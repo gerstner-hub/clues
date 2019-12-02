@@ -2,7 +2,6 @@
 #define TUXTRACE_TRACEDPROC_HXX
 
 // C++
-#include <vector>
 
 // Linux
 #include <unistd.h>
@@ -73,6 +72,8 @@ public:
 	 * 	success. On error an exception is thrown.
 	 **/
 	long getData(const long *addr) const;
+
+public: // types
 
 protected:
 
@@ -145,6 +146,8 @@ protected:
 	TraceState m_state;
 	//! PID of the tracee we're dealing with
 	pid_t m_tracee;
+	//! here we store our current knowledge open file descriptions
+	DescriptorPathMapping m_fd_path_map;
 };
 	
 /**

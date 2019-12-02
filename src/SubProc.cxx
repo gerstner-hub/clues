@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <signal.h>
 
 // tuxtrace
 #include <tuxtrace/include/ApiError.hxx>
@@ -116,6 +117,14 @@ void SubProc::exec(CStringVector &v)
 	);
 
 	tt_throw( ApiError() );
+}
+
+void SubProc::kill(int signal)
+{
+	if( ::kill( m_pid, signal ) )
+	{
+		tt_throw( ApiError() );
+	}
 }
 
 WaitRes SubProc::wait()

@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <sys/prctl.h> // arch_prctl constants
 #include <asm/prctl.h> // "	"
+#include <linux/futex.h> // futex(2)
+#include <time.h>
 
 // tuxtrace
 #include <tuxtrace/include/Parameters.hxx>
@@ -176,10 +178,10 @@ void readTraceeBlob(
 
 std::string ErrnoResult::str() const
 {
-	if( (int)m_val <= 0 )
+	if( (int)m_val <= m_highest )
 		return ApiError::msg(((int)m_val) * -1);
 	else
-		return "Result Value = " + std::to_string((int)m_val);
+		return std::to_string((int)m_val);
 }
 
 std::string PointerParameter::str() const
@@ -445,6 +447,75 @@ void DirEntries::update(const TracedProc &proc)
 	}
 
 	delete[] buffer;
+}
+
+#define ENUM_CASE(NAME) case NAME: return #NAME
+
+std::string SigSetOperation::str() const
+{
+
+	switch(m_val)
+	{
+	ENUM_CASE(SIG_BLOCK);
+	ENUM_CASE(SIG_UNBLOCK);
+	ENUM_CASE(SIG_SETMASK);
+	default:
+		std::stringstream ss;
+		ss << "unknown (" << m_val << ")";
+		return ss.str();
+	}
+}
+
+std::string FutexOperation::str() const
+{
+	/*
+	 * there are a number of undocumented constants and some flags can be
+	 * or'd in like FUTEX_PRIVATE_FLAG. Without exactly understanding that
+	 * we can't sensibly trace this ...
+	 */
+	switch(m_val & FUTEX_CMD_MASK)
+	{
+	ENUM_CASE(FUTEX_WAIT);
+	ENUM_CASE(FUTEX_WAIT_BITSET);
+	ENUM_CASE(FUTEX_WAKE);
+	ENUM_CASE(FUTEX_WAKE_BITSET);
+	ENUM_CASE(FUTEX_FD);
+	ENUM_CASE(FUTEX_REQUEUE);
+	ENUM_CASE(FUTEX_CMP_REQUEUE);
+	default:
+		std::stringstream ss;
+		ss << "unknown (" << m_val << ")";
+		return ss.str();
+	}
+}
+
+void TimespecParameter::process(const TracedProc &proc)
+{
+	// the address of the struct stat in the userspace address space
+	const long *addr = reinterpret_cast<long*>(m_val);
+
+	if( ! addr )
+		// NULL time specification
+		return;
+
+	if( ! m_timespec )
+		m_timespec = new struct timespec;
+	
+	readTraceeStruct(proc, addr, *m_timespec);
+}
+
+TimespecParameter::~TimespecParameter() { delete m_timespec; }
+
+std::string TimespecParameter::str() const
+{
+	if( ! m_timespec )
+		return "NULL";
+
+	std::stringstream ss;
+
+	ss << m_timespec->tv_sec << "s, " << m_timespec->tv_nsec << "ns";
+
+	return ss.str();
 }
 
 } // end ns

@@ -12,6 +12,7 @@
 
 // tuxtrace
 #include <tuxtrace/include/RegisterSet.hxx>
+#include <tuxtrace/include/types.hxx>
 
 namespace tuxtrace
 {
@@ -60,12 +61,16 @@ public: // functions
 		const SystemCallNr nr,
 		const char *name,
 		SystemCallParameter *ret,
-		ParameterVector &&pars);
+		ParameterVector &&pars,
+		const size_t open_id_par = SIZE_MAX,
+		const size_t close_fd_par = SIZE_MAX);
 
 	~SystemCall();
 
 	void setEntryRegs(const TracedProc &proc, const RegisterSet &r);
 	void setExitRegs(const TracedProc &proc, const RegisterSet &r);
+
+	void updateOpenFiles(DescriptorPathMapping &mapping);
 
 	//! returns the system call's name
 	const char* name() const { return m_name; }
@@ -91,6 +96,12 @@ protected:
 	SystemCallParameter *m_return;
 	//! the array of system call parameters, if any
 	ParameterVector m_pars;
+	//! if this is a open-like system call this gives the number of the
+	//! parameter that contains the open identifier
+	const size_t m_open_id_par;
+	//! if this is a close-like system call this gives the number of the
+	//! parameter that contains the open file descriptor
+	const size_t m_close_fd_par;
 };
 
 } // end ns

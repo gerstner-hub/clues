@@ -31,6 +31,12 @@ class FileDescriptorParameter :
 	public SystemCallParameter
 {
 public:
+	/**
+	 * \param[in] at_semantics
+	 * 	If set then the file descriptor is considered to be part of an
+	 * 	*at() type system call i.e. the special file descriptor
+	 * 	AT_FDCWD can occur.
+	 **/
 	FileDescriptorParameter(
 		const FlowType &flow = IN,
 		const bool at_semantics = false) :
@@ -63,11 +69,17 @@ class ErrnoResult :
 	public SystemCallParameter
 {
 public:
-	ErrnoResult() :
-		SystemCallParameter("errno", OUT)
+	ErrnoResult(
+		const int highest_errno = 0,
+		const char *label = "errno") :
+		SystemCallParameter(label, OUT),
+		m_highest(highest_errno)
 	{}
 
 	std::string str() const override;
+protected:
+
+	int m_highest;
 };
 
 /**
@@ -230,6 +242,50 @@ protected:
 protected:
 
 	std::list<std::string> m_entries;
+};
+
+class SigSetOperation :	
+	public SystemCallParameter
+{
+public:
+	SigSetOperation() :
+		SystemCallParameter("operation")
+	{}
+
+	std::string str() const override;
+};
+
+class TimespecParameter :
+	public SystemCallParameter
+{
+public:
+	TimespecParameter(const char *name, const FlowType &flow = IN) :
+		SystemCallParameter(name, flow),
+		m_timespec(nullptr)
+	{}
+
+	~TimespecParameter() override;
+
+	std::string str() const override;
+
+protected:
+
+	void process(const TracedProc &proc) override;
+
+protected:
+
+	struct timespec *m_timespec;
+};
+
+class FutexOperation :
+	public SystemCallParameter
+{
+public:
+	FutexOperation() :
+		SystemCallParameter("operation")
+	{}
+
+	std::string str() const override;
 };
 
 } // end ns

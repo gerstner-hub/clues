@@ -126,6 +126,7 @@ void TracedProc::trace()
 					m_state = TraceState::SYSCALL_EXIT;
 					getRegisters(rs);
 					sc->setExitRegs(*this, rs);
+					sc->updateOpenFiles(m_fd_path_map);
 					m_consumer.syscallExit(*sc);
 				}
 			}
@@ -250,6 +251,16 @@ TracedSubProc::~TracedSubProc()
 {
 	try
 	{
+		if( m_child.running() )
+		{
+			// make sure we can wait for it
+			try
+			{
+				m_child.kill(SIGKILL);
+			}
+			catch( ... ) { }
+		}
+
 		detach();
 	}
 	catch( const TuxTraceError &tte )

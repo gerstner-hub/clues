@@ -75,8 +75,8 @@ SystemCall* SystemCallDB::createSysCall(
 		return new Call(nr, "nanosleep",
 			new ErrnoResult(),
 			{
-				new PointerParameter("requested"),
-				new PointerParameter("remaining", Par::OUT)
+				new TimespecParameter("requested"),
+				new TimespecParameter("remaining", Par::OUT)
 			}
 		);
 	case SYS_alarm:
@@ -163,7 +163,8 @@ SystemCall* SystemCallDB::createSysCall(
 				new StringParameter("filename"),
 				new OpenFlagsParameter(),
 				new FileModeParameter()
-			}
+			},
+			0 // number of parameter that is the to-be-opened ID
 		);
 	case SYS_openat:
 		return new Call(nr, "openat",
@@ -181,7 +182,24 @@ SystemCall* SystemCallDB::createSysCall(
 			new ErrnoResult(),
 			{
 				new FileDescriptorParameter()
+			},
+			SIZE_MAX,
+			0 // number of parameter that is the to-be-closed fd
+		);
+	case SYS_rt_sigprocmask:
+		return new Call(nr, "rt_sigprocmask",
+			new ErrnoResult(),
+			{
+				new SigSetOperation(),
+				new PointerParameter("set"),
+				new PointerParameter("oldset"),
+				new Par("sigset_t size")
 			}
+		);
+	case SYS_fork:
+		return new Call(nr, "fork",
+			new ErrnoResult(-1, "child PID"),
+			{}
 		);
 	case SYS_execve:
 		return new Call(nr, "execve",
@@ -202,7 +220,7 @@ SystemCall* SystemCallDB::createSysCall(
 		);
 	case SYS_getdents:
 		return new Call(nr, "getdents",
-			new ErrnoResult(),
+			new ErrnoResult(-1, "size of dirent"),
 			{
 				new FileDescriptorParameter(),
 				new DirEntries(),
@@ -219,6 +237,47 @@ SystemCall* SystemCallDB::createSysCall(
 			{}
 		);
 	}
+	case SYS_set_tid_address:
+		return new Call(nr, "set_tid_address",
+			new SystemCallParameter("thread id"),
+			{
+				new PointerParameter("thread ID location")
+			}
+		);
+	case SYS_get_robust_list:
+		return new Call(nr, "get_robust_list",
+			new ErrnoResult(),
+			{
+				new SystemCallParameter("thread id"),
+				new PointerParameter("robust_list_head"),
+				// TODO: new parameter type that also prints
+				// the size value at the pointed to address
+				new PointerParameter("len_ptr")
+			}
+		);
+	case SYS_set_robust_list:
+		return new Call(nr, "set_robust_list",
+			new ErrnoResult(),
+			{
+				new PointerParameter("robust_list_head"),
+				new SystemCallParameter("len")
+			}
+		);
+	case SYS_futex:
+		return new Call(nr, "futex",
+			// TODO: requires context-sensitive interpr. of the
+			// non-error returns (the FutexOperation is the
+			// necessary context)
+			new ErrnoResult(-1, "processes woken up"),
+			{
+				new PointerParameter("futex_int"),
+				new FutexOperation(),
+				new SystemCallParameter("val"),
+				new TimespecParameter("timeout"),
+				new PointerParameter("requeue_futex"),
+				new SystemCallParameter("requeue_check_val")
+			}
+		);
 	default:
 		return new Call(nr, "unknown",
 			new Par("result"),
