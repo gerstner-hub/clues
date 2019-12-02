@@ -397,6 +397,9 @@ void StatParameter::exitedCall(const TracedProc &proc)
 	readStruct(proc, m_val, m_stat);
 }
 
+extern "C"
+{
+
 /*
  * the man page says there's no header for this
  */
@@ -406,9 +409,15 @@ struct linux_dirent
 	unsigned long d_off;
 	unsigned short d_reclen;
 	char d_name[];
-	char pad;
-	char d_type;
+	/*
+	 * following fields, cannot be sensibly accessed by the compiler,
+	 * needs to be calculated during runtime, therefore only as comments
+	char pad; // zero padding byte
+	char d_type; // file type since Linux 2.6.4
+	*/
 };
+
+}
 
 std::string DirEntries::str() const
 {
