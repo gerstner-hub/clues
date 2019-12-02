@@ -2,11 +2,14 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 // Linux
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#include <sys/prctl.h> // arch_prctl constants
+#include <asm/prctl.h> // "	"
 
 // tuxtrace
 #include <tuxtrace/include/Parameters.hxx>
@@ -16,35 +19,114 @@
 namespace tuxtrace
 {
 
-template <typename VECTOR>
+/**
+ * \brief
+ * 	reads data from the tracee and feeds it to \c eater until its
+ * 	saturated
+ **/
+template <typename EATER>
 void readTraceeData(
 	const TracedProc &proc,
 	const long *addr,
-	VECTOR &out)
+	EATER &eater)
 {
 	long word;
-	const auto VALUE_SIZE = sizeof(typename VECTOR::value_type);
-	typedef typename VECTOR::value_type *ptr_type;
-	ptr_type unit = reinterpret_cast<ptr_type>(&word);
-	out.clear();
 
-	while( true )
+	do
 	{
 		word = proc.getData(addr);
+
+		// get the next word
+		addr++;
+	}
+	while( eater(word) );
+}
+
+/**
+ * \brief
+ * 	An EATER that fills eaten data into a vector-like container until a
+ * 	terminating zero element is found
+ **/
+template <typename VECTOR>
+class VectorEater
+{
+	typedef typename VECTOR::value_type *ptr_type;
+public:
+
+	VectorEater(VECTOR &vector) :
+		m_vector(vector),
+		VALUE_SIZE(sizeof(typename VECTOR::value_type))
+	{}
+
+	bool operator()(long word)
+	{
+		ptr_type unit = reinterpret_cast<ptr_type>(&word);
 
 		for( size_t cur = 0; cur < sizeof(word) / VALUE_SIZE; cur++ )
 		{
 			if( unit[cur] == 0 )
 				// termination found
-				return;
+				return false;
 
-			out.push_back( unit[cur] );
+			m_vector.push_back( unit[cur] );
 		}
 
-		// get the next word
-		addr++;
+		return true;
 	}
 
+protected:
+	VECTOR &m_vector;
+	const size_t VALUE_SIZE;
+};
+
+template <typename VECTOR>
+void readTraceeVector(
+	const TracedProc &proc,
+	const long *addr,
+	VECTOR &out)
+{
+	out.clear();
+
+	VectorEater<VECTOR> eater(out);
+	readTraceeData(proc, addr, eater);
+}
+
+template <typename STRUCT>
+class StructEater
+{
+public:
+	StructEater(STRUCT &strct) :
+		m_struct(strct),
+		m_left(sizeof(STRUCT))
+	{}
+
+	bool operator()(long word)
+	{
+		const size_t to_copy = std::min( sizeof(word), m_left );
+
+		::memcpy(
+			((char*)&m_struct) + (sizeof(STRUCT) - m_left),
+			&word,
+			to_copy
+		);
+
+		m_left -= to_copy;
+
+		return m_left != 0;
+	}
+protected:
+	STRUCT &m_struct;
+	size_t m_left;
+};
+
+template <typename STRUCT>
+void readTraceeStruct(
+	const TracedProc &proc,
+	const long *addr,
+	STRUCT &out)
+{
+	StructEater<STRUCT> eater(out);
+	readTraceeData(proc, addr, eater);
 }
 
 std::string ErrnoResult::str() const
@@ -74,7 +156,7 @@ void readTraceeString(
 	const long *addr,
 	std::string &out)
 {
-	return readTraceeData(proc, addr, out);
+	return readTraceeVector(proc, addr, out);
 }
 
 void StringParameter::process(const TracedProc &proc)
@@ -91,7 +173,7 @@ void StringArrayParameter::process(const TracedProc &proc)
 
 	// first read in all start adresses of the c-strings for the string
 	// array
-	readTraceeData(proc, array_start, string_addrs);
+	readTraceeVector(proc, array_start, string_addrs);
 
 	for( const auto &addr: string_addrs )
 	{
@@ -204,6 +286,44 @@ std::string MemoryProtectionParameter::str() const
 		ss << "|PROT_EXEC";
 
 	return ss.str();
+}
+
+#define chk_arch_case(MODE) case MODE: return #MODE;
+
+std::string ArchCodeParameter::str() const
+{
+	switch( m_val )
+	{
+	chk_arch_case(ARCH_SET_FS)
+	chk_arch_case(ARCH_GET_FS)
+	chk_arch_case(ARCH_SET_GS)
+	chk_arch_case(ARCH_GET_GS)
+	default:
+		return "unknown";
+	}
+}
+
+StatParameter::~StatParameter() { delete m_stat; }
+
+std::string StatParameter::str() const
+{
+	std::stringstream ss;
+
+	ss << "st_size = " << m_stat->st_size << ", ";
+	ss << "st_dev = " << m_stat->st_dev;
+
+	return ss.str();
+}
+
+void StatParameter::update(const TracedProc &proc)
+{
+	if( ! m_stat )
+		m_stat = new struct stat;
+	
+	// the address of the struct stat in the userspace address space
+	const long *addr = reinterpret_cast<long*>(m_val);
+
+	readTraceeStruct(proc, addr, *m_stat);
 }
 
 } // end ns

@@ -102,7 +102,16 @@ SystemCall* SystemCallDB::createSysCall(
 			new ErrnoResult(),
 			{
 				new FileDescriptorParameter(),
-				new PointerParameter("stat_buf")
+				new StatParameter()
+			}
+		);
+	case SYS_lstat:
+	case SYS_stat:
+		return new Call(nr, nr == SYS_stat ? "stat" : "lstat",
+			new ErrnoResult(),
+			{
+				new StringParameter("pathname"),
+				new StatParameter()
 			}
 		);
 	case SYS_mmap:
@@ -110,10 +119,19 @@ SystemCall* SystemCallDB::createSysCall(
 			new PointerParameter("new_memory"),
 			{
 				new PointerParameter("hint"),
+				new Par("length"),
 				new Par("protocol"),
 				new Par("flags"),
 				new FileDescriptorParameter(),
 				new Par("offset")
+			}
+		);
+	case SYS_munmap:
+		return new Call(nr, "munmap",
+			new ErrnoResult(),
+			{
+				new PointerParameter("memory"),
+				new Par("length")
 			}
 		);
 	case SYS_mprotect:
@@ -123,6 +141,14 @@ SystemCall* SystemCallDB::createSysCall(
 				new PointerParameter("addr"),
 				new Par("length"),
 				new MemoryProtectionParameter()
+			}
+		);
+	case SYS_arch_prctl:
+		return new Call(nr, "arch_prctl",
+			new ErrnoResult(),
+			{
+				new ArchCodeParameter(),
+				new PointerParameter("addr")
 			}
 		);
 	case SYS_open:
@@ -148,6 +174,14 @@ SystemCall* SystemCallDB::createSysCall(
 				new StringParameter("filename"),
 				new StringArrayParameter("argv"),
 				new StringArrayParameter("envp")
+			}
+		);
+	case SYS_ioctl:
+		return new Call(nr, "ioctl",
+			new ErrnoResult(),
+			{
+				new FileDescriptorParameter(),
+				new PointerParameter("request")
 			}
 		);
 	default:
@@ -178,10 +212,14 @@ void SystemCall::setEntryRegs(const TracedProc &proc, const RegisterSet &r)
 
 void SystemCall::setExitRegs(const TracedProc &proc, const RegisterSet &r)
 {
-	if( ! m_return )
-		return;
+	if( m_return )
+		m_return->set(proc, r.syscallRes());
 
-	m_return->set(proc, r.syscallRes());
+	
+	for( size_t par = 0; par < m_pars.size(); par++ )
+	{
+		m_pars[par]->update(proc);
+	}
 }
 
 void SystemCallParameter::set(

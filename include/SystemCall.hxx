@@ -109,6 +109,8 @@ public:
 	virtual ~SystemCallParameter() {}
 
 	void set(const TracedProc &proc, const RegisterSet::Word word);
+	//! called upon exit of the system call to update possible out par.
+	virtual void update(const TracedProc &proc) {}
 
 	const char* name() const { return m_name; }
 	RegisterSet::Word value() const { return m_val; }

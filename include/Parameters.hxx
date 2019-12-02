@@ -132,6 +132,21 @@ public:
 
 /**
  * \brief
+ * 	The code parameter to the arch_prctl system call
+ **/
+class ArchCodeParameter :
+	public SystemCallParameter
+{
+public:
+	ArchCodeParameter() :
+		SystemCallParameter("subfunction")
+	{}
+
+	std::string str() const override;
+};
+
+/**
+ * \brief
  * 	File access mode passed e.g. to open(), chmod()
  **/
 class FileModeParameter :
@@ -145,6 +160,32 @@ public:
 
 	std::string str() const override;
 };
+
+/**
+ * \brief
+ * 	The stat structure used in stat() & friends
+ **/
+class StatParameter :
+	public SystemCallParameter
+{
+public:
+	StatParameter() :
+		SystemCallParameter("struct stat"),
+		m_stat()
+	{}
+
+	~StatParameter() override;
+
+	std::string str() const override;
+
+protected:
+	void update(const TracedProc &proc) override;
+
+protected:
+	FileModeParameter m_mode;
+	struct stat *m_stat;
+};
+
 
 /**
  * \brief
