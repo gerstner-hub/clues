@@ -37,7 +37,7 @@ SystemCall& SystemCallDB::get(const SystemCallNr nr)
 
 	return *(it->second);
 }
-				
+
 SystemCall* SystemCallDB::createSysCall(
 	const SystemCallNr nr)
 {

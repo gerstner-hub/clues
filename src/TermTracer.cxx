@@ -27,7 +27,7 @@ public: // functions
 
 protected: // event consumer interface
 
-	
+
 	void syscallEntry(const SystemCall &sc) override;
 
 	void syscallExit(const SystemCall &sc) override;

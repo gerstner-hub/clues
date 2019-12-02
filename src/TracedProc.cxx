@@ -160,7 +160,7 @@ void TracedProc::getRegisters(RegisterSet &rs)
 	{
 		tt_throw( ApiError() );
 	}
-	
+
 	//std::cout << "Read registers " << reg_vector.iov_len << " vs. " << sizeof(regs) << std::endl;
 }
 
@@ -276,7 +276,7 @@ void TracedSubProc::attach()
 	m_child.run();
 
 	setTracee(m_child.pid());
-		
+
 	seize();
 
 	WaitRes r;
@@ -288,7 +288,7 @@ void TracedSubProc::attach()
 	while( ! r.stopped() && ! r.exited() );
 
 	setOptions( (int) TraceOpts::TRACESYSGOOD );
-	
+
 	if( r.stopped() )
 	{
 		m_state = TraceState::ATTACHED;

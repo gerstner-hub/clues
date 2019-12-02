@@ -84,7 +84,7 @@ protected:
 	 * 	Waits for the next trace event of this tracee
 	 **/
 	void wait(WaitRes &res);
-	
+
 	/**
 	 * \brief
 	 * 	Causes the traced process to stop
@@ -149,7 +149,7 @@ protected:
 	//! here we store our current knowledge open file descriptions
 	DescriptorPathMapping m_fd_path_map;
 };
-	
+
 /**
  * \brief
  * 	Specialization of TracedProc that attaches to an existing, unrelated

@@ -49,7 +49,7 @@ public: // functions
 
 	const char* name() const { return m_name; }
 	RegisterSet::Word value() const { return m_val; }
-	
+
 	//! returns a string representation of the parameter
 	virtual std::string str() const;
 
@@ -58,7 +58,7 @@ protected: // functions
 	//! processes the value stored in m_val acc. to the actual parameter
 	//! type before entering the system call
 	virtual void enteredCall(const TracedProc &proc) = 0;
-	
+
 	//! called upon exit of the system call to update possible out par.
 	virtual void exitedCall(const TracedProc &proc) = 0;
 
@@ -98,11 +98,11 @@ public:
 	ValueParameter(const char *name, const FlowType &flow) :
 		SystemCallParameter(name, flow)
 	{}
-	
+
 protected:
-	
+
 	void enteredCall(const TracedProc &proc) override {}
-	
+
 	void exitedCall(const TracedProc &proc) override {}
 };
 

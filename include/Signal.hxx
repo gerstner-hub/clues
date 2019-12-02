@@ -17,16 +17,16 @@ namespace tuxtrace
 class Signal
 {
 public: // types
-	
+
 	//! the basic signal type
 	typedef int Type;
 
 public: // functions
-	
+
 	explicit Signal(const Type &sig) : m_sig(sig) {}
 
 	Signal& operator=(const Signal &o) { m_sig = o.m_sig; return *this; }
-	
+
 	const Type& raw() const { return m_sig; }
 
 	std::string name() const;

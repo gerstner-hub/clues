@@ -57,7 +57,7 @@ void SubProc::run(const StringVector &sv)
 		postFork();
 
 		CStringVector argv;
-		
+
 		for( auto arg: args )
 		{
 			argv.push_back(arg.c_str());
@@ -85,7 +85,7 @@ void SubProc::postFork()
 			tt_throw( ApiError() );
 		}
 	}
-	
+
 	if( m_trace )
 	{
 #if 0
@@ -108,7 +108,7 @@ void SubProc::postFork()
 		}
 	}
 }
-	
+
 void SubProc::exec(CStringVector &v)
 {
 	::execvp(
@@ -133,7 +133,7 @@ WaitRes SubProc::wait()
 
 	pid_t pid = m_pid;
 	m_pid = INVALID_PID;
-	
+
 	if( ::waitpid(m_pid, &wr.m_status, 0) == -1 )
 	{
 		tt_throw( ApiError() );

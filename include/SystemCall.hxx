@@ -83,9 +83,9 @@ public: // functions
 	const ParameterVector& parameters() const { return m_pars; }
 	//! access to the return value parameter associated with this sys. c.
 	const SystemCallParameter& result() const { return *m_return; }
-	
+
 protected: // functions	
-	
+
 protected:
 
 	//! the raw sytem call number we represent

@@ -23,7 +23,7 @@ public:
 	~SystemCallDB();
 
 	SystemCall& get(const SystemCallNr nr);
-	
+
 	const SystemCall& get(const SystemCallNr nr) const
 	{ return const_cast<SystemCallDB&>(*this).get(nr); }
 

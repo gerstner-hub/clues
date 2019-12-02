@@ -9,7 +9,7 @@
 
 namespace tuxtrace
 {
-	
+
 SystemCall::SystemCall(
 	const SystemCallNr nr,
 	const char *name,
@@ -38,7 +38,7 @@ SystemCall::~SystemCall()
 
 	delete m_return;
 }
-	
+
 void SystemCall::setEntryRegs(const TracedProc &proc, const RegisterSet &r)
 {
 	for( size_t par = 0; par < m_pars.size(); par++ )
@@ -52,7 +52,7 @@ void SystemCall::setExitRegs(const TracedProc &proc, const RegisterSet &r)
 	if( m_return )
 		m_return->set(proc, r.syscallRes());
 
-	
+
 	for( auto &par: m_pars )
 	{
 		if( par->needsUpdate() )

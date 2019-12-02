@@ -161,7 +161,7 @@ public:
 
 		return m_left != 0;
 	}
-	
+
 protected:
 
 	size_t m_left;
@@ -194,7 +194,7 @@ void readStruct(
 	if( ! addr )
 		// null address specification
 		return;
-	
+
 	if( ! copy )
 		copy = new T;
 
@@ -224,7 +224,7 @@ std::string FileDescriptorParameter::str() const
 		return "AT_FDCWD";
 	else if( fd >= 0 || !m_error_semantics )
 		return std::to_string((int)m_val);
-		
+
 	return std::string("Failed: ") + ApiError::msg(fd * -1);
 }
 
@@ -531,7 +531,7 @@ void TimespecParameter::fill(const TracedProc &proc)
 
 	if( ! m_timespec )
 		m_timespec = new struct timespec;
-	
+
 	readTraceeStruct(proc, addr, *m_timespec);
 }
 
@@ -675,7 +675,7 @@ std::string SigactionParameter::str() const
 
 
 	ss << "handler(";
-	
+
 	if( m_sigaction->handler == SIG_IGN )
 		ss << "SIG_IGN";
 	else if( m_sigaction->handler == SIG_DFL )
@@ -685,7 +685,7 @@ std::string SigactionParameter::str() const
 
 	std::string mask_str;
 	printSignalSet(mask_str, m_sigaction->mask);
-		
+
 	ss << "), sa_mask(" << mask_str << "), sa_flags("
 		<< saflags_str(m_sigaction->flags) << "), sa_restorer("
 		<< (void*)m_sigaction->restorer << ")";
@@ -762,7 +762,7 @@ std::string ResourceLimit::str() const
 	ss
 		<< "rlim_cur(" << printLimit(m_limit->rlim_cur) << "), rlim_max("
 		<< printLimit(m_limit->rlim_max) << ")";
-	
+
 	return ss.str();
 }
 

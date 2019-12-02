@@ -19,7 +19,7 @@ public: // functions
 	UsageError(const char *msg) :
 		TuxTraceError("UsageError")
 	{}
-		
+
 	void raise() override { throw *this; }
 
 protected: // functions

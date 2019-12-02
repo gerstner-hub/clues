@@ -55,7 +55,7 @@ public:
 protected:
 
 	void enteredCall(const TracedProc &proc) override {};
-	
+
 	void exitedCall(const TracedProc &proc) override {};
 
 
@@ -129,7 +129,7 @@ protected:
 		if( ! this->isOut() )
 			fill(proc);
 	}
-	
+
 	void exitedCall(const TracedProc &proc) override
 	{
 		if( ! this->isIn() )
@@ -323,7 +323,7 @@ protected:
 		if( this->isIn() )
 			fill(proc);
 	}
-	
+
 	void exitedCall(const TracedProc &proc) override
 	{
 		if( this->isOut() )
@@ -436,7 +436,7 @@ public:
 
 	std::string str() const override;
 };
-				
+
 class ResourceLimit :
 	public PointerOutParameter
 {

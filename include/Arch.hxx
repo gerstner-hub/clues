@@ -25,7 +25,7 @@ static bool isx86()
 {
 	return !isx86_64();
 }
-	
+
 /*
  * orig_eax saves the original system call number during a system call,
  * because the actual eax is used to return the system call result.
