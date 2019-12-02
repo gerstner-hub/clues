@@ -211,6 +211,21 @@ SystemCall* SystemCallDB::createSysCall(
 				new ValueInParameter("sigset_t size")
 			}
 		);
+	case SYS_clone:
+		/*
+		 * NOTE: the order of parameters for clone differs between
+		 * architectures
+		 */
+		return new Call(nr, "clone",
+			new ErrnoResult(-1, "child PID"),
+			{
+				new ValueInParameter("flags"),
+				new GenericPointerParameter("stack address", SystemCallParameter::IN),
+				new GenericPointerParameter("parent thread ID", SystemCallParameter::OUT),
+				new GenericPointerParameter("child thread ID", SystemCallParameter::OUT),
+				new GenericPointerParameter("regs", SystemCallParameter::IN)
+			}
+		);
 	case SYS_fork:
 		return new Call(nr, "fork",
 			new ErrnoResult(-1, "child PID"),
