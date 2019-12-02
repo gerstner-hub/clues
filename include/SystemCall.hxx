@@ -106,6 +106,8 @@ public:
 		m_name(name)
 	{}
 
+	virtual ~SystemCallParameter() {}
+
 	void set(const TracedProc &proc, const RegisterSet::Word word);
 
 	const char* name() const { return m_name; }
@@ -188,6 +190,8 @@ class SystemCallDB :
 	protected std::map<SystemCallNr, SystemCall*>
 {
 public:
+
+	~SystemCallDB();
 
 	SystemCall& get(const SystemCallNr nr);
 	

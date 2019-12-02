@@ -125,7 +125,7 @@ void TracedProc::trace()
 					m_state = TraceState::SYSCALL_EXIT;
 					getRegisters(rs);
 					sc->setExitRegs(*this, rs);
-					std::cout << "syscall:" << *sc << std::endl;
+					std::cout << *sc << std::endl;
 				}
 			}
 			else

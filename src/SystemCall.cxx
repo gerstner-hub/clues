@@ -11,6 +11,16 @@
 namespace tuxtrace
 {
 
+SystemCallDB::~SystemCallDB()
+{
+	for( auto &pair: *this )
+	{
+		delete pair.second;
+	}
+
+	this->clear();
+}
+
 SystemCall& SystemCallDB::get(const SystemCallNr nr)
 {
 	iterator it = find(nr);
@@ -44,8 +54,67 @@ SystemCall* SystemCallDB::createSysCall(
 			new Par("bytes written"),
 			{
 				new FileDescriptorParameter(),
-				new Par("source data"),
-				new Par("source length")
+				new PointerParameter("source buffer"),
+				new Par("buffer length")
+			}
+		);
+	case SYS_read:
+		return new Call(nr, "read",
+			new Par("bytes read"),
+			{
+				new FileDescriptorParameter(),
+				new PointerParameter("target buffer"),
+				new Par("buffer length")
+			}
+		);
+	case SYS_brk:
+		return new Call(nr, "brk",
+			new PointerParameter("actual data segment end"),
+			{
+				new PointerParameter("requested data segment end")
+			}
+		);
+	case SYS_alarm:
+		return new Call(nr, "alarm",
+			new Par("prev_remaining_seconds"),
+			{
+				new Par("seconds")
+			}
+		);
+	case SYS_access:
+		return new Call(nr, "access",
+			new ErrnoResult(),
+			{
+				new StringParameter("filename"),
+				new Par("mode")
+			}
+		);
+	case SYS_fstat:
+		return new Call(nr, "fstat",
+			new ErrnoResult(),
+			{
+				new FileDescriptorParameter(),
+				new PointerParameter("stat_buf")
+			}
+		);
+	case SYS_mmap:
+		return new Call(nr, "mmap",
+			new PointerParameter("new_memory"),
+			{
+				new PointerParameter("hint"),
+				new Par("protocol"),
+				new Par("flags"),
+				new FileDescriptorParameter(),
+				new Par("offset")
+			}
+		);
+	case SYS_mprotect:
+		return new Call(nr, "mprotect",
+			new ErrnoResult(),
+			{
+				new PointerParameter("addr"),
+				new Par("length"),
+				new MemoryProtectionParameter()
 			}
 		);
 	case SYS_open:
@@ -53,20 +122,20 @@ SystemCall* SystemCallDB::createSysCall(
 			new FileDescriptorParameter(),
 			{
 				new StringParameter("filename"),
-				new Par("flags"),
-				new Par("mode")
+				new OpenFlagsParameter(),
+				new FileModeParameter()
 			}
 		);
 	case SYS_close:
 		return new Call(nr, "close",
-			new Par("errno"),
+			new ErrnoResult(),
 			{
 				new FileDescriptorParameter()
 			}
 		);
 	case SYS_execve:
 		return new Call(nr, "execve",
-			new Par("errno"),
+			new ErrnoResult(),
 			{
 				new StringParameter("filename"),
 				new StringArrayParameter("argv"),
@@ -82,7 +151,7 @@ SystemCall* SystemCallDB::createSysCall(
 
 SystemCall::~SystemCall()
 {
-	while( m_pars.empty() )
+	while( ! m_pars.empty() )
 	{
 		delete *m_pars.rbegin();
 		m_pars.pop_back();

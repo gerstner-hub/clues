@@ -39,15 +39,26 @@ protected:
 
 };
 
+class PointerParameter :
+	public SystemCallParameter
+{
+public:
+	PointerParameter(const char *name) :
+		SystemCallParameter(name)
+	{}
+
+	std::string str() const override;
+};
+
 /**
  * \brief
  * 	An errno system call result
  **/
-class ErrnoParameter :
+class ErrnoResult :
 	public SystemCallParameter
 {
 public:
-	ErrnoParameter() :
+	ErrnoResult() :
 		SystemCallParameter("errno")
 	{}
 
@@ -102,6 +113,53 @@ protected:
 protected:
 
 	std::vector<std::string> m_strs;
+};
+
+/**
+ * \brief
+ * 	The flags passed to e.g. open()
+ **/
+class OpenFlagsParameter :
+	public SystemCallParameter
+{
+public:
+	OpenFlagsParameter() :
+		SystemCallParameter("open-flags")
+	{}
+
+	std::string str() const override;
+};
+
+/**
+ * \brief
+ * 	File access mode passed e.g. to open(), chmod()
+ **/
+class FileModeParameter :
+	public SystemCallParameter
+{
+public:
+
+	FileModeParameter() :
+		SystemCallParameter("file-mode")
+	{}
+
+	std::string str() const override;
+};
+
+/**
+ * \brief
+ * 	Memory protection used e.g. in mprotect()
+ **/
+class MemoryProtectionParameter :
+	public SystemCallParameter
+{
+public:
+
+	MemoryProtectionParameter() :
+		SystemCallParameter("protection")
+	{}
+
+	std::string str() const override;
 };
 
 } // end ns
