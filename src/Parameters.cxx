@@ -12,6 +12,7 @@
 #include <asm/prctl.h> // "	"
 #include <linux/futex.h> // futex(2)
 #include <time.h>
+#include <signal.h>
 
 // tuxtrace
 #include <tuxtrace/include/Parameters.hxx>
@@ -472,6 +473,9 @@ std::string FutexOperation::str() const
 	 * there are a number of undocumented constants and some flags can be
 	 * or'd in like FUTEX_PRIVATE_FLAG. Without exactly understanding that
 	 * we can't sensibly trace this ...
+	 * seems the man page doesn't tell the complete story, strace
+	 * understands all the "private" stuff that can also be found in the
+	 * header
 	 */
 	switch(m_val & FUTEX_CMD_MASK)
 	{
@@ -491,7 +495,7 @@ std::string FutexOperation::str() const
 
 void TimespecParameter::process(const TracedProc &proc)
 {
-	// the address of the struct stat in the userspace address space
+	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
 
 	if( ! addr )
@@ -516,6 +520,191 @@ std::string TimespecParameter::str() const
 	ss << m_timespec->tv_sec << "s, " << m_timespec->tv_nsec << "ns";
 
 	return ss.str();
+}
+
+#define SIG_CASE(NAME) case NAME: ss << #NAME; break
+
+void printSignal(std::string &s, int signal)
+{
+	std::stringstream ss;
+	s.clear();
+
+	const auto SIGRTMIN_PRIV = SIGRTMIN - 2;
+
+	if( signal < (SIGRTMIN_PRIV) || signal > SIGRTMAX )
+	{
+		switch( signal )
+		{
+		SIG_CASE(SIGINT);
+		SIG_CASE(SIGTERM);
+		SIG_CASE(SIGHUP);
+		SIG_CASE(SIGQUIT);
+		SIG_CASE(SIGILL);
+		SIG_CASE(SIGABRT);
+		SIG_CASE(SIGFPE);
+		SIG_CASE(SIGKILL);
+		SIG_CASE(SIGPIPE);
+		SIG_CASE(SIGSEGV);
+		SIG_CASE(SIGALRM);
+		SIG_CASE(SIGUSR1);
+		SIG_CASE(SIGUSR2);
+		SIG_CASE(SIGCONT);
+		SIG_CASE(SIGSTOP);
+		SIG_CASE(SIGTSTP);
+		SIG_CASE(SIGTTIN);
+		SIG_CASE(SIGTTOU);
+		SIG_CASE(SIGTRAP);
+		SIG_CASE(SIGBUS);
+		SIG_CASE(SIGSTKFLT);
+		SIG_CASE(SIGCHLD);
+		SIG_CASE(SIGIO);
+		SIG_CASE(SIGPROF);
+		SIG_CASE(SIGSYS);
+		SIG_CASE(SIGWINCH);
+		SIG_CASE(SIGPWR);
+		SIG_CASE(SIGURG);
+		SIG_CASE(SIGXCPU);
+		SIG_CASE(SIGVTALRM);
+		SIG_CASE(SIGXFSZ);
+		default:
+			ss << "unknown (" << signal << ")";
+		}
+	}
+	else if( signal >= SIGRTMIN_PRIV && signal < SIGRTMIN )
+	{
+		ss << "glibc internal signal";
+	}
+	else
+	{
+		ss << "SIGRT" << signal - SIGRTMIN;
+	}
+
+	ss << " (" << ::strsignal(signal) << ")";
+
+	s = ss.str();
+}
+
+void printSignalSet(std::string &s, const sigset_t &set)
+{
+	std::stringstream ss;
+
+	s.clear();
+
+	ss << "{";
+
+	for( int signum = 1; signum < SIGRTMAX; signum++ )
+	{
+		if( sigismember(&set, signum) )
+		{
+			printSignal(s, signum);
+
+			ss << s << ", ";
+		}
+	}
+
+	ss << "}";
+
+	s = ss.str();
+}
+
+std::string SignalParameter::str() const
+{
+	std::string s;
+	printSignal(s, m_val);
+	return s;
+}
+
+#define chk_sa_flag(FLAG) if( flags & FLAG ) { \
+	if ( !first ) ss << "|";\
+	else first = false;\
+	\
+	ss << #FLAG;\
+}
+
+std::string saflags_str(const int flags)
+{
+	std::stringstream ss;
+	bool first = true;
+
+	chk_sa_flag(SA_NOCLDSTOP);
+	chk_sa_flag(SA_NOCLDWAIT);
+	chk_sa_flag(SA_NODEFER);
+	chk_sa_flag(SA_ONSTACK);
+	chk_sa_flag(SA_RESETHAND);
+	chk_sa_flag(SA_RESTART);
+	chk_sa_flag(SA_SIGINFO);
+	chk_sa_flag(SA_RESTORER);
+
+	return ss.str();
+}
+
+std::string SigactionParameter::str() const
+{
+	if( ! m_sigaction )
+		return "NULL";
+
+	std::stringstream ss;
+
+
+	ss << "handler(";
+	
+	if( m_sigaction->handler == SIG_IGN )
+		ss << "SIG_IGN";
+	else if( m_sigaction->handler == SIG_DFL )
+		ss << "SIG_DFL";
+	else 
+		ss << (void*)m_sigaction->handler;
+
+	std::string mask_str;
+	printSignalSet(mask_str, m_sigaction->mask);
+		
+	ss << "), sa_mask(" << mask_str << "), sa_flags("
+		<< saflags_str(m_sigaction->flags) << "), sa_restorer("
+		<< (void*)m_sigaction->restorer << ")";
+
+	return ss.str();
+}
+
+SigactionParameter::~SigactionParameter() { delete m_sigaction; }
+
+void SigactionParameter::process(const TracedProc &proc)
+{
+	// the address of the struct in the userspace address space
+	const long *addr = reinterpret_cast<long*>(m_val);
+
+	if( ! addr )
+		// NULL action specification
+		return;
+
+	if( ! m_sigaction )
+		m_sigaction = new struct kernel_sigaction;
+	
+	readTraceeStruct(proc, addr, *m_sigaction);
+}
+
+SigSetParameter::~SigSetParameter() { delete m_sigset; }
+
+void SigSetParameter::process(const TracedProc &proc)
+{
+	// the address of the struct in the userspace address space
+	const long *addr = reinterpret_cast<long*>(m_val);
+
+	if( ! addr )
+		// NULL sigset specification (e.g. for oldset)
+		return ;
+
+	if( ! m_sigset )
+		m_sigset = new sigset_t;
+
+	readTraceeStruct(proc, addr, *m_sigset);
+}
+
+std::string SigSetParameter::str() const
+{
+	std::string s;
+	printSignalSet(s, *m_sigset);
+
+	return s;
 }
 
 } // end ns

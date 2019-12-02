@@ -9,6 +9,7 @@
 // tuxtrace
 #include <tuxtrace/include/SystemCall.hxx>
 #include <tuxtrace/include/SystemCallParameter.hxx>
+#include <tuxtrace/include/KernelStructs.hxx>
 
 namespace tuxtrace
 {
@@ -50,6 +51,11 @@ protected:
 	bool m_at_semantics;
 };
 
+/**
+ * \brief
+ * 	Generic "some pointer" parameter that just prints the address the
+ * 	pointer points to
+ **/
 class PointerParameter :
 	public SystemCallParameter
 {
@@ -244,6 +250,10 @@ protected:
 	std::list<std::string> m_entries;
 };
 
+/**
+ * \brief
+ * 	The operation to performed on a signal set
+ **/
 class SigSetOperation :	
 	public SystemCallParameter
 {
@@ -255,6 +265,11 @@ public:
 	std::string str() const override;
 };
 
+/**
+ * \brief
+ * 	The struct timespec used for various timing and timeout operations
+ * 	in system calls
+ **/
 class TimespecParameter :
 	public SystemCallParameter
 {
@@ -277,6 +292,11 @@ protected:
 	struct timespec *m_timespec;
 };
 
+/**
+ * \brief
+ * 	The futex operation to be performed in the context of a futex system
+ * 	call
+ **/
 class FutexOperation :
 	public SystemCallParameter
 {
@@ -286,6 +306,74 @@ public:
 	{}
 
 	std::string str() const override;
+};
+
+/**
+ * \brief
+ * 	A signal number specification
+ **/
+class SignalParameter :
+	public SystemCallParameter
+{
+public:
+	SignalParameter() :
+		SystemCallParameter("signal_nr")
+	{}
+
+	std::string str() const override;
+};
+
+/**
+ * \brief
+ * 	The struct sigaction used in various signal related system calls
+ **/
+class SigactionParameter :
+	public SystemCallParameter
+{
+public:
+	SigactionParameter(const char *name = "sigaction") :
+		SystemCallParameter(name),
+		m_sigaction(nullptr)
+	{}
+
+	~SigactionParameter() override;
+
+	std::string str() const override;
+
+protected:
+
+	void process(const TracedProc &proc) override;
+
+protected:
+
+	struct kernel_sigaction *m_sigaction;
+};
+
+/**
+ * \brief
+ * 	A set of POSIX signals for setting or masking in the context of
+ * 	various system calls
+ **/
+class SigSetParameter :
+	public SystemCallParameter
+{
+public:
+	SigSetParameter(const char *name = "signal_set") :
+		SystemCallParameter(name),
+		m_sigset(nullptr)
+	{}
+
+	~SigSetParameter() override;
+
+	std::string str() const override;
+
+protected:
+
+	void process(const TracedProc &proc) override;
+
+protected:
+
+	sigset_t *m_sigset;
 };
 
 } // end ns

@@ -186,13 +186,22 @@ SystemCall* SystemCallDB::createSysCall(
 			SIZE_MAX,
 			0 // number of parameter that is the to-be-closed fd
 		);
+	case SYS_rt_sigaction:
+		return new Call(nr, "rt_sigaction",
+			new ErrnoResult(),
+			{
+				new SignalParameter(),
+				new SigactionParameter(),
+				new SigactionParameter("old_action")
+			}
+		);
 	case SYS_rt_sigprocmask:
 		return new Call(nr, "rt_sigprocmask",
 			new ErrnoResult(),
 			{
 				new SigSetOperation(),
-				new PointerParameter("set"),
-				new PointerParameter("oldset"),
+				new SigSetParameter("new_mask"),
+				new SigSetParameter("old_mask"),
 				new Par("sigset_t size")
 			}
 		);
@@ -268,6 +277,8 @@ SystemCall* SystemCallDB::createSysCall(
 			// TODO: requires context-sensitive interpr. of the
 			// non-error returns (the FutexOperation is the
 			// necessary context)
+			// TODO: allows for a number of additional operations
+			// that aren't well documented
 			new ErrnoResult(-1, "processes woken up"),
 			{
 				new PointerParameter("futex_int"),
