@@ -117,7 +117,7 @@ void TracedProc::trace()
 					getRegisters(rs);
 					sc = &scdb.get(rs.syscall());
 					sc->setEntryRegs(*this, rs);
-					std::cout << "syscall enter: " << *sc << std::endl;
+					//std::cout << "syscall enter: " << *sc << std::endl;
 
 				}
 				else
@@ -125,7 +125,7 @@ void TracedProc::trace()
 					m_state = TraceState::SYSCALL_EXIT;
 					getRegisters(rs);
 					sc->setExitRegs(*this, rs);
-					std::cout << "syscall exit:" << *sc << std::endl;
+					std::cout << "syscall:" << *sc << std::endl;
 				}
 			}
 			else

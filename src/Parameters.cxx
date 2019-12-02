@@ -11,6 +11,37 @@
 namespace tuxtrace
 {
 
+template <typename VECTOR>
+void readTraceeData(
+	const TracedProc &proc,
+	const long *addr,
+	VECTOR &out)
+{
+	long word;
+	const auto VALUE_SIZE = sizeof(typename VECTOR::value_type);
+	typedef typename VECTOR::value_type *ptr_type;
+	ptr_type unit = reinterpret_cast<ptr_type>(&word);
+	out.clear();
+
+	while( true )
+	{
+		word = proc.getData(addr);
+
+		for( size_t cur = 0; cur < sizeof(word) / VALUE_SIZE; cur++ )
+		{
+			if( unit[cur] == 0 )
+				// termination found
+				return;
+
+			out.push_back( unit[cur] );
+		}
+
+		// get the next word
+		addr++;
+	}
+
+}
+
 std::string ErrnoParameter::str() const
 {
 	return ApiError::msg(((int)m_val) * -1);
@@ -26,31 +57,51 @@ std::string FileDescriptorParameter::str() const
 	return std::string("Failed: ") + ApiError::msg(fd * -1);
 }
 
+void readTraceeString(
+	const TracedProc &proc,
+	const long *addr,
+	std::string &out)
+{
+	return readTraceeData(proc, addr, out);
+}
+
 void StringParameter::process(const TracedProc &proc)
 {
 	// the address of the string in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
-	long word;
-	char *bit = reinterpret_cast<char*>(&word);;
-	
-	m_str.clear();
+	readTraceeString(proc, addr, m_str);
+}
 
-	while( true )
+void StringArrayParameter::process(const TracedProc &proc)
+{
+	const long *array_start = reinterpret_cast<long*>(m_val);
+	std::vector<long*> string_addrs;
+
+	// first read in all start adresses of the c-strings for the string
+	// array
+	readTraceeData(proc, array_start, string_addrs);
+
+	for( const auto &addr: string_addrs )
 	{
-		word = proc.getData(addr);
-
-		for( size_t byte = 0; byte < sizeof(word); byte++ )
-		{
-			if( bit[byte] == 0 )
-				// string termination found
-				return;
-
-			m_str += bit[byte];
-		}
-
-		// get the next word
-		addr++;
+		m_strs.push_back( std::string() );
+		readTraceeString(proc, addr, m_strs.back() );
 	}
+}
+
+std::string StringArrayParameter::str() const
+{
+	std::string ret;
+
+	for( const auto &str: m_strs )
+	{
+		ret += str;
+		ret += " ";
+	}
+
+	if( ! ret.empty() )
+		ret.erase( ret.end() - 1 );
+
+	return ret;
 }
 
 } // end ns

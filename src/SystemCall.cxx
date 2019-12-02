@@ -40,7 +40,6 @@ SystemCall* SystemCallDB::createSysCall(
 	switch( nr )
 	{
 	case SYS_write:
-		//return new SystemCall<ssize_t, int, void*, size_t>(nr, "write");
 		return new Call(nr, "write",
 			new Par("bytes written"),
 			{
@@ -50,7 +49,6 @@ SystemCall* SystemCallDB::createSysCall(
 			}
 		);
 	case SYS_open:
-		//return new SystemCall<int, /*char**/ void*, int, mode_t>(nr, "open");
 		return new Call(nr, "open",
 			new FileDescriptorParameter(),
 			{
@@ -60,11 +58,19 @@ SystemCall* SystemCallDB::createSysCall(
 			}
 		);
 	case SYS_close:
-		//return new SystemCall<int, int>(nr, "close");
 		return new Call(nr, "close",
 			new Par("errno"),
 			{
 				new FileDescriptorParameter()
+			}
+		);
+	case SYS_execve:
+		return new Call(nr, "execve",
+			new Par("errno"),
+			{
+				new StringParameter("filename"),
+				new StringArrayParameter("argv"),
+				new StringArrayParameter("envp")
 			}
 		);
 	default:
