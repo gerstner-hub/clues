@@ -10,6 +10,7 @@
 
 // tuxtrace
 #include <tuxtrace/include/Signal.hxx>
+#include <tuxtrace/include/ptrace.hxx>
 
 namespace tuxtrace
 {
@@ -52,6 +53,21 @@ public: // functions
 	bool syscallTrace() const
 	{
 		return stopped() && WSTOPSIG(m_status) == (SIGTRAP | 0x80);
+	}
+
+	/**
+	 * \brief
+	 * 	Checks whether the given event occured
+	 * \details
+	 * 	These events only occur if the corresponding TraceOpts have
+	 * 	been set on the tracee
+	 **/
+	bool checkEvent(const TraceEvent &event)
+	{
+		if( ! stopped() )
+			return false;
+
+		return (m_status >> 8) == (SIGTRAP | ((int)event << 8));
 	}
 
 	int* raw() { return &m_status; }

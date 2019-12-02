@@ -11,6 +11,7 @@ srcs = [
 	"WaitRes.cxx",
 	"Signal.cxx",
 	"SystemCall.cxx",
+	"SystemCallDB.cxx",
 	"Parameters.cxx"
 ]
 

@@ -13,46 +13,12 @@
 #include <tuxtrace/include/TraceState.hxx>
 #include <tuxtrace/include/SubProc.hxx>
 #include <tuxtrace/include/Signal.hxx>
+#include <tuxtrace/include/ptrace.hxx>
 
 namespace tuxtrace
 {
 
 class RegisterSet;
-
-/**
- * \brief
- * 	Different modes to continue a tracee
- **/
-enum class ContinueMode
-{
-	//! continues the tracee without special side-effects
-	NORMAL = PTRACE_CONT,
-	//! continues, but stops it at the next entry/exit to a system call
-	SYSCALL = PTRACE_SYSCALL,
-	//! continues, but stops after execution of a single instruction
-	SINGLESTEP = PTRACE_SINGLESTEP
-};
-
-enum class TraceOpts
-{
-	//! when the tracer exits all tracees will be sent SIGKILL
-	//EXITKILL = PTRACE_O_EXITKILL,
-	//! stop on clone(2) and trace the newly cloned process
-	TRACECLONE = PTRACE_O_TRACECLONE,
-	//! stop on the next execve(2)
-	TRACEEXEC = PTRACE_O_TRACEEXEC,
-	//! stop the tracee at exit
-	TRACEEXIT = PTRACE_O_TRACEEXIT,
-	//! stop at the next fork(2) and start trace on the newly forked proc.
-	TRACEFORK = PTRACE_O_TRACEFORK,
-	//! stop at the next vfork(2) and start trace on the newly forked proc
-	TRACEVFORK = PTRACE_O_TRACEVFORK,
-	//! stop tracee at completion of the next vfork(2)
-	TRACEVFORKDONE = PTRACE_O_TRACEVFORKDONE,
-	//! on system call traps the bit 7 in sig number (SIGTRAP|0x80)
-	TRACESYSGOOD = PTRACE_O_TRACESYSGOOD
-};
-
 class SystemCall;
 
 /**

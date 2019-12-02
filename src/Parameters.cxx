@@ -79,6 +79,11 @@ protected:
 	const size_t VALUE_SIZE;
 };
 
+/**
+ * \brief
+ * 	Reads in an array of data items into the STL-vector like parameter \c
+ * 	out
+ **/
 template <typename VECTOR>
 void readTraceeVector(
 	const TracedProc &proc,
@@ -119,6 +124,10 @@ protected:
 	size_t m_left;
 };
 
+/**
+ * \brief
+ * 	Reads in a complete data structure STRUCT from the tracee
+ **/
 template <typename STRUCT>
 void readTraceeStruct(
 	const TracedProc &proc,
@@ -129,9 +138,48 @@ void readTraceeStruct(
 	readTraceeData(proc, addr, eater);
 }
 
+class BlobEater
+{
+public:
+	BlobEater(const size_t bytes, char *buffer) :
+		m_left(bytes),
+		m_buffer(buffer)
+	{}
+
+	bool operator()(long word)
+	{
+		const size_t to_copy = std::min( sizeof(word), m_left );
+
+		::memcpy( m_buffer, &word, to_copy );
+
+		m_buffer += to_copy;
+		m_left -= to_copy;
+
+		return m_left != 0;
+	}
+	
+protected:
+
+	size_t m_left;
+	char *m_buffer;
+};
+
+void readTraceeBlob(
+	const TracedProc &proc,
+	const long *addr,
+	char *buffer,
+	const size_t bytes)
+{
+	BlobEater eater(bytes, buffer);
+	readTraceeData(proc, addr, eater);
+}
+
 std::string ErrnoResult::str() const
 {
-	return ApiError::msg(((int)m_val) * -1);
+	if( (int)m_val <= 0 )
+		return ApiError::msg(((int)m_val) * -1);
+	else
+		return "Result Value = " + std::to_string((int)m_val);
 }
 
 std::string PointerParameter::str() const
@@ -145,7 +193,9 @@ std::string FileDescriptorParameter::str() const
 {
 	int fd = (int)m_val;
 
-	if( fd >= 0 )
+	if( m_at_semantics && fd == AT_FDCWD )
+		return "AT_FDCWD";
+	else if( fd >= 0 )
 		return std::to_string((int)m_val);
 		
 	return std::string("Failed: ") + ApiError::msg(fd * -1);
@@ -324,6 +374,77 @@ void StatParameter::update(const TracedProc &proc)
 	const long *addr = reinterpret_cast<long*>(m_val);
 
 	readTraceeStruct(proc, addr, *m_stat);
+}
+
+/*
+ * the man page says there's no header for this
+ */
+struct linux_dirent
+{
+	unsigned long d_ino;
+	unsigned long d_off;
+	unsigned short d_reclen;
+	char d_name[];
+	char pad;
+	char d_type;
+};
+
+std::string DirEntries::str() const
+{
+	std::stringstream ss;
+	const auto &respar = m_call->result();
+	const int result = respar.value();
+
+	if( result < 0 )
+		ss << "undefined";
+	else if( result == 0 )
+		ss << "empty";
+	else
+	{
+		ss << m_entries.size() << " entries: ";
+
+		for( const auto &entry: m_entries )
+		{
+			ss << entry << ", ";
+		}
+	}
+
+	return ss.str();
+}
+
+void DirEntries::update(const TracedProc &proc)
+{
+	m_entries.clear();
+
+	// the amount of data store at the DirEntries location depends on the
+	// system call result value
+	const auto &respar = m_call->result();
+	const size_t bytes = respar.value();
+
+	if( bytes <= 0 )
+		return;
+
+	/*
+	 * first copy over all the necessary data from the tracee
+	 */
+	char *buffer = new char[bytes];
+	readTraceeBlob(
+		proc,
+		reinterpret_cast<long*>(this->value()),
+		buffer,
+		bytes);
+
+	struct linux_dirent *cur = nullptr;
+	size_t pos = 0;
+
+	while( pos < bytes )
+	{
+		cur = (struct linux_dirent*)(buffer + pos);
+		m_entries.push_back( cur->d_name );
+		pos += cur->d_reclen;
+	}
+
+	delete[] buffer;
 }
 
 } // end ns

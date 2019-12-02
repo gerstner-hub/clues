@@ -2,11 +2,13 @@
 #define TUXTRACE_PARAMETERS_HXX
 
 // C++
+#include <list>
 
 // Linux
 
 // tuxtrace
 #include <tuxtrace/include/SystemCall.hxx>
+#include <tuxtrace/include/SystemCallParameter.hxx>
 
 namespace tuxtrace
 {
@@ -29,22 +31,25 @@ class FileDescriptorParameter :
 	public SystemCallParameter
 {
 public:
-	FileDescriptorParameter() :
-		SystemCallParameter("file descriptor")
+	FileDescriptorParameter(
+		const FlowType &flow = IN,
+		const bool at_semantics = false) :
+		SystemCallParameter("file descriptor", flow),
+		m_at_semantics(at_semantics)
 	{}
 
 	std::string str() const override;
 
 protected:
-
+	bool m_at_semantics;
 };
 
 class PointerParameter :
 	public SystemCallParameter
 {
 public:
-	PointerParameter(const char *name) :
-		SystemCallParameter(name)
+	PointerParameter(const char *name, const FlowType &flow = IN) :
+		SystemCallParameter(name, flow)
 	{}
 
 	std::string str() const override;
@@ -59,7 +64,7 @@ class ErrnoResult :
 {
 public:
 	ErrnoResult() :
-		SystemCallParameter("errno")
+		SystemCallParameter("errno", OUT)
 	{}
 
 	std::string str() const override;
@@ -73,8 +78,8 @@ class StringParameter :
 	public SystemCallParameter
 {
 public:
-	StringParameter(const char *name = nullptr) :
-		SystemCallParameter( name ? name : "string" )
+	StringParameter(const char *name = nullptr, const FlowType &flow = IN) :
+		SystemCallParameter( name ? name : "string", flow )
 	{}
 
 	std::string str() const override { return m_str; }
@@ -101,7 +106,7 @@ class StringArrayParameter :
 public:
 
 	StringArrayParameter(const char *name = nullptr) :
-		SystemCallParameter( name ? name : "string-array" )
+		SystemCallParameter( name ? name : "string-array", IN )
 	{}
 
 	std::string str() const override;
@@ -124,7 +129,7 @@ class OpenFlagsParameter :
 {
 public:
 	OpenFlagsParameter() :
-		SystemCallParameter("open-flags")
+		SystemCallParameter("open-flags", IN)
 	{}
 
 	std::string str() const override;
@@ -139,7 +144,7 @@ class ArchCodeParameter :
 {
 public:
 	ArchCodeParameter() :
-		SystemCallParameter("subfunction")
+		SystemCallParameter("subfunction", IN)
 	{}
 
 	std::string str() const override;
@@ -155,7 +160,7 @@ class FileModeParameter :
 public:
 
 	FileModeParameter() :
-		SystemCallParameter("file-mode")
+		SystemCallParameter("file-mode", IN)
 	{}
 
 	std::string str() const override;
@@ -170,7 +175,7 @@ class StatParameter :
 {
 public:
 	StatParameter() :
-		SystemCallParameter("struct stat"),
+		SystemCallParameter("struct stat", OUT),
 		m_stat()
 	{}
 
@@ -197,10 +202,34 @@ class MemoryProtectionParameter :
 public:
 
 	MemoryProtectionParameter() :
-		SystemCallParameter("protection")
+		SystemCallParameter("protection", IN)
 	{}
 
 	std::string str() const override;
+};
+
+/**
+ * \brief
+ * 	A list of directory entries
+ **/
+class DirEntries :
+	public SystemCallParameter
+{
+public:
+
+	DirEntries() :
+		SystemCallParameter("struct linux_dirent", OUT)
+	{}
+
+	std::string str() const override;
+
+protected:
+
+	void update(const TracedProc &proc) override;
+
+protected:
+
+	std::list<std::string> m_entries;
 };
 
 } // end ns

@@ -60,13 +60,7 @@ public: // functions
 		const SystemCallNr nr,
 		const char *name,
 		SystemCallParameter *ret,
-		ParameterVector &&pars
-	) :
-		m_nr(nr),
-		m_name(name),
-		m_return(ret),
-		m_pars(pars)
-	{}
+		ParameterVector &&pars);
 
 	~SystemCall();
 
@@ -79,6 +73,11 @@ public: // functions
 	size_t numPars() const { return m_pars.size(); }
 	//! returns the system call table nr. for this system call
 	SystemCallNr callNr() const { return m_nr; }
+
+	//! access to the parameters associated with this system call
+	const ParameterVector& parameters() const { return m_pars; }
+	//! access to the return value parameter associated with this sys. c.
+	const SystemCallParameter& result() const { return *m_return; }
 	
 protected: // functions	
 	
@@ -94,74 +93,7 @@ protected:
 	ParameterVector m_pars;
 };
 
-/**
- * \brief
- * 	Base class for any kind of system call parameter
- **/
-class SystemCallParameter
-{
-public:
-
-	SystemCallParameter(const char *name) :
-		m_name(name)
-	{}
-
-	virtual ~SystemCallParameter() {}
-
-	void set(const TracedProc &proc, const RegisterSet::Word word);
-	//! called upon exit of the system call to update possible out par.
-	virtual void update(const TracedProc &proc) {}
-
-	const char* name() const { return m_name; }
-	RegisterSet::Word value() const { return m_val; }
-	
-	//! returns a string representation of the parameter
-	virtual std::string str() const;
-
-protected:
-
-	//! processes the value stored in m_val acc. to the actual parameter
-	//! type
-	virtual void process(const TracedProc &proc) {};
-
-protected:
-
-	//! a human readable name for the parameter
-	const char *m_name;
-	//! the raw register value for the parameter
-	RegisterSet::Word m_val;
-};
-
-/**
- * \brief
- * 	Stores information about each system call nr. in form of
- * 	SystemCall objects
- * \details
- * 	This is a caching map object. It doesn't fill in all system calls at
- * 	once but fills in each system call as it comes up.
- **/
-class SystemCallDB :
-	protected std::map<SystemCallNr, SystemCall*>
-{
-public:
-
-	~SystemCallDB();
-
-	SystemCall& get(const SystemCallNr nr);
-	
-	const SystemCall& get(const SystemCallNr nr) const
-	{ return const_cast<SystemCallDB&>(*this).get(nr); }
-
-protected:
-
-	SystemCall* createSysCall(const SystemCallNr nr);
-};
-
 } // end ns
-
-std::ostream& operator<<(
-	std::ostream &o,
-	const tuxtrace::SystemCallParameter &par);
 
 #endif // inc. guard
 

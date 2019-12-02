@@ -12,6 +12,7 @@
 #include <tuxtrace/include/WaitRes.hxx>
 #include <tuxtrace/include/RegisterSet.hxx>
 #include <tuxtrace/include/SystemCall.hxx>
+#include <tuxtrace/include/SystemCallDB.hxx>
 
 namespace tuxtrace
 {
