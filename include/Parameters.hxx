@@ -37,34 +37,31 @@ public:
 	 * 	If set then the file descriptor is considered to be part of an
 	 * 	*at() type system call i.e. the special file descriptor
 	 * 	AT_FDCWD can occur.
+	 * \param[in] error_semantics
+	 * 	If set then negative file descriptor values are interpreted as
+	 * 	errno's, other as unset/undefined/invalid file descriptors.
 	 **/
 	FileDescriptorParameter(
 		const FlowType &flow = IN,
-		const bool at_semantics = false) :
+		const bool at_semantics = false,
+		const bool error_semantics = false) :
 		SystemCallParameter("file descriptor", flow),
-		m_at_semantics(at_semantics)
+		m_at_semantics(at_semantics),
+		m_error_semantics(error_semantics)
 	{}
 
 	std::string str() const override;
 
 protected:
+
+	void enteredCall(const TracedProc &proc) override {};
+	
+	void exitedCall(const TracedProc &proc) override {};
+
+
+protected:
 	bool m_at_semantics;
-};
-
-/**
- * \brief
- * 	Generic "some pointer" parameter that just prints the address the
- * 	pointer points to
- **/
-class PointerParameter :
-	public SystemCallParameter
-{
-public:
-	PointerParameter(const char *name, const FlowType &flow = IN) :
-		SystemCallParameter(name, flow)
-	{}
-
-	std::string str() const override;
+	bool m_error_semantics;
 };
 
 /**
@@ -72,13 +69,13 @@ public:
  * 	An errno system call result
  **/
 class ErrnoResult :
-	public SystemCallParameter
+	public ValueOutParameter
 {
 public:
 	ErrnoResult(
 		const int highest_errno = 0,
 		const char *label = "errno") :
-		SystemCallParameter(label, OUT),
+		ValueOutParameter(label),
 		m_highest(highest_errno)
 	{}
 
@@ -86,6 +83,29 @@ public:
 protected:
 
 	int m_highest;
+};
+
+
+/**
+ *
+ * 	TODO: support to get the length of the data area from a
+ * 	context-sensitive sibbling parameter and the print out the
+ * 	binary/ascii data as appropriate
+ **/
+class GenericPointerParameter :
+	public PointerParameter
+{
+public:
+	GenericPointerParameter(const char *name, const FlowType &flow = PointerParameter::IN) :
+		PointerParameter(name, flow)
+	{}
+
+	std::string str() const override;
+
+protected:
+
+	void enteredCall(const TracedProc &proc) override {}
+	void exitedCall(const TracedProc &proc) override {}
 };
 
 /**
@@ -104,7 +124,20 @@ public:
 
 protected:
 
-	void process(const TracedProc &proc) override;
+	void enteredCall(const TracedProc &proc) override
+	{
+		if( ! this->isOut() )
+			fill(proc);
+	}
+	
+	void exitedCall(const TracedProc &proc) override
+	{
+		if( ! this->isIn() )
+			fill(proc);
+	}
+
+
+	void fill(const TracedProc &proc);
 
 protected:
 
@@ -119,19 +152,19 @@ protected:
  * 	call
  **/
 class StringArrayParameter :
-	public SystemCallParameter
+	public PointerInParameter
 {
 public:
 
 	StringArrayParameter(const char *name = nullptr) :
-		SystemCallParameter( name ? name : "string-array", IN )
+		PointerInParameter( name ? name : "string-array")
 	{}
 
 	std::string str() const override;
 
 protected:
 
-	void process(const TracedProc &proc) override;
+	void enteredCall(const TracedProc &proc) override;
 
 protected:
 
@@ -143,11 +176,11 @@ protected:
  * 	The flags passed to e.g. open()
  **/
 class OpenFlagsParameter :
-	public SystemCallParameter
+	public ValueInParameter
 {
 public:
 	OpenFlagsParameter() :
-		SystemCallParameter("open-flags", IN)
+		ValueInParameter("open-flags")
 	{}
 
 	std::string str() const override;
@@ -158,11 +191,11 @@ public:
  * 	The code parameter to the arch_prctl system call
  **/
 class ArchCodeParameter :
-	public SystemCallParameter
+	public ValueInParameter
 {
 public:
 	ArchCodeParameter() :
-		SystemCallParameter("subfunction", IN)
+		ValueInParameter("subfunction")
 	{}
 
 	std::string str() const override;
@@ -173,12 +206,12 @@ public:
  * 	File access mode passed e.g. to open(), chmod()
  **/
 class FileModeParameter :
-	public SystemCallParameter
+	public ValueInParameter
 {
 public:
 
 	FileModeParameter() :
-		SystemCallParameter("file-mode", IN)
+		ValueInParameter("file-mode")
 	{}
 
 	std::string str() const override;
@@ -189,11 +222,11 @@ public:
  * 	The stat structure used in stat() & friends
  **/
 class StatParameter :
-	public SystemCallParameter
+	public PointerOutParameter
 {
 public:
 	StatParameter() :
-		SystemCallParameter("struct stat", OUT),
+		PointerOutParameter("struct stat"),
 		m_stat()
 	{}
 
@@ -202,7 +235,7 @@ public:
 	std::string str() const override;
 
 protected:
-	void update(const TracedProc &proc) override;
+	void exitedCall(const TracedProc &proc) override;
 
 protected:
 	FileModeParameter m_mode;
@@ -215,12 +248,12 @@ protected:
  * 	Memory protection used e.g. in mprotect()
  **/
 class MemoryProtectionParameter :
-	public SystemCallParameter
+	public ValueInParameter
 {
 public:
 
 	MemoryProtectionParameter() :
-		SystemCallParameter("protection", IN)
+		ValueInParameter("protection")
 	{}
 
 	std::string str() const override;
@@ -231,19 +264,19 @@ public:
  * 	A list of directory entries
  **/
 class DirEntries :
-	public SystemCallParameter
+	public PointerOutParameter
 {
 public:
 
 	DirEntries() :
-		SystemCallParameter("struct linux_dirent", OUT)
+		PointerOutParameter("struct linux_dirent")
 	{}
 
 	std::string str() const override;
 
 protected:
 
-	void update(const TracedProc &proc) override;
+	void exitedCall(const TracedProc &proc) override;
 
 protected:
 
@@ -255,11 +288,11 @@ protected:
  * 	The operation to performed on a signal set
  **/
 class SigSetOperation :	
-	public SystemCallParameter
+	public ValueInParameter
 {
 public:
 	SigSetOperation() :
-		SystemCallParameter("operation")
+		ValueInParameter("operation")
 	{}
 
 	std::string str() const override;
@@ -285,7 +318,20 @@ public:
 
 protected:
 
-	void process(const TracedProc &proc) override;
+	void enteredCall(const TracedProc &proc) override
+	{
+		if( this->isIn() )
+			fill(proc);
+	}
+	
+	void exitedCall(const TracedProc &proc) override
+	{
+		if( this->isOut() )
+			fill(proc);
+	}
+
+
+	void fill(const TracedProc &proc);
 
 protected:
 
@@ -298,11 +344,11 @@ protected:
  * 	call
  **/
 class FutexOperation :
-	public SystemCallParameter
+	public ValueInParameter
 {
 public:
 	FutexOperation() :
-		SystemCallParameter("operation")
+		ValueInParameter("operation")
 	{}
 
 	std::string str() const override;
@@ -313,11 +359,11 @@ public:
  * 	A signal number specification
  **/
 class SignalParameter :
-	public SystemCallParameter
+	public ValueInParameter
 {
 public:
 	SignalParameter() :
-		SystemCallParameter("signal_nr")
+		ValueInParameter("signal_nr")
 	{}
 
 	std::string str() const override;
@@ -328,11 +374,11 @@ public:
  * 	The struct sigaction used in various signal related system calls
  **/
 class SigactionParameter :
-	public SystemCallParameter
+	public PointerInParameter
 {
 public:
 	SigactionParameter(const char *name = "sigaction") :
-		SystemCallParameter(name),
+		PointerInParameter(name),
 		m_sigaction(nullptr)
 	{}
 
@@ -342,7 +388,7 @@ public:
 
 protected:
 
-	void process(const TracedProc &proc) override;
+	void enteredCall(const TracedProc &proc) override;
 
 protected:
 
@@ -355,11 +401,11 @@ protected:
  * 	various system calls
  **/
 class SigSetParameter :
-	public SystemCallParameter
+	public PointerInParameter
 {
 public:
 	SigSetParameter(const char *name = "signal_set") :
-		SystemCallParameter(name),
+		PointerInParameter(name),
 		m_sigset(nullptr)
 	{}
 
@@ -369,11 +415,48 @@ public:
 
 protected:
 
-	void process(const TracedProc &proc) override;
+	void enteredCall(const TracedProc &proc) override;
 
 protected:
 
 	sigset_t *m_sigset;
+};
+
+/**
+ * \brief
+ * 	A resource kind specification as used in getrlimit & friends
+ **/
+class ResourceType :
+	public ValueInParameter
+{
+public:
+	ResourceType() :
+		ValueInParameter("resource")
+	{}
+
+	std::string str() const override;
+};
+				
+class ResourceLimit :
+	public PointerOutParameter
+{
+public:
+	ResourceLimit() :
+		PointerOutParameter("limit"),
+		m_limit(nullptr)
+	{}
+
+	~ResourceLimit() override;
+
+	std::string str() const override;
+
+protected:
+
+	void exitedCall(const TracedProc &proc) override;
+
+protected:
+
+	struct rlimit *m_limit;
 };
 
 } // end ns

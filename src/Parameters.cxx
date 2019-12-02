@@ -13,6 +13,7 @@
 #include <linux/futex.h> // futex(2)
 #include <time.h>
 #include <signal.h>
+#include <sys/resource.h> // *rlimit()
 
 // tuxtrace
 #include <tuxtrace/include/Parameters.hxx>
@@ -177,6 +178,29 @@ void readTraceeBlob(
 	readTraceeData(proc, addr, eater);
 }
 
+/**
+ * \brief
+ * 	Wrapper to helper functions to implement typicall exitedCall functions
+ **/
+template <typename T>
+void readStruct(
+	const TracedProc &proc,
+	const long pointer,
+	T *&copy)
+{
+	// the address of the struct in the userspace address space
+	const long *addr = reinterpret_cast<long*>(pointer);
+
+	if( ! addr )
+		// null address specification
+		return;
+	
+	if( ! copy )
+		copy = new T;
+
+	readTraceeStruct(proc, addr, *copy);
+}
+
 std::string ErrnoResult::str() const
 {
 	if( (int)m_val <= m_highest )
@@ -185,7 +209,7 @@ std::string ErrnoResult::str() const
 		return std::to_string((int)m_val);
 }
 
-std::string PointerParameter::str() const
+std::string GenericPointerParameter::str() const
 {
 	std::stringstream ss;
 	ss << (long*)m_val;
@@ -198,7 +222,7 @@ std::string FileDescriptorParameter::str() const
 
 	if( m_at_semantics && fd == AT_FDCWD )
 		return "AT_FDCWD";
-	else if( fd >= 0 )
+	else if( fd >= 0 || !m_error_semantics )
 		return std::to_string((int)m_val);
 		
 	return std::string("Failed: ") + ApiError::msg(fd * -1);
@@ -212,14 +236,14 @@ void readTraceeString(
 	return readTraceeVector(proc, addr, out);
 }
 
-void StringParameter::process(const TracedProc &proc)
+void StringParameter::fill(const TracedProc &proc)
 {
 	// the address of the string in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
 	readTraceeString(proc, addr, m_str);
 }
 
-void StringArrayParameter::process(const TracedProc &proc)
+void StringArrayParameter::enteredCall(const TracedProc &proc)
 {
 	const long *array_start = reinterpret_cast<long*>(m_val);
 	std::vector<long*> string_addrs;
@@ -368,15 +392,9 @@ std::string StatParameter::str() const
 	return ss.str();
 }
 
-void StatParameter::update(const TracedProc &proc)
+void StatParameter::exitedCall(const TracedProc &proc)
 {
-	if( ! m_stat )
-		m_stat = new struct stat;
-	
-	// the address of the struct stat in the userspace address space
-	const long *addr = reinterpret_cast<long*>(m_val);
-
-	readTraceeStruct(proc, addr, *m_stat);
+	readStruct(proc, m_val, m_stat);
 }
 
 /*
@@ -415,11 +433,11 @@ std::string DirEntries::str() const
 	return ss.str();
 }
 
-void DirEntries::update(const TracedProc &proc)
+void DirEntries::exitedCall(const TracedProc &proc)
 {
 	m_entries.clear();
 
-	// the amount of data store at the DirEntries location depends on the
+	// the amount of data stored at the DirEntries location depends on the
 	// system call result value
 	const auto &respar = m_call->result();
 	const size_t bytes = respar.value();
@@ -493,7 +511,7 @@ std::string FutexOperation::str() const
 	}
 }
 
-void TimespecParameter::process(const TracedProc &proc)
+void TimespecParameter::fill(const TracedProc &proc)
 {
 	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
@@ -507,6 +525,7 @@ void TimespecParameter::process(const TracedProc &proc)
 	
 	readTraceeStruct(proc, addr, *m_timespec);
 }
+
 
 TimespecParameter::~TimespecParameter() { delete m_timespec; }
 
@@ -667,36 +686,16 @@ std::string SigactionParameter::str() const
 
 SigactionParameter::~SigactionParameter() { delete m_sigaction; }
 
-void SigactionParameter::process(const TracedProc &proc)
+void SigactionParameter::enteredCall(const TracedProc &proc)
 {
-	// the address of the struct in the userspace address space
-	const long *addr = reinterpret_cast<long*>(m_val);
-
-	if( ! addr )
-		// NULL action specification
-		return;
-
-	if( ! m_sigaction )
-		m_sigaction = new struct kernel_sigaction;
-	
-	readTraceeStruct(proc, addr, *m_sigaction);
+	readStruct(proc, m_val, m_sigaction);
 }
 
 SigSetParameter::~SigSetParameter() { delete m_sigset; }
 
-void SigSetParameter::process(const TracedProc &proc)
+void SigSetParameter::enteredCall(const TracedProc &proc)
 {
-	// the address of the struct in the userspace address space
-	const long *addr = reinterpret_cast<long*>(m_val);
-
-	if( ! addr )
-		// NULL sigset specification (e.g. for oldset)
-		return ;
-
-	if( ! m_sigset )
-		m_sigset = new sigset_t;
-
-	readTraceeStruct(proc, addr, *m_sigset);
+	readStruct(proc, m_val, m_sigset);
 }
 
 std::string SigSetParameter::str() const
@@ -705,6 +704,64 @@ std::string SigSetParameter::str() const
 	printSignalSet(s, *m_sigset);
 
 	return s;
+}
+
+std::string ResourceType::str() const
+{
+	switch(m_val)
+	{
+	ENUM_CASE(RLIMIT_AS);
+	ENUM_CASE(RLIMIT_CORE);
+	ENUM_CASE(RLIMIT_CPU);
+	ENUM_CASE(RLIMIT_DATA);
+	ENUM_CASE(RLIMIT_FSIZE);
+	ENUM_CASE(RLIMIT_LOCKS);
+	ENUM_CASE(RLIMIT_MEMLOCK);
+	ENUM_CASE(RLIMIT_MSGQUEUE);
+	ENUM_CASE(RLIMIT_NICE);
+	ENUM_CASE(RLIMIT_NOFILE);
+	ENUM_CASE(RLIMIT_NPROC);
+	ENUM_CASE(RLIMIT_RSS);
+	ENUM_CASE(RLIMIT_RTPRIO);
+	ENUM_CASE(RLIMIT_RTTIME);
+	ENUM_CASE(RLIMIT_SIGPENDING);
+	ENUM_CASE(RLIMIT_STACK);
+	default:
+		return "unknown";
+	}
+}
+
+std::string printLimit(uint64_t lim)
+{
+	if( lim == RLIM_INFINITY )
+		return "RLIM_INFINITY";
+	else if( lim == RLIM64_INFINITY )
+		return "RLIM64_INFINITY";
+	else if( (lim % 1024) == 0 )
+		return std::to_string(lim / 1024) + " * " + "1024";
+	else
+		return std::to_string(lim);
+}
+
+std::string ResourceLimit::str() const
+{
+	if( ! m_limit )
+		return "NULL";
+
+	std::stringstream ss;
+
+	ss
+		<< "rlim_cur(" << printLimit(m_limit->rlim_cur) << "), rlim_max("
+		<< printLimit(m_limit->rlim_max) << ")";
+	
+	return ss.str();
+}
+
+ResourceLimit::~ResourceLimit() { delete m_limit; }
+
+void ResourceLimit::exitedCall(const TracedProc &proc)
+{
+	readStruct(proc, m_val, m_limit);
 }
 
 } // end ns

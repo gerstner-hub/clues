@@ -41,34 +41,33 @@ SystemCall& SystemCallDB::get(const SystemCallNr nr)
 SystemCall* SystemCallDB::createSysCall(
 	const SystemCallNr nr)
 {
-	typedef SystemCallParameter Par;
 	typedef SystemCall Call;
 
 	switch( nr )
 	{
 	case SYS_write:
 		return new Call(nr, "write",
-			new Par("bytes written"),
+			new ValueOutParameter("bytes written"),
 			{
 				new FileDescriptorParameter(),
-				new PointerParameter("source buffer"),
-				new Par("buffer length")
+				new GenericPointerParameter("source buffer"),
+				new ValueInParameter("buffer length")
 			}
 		);
 	case SYS_read:
 		return new Call(nr, "read",
-			new Par("bytes read"),
+			new ValueOutParameter("bytes read"),
 			{
 				new FileDescriptorParameter(),
-				new PointerParameter("target buffer", Par::OUT),
-				new Par("buffer length")
+				new GenericPointerParameter("target buffer", GenericPointerParameter::OUT),
+				new ValueInParameter("buffer length")
 			}
 		);
 	case SYS_brk:
 		return new Call(nr, "brk",
-			new PointerParameter("actual data segment end"),
+			new GenericPointerParameter("actual data segment end"),
 			{
-				new PointerParameter("requested data segment end")
+				new GenericPointerParameter("requested data segment end")
 			}
 		);
 	case SYS_nanosleep:
@@ -76,14 +75,14 @@ SystemCall* SystemCallDB::createSysCall(
 			new ErrnoResult(),
 			{
 				new TimespecParameter("requested"),
-				new TimespecParameter("remaining", Par::OUT)
+				new TimespecParameter("remaining", TimespecParameter::OUT)
 			}
 		);
 	case SYS_alarm:
 		return new Call(nr, "alarm",
-			new Par("prev_remaining_seconds"),
+			new ValueOutParameter("prev_remaining_seconds"),
 			{
-				new Par("seconds")
+				new ValueInParameter("seconds")
 			}
 		);
 	case SYS_access:
@@ -91,7 +90,7 @@ SystemCall* SystemCallDB::createSysCall(
 			new ErrnoResult(),
 			{
 				new StringParameter("filename"),
-				new Par("mode")
+				new ValueInParameter("mode")
 			}
 		);
 	case SYS_fcntl:
@@ -99,7 +98,7 @@ SystemCall* SystemCallDB::createSysCall(
 			new ErrnoResult(),
 			{
 				new FileDescriptorParameter(),
-				new Par("command")
+				new ValueInParameter("command")
 			}
 		);
 	case SYS_fstat:
@@ -121,30 +120,30 @@ SystemCall* SystemCallDB::createSysCall(
 		);
 	case SYS_mmap:
 		return new Call(nr, "mmap",
-			new PointerParameter("new_memory", Par::OUT),
+			new GenericPointerParameter("new_memory", GenericPointerParameter::OUT),
 			{
-				new PointerParameter("hint"),
-				new Par("length"),
-				new Par("protocol"),
-				new Par("flags"),
+				new GenericPointerParameter("hint"),
+				new ValueInParameter("length"),
+				new ValueInParameter("protocol"),
+				new ValueInParameter("flags"),
 				new FileDescriptorParameter(),
-				new Par("offset")
+				new ValueInParameter("offset")
 			}
 		);
 	case SYS_munmap:
 		return new Call(nr, "munmap",
 			new ErrnoResult(),
 			{
-				new PointerParameter("memory"),
-				new Par("length")
+				new GenericPointerParameter("memory"),
+				new ValueInParameter("length")
 			}
 		);
 	case SYS_mprotect:
 		return new Call(nr, "mprotect",
 			new ErrnoResult(),
 			{
-				new PointerParameter("addr"),
-				new Par("length"),
+				new GenericPointerParameter("addr"),
+				new ValueInParameter("length"),
 				new MemoryProtectionParameter()
 			}
 		);
@@ -153,12 +152,15 @@ SystemCall* SystemCallDB::createSysCall(
 			new ErrnoResult(),
 			{
 				new ArchCodeParameter(),
-				new PointerParameter("addr")
+				new GenericPointerParameter("addr")
 			}
 		);
 	case SYS_open:
 		return new Call(nr, "open",
-			new FileDescriptorParameter(Par::OUT),
+			new FileDescriptorParameter(
+				FileDescriptorParameter::OUT,
+				false /* at semantics */,
+				true /* error semantics */),
 			{
 				new StringParameter("filename"),
 				new OpenFlagsParameter(),
@@ -168,10 +170,14 @@ SystemCall* SystemCallDB::createSysCall(
 		);
 	case SYS_openat:
 		return new Call(nr, "openat",
-			new FileDescriptorParameter(Par::OUT),
+			new FileDescriptorParameter(
+				FileDescriptorParameter::OUT,
+				false /* at semantics */,
+				true /* error semantics */),
 			{
 				new FileDescriptorParameter(
-					Par::IN, true /* at semantics */),
+					FileDescriptorParameter::IN,
+					true /* at semantics */),
 				new StringParameter("filename"),
 				new OpenFlagsParameter(),
 				new FileModeParameter()
@@ -202,7 +208,7 @@ SystemCall* SystemCallDB::createSysCall(
 				new SigSetOperation(),
 				new SigSetParameter("new_mask"),
 				new SigSetParameter("old_mask"),
-				new Par("sigset_t size")
+				new ValueInParameter("sigset_t size")
 			}
 		);
 	case SYS_fork:
@@ -224,7 +230,7 @@ SystemCall* SystemCallDB::createSysCall(
 			new ErrnoResult(),
 			{
 				new FileDescriptorParameter(),
-				new PointerParameter("request")
+				new GenericPointerParameter("request")
 			}
 		);
 	case SYS_getdents:
@@ -233,7 +239,7 @@ SystemCall* SystemCallDB::createSysCall(
 			{
 				new FileDescriptorParameter(),
 				new DirEntries(),
-				new Par("dirent_size")
+				new ValueInParameter("dirent_size")
 			}
 		);
 	case SYS_getuid:
@@ -242,34 +248,34 @@ SystemCall* SystemCallDB::createSysCall(
 		return new Call(
 			nr,
 			nr == SYS_getuid ? "getuid" : "geteuid",
-			new Par("id"),
+			new ValueOutParameter("id"),
 			{}
 		);
 	}
 	case SYS_set_tid_address:
 		return new Call(nr, "set_tid_address",
-			new SystemCallParameter("thread id"),
+			new ValueOutParameter("thread id"),
 			{
-				new PointerParameter("thread ID location")
+				new GenericPointerParameter("thread ID location")
 			}
 		);
 	case SYS_get_robust_list:
 		return new Call(nr, "get_robust_list",
 			new ErrnoResult(),
 			{
-				new SystemCallParameter("thread id"),
-				new PointerParameter("robust_list_head"),
+				new ValueInParameter("thread id"),
+				new GenericPointerParameter("robust_list_head"),
 				// TODO: new parameter type that also prints
 				// the size value at the pointed to address
-				new PointerParameter("len_ptr")
+				new GenericPointerParameter("len_ptr")
 			}
 		);
 	case SYS_set_robust_list:
 		return new Call(nr, "set_robust_list",
 			new ErrnoResult(),
 			{
-				new PointerParameter("robust_list_head"),
-				new SystemCallParameter("len")
+				new GenericPointerParameter("robust_list_head"),
+				new ValueInParameter("len")
 			}
 		);
 	case SYS_futex:
@@ -281,17 +287,25 @@ SystemCall* SystemCallDB::createSysCall(
 			// that aren't well documented
 			new ErrnoResult(-1, "processes woken up"),
 			{
-				new PointerParameter("futex_int"),
+				new GenericPointerParameter("futex_int"),
 				new FutexOperation(),
-				new SystemCallParameter("val"),
+				new ValueInParameter("val"),
 				new TimespecParameter("timeout"),
-				new PointerParameter("requeue_futex"),
-				new SystemCallParameter("requeue_check_val")
+				new GenericPointerParameter("requeue_futex"),
+				new ValueInParameter("requeue_check_val")
+			}
+		);
+	case SYS_getrlimit:
+		return new Call(nr, "getrlimit",
+			new ErrnoResult(),
+			{
+				new ResourceType(),
+				new ResourceLimit()
 			}
 		);
 	default:
 		return new Call(nr, "unknown",
-			new Par("result"),
+			new ValueOutParameter("result"),
 			{} );
 	}
 }

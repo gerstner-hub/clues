@@ -56,7 +56,7 @@ void SystemCall::setExitRegs(const TracedProc &proc, const RegisterSet &r)
 	for( auto &par: m_pars )
 	{
 		if( par->needsUpdate() )
-			par->update(proc);
+			par->exitedCall(proc);
 	}
 }
 
@@ -109,7 +109,7 @@ void SystemCallParameter::set(
 	const RegisterSet::Word word)
 {
 	m_val = word;
-	process(proc);
+	enteredCall(proc);
 }
 
 std::string SystemCallParameter::str() const
@@ -117,7 +117,7 @@ std::string SystemCallParameter::str() const
 	// by default simply return the register value as a string
 	return std::to_string(m_val);
 }
-	
+
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const tuxtrace::SystemCall &sc)
