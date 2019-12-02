@@ -130,54 +130,6 @@ protected:
 	RegisterSet::Word m_val;
 };
 
-#if 0
-template <typename RET, typename... PARS>
-class SystemCall :
-	public SystemCallBase
-{
-public:
-
-	SystemCall(
-		const SystemCallNr nr,
-		const char *name) :
-		SystemCallBase(nr, name, sizeof...(PARS)),
-		m_pars()
-	{
-	}
-
-	void printPars(std::ostream &o) const override;
-
-	template <size_t NUM=0, typename CALL, typename... PACK>
-	typename std::enable_if<NUM == sizeof...(PACK), void>::type
-		itTuple(std::ostream &o, const std::tuple<PACK...> &p, CALL &c) const
-	{
-	}
-
-	template <size_t NUM=0, typename CALL, typename... PACK>
-	typename std::enable_if<NUM < sizeof...(PACK), void>::type
-	itTuple(std::ostream &o, const std::tuple<PACK...> &tuple, CALL &call) const
-	{
-		call(o, std::get<NUM>(tuple));
-
-		itTuple<NUM+1, CALL, PACK...>( o, tuple, call );
-	}
-
-	const RET& returnVal() const { return m_return; }
-
-	template<typename T>
-	void operator()(std::ostream &o, const T &t) const;
-
-protected:
-
-protected:
-
-	//! the return value type of the system call
-	RET m_return;
-	//! the unknown amount of templated system call parameters
-	std::tuple<PARS...> m_pars;
-};
-#endif
-
 /**
  * \brief
  * 	Stores information about each system call nr. in form of

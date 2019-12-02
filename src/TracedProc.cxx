@@ -16,7 +16,8 @@
 namespace tuxtrace
 {
 
-TracedProc::TracedProc() :
+TracedProc::TracedProc(TraceEventConsumer &consumer) :
+	m_consumer(consumer),
 	m_state(TraceState::UNKNOWN),
 	m_tracee(SubProc::INVALID_PID)
 {}
@@ -117,15 +118,14 @@ void TracedProc::trace()
 					getRegisters(rs);
 					sc = &scdb.get(rs.syscall());
 					sc->setEntryRegs(*this, rs);
-					//std::cout << "syscall enter: " << *sc << std::endl;
-
+					m_consumer.syscallEntry(*sc);
 				}
 				else
 				{
 					m_state = TraceState::SYSCALL_EXIT;
 					getRegisters(rs);
 					sc->setExitRegs(*this, rs);
-					std::cout << *sc << std::endl;
+					m_consumer.syscallExit(*sc);
 				}
 			}
 			else
@@ -175,8 +175,8 @@ long TracedProc::getData(const long *addr) const
 	return ret;
 }
 
-TracedSeizedProc::TracedSeizedProc() :
-	TracedProc()
+TracedSeizedProc::TracedSeizedProc(TraceEventConsumer &consumer) :
+	TracedProc(consumer)
 {
 }
 
@@ -233,7 +233,8 @@ TracedSeizedProc::~TracedSeizedProc()
 }
 
 
-TracedSubProc::TracedSubProc() :
+TracedSubProc::TracedSubProc(TraceEventConsumer &consumer) :
+	TracedProc(consumer),
 	m_exit_code(EXIT_SUCCESS)
 {
 }

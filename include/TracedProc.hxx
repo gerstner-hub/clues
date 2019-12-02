@@ -53,6 +53,22 @@ enum class TraceOpts
 	TRACESYSGOOD = PTRACE_O_TRACESYSGOOD
 };
 
+class SystemCall;
+
+/**
+ * \brief
+ * 	pure virtual interface for consumers of tracing events
+ **/
+class TraceEventConsumer
+{
+	friend class TracedProc;
+protected: // functions
+
+	virtual void syscallEntry(const SystemCall &sc) = 0;
+
+	virtual void syscallExit(const SystemCall &sc) = 0;
+};
+
 /**
  * \brief
  * 	Base class for traced processes
@@ -94,7 +110,7 @@ public:
 
 protected:
 
-	TracedProc();
+	TracedProc(TraceEventConsumer &consumer);
 
 	/**
 	 * \brief
@@ -157,6 +173,9 @@ protected:
 	void getRegisters(RegisterSet &rs);
 
 protected:
+	//! callback interface receiving our information
+	TraceEventConsumer &m_consumer;
+	//! the current state the tracee is in
 	TraceState m_state;
 	//! PID of the tracee we're dealing with
 	pid_t m_tracee;
@@ -177,7 +196,7 @@ public: // functions
 	 * 	Create a traced process object by attaching to the given
 	 * 	process ID
 	 **/
-	TracedSeizedProc();
+	TracedSeizedProc(TraceEventConsumer &consumer);
 
 	~TracedSeizedProc() override;
 
@@ -209,7 +228,7 @@ public: // functions
 	 * 	Create a traced process by creating a new process from \c
 	 * 	prog_args
 	 **/
-	TracedSubProc();
+	TracedSubProc(TraceEventConsumer &consumer);
 
 	~TracedSubProc() override;
 

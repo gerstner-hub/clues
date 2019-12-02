@@ -74,6 +74,14 @@ SystemCall* SystemCallDB::createSysCall(
 				new PointerParameter("requested data segment end")
 			}
 		);
+	case SYS_nanosleep:
+		return new Call(nr, "nanosleep",
+			new ErrnoResult(),
+			{
+				new PointerParameter("requested"),
+				new PointerParameter("remaining")
+			}
+		);
 	case SYS_alarm:
 		return new Call(nr, "alarm",
 			new Par("prev_remaining_seconds"),

@@ -9,11 +9,13 @@
 #include <tuxtrace/include/TracedProc.hxx>
 #include <tuxtrace/include/SubProc.hxx>
 #include <tuxtrace/include/TuxTraceError.hxx>
+#include <tuxtrace/include/SystemCall.hxx>
 
 namespace tuxtrace
 {
 
-class TermTracer
+class TermTracer :
+	public TraceEventConsumer
 {
 public: // functions
 
@@ -22,6 +24,13 @@ public: // functions
 	~TermTracer();
 
 	int run(const int argc, const char **argv);
+
+protected: // event consumer interface
+
+	
+	void syscallEntry(const SystemCall &sc) override;
+
+	void syscallExit(const SystemCall &sc) override;
 
 protected: // data
 
@@ -49,13 +58,25 @@ TermTracer::TermTracer() :
 		"c", "create",
 		"create a new process using arguments specified after '--'",
 		false),
-	m_proc(nullptr)
+	m_proc(nullptr),
+	m_seized_proc(*this),
+	m_sub_proc(*this)
 {
 }
 
 TermTracer::~TermTracer()
 {
 	m_proc = nullptr;
+}
+
+void TermTracer::syscallEntry(const SystemCall &sc)
+{
+
+}
+
+void TermTracer::syscallExit(const SystemCall &sc)
+{
+	std::cout << sc << std::endl;
 }
 
 int TermTracer::run(const int argc, const char **argv)
