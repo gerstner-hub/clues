@@ -1,0 +1,23 @@
+Import('env')
+
+srcs = [
+	"TracedProc.cxx",
+	"TracedThread.cxx",
+	"SubProc.cxx",
+	"TermTracer.cxx",
+	"ApiError.cxx",
+	"TuxTraceError.cxx",
+	"types.cxx",
+	"WaitRes.cxx",
+	"Signal.cxx",
+	"SystemCall.cxx",
+	"Parameters.cxx"
+]
+
+#srcs = [ "src/" + src for src in srcs ]
+
+tuxtracer = env.Program(
+	"tuxtracer",
+	srcs,
+	CPPPATH = "../.."
+)
