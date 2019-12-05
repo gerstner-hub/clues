@@ -43,7 +43,7 @@ protected: // data
 	TracedSeizedProc m_seized_proc;
 	TracedSubProc m_sub_proc;
 	//! generic handling of either TracedSeizedProc or TracedSubProc
-	TracedProc *m_proc;
+	TracedProc *m_proc = nullptr;
 };
 
 TermTracer::TermTracer() :
@@ -58,7 +58,6 @@ TermTracer::TermTracer() :
 		"c", "create",
 		"create a new process using arguments specified after '--'",
 		false),
-	m_proc(nullptr),
 	m_seized_proc(*this),
 	m_sub_proc(*this)
 {

@@ -12,7 +12,7 @@
 namespace tuxtrace
 {
 
-static bool isx86_64()
+inline bool isx86_64()
 {
 #ifdef __x86_64__
 	return true;
@@ -21,7 +21,7 @@ static bool isx86_64()
 #endif
 }
 
-static bool isx86()
+inline bool isx86()
 {
 	return !isx86_64();
 }

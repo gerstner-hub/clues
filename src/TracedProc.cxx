@@ -200,7 +200,7 @@ void TracedSeizedProc::attach()
 		if( wr.exited() )
 			return;
 	}
-	while( ! wr.stopped() && ! wr.stopSignal().raw() == SIGTRAP );
+	while( ! wr.stopped() && ! (wr.stopSignal().raw() == SIGTRAP) );
 
 	setOptions( (int)TraceOpts::TRACESYSGOOD );
 	m_state = TraceState::ATTACHED;
