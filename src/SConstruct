@@ -1,10 +1,9 @@
 Import('env')
 
-srcs = [
+lib_srcs = [
 	"TracedProc.cxx",
 	"TracedThread.cxx",
 	"SubProc.cxx",
-	"TermTracer.cxx",
 	"ApiError.cxx",
 	"TuxTraceError.cxx",
 	"types.cxx",
@@ -15,10 +14,18 @@ srcs = [
 	"Parameters.cxx"
 ]
 
-#srcs = [ "src/" + src for src in srcs ]
+tracer_srcs = [
+	"TermTracer.cxx",
+]
+
+tracelib = env.SharedLibrary(
+	"clues",
+	lib_srcs
+)
 
 tuxtracer = env.Program(
 	"tuxtracer",
-	srcs,
-	CPPPATH = "../.."
+	tracer_srcs + [tracelib]
 )
+
+env['libs']['clues'] = tracelib

@@ -1,0 +1,16 @@
+Import('env')
+
+tracelib = env['libs']['clues']
+
+tests = (
+	"exceptions",
+)
+
+for test in tests:
+
+	test_bin = env.Program(
+		"test_{}".format(test),
+		["{}.cxx".format(test), tracelib]
+	)
+
+	env.Alias("tests", test_bin)
