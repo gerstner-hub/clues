@@ -2,22 +2,23 @@
 #define TUXTRACE_USAGEERROR_HXX
 
 // tuxtrace
-#include <tuxtrace/include/TuxTraceError.hxx>
+#include "tuxtrace/include/TuxTraceError.hxx"
 
 namespace tuxtrace
 {
 
 /**
  * \brief
- * 	Exception type for when C library APIs fail
+ * 	Exception type for logical usage errors within the application
  **/
 class UsageError :
 	public TuxTraceError
 {
 public: // functions
 
-	UsageError(const char *msg) :
-		TuxTraceError("UsageError")
+	explicit UsageError(const char *msg) :
+		TuxTraceError("UsageError"),
+		m_error_msg(msg)
 	{}
 
 	void raise() override { throw *this; }

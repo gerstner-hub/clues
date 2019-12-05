@@ -2,25 +2,37 @@
 #define TUXTRACE_APIERROR_HXX
 
 // tuxtrace
-#include <tuxtrace/include/TuxTraceError.hxx>
+#include "tuxtrace/include/TuxTraceError.hxx"
 
 namespace tuxtrace
 {
 
 /**
  * \brief
- * 	Exception type for when C library APIs fail
+ * 	Specialized exception type used for when system APIs fail
+ * \details
+ * 	This exception type will store a well known errno code as a member and
+ * 	format a human readable error message from it.
  **/
 class ApiError :
 	public TuxTraceError
 {
 public: // functions
 
-	ApiError(const int p_errno = 0);
+	//! stores the current errno code in the exception
+	ApiError();
+
+	//! stores the given errno code in the exception
+	explicit ApiError(const int p_errno);
 
 	void raise() override { throw *this; }
 
-	static std::string msg(int no);
+	/**
+	 * \brief
+	 * 	Returns a human readable error message for the given errno
+	 * 	code
+	 **/
+	static std::string msg(const int no);
 
 protected: // functions
 
@@ -28,7 +40,7 @@ protected: // functions
 
 protected: // data
 
-	int m_errno;
+	int m_errno = 0;
 };
 
 } // end ns
