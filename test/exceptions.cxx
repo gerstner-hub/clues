@@ -10,7 +10,7 @@ int main()
 	errno = ENOENT;
 	try
 	{
-		tt_throw( tuxtrace::ApiError() );
+		clues_throw( tuxtrace::ApiError() );
 	}
 	catch( const tuxtrace::TuxTraceError &tte )
 	{
@@ -19,7 +19,7 @@ int main()
 
 	try
 	{
-		tt_throw( tuxtrace::UsageError("testing is good") );
+		clues_throw( tuxtrace::UsageError("testing is good") );
 	}
 	catch( const tuxtrace::TuxTraceError &tte )
 	{

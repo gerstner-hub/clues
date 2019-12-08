@@ -65,7 +65,7 @@ public: // functions
 	{
 		if( number >= MAX_SYSCALL_PARS )
 		{
-			tt_throw( UsageError("invalid system call parameter nr.") );
+			clues_throw( UsageError("invalid system call parameter nr.") );
 		}
 
 		return m_regs[SYSCALL_PAR_REGISTER[number]];

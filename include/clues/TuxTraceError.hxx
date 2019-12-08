@@ -7,7 +7,7 @@
 
 // throw the given Exception type after added contextual information from the
 // callers location
-#define tt_throw(e) (e.setInfo(__FILE__, __LINE__, __FUNCTION__).raise())
+#define clues_throw(e) (e.setInfo(__FILE__, __LINE__, __FUNCTION__).raise())
 
 namespace tuxtrace
 {
@@ -20,7 +20,7 @@ namespace tuxtrace
  * 	information from where it was thrown. Furthermore it stores a
  * 	dynamically allocated string with runtime information.
  *
- * 	The tt_throw macro allows to transparently throw any type derived from
+ * 	The clues_throw macro allows to transparently throw any type derived from
  * 	this base class, all contextual information filled in.
  *
  * 	Each derived type must implement the raise() function to allow to

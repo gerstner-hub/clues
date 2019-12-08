@@ -46,7 +46,7 @@ void SubProc::run(const StringVector &sv)
 	default: // parent process with child pid
 		return;
 	case -1: // an error occured
-		tt_throw( ApiError() );
+		clues_throw( ApiError() );
 		return;
 	case 0: // the child process
 		// let's do something!
@@ -83,7 +83,7 @@ void SubProc::postFork()
 	{
 		if( ::chdir(m_cwd.c_str()) != 0 )
 		{
-			tt_throw( ApiError() );
+			clues_throw( ApiError() );
 		}
 	}
 
@@ -97,7 +97,7 @@ void SubProc::postFork()
 		// the parent can SEIZE us.
 		if( ::ptrace( PTRACE_TRACEME, INVALID_PID, 0, 0 ) != 0 )
 		{
-			tt_throw( ApiError() );
+			clues_throw( ApiError() );
 		}
 #endif
 
@@ -105,7 +105,7 @@ void SubProc::postFork()
 		// we're a tracee now
 		if( ::raise( SIGSTOP ) )
 		{
-			tt_throw( ApiError() );
+			clues_throw( ApiError() );
 		}
 	}
 }
@@ -114,7 +114,7 @@ void SubProc::exec(CStringVector &v)
 {
 	if( v.empty() )
 	{
-		tt_throw( InternalError("called with empty argument vector") );
+		clues_throw( InternalError("called with empty argument vector") );
 	}
 
 	::execvp(
@@ -122,14 +122,14 @@ void SubProc::exec(CStringVector &v)
 		const_cast<char**>(v.data())
 	);
 
-	tt_throw( ApiError() );
+	clues_throw( ApiError() );
 }
 
 void SubProc::kill(int signal)
 {
 	if( ::kill( m_pid, signal ) )
 	{
-		tt_throw( ApiError() );
+		clues_throw( ApiError() );
 	}
 }
 
@@ -142,7 +142,7 @@ WaitRes SubProc::wait()
 
 	if( ::waitpid(pid, &wr.m_status, 0) == -1 )
 	{
-		tt_throw( ApiError() );
+		clues_throw( ApiError() );
 	}
 
 	return wr;
