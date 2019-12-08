@@ -134,7 +134,7 @@ WaitRes SubProc::wait()
 	pid_t pid = m_pid;
 	m_pid = INVALID_PID;
 
-	if( ::waitpid(m_pid, &wr.m_status, 0) == -1 )
+	if( ::waitpid(pid, &wr.m_status, 0) == -1 )
 	{
 		tt_throw( ApiError() );
 	}
