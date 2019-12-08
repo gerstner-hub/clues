@@ -20,12 +20,12 @@ tracer_srcs = [
 
 tracelib = env.SharedLibrary(
 	"clues",
-	lib_srcs
+	[ "lib/" + src for src in lib_srcs ]
 )
 
 clues = env.Program(
 	"clues",
-	tracer_srcs + [tracelib]
+	[ "termtracer/" + src for src in tracer_srcs ] + [tracelib]
 )
 
 env['libs']['clues'] = tracelib
