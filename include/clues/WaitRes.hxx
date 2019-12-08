@@ -17,22 +17,40 @@ namespace clues
 
 /**
  * \brief
- * 	Result from a wait() call
+ * 	Represents the result from a wait() call
  **/
 class WaitRes
 {
 	friend class SubProc;
+public: // types
+
+	//! the primitive wait result type
+	typedef int Type;
+
 public: // functions
 
-	WaitRes(const int status = 0) :
+	explicit WaitRes(const Type &status = 0) :
 		m_status(status)
 	{}
 
+	//! returns whether the child stopped
 	bool stopped() const { return WIFSTOPPED(m_status) != 0; }
 
+	//! returns whether the child exited
 	bool exited() const { return WIFEXITED(m_status) != 0; }
 
-	int exitStatus() const { return WEXITSTATUS(m_status); }
+	/**
+	 * \brief
+	 *	Returns the exit status of the child
+	 * \details
+	 *	The returned value is only valid in case exited() returns \c
+	 *	true.
+	 **/
+	int exitStatus() const
+	{
+		return exited() ?
+			WEXITSTATUS(m_status) : -1;
+	}
 
 	/**
 	 * \brief
@@ -70,13 +88,13 @@ public: // functions
 		return (m_status >> 8) == (SIGTRAP | ((int)event << 8));
 	}
 
-	int* raw() { return &m_status; }
-	const int* raw() const { return &m_status; }
+	Type* raw() { return &m_status; }
+	const Type* raw() const { return &m_status; }
 
 protected: // data
 
 	//! the raw status
-	int m_status;
+	Type m_status = 0;
 };
 
 } // end ns

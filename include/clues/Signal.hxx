@@ -5,14 +5,12 @@
 #include <iosfwd>
 #include <string>
 
-// Linux
-
 namespace clues
 {
 
 /**
  * \brief
- * 	Represents a POSIX signal
+ * 	Represents a POSIX signal number
  **/
 class Signal
 {
@@ -23,18 +21,22 @@ public: // types
 
 public: // functions
 
+	//! Creates a Signal objects for the given primitive signal number
 	explicit Signal(const Type &sig) : m_sig(sig) {}
 
 	Signal& operator=(const Signal &o) { m_sig = o.m_sig; return *this; }
 
+	//! returns the primitive signal number stored in this object
 	const Type& raw() const { return m_sig; }
 
+	//! returns a human readable label for the currently stored signal
+	//! number
 	std::string name() const;
 
 protected: // data
 
 	//! the raw signal
-	Type m_sig;
+	Type m_sig = 0;
 };
 
 } // end ns
