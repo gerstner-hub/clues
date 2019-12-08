@@ -4,7 +4,7 @@
 // clues
 #include "clues/WaitRes.hxx"
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::WaitRes &res)
+std::ostream& operator<<(std::ostream &o, const clues::WaitRes &res)
 {
 	o << "Stopped: " << res.stopped() << "\n";
 	o << "Exited: " << res.exited() << "\n";

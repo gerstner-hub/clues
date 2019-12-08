@@ -8,7 +8,7 @@
 // clues
 #include "clues/ApiError.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 ApiError::ApiError() :

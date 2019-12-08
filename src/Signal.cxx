@@ -7,7 +7,7 @@
 // Linux
 #include <string.h>
 
-namespace tuxtrace
+namespace clues
 {
 
 std::string Signal::name() const
@@ -17,7 +17,7 @@ std::string Signal::name() const
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::Signal &sig)
+std::ostream& operator<<(std::ostream &o, const clues::Signal &sig)
 {
 	o << sig.name() << " (" << sig.raw() << ")";
 

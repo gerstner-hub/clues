@@ -13,7 +13,7 @@
 #include "clues/InternalError.hxx"
 #include "clues/SubProc.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 const pid_t SubProc::INVALID_PID = -1;
@@ -155,7 +155,7 @@ void SubProc::gone(const WaitRes &r)
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::SubProc &proc)
+std::ostream& operator<<(std::ostream &o, const clues::SubProc &proc)
 {
 	o << "Subprocess PID " << proc.m_pid << "\n";
 	o << "Arguments: " << proc.args() << "\n";

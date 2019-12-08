@@ -4,7 +4,7 @@
 // clues
 #include "clues/SystemCall.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 /**
@@ -202,7 +202,7 @@ protected:
 
 std::ostream& operator<<(
 	std::ostream &o,
-	const tuxtrace::SystemCallParameter &par);
+	const clues::SystemCallParameter &par);
 
 #endif // inc. guard
 

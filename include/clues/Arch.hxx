@@ -9,7 +9,7 @@
  * regarding registers & friends
  */
 
-namespace tuxtrace
+namespace clues
 {
 
 inline bool isx86_64()

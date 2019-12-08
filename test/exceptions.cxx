@@ -10,18 +10,18 @@ int main()
 	errno = ENOENT;
 	try
 	{
-		clues_throw( tuxtrace::ApiError() );
+		clues_throw( clues::ApiError() );
 	}
-	catch( const tuxtrace::TuxTraceError &tte )
+	catch( const clues::TuxTraceError &tte )
 	{
 		std::cerr << "Testing ApiError (ENOENT): " << tte.what() << std::endl;
 	}
 
 	try
 	{
-		clues_throw( tuxtrace::UsageError("testing is good") );
+		clues_throw( clues::UsageError("testing is good") );
 	}
-	catch( const tuxtrace::TuxTraceError &tte )
+	catch( const clues::TuxTraceError &tte )
 	{
 		std::cerr << "Testing UsageError: " << tte.what() << std::endl;
 	}

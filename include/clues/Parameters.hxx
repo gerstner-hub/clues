@@ -11,7 +11,7 @@
 #include "clues/SystemCallParameter.hxx"
 #include "clues/KernelStructs.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 /**

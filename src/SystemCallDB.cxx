@@ -5,7 +5,7 @@
 // Linux
 #include <sys/syscall.h> // system call nr. constants
 
-namespace tuxtrace
+namespace clues
 {
 
 SystemCallDB::~SystemCallDB()

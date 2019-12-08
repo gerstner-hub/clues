@@ -1,10 +1,10 @@
 #ifndef TUXTRACE_APIERROR_HXX
 #define TUXTRACE_APIERROR_HXX
 
-// tuxtrace
+// clues
 #include "clues/TuxTraceError.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 /**

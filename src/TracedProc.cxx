@@ -14,7 +14,7 @@
 #include "clues/SystemCall.hxx"
 #include "clues/SystemCallDB.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 TracedProc::TracedProc(TraceEventConsumer &consumer) :

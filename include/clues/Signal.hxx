@@ -7,7 +7,7 @@
 
 // Linux
 
-namespace tuxtrace
+namespace clues
 {
 
 /**
@@ -39,7 +39,7 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::Signal &sig);
+std::ostream& operator<<(std::ostream &o, const clues::Signal &sig);
 
 #endif // inc. guard
 

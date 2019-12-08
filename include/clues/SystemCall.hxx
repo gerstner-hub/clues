@@ -14,15 +14,15 @@
 #include "clues/RegisterSet.hxx"
 #include "clues/types.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 	class SystemCall;
 	class TracedProc;
 }
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::SystemCall &sc);
+std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc);
 
-namespace tuxtrace
+namespace clues
 {
 
 

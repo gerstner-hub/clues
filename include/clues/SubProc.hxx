@@ -12,14 +12,14 @@
 #include "clues/types.hxx"
 #include "clues/WaitRes.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 	class SubProc;
 }
 
-std::ostream& operator<<(std::ostream&, const tuxtrace::SubProc &);
+std::ostream& operator<<(std::ostream&, const clues::SubProc &);
 
-namespace tuxtrace
+namespace clues
 {
 
 /**
@@ -126,9 +126,9 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::SubProc &proc);
+std::ostream& operator<<(std::ostream &o, const clues::SubProc &proc);
 
-tuxtrace::SubProc& operator<<(tuxtrace::SubProc &proc, const std::string &arg);
+clues::SubProc& operator<<(clues::SubProc &proc, const std::string &arg);
 
 #endif // inc. guard
 

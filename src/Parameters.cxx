@@ -20,7 +20,7 @@
 #include "clues/ApiError.hxx"
 #include "clues/TracedProc.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 /**

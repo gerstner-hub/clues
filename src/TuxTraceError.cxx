@@ -4,7 +4,7 @@
 // clues
 #include "clues/TuxTraceError.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 const char* TuxTraceError::what() const throw()

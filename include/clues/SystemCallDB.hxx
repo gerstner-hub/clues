@@ -4,7 +4,7 @@
 // clues
 #include "clues/SystemCall.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 /**

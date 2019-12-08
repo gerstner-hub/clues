@@ -11,7 +11,7 @@
 #include "clues/TuxTraceError.hxx"
 #include "clues/SystemCall.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 class TermTracer :
@@ -132,9 +132,9 @@ int main(const int argc, const char **argv)
 {
 	try
 	{
-		return tuxtrace::TermTracer().run(argc, argv);
+		return clues::TermTracer().run(argc, argv);
 	}
-	catch( const tuxtrace::TuxTraceError &tte )
+	catch( const clues::TuxTraceError &tte )
 	{
 		std::cerr
 			<< "Exception catched:\n\n"

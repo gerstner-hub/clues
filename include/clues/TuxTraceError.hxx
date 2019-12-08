@@ -9,7 +9,7 @@
 // callers location
 #define clues_throw(e) (e.setInfo(__FILE__, __LINE__, __FUNCTION__).raise())
 
-namespace tuxtrace
+namespace clues
 {
 
 /**

@@ -6,7 +6,7 @@
  * calls and not exposed to user space (usually dealt with in glibc)
  */
 
-namespace tuxtrace
+namespace clues
 {
 
 // deprecated flag that's still set in the flags obviously

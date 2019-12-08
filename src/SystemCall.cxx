@@ -7,7 +7,7 @@
 #include "clues/SystemCallDB.hxx"
 #include "clues/SystemCallParameter.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 SystemCall::SystemCall(
@@ -120,7 +120,7 @@ std::string SystemCallParameter::str() const
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::SystemCall &sc)
+std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc)
 {
 	o << sc.name() << " (" << sc.callNr() << "): " << sc.numPars() << " parameters";
 
@@ -136,7 +136,7 @@ std::ostream& operator<<(std::ostream &o, const tuxtrace::SystemCall &sc)
 
 std::ostream& operator<<(
 	std::ostream &o,
-	const tuxtrace::SystemCallParameter &par)
+	const clues::SystemCallParameter &par)
 {
 	o << par.name() << " = " << par.str();
 	return o;

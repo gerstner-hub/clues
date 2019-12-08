@@ -1,7 +1,7 @@
 #ifndef TUXTRACE_TRACESTATE_HXX
 #define TUXTRACE_TRACESTATE_HXX
 
-namespace tuxtrace
+namespace clues
 {
 
 enum class TraceState

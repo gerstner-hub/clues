@@ -12,7 +12,7 @@
 #include "clues/Signal.hxx"
 #include "clues/ptrace.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 /**
@@ -81,7 +81,7 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::WaitRes &res);
+std::ostream& operator<<(std::ostream &o, const clues::WaitRes &res);
 
 #endif // inc. guard
 

@@ -7,11 +7,11 @@
 #include <vector>
 #include <map>
 
-namespace tuxtrace
+namespace clues
 {
 
 /*
- * some general types used across tuxtrace
+ * some general types used across clues
  */
 
 typedef std::vector<std::string> StringVector;

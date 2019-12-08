@@ -14,7 +14,7 @@
 #include "clues/Arch.hxx"
 #include "clues/UsageError.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 /**
@@ -94,7 +94,7 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const tuxtrace::RegisterSet &res);
+std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &res);
 
 #endif // inc. guard
 

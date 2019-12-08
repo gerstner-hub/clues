@@ -14,7 +14,7 @@
 #include "clues/Signal.hxx"
 #include "clues/ptrace.hxx"
 
-namespace tuxtrace
+namespace clues
 {
 
 class RegisterSet;
