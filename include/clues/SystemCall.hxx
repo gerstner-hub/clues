@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_SYSTEMCALL_HXX
-#define TUXTRACE_SYSTEMCALL_HXX
+#ifndef CLUES_SYSTEMCALL_HXX
+#define CLUES_SYSTEMCALL_HXX
 
 // C++
 #include <iosfwd>

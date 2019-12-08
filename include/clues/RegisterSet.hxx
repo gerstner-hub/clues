@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_REGISTERSET_HXX
-#define TUXTRACE_REGISTERSET_HXX
+#ifndef CLUES_REGISTERSET_HXX
+#define CLUES_REGISTERSET_HXX
 
 // C++
 #include <iosfwd>

@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_SYSTEMCALLDB_HXX
-#define TUXTRACE_SYSTEMCALLDB_HXX
+#ifndef CLUES_SYSTEMCALLDB_HXX
+#define CLUES_SYSTEMCALLDB_HXX
 
 // clues
 #include "clues/SystemCall.hxx"

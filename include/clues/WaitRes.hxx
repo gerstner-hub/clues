@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_WAITRES_HXX
-#define TUXTRACE_WAITRES_HXX
+#ifndef CLUES_WAITRES_HXX
+#define CLUES_WAITRES_HXX
 
 // C++
 #include <iosfwd>

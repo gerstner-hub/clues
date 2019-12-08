@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_SIGNAL_HXX
-#define TUXTRACE_SIGNAL_HXX
+#ifndef CLUES_SIGNAL_HXX
+#define CLUES_SIGNAL_HXX
 
 // C++
 #include <iosfwd>

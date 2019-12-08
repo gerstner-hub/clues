@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_SUBPROC_HXX
-#define TUXTRACE_SUBPROC_HXX
+#ifndef CLUES_SUBPROC_HXX
+#define CLUES_SUBPROC_HXX
 
 // C++
 #include <iosfwd>

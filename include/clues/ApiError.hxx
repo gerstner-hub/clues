@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_APIERROR_HXX
-#define TUXTRACE_APIERROR_HXX
+#ifndef CLUES_APIERROR_HXX
+#define CLUES_APIERROR_HXX
 
 // clues
 #include "clues/TuxTraceError.hxx"

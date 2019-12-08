@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_TYPES_HXX
-#define TUXTRACE_TYPES_HXX
+#ifndef CLUES_TYPES_HXX
+#define CLUES_TYPES_HXX
 
 // C++
 #include <ostream>

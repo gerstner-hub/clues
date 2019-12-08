@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_INTERNALERROR_HXX
-#define TUXTRACE_INTERNALERROR_HXX
+#ifndef CLUES_INTERNALERROR_HXX
+#define CLUES_INTERNALERROR_HXX
 
 // clues
 #include "clues/TuxTraceError.hxx"

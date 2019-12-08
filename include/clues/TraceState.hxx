@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_TRACESTATE_HXX
-#define TUXTRACE_TRACESTATE_HXX
+#ifndef CLUES_TRACESTATE_HXX
+#define CLUES_TRACESTATE_HXX
 
 namespace clues
 {

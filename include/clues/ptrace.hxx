@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_PTRACE_HXX
-#define TUXTRACE_PTRACE_HXX
+#ifndef CLUES_PTRACE_HXX
+#define CLUES_PTRACE_HXX
 
 /*
  * wrappers for some of the ptrace constants and calls

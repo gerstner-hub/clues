@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_PARAMETERS_HXX
-#define TUXTRACE_PARAMETERS_HXX
+#ifndef CLUES_PARAMETERS_HXX
+#define CLUES_PARAMETERS_HXX
 
 // C++
 #include <list>

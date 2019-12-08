@@ -1,5 +1,5 @@
-#ifndef TUXTRACE_ARCH_HXX
-#define TUXTRACE_ARCH_HXX
+#ifndef CLUES_ARCH_HXX
+#define CLUES_ARCH_HXX
 
 // Linux
 #include <sys/reg.h> // provides offsets into the register data structure
