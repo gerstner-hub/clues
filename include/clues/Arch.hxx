@@ -5,8 +5,8 @@
 #include <sys/reg.h> // provides offsets into the register data structure
 
 /*
- * In this header I attempt to alleviate some of the architectular differences
- * regarding registers & friends
+ * this header provides facilities to abstract some of the architectural
+ * differences regarding registers & friends
  */
 
 namespace clues

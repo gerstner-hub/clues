@@ -11,7 +11,7 @@ namespace clues
 {
 
 /*
- * some general types used across clues
+ * some general types used across Clues
  */
 
 typedef std::vector<std::string> StringVector;
@@ -23,6 +23,10 @@ typedef std::map<int, std::string> DescriptorPathMapping;
 
 } // end ns
 
+/**
+ * \brief
+ * 	Output all the elements of a vector as a comma separated list
+ **/
 template <typename T>
 inline std::ostream& operator<<(std::ostream &o, const std::vector<T> &sv)
 {
@@ -36,6 +40,11 @@ inline std::ostream& operator<<(std::ostream &o, const std::vector<T> &sv)
 	return o;
 }
 
+/**
+ * \brief
+ * 	Output all the elements of a map as a "key:value" newline separated
+ * 	list
+ **/
 template <typename K, typename V>
 inline std::ostream& operator<<(std::ostream &o, const std::map<K,V> &m)
 {
