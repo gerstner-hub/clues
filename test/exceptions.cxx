@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "clues/ApiError.hxx"
-#include "clues/UsageError.hxx"
+#include "clues/errors/ApiError.hxx"
+#include "clues/errors/UsageError.hxx"
 
 int main()
 {
@@ -12,18 +12,18 @@ int main()
 	{
 		clues_throw( clues::ApiError() );
 	}
-	catch( const clues::TuxTraceError &tte )
+	catch( const clues::CluesError &ce )
 	{
-		std::cerr << "Testing ApiError (ENOENT): " << tte.what() << std::endl;
+		std::cerr << "Testing ApiError (ENOENT): " << ce.what() << std::endl;
 	}
 
 	try
 	{
 		clues_throw( clues::UsageError("testing is good") );
 	}
-	catch( const clues::TuxTraceError &tte )
+	catch( const clues::CluesError &ce )
 	{
-		std::cerr << "Testing UsageError: " << tte.what() << std::endl;
+		std::cerr << "Testing UsageError: " << ce.what() << std::endl;
 	}
 
 	return 0;

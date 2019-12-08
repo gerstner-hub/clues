@@ -2,7 +2,7 @@
 #define CLUES_USAGEERROR_HXX
 
 // clues
-#include "clues/TuxTraceError.hxx"
+#include "clues/errors/CluesError.hxx"
 
 namespace clues
 {
@@ -12,12 +12,12 @@ namespace clues
  * 	Exception type for logical usage errors within the application
  **/
 class UsageError :
-	public TuxTraceError
+	public CluesError
 {
 public: // functions
 
 	explicit UsageError(const char *msg) :
-		TuxTraceError("UsageError"),
+		CluesError("UsageError"),
 		m_error_msg(msg)
 	{}
 

@@ -6,7 +6,7 @@
 #include <errno.h>
 
 // clues
-#include "clues/ApiError.hxx"
+#include "clues/errors/ApiError.hxx"
 
 namespace clues
 {
@@ -17,7 +17,7 @@ ApiError::ApiError() :
 }
 
 ApiError::ApiError(const int p_errno) :
-	TuxTraceError("ApiError"),
+	CluesError("ApiError"),
 	m_errno(p_errno)
 {}
 

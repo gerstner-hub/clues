@@ -2,7 +2,7 @@
 #define CLUES_INTERNALERROR_HXX
 
 // clues
-#include "clues/TuxTraceError.hxx"
+#include "clues/errors/CluesError.hxx"
 
 namespace clues
 {
@@ -15,12 +15,12 @@ namespace clues
  * 	given are not fulfilled.
  **/
 class InternalError :
-	public TuxTraceError
+	public CluesError
 {
 public: // functions
 
 	explicit InternalError(const char *msg) :
-		TuxTraceError("InternalError"),
+		CluesError("InternalError"),
 		m_error_msg(msg)
 	{}
 

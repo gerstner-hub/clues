@@ -17,7 +17,7 @@
 
 // clues
 #include "clues/Parameters.hxx"
-#include "clues/ApiError.hxx"
+#include "clues/errors/ApiError.hxx"
 #include "clues/TracedProc.hxx"
 
 namespace clues

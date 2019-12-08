@@ -12,7 +12,7 @@
 
 // clues
 #include "clues/Arch.hxx"
-#include "clues/UsageError.hxx"
+#include "clues/errors/UsageError.hxx"
 
 namespace clues
 {

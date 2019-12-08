@@ -2,7 +2,7 @@
 #define CLUES_APIERROR_HXX
 
 // clues
-#include "clues/TuxTraceError.hxx"
+#include "clues/errors/CluesError.hxx"
 
 namespace clues
 {
@@ -15,7 +15,7 @@ namespace clues
  * 	format a human readable error message from it.
  **/
 class ApiError :
-	public TuxTraceError
+	public CluesError
 {
 public: // functions
 

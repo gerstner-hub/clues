@@ -9,8 +9,8 @@
 #include <signal.h>
 
 // clues
-#include "clues/ApiError.hxx"
-#include "clues/InternalError.hxx"
+#include "clues/errors/ApiError.hxx"
+#include "clues/errors/InternalError.hxx"
 #include "clues/SubProc.hxx"
 
 namespace clues
@@ -68,11 +68,11 @@ void SubProc::run(const StringVector &sv)
 
 		this->exec(argv);
 	}
-	catch( const TuxTraceError &tte )
+	catch( const CluesError &ce )
 	{
 		std::cerr
 			<< "Execution of child process failed:\n"
-			<< *this << "\n" << tte.what() << std::endl;
+			<< *this << "\n" << ce.what() << std::endl;
 		::_exit(1);
 	}
 }

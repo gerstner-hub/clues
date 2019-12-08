@@ -8,7 +8,7 @@
 
 // clues
 #include "clues/TracedProc.hxx"
-#include "clues/ApiError.hxx"
+#include "clues/errors/ApiError.hxx"
 #include "clues/WaitRes.hxx"
 #include "clues/RegisterSet.hxx"
 #include "clues/SystemCall.hxx"
@@ -226,11 +226,11 @@ TracedSeizedProc::~TracedSeizedProc()
 	{
 		detach();
 	}
-	catch( const TuxTraceError &tte )
+	catch( const CluesError &ce )
 	{
 		std::cerr
 			<< "Couldn't detach from " << m_tracee << ":\n\n"
-			<< tte.what() << "\n";
+			<< ce.what() << "\n";
 	}
 }
 
@@ -263,10 +263,10 @@ TracedSubProc::~TracedSubProc()
 
 		detach();
 	}
-	catch( const TuxTraceError &tte )
+	catch( const CluesError &ce )
 	{
 		std::cerr << "Error detaching from child process " << m_child
-			<< ":\n\n" << tte.what();
+			<< ":\n\n" << ce.what();
 	}
 }
 

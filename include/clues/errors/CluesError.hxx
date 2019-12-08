@@ -1,5 +1,5 @@
-#ifndef CLUES_TUXTRACEERROR_HXX
-#define CLUES_TUXTRACEERROR_HXX
+#ifndef CLUES_CLUESERROR_HXX
+#define CLUES_CLUESERROR_HXX
 
 // C++
 #include <exception>
@@ -14,7 +14,7 @@ namespace clues
 
 /**
  * \brief
- * 	Base class for TuxTrace exceptions
+ * 	Base class for Clues exceptions
  * \details
  * 	This base class carries the file, line and function contextual
  * 	information from where it was thrown. Furthermore it stores a
@@ -28,15 +28,15 @@ namespace clues
  * 	is known. The generateMsg() function can be overwritten to update the
  * 	error message content at the time what() is called.
  **/
-class TuxTraceError :
+class CluesError :
 	std::exception
 {
 public: // functions
 
-	explicit TuxTraceError(const char *error_class) :
+	explicit CluesError(const char *error_class) :
 		m_error_class(error_class) {}
 
-	TuxTraceError& setInfo(
+	CluesError& setInfo(
 		const char *file,
 		const size_t line,
 		const char *func)

@@ -2,12 +2,12 @@
 #include <sstream>
 
 // clues
-#include "clues/TuxTraceError.hxx"
+#include "clues/errors/CluesError.hxx"
 
 namespace clues
 {
 
-const char* TuxTraceError::what() const throw()
+const char* CluesError::what() const throw()
 {
 	if( !m_msg.empty() )
 		return m_msg.c_str();

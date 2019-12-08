@@ -8,7 +8,7 @@
 // clues
 #include "clues/TracedProc.hxx"
 #include "clues/SubProc.hxx"
-#include "clues/TuxTraceError.hxx"
+#include "clues/errors/CluesError.hxx"
 #include "clues/SystemCall.hxx"
 
 namespace clues
@@ -134,11 +134,11 @@ int main(const int argc, const char **argv)
 	{
 		return clues::TermTracer().run(argc, argv);
 	}
-	catch( const clues::TuxTraceError &tte )
+	catch( const clues::CluesError &ce )
 	{
 		std::cerr
 			<< "Exception catched:\n\n"
-			<< tte.what() << std::endl;
+			<< ce.what() << std::endl;
 
 		return EXIT_FAILURE;
 	}
