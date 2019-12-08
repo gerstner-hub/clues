@@ -10,6 +10,7 @@
 
 // clues
 #include "clues/ApiError.hxx"
+#include "clues/InternalError.hxx"
 #include "clues/SubProc.hxx"
 
 namespace tuxtrace
@@ -111,9 +112,14 @@ void SubProc::postFork()
 
 void SubProc::exec(CStringVector &v)
 {
+	if( v.empty() )
+	{
+		tt_throw( InternalError("called with empty argument vector") );
+	}
+
 	::execvp(
 		v[0],
-		v.empty() ? NULL : const_cast<char**>(v.data())
+		const_cast<char**>(v.data())
 	);
 
 	tt_throw( ApiError() );
