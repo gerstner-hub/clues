@@ -23,8 +23,8 @@ tracelib = env.SharedLibrary(
 	lib_srcs
 )
 
-tuxtracer = env.Program(
-	"tuxtracer",
+clues = env.Program(
+	"clues",
 	tracer_srcs + [tracelib]
 )
 

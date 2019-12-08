@@ -1,6 +1,6 @@
-// tuxtrace
-#include <tuxtrace/include/SystemCallDB.hxx>
-#include <tuxtrace/include/Parameters.hxx>
+// clues
+#include "clues/SystemCallDB.hxx"
+#include "clues/Parameters.hxx"
 
 // Linux
 #include <sys/syscall.h> // system call nr. constants

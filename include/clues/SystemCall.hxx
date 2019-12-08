@@ -10,9 +10,9 @@
 
 // Linux
 
-// tuxtrace
-#include <tuxtrace/include/RegisterSet.hxx>
-#include <tuxtrace/include/types.hxx>
+// clues
+#include "clues/RegisterSet.hxx"
+#include "clues/types.hxx"
 
 namespace tuxtrace
 {

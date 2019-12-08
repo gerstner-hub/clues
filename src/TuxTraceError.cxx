@@ -1,8 +1,8 @@
 // C++
 #include <sstream>
 
-// tuxtrace
-#include "tuxtrace/include/TuxTraceError.hxx"
+// clues
+#include "clues/TuxTraceError.hxx"
 
 namespace tuxtrace
 {

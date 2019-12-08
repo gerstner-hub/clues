@@ -7,12 +7,12 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 
-// tuxtrace
-#include <tuxtrace/include/types.hxx>
-#include <tuxtrace/include/TraceState.hxx>
-#include <tuxtrace/include/SubProc.hxx>
-#include <tuxtrace/include/Signal.hxx>
-#include <tuxtrace/include/ptrace.hxx>
+// clues
+#include "clues/types.hxx"
+#include "clues/TraceState.hxx"
+#include "clues/SubProc.hxx"
+#include "clues/Signal.hxx"
+#include "clues/ptrace.hxx"
 
 namespace tuxtrace
 {

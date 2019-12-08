@@ -5,11 +5,11 @@
 #include <cstdlib>
 #include <iostream>
 
-// tuxtrace
-#include <tuxtrace/include/TracedProc.hxx>
-#include <tuxtrace/include/SubProc.hxx>
-#include <tuxtrace/include/TuxTraceError.hxx>
-#include <tuxtrace/include/SystemCall.hxx>
+// clues
+#include "clues/TracedProc.hxx"
+#include "clues/SubProc.hxx"
+#include "clues/TuxTraceError.hxx"
+#include "clues/SystemCall.hxx"
 
 namespace tuxtrace
 {

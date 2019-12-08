@@ -5,8 +5,8 @@
 // Linux
 #include <errno.h>
 
-// tuxtrace
-#include "tuxtrace/include/ApiError.hxx"
+// clues
+#include "clues/ApiError.hxx"
 
 namespace tuxtrace
 {

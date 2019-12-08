@@ -6,13 +6,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-// tuxtrace
-#include <tuxtrace/include/TracedProc.hxx>
-#include <tuxtrace/include/ApiError.hxx>
-#include <tuxtrace/include/WaitRes.hxx>
-#include <tuxtrace/include/RegisterSet.hxx>
-#include <tuxtrace/include/SystemCall.hxx>
-#include <tuxtrace/include/SystemCallDB.hxx>
+// clues
+#include "clues/TracedProc.hxx"
+#include "clues/ApiError.hxx"
+#include "clues/WaitRes.hxx"
+#include "clues/RegisterSet.hxx"
+#include "clues/SystemCall.hxx"
+#include "clues/SystemCallDB.hxx"
 
 namespace tuxtrace
 {

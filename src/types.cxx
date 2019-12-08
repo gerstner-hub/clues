@@ -1,8 +1,8 @@
 // C++
 #include <ostream>
 
-// tuxtrace
-#include <tuxtrace/include/types.hxx>
+// clues
+#include "clues/types.hxx"
 
 namespace tuxtrace
 {

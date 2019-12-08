@@ -6,10 +6,10 @@
 
 // Linux
 
-// tuxtrace
-#include <tuxtrace/include/SystemCall.hxx>
-#include <tuxtrace/include/SystemCallParameter.hxx>
-#include <tuxtrace/include/KernelStructs.hxx>
+// clues
+#include "clues/SystemCall.hxx"
+#include "clues/SystemCallParameter.hxx"
+#include "clues/KernelStructs.hxx"
 
 namespace tuxtrace
 {

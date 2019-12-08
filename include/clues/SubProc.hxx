@@ -8,9 +8,9 @@
 // Linux
 #include <unistd.h>
 
-// tuxtrace
-#include <tuxtrace/include/types.hxx>
-#include <tuxtrace/include/WaitRes.hxx>
+// clues
+#include "clues/types.hxx"
+#include "clues/WaitRes.hxx"
 
 namespace tuxtrace
 {

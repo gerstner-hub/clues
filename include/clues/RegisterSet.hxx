@@ -10,10 +10,9 @@
 // unclear what the official headers for these are ...
 #include <elf.h> // NT_PRSTATUS is in here
 
-// tuxtrace
-//	provides abstraction of per-arch registers & such
-#include <tuxtrace/include/Arch.hxx>
-#include <tuxtrace/include/UsageError.hxx>
+// clues
+#include "clues/Arch.hxx"
+#include "clues/UsageError.hxx"
 
 namespace tuxtrace
 {

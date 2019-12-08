@@ -1,8 +1,8 @@
 // C++
 #include <ostream>
 
-// tuxtrace
-#include <tuxtrace/include/Signal.hxx>
+// clues
+#include "clues/Signal.hxx"
 
 // Linux
 #include <string.h>

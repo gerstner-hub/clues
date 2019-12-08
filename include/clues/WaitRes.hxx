@@ -8,9 +8,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-// tuxtrace
-#include <tuxtrace/include/Signal.hxx>
-#include <tuxtrace/include/ptrace.hxx>
+// clues
+#include "clues/Signal.hxx"
+#include "clues/ptrace.hxx"
 
 namespace tuxtrace
 {

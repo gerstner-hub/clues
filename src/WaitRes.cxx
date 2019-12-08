@@ -1,8 +1,8 @@
 // C++
 #include <iostream>
 
-// tuxtrace
-#include <tuxtrace/include/WaitRes.hxx>
+// clues
+#include "clues/WaitRes.hxx"
 
 std::ostream& operator<<(std::ostream &o, const tuxtrace::WaitRes &res)
 {

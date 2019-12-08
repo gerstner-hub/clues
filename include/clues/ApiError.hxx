@@ -2,7 +2,7 @@
 #define TUXTRACE_APIERROR_HXX
 
 // tuxtrace
-#include "tuxtrace/include/TuxTraceError.hxx"
+#include "clues/TuxTraceError.hxx"
 
 namespace tuxtrace
 {

@@ -1,8 +1,8 @@
 #ifndef TUXTRACE_SYSTEMCALLPARAMETER_HXX
 #define TUXTRACE_SYSTEMCALLPARAMETER_HXX
 
-// tuxtrace
-#include <tuxtrace/include/SystemCall.hxx>
+// clues
+#include "clues/SystemCall.hxx"
 
 namespace tuxtrace
 {

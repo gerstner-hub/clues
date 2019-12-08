@@ -8,9 +8,9 @@
 #include <sys/ptrace.h>
 #include <signal.h>
 
-// tuxtrace
-#include <tuxtrace/include/ApiError.hxx>
-#include <tuxtrace/include/SubProc.hxx>
+// clues
+#include "clues/ApiError.hxx"
+#include "clues/SubProc.hxx"
 
 namespace tuxtrace
 {

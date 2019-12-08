@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "tuxtrace/include/ApiError.hxx"
-#include "tuxtrace/include/UsageError.hxx"
+#include "clues/ApiError.hxx"
+#include "clues/UsageError.hxx"
 
 int main()
 {

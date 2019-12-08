@@ -15,10 +15,10 @@
 #include <signal.h>
 #include <sys/resource.h> // *rlimit()
 
-// tuxtrace
-#include <tuxtrace/include/Parameters.hxx>
-#include <tuxtrace/include/ApiError.hxx>
-#include <tuxtrace/include/TracedProc.hxx>
+// clues
+#include "clues/Parameters.hxx"
+#include "clues/ApiError.hxx"
+#include "clues/TracedProc.hxx"
 
 namespace tuxtrace
 {

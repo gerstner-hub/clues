@@ -2,10 +2,10 @@
 #include <iostream>
 #include <cassert>
 
-// tuxtrace
-#include <tuxtrace/include/SystemCall.hxx>
-#include <tuxtrace/include/SystemCallDB.hxx>
-#include <tuxtrace/include/SystemCallParameter.hxx>
+// clues
+#include "clues/SystemCall.hxx"
+#include "clues/SystemCallDB.hxx"
+#include "clues/SystemCallParameter.hxx"
 
 namespace tuxtrace
 {

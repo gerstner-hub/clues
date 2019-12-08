@@ -1,8 +1,8 @@
 #ifndef TUXTRACE_USAGEERROR_HXX
 #define TUXTRACE_USAGEERROR_HXX
 
-// tuxtrace
-#include "tuxtrace/include/TuxTraceError.hxx"
+// clues
+#include "clues/TuxTraceError.hxx"
 
 namespace tuxtrace
 {
