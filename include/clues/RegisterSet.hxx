@@ -6,7 +6,7 @@
 
 // Linux
 #include <sys/uio.h> // struct iov
-#include <sys/procfs.h> // the elf_greg_t & friend are in here
+#include <sys/procfs.h> // the elf_greg_t & friends are in here
 // unclear what the official headers for these are ...
 #include <elf.h> // NT_PRSTATUS is in here
 
@@ -19,7 +19,10 @@ namespace clues
 
 /**
  * \brief
- *	Holds a set of registers for the architecture in question
+ *	Holds a set of registers for the hosts CPU architecture
+ * \details
+ * 	This type is able to hold data for each of the host's CPU specific
+ * 	registers. The 
  **/
 class RegisterSet
 {
@@ -30,6 +33,16 @@ public: // types
 
 public: // functions
 
+	explicit RegisterSet(bool zero_init = false)
+	{
+		if( zero_init )
+		{
+			for( size_t reg = 0; reg < numRegisters(); reg++ )
+			{
+				m_regs[reg] = 0;
+			}
+		}
+	}
 
 	/**
 	 * \brief
@@ -71,6 +84,32 @@ public: // functions
 		return m_regs[SYSCALL_PAR_REGISTER[number]];
 	}
 
+	/**
+	 * \brief
+	 * 	Returns the content of the given register number
+	 * \details
+	 * 	The exact order registers is platform and architecture
+	 * 	dependent. See sys/regs.h for the index offsets for the
+	 * 	various registers.
+	 *
+	 * 	You can also use getRegisterName() to get a friendly name for
+	 * 	a register number.
+	 **/
+	Word registerValue(const size_t number) const
+	{
+		if( number >= numRegisters() )
+		{
+			clues_throw( UsageError("invalid register nr.") );
+		}
+
+		return m_regs[number];
+	}
+
+	//! returns the number of registers available in a RegisterSet
+	static size_t numRegisters()
+	{
+		return ELF_NGREG;
+	}
 
 protected: // data
 
@@ -94,7 +133,7 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &res);
+std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &rs);
 
 #endif // inc. guard
 

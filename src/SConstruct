@@ -1,6 +1,7 @@
 Import('env')
 
 lib_srcs = [
+	"Arch.cxx",
 	"TracedProc.cxx",
 	"TracedThread.cxx",
 	"SubProc.cxx",
@@ -11,7 +12,8 @@ lib_srcs = [
 	"Signal.cxx",
 	"SystemCall.cxx",
 	"SystemCallDB.cxx",
-	"Parameters.cxx"
+	"Parameters.cxx",
+	"RegisterSet.cxx"
 ]
 
 tracer_srcs = [
