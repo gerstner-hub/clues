@@ -25,14 +25,15 @@ namespace clues
 
 /**
  * \brief
- * 	reads data from the tracee and feeds it to \c eater until its
+ * 	reads data from the tracee and feeds it to \c eater until it's
  * 	saturated
  **/
 template <typename EATER>
 void readTraceeData(
 	const TracedProc &proc,
 	const long *addr,
-	EATER &eater)
+	EATER &eater
+)
 {
 	long word;
 
@@ -58,21 +59,22 @@ class VectorEater
 public:
 
 	VectorEater(VECTOR &vector) :
-		m_vector(vector),
-		VALUE_SIZE(sizeof(typename VECTOR::value_type))
+		m_vector(vector)
 	{}
 
 	bool operator()(long word)
 	{
+		static_assert(sizeof(VALUE_SIZE) <= sizeof(long), "Unexpected VALUE_SIZE");
 		ptr_type unit = reinterpret_cast<ptr_type>(&word);
 
 		for( size_t cur = 0; cur < sizeof(word) / VALUE_SIZE; cur++ )
 		{
-			if( unit[cur] == 0 )
+			const auto &piece = unit[cur];
+			if( piece == 0 )
 				// termination found
 				return false;
 
-			m_vector.push_back( unit[cur] );
+			m_vector.push_back( piece );
 		}
 
 		return true;
@@ -80,7 +82,7 @@ public:
 
 protected:
 	VECTOR &m_vector;
-	const size_t VALUE_SIZE;
+	static constexpr size_t VALUE_SIZE = sizeof(typename VECTOR::value_type);
 };
 
 /**
@@ -92,7 +94,8 @@ template <typename VECTOR>
 void readTraceeVector(
 	const TracedProc &proc,
 	const long *addr,
-	VECTOR &out)
+	VECTOR &out
+)
 {
 	out.clear();
 

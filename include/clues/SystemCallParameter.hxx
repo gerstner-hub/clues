@@ -29,8 +29,15 @@ public: // types
 
 public: // functions
 
+	/**
+	 * \brief
+	 * 	Constructs a new SystemCallParameter
+	 * \param[in] name
+	 * 	A friendly name for this parameter
+	 * \param[in] flow
+	 * 	The data flow of the parameter during the system call
+	 **/
 	SystemCallParameter(const char *name, const FlowType &flow) :
-		m_call(nullptr),
 		m_flow(flow),
 		m_name(name)
 	{}
@@ -45,12 +52,24 @@ public: // functions
 
 	void set(const TracedProc &proc, const RegisterSet::Word word);
 
+	//! returns whether the parameter data needs to be updated after the
+	//! system call is finished
 	bool needsUpdate() const { return m_flow != IN; }
 
+	//! returns the friendly name for this parameter
 	const char* name() const { return m_name; }
+	//! returns the current value for this parameter
 	RegisterSet::Word value() const { return m_val; }
 
-	//! returns a string representation of the parameter
+	/**
+	 * \brief
+	 *	returns a human readable string representation of the
+	 *	parameter
+	 * \details
+	 * 	This member function should be specialized by derived classes
+	 * 	for output the parameter data in a fahsion more suitable the
+	 * 	concrete parameter type.
+	 **/
 	virtual std::string str() const;
 
 protected: // functions
@@ -59,22 +78,21 @@ protected: // functions
 	//! type before entering the system call
 	virtual void enteredCall(const TracedProc &proc) = 0;
 
-	//! called upon exit of the system call to update possible out par.
+	//! called upon exit of the system call to update possible out
+	//! parameters
 	virtual void exitedCall(const TracedProc &proc) = 0;
 
-	//! sets the system call this parameter is a part of
+	//! sets the system call context this parameter is a part of
 	void setSystemCall(const SystemCall &sc) { m_call = &sc; }
 
 protected: // data
 
-	//! \brief
-	//! the system call the parameter is a part of for context
-	//! sensitiveness
-	const SystemCall *m_call;
+	//! the system call context the parameter is a part of
+	const SystemCall *m_call = nullptr;
 	//! the kind of parameter flow
 	const FlowType m_flow;
 	//! a human readable name for the parameter
-	const char *m_name;
+	const char *m_name = nullptr;
 	//! the raw register value for the parameter
 	RegisterSet::Word m_val;
 };
@@ -202,7 +220,8 @@ protected:
 
 std::ostream& operator<<(
 	std::ostream &o,
-	const clues::SystemCallParameter &par);
+	const clues::SystemCallParameter &par
+);
 
 #endif // inc. guard
 

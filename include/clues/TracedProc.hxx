@@ -77,7 +77,7 @@ public: // types
 
 protected:
 
-	TracedProc(TraceEventConsumer &consumer);
+	explicit TracedProc(TraceEventConsumer &consumer);
 
 	/**
 	 * \brief

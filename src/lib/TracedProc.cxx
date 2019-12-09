@@ -167,7 +167,7 @@ void TracedProc::getRegisters(RegisterSet &rs)
 long TracedProc::getData(const long *addr) const
 {
 	errno = 0;
-	const long ret = (long)::ptrace( PTRACE_PEEKDATA, m_tracee, addr, 0 );
+	const long ret = ::ptrace( PTRACE_PEEKDATA, m_tracee, addr, 0 );
 
 	if( errno != 0 )
 	{

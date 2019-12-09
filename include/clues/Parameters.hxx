@@ -16,13 +16,16 @@ namespace clues
 
 /**
  * \brief
- * 	Reads a C-string from the address space starting at \c addr of the
- * 	tracee \c proc into the C++ string object \c out
+ * 	Reads a \0 terminated C-string from the tracee
+ * \details
+ * 	Read from the address space starting at \c addr of the tracee \c proc
+ * 	into the C++ string object \c out.
  **/
 void readTraceeString(
 	const TracedProc &proc,
 	const long *addr,
-	std::string &out);
+	std::string &out
+);
 
 /**
  * \brief

@@ -9,7 +9,7 @@
 namespace clues
 {
 
-// deprecated flag that's still set in the flags obviously
+// deprecated flag that's still set in the sigaction flags obviously
 #define SA_RESTORER 0x04000000
 
 /**
@@ -32,3 +32,4 @@ struct kernel_sigaction
 };
 
 } // end ns
+
