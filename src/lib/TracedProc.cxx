@@ -20,7 +20,7 @@ namespace clues
 TracedProc::TracedProc(TraceEventConsumer &consumer) :
 	m_consumer(consumer),
 	m_state(TraceState::UNKNOWN),
-	m_tracee(SubProc::INVALID_PID)
+	m_tracee(INVALID_PID)
 {}
 
 void TracedProc::setTracee(const pid_t &tracee)
@@ -209,14 +209,14 @@ void TracedSeizedProc::attach()
 
 void TracedSeizedProc::detach()
 {
-	if( m_tracee != SubProc::INVALID_PID && m_state != TraceState::EXITED )
+	if( m_tracee != INVALID_PID && m_state != TraceState::EXITED )
 	{
 		if( ::ptrace( PTRACE_DETACH, m_tracee, nullptr, nullptr ) != 0 )
 		{
 			clues_throw( ApiError() );
 		}
 
-		m_tracee = SubProc::INVALID_PID;
+		m_tracee = INVALID_PID;
 	}
 }
 
@@ -256,7 +256,7 @@ TracedSubProc::~TracedSubProc()
 			// make sure we can wait for it
 			try
 			{
-				m_child.kill(SIGKILL);
+				m_child.kill(Signal(SIGKILL));
 			}
 			catch( ... ) { }
 		}

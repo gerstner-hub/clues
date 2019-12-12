@@ -6,21 +6,17 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <signal.h>
 
 // clues
 #include "clues/errors/ApiError.hxx"
 #include "clues/errors/InternalError.hxx"
+#include "clues/errors/UsageError.hxx"
 #include "clues/SubProc.hxx"
 
 namespace clues
 {
 
-const pid_t SubProc::INVALID_PID = -1;
-
-SubProc::SubProc() :
-	m_pid(INVALID_PID),
-	m_trace(false)
+SubProc::SubProc()
 {}
 
 SubProc::~SubProc()
@@ -38,7 +34,9 @@ void SubProc::run(const StringVector &sv)
 
 	if( args.empty() )
 	{
-		throw 5;
+		clues_throw( UsageError(
+			"attempted to run a subprocess w/o specifying an executable path"
+		) );
 	}
 
 	switch( (m_pid = ::fork()) )
@@ -64,7 +62,7 @@ void SubProc::run(const StringVector &sv)
 			argv.push_back(arg.c_str());
 		}
 
-		argv.push_back(NULL);
+		argv.push_back(nullptr);
 
 		this->exec(argv);
 	}
@@ -103,10 +101,7 @@ void SubProc::postFork()
 
 		// this allows our parent to wait for us such that is knows
 		// we're a tracee now
-		if( ::raise( SIGSTOP ) )
-		{
-			clues_throw( ApiError() );
-		}
+		Signal::raiseSignal( Signal(SIGSTOP) );
 	}
 }
 
@@ -117,20 +112,14 @@ void SubProc::exec(CStringVector &v)
 		clues_throw( InternalError("called with empty argument vector") );
 	}
 
-	::execvp(
-		v[0],
-		const_cast<char**>(v.data())
-	);
+	::execvp( v[0], const_cast<char**>(v.data()) );
 
 	clues_throw( ApiError() );
 }
 
-void SubProc::kill(int signal)
+void SubProc::kill(const Signal &s)
 {
-	if( ::kill( m_pid, signal ) )
-	{
-		clues_throw( ApiError() );
-	}
+	Signal::sendSignal(m_pid, s);
 }
 
 WaitRes SubProc::wait()

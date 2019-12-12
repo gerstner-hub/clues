@@ -52,7 +52,7 @@ TermTracer::TermTracer() :
 		"p", "process",
 		"attach to the given already running process for tracing",
 		false,
-		SubProc::INVALID_PID,
+		INVALID_PID,
 		"Process ID"),
 	m_start_proc(
 		"c", "create",

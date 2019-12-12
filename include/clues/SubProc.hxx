@@ -10,11 +10,13 @@
 
 // clues
 #include "clues/types.hxx"
+#include "clues/ostypes.hxx"
 #include "clues/WaitRes.hxx"
 
 namespace clues
 {
 	class SubProc;
+	class Signal;
 }
 
 std::ostream& operator<<(std::ostream&, const clues::SubProc &);
@@ -30,7 +32,9 @@ namespace clues
 class SubProc
 {
 	friend class TracedSubProc;
-public:
+
+public: // functions
+
 	SubProc();
 
 	~SubProc();
@@ -47,7 +51,7 @@ public:
 		if( ! m_argv.empty() )
 			m_argv[0] = exe;
 
-		m_argv.push_back(exe);
+		m_argv.emplace_back(exe);
 	}
 
 	const StringVector& args() const { return m_argv; }
@@ -61,14 +65,16 @@ public:
 
 	/**
 	 * \brief
-	 * 	Run a subprocess, either the one temporarily specified in \c
-	 * 	sv or the one configured in \c m_argv via setArgs()
+	 * 	Run a subprocess
+	 * \details
+	 * 	Runs either the program explicitly specified in \c sv or the
+	 * 	one configured in \c m_argv via setArgs().
 	 **/
 	void run(const StringVector &sv = StringVector());
 
 	WaitRes wait();
 
-	void kill(int signal);
+	void kill(const Signal &signal);
 
 	void setCWD(const std::string &cwd) { m_cwd = cwd; }
 
@@ -79,11 +85,7 @@ public:
 	void setTrace(const bool trace) { m_trace = trace; }
 	bool trace() const { return m_trace; }
 
-	pid_t pid() const { return m_pid; }
-
-public: // data
-
-	static const pid_t INVALID_PID;
+	ProcessID pid() const { return m_pid; }
 
 protected: // functions
 
@@ -111,7 +113,7 @@ protected: // functions
 protected: // data
 
 	//! the pid of the child process, if any
-	pid_t m_pid;
+	ProcessID m_pid = INVALID_PID;
 	//! executable plus arguments to use
 	StringVector m_argv;
 	//! an explicit working directory, if any
@@ -119,14 +121,12 @@ protected: // data
 	//! an explicit environment block, if any
 	std::string m_env;
 	//! whether the child process shall become a tracee of us
-	bool m_trace;
+	bool m_trace = false;
 
 	friend std::ostream& ::operator<<(std::ostream&, const SubProc &);
 };
 
 } // end ns
-
-std::ostream& operator<<(std::ostream &o, const clues::SubProc &proc);
 
 clues::SubProc& operator<<(clues::SubProc &proc, const std::string &arg);
 

@@ -5,6 +5,9 @@
 #include <iosfwd>
 #include <string>
 
+// Clues
+#include "clues/ostypes.hxx"
+
 namespace clues
 {
 
@@ -21,7 +24,7 @@ public: // types
 
 public: // functions
 
-	//! Creates a Signal objects for the given primitive signal number
+	//! Creates a Signal object for the given primitive signal number
 	explicit Signal(const Type &sig) : m_sig(sig) {}
 
 	Signal& operator=(const Signal &o) { m_sig = o.m_sig; return *this; }
@@ -32,6 +35,25 @@ public: // functions
 	//! returns a human readable label for the currently stored signal
 	//! number
 	std::string name() const;
+
+	/**
+	 * \brief
+	 * 	Sends a signal to the caller itself
+	 * \details
+	 * 	The given signal will be delivered to the calling process or
+	 * 	thread.
+	 * \exception
+	 * 	Throws an ApiError on error.
+	 **/
+	static void raiseSignal(const Signal &s);
+
+	/**
+	 * \brief
+	 * 	Sends a signal to another process
+	 * \exception
+	 * 	Throws an ApiError on error.
+	 **/
+	static void sendSignal(const ProcessID &proc, const Signal &s);
 
 protected: // data
 
