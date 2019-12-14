@@ -104,20 +104,6 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping)
 }
 
 
-void SystemCallParameter::set(
-	const TracedProc &proc,
-	const RegisterSet::Word word)
-{
-	m_val = word;
-	enteredCall(proc);
-}
-
-std::string SystemCallParameter::str() const
-{
-	// by default simply return the register value as a string
-	return std::to_string(m_val);
-}
-
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc)
@@ -131,14 +117,6 @@ std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc)
 
 	o << "\n\tResult -> " << *(sc.m_return);
 
-	return o;
-}
-
-std::ostream& operator<<(
-	std::ostream &o,
-	const clues::SystemCallParameter &par)
-{
-	o << par.name() << " = " << par.str();
 	return o;
 }
 
