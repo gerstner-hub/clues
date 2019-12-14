@@ -115,7 +115,8 @@ std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc)
 		o << "\n\t" << *par;
 	}
 
-	o << "\n\tResult -> " << *(sc.m_return);
+	if( sc.m_return )
+		o << "\n\tResult -> " << *(sc.m_return);
 
 	return o;
 }
