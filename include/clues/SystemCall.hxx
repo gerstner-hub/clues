@@ -87,7 +87,7 @@ public: // functions
 		const size_t close_fd_par = SIZE_MAX
 	);
 
-	~SystemCall();
+	virtual ~SystemCall();
 
 	/**
 	 * \brief
@@ -131,9 +131,9 @@ protected: // data
 	//! the raw sytem call number we represent
 	SystemCallNr m_nr;
 	//! the basic name of the system call we're representing
-	const char *m_name;
+	const char *m_name = nullptr;
 	//! the return value type of the system call
-	SystemCallParameter *m_return;
+	SystemCallParameter *m_return = nullptr;
 	//! the array of system call parameters, if any
 	ParameterVector m_pars;
 	//! if this is a open-like system call this gives the number of the
