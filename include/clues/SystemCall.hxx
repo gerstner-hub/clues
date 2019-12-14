@@ -33,19 +33,20 @@ class SystemCallParameter;
 
 /**
  * \brief
- * 	Base class for all kinds of different system call instances
+ * 	Base class to represent system call properties
  * \details
  * 	This type stores all properties that are common to all system calls:
  *
- * 	- the system call nr.
- * 	- the number of parameters the system call takes
+ * 	- the system call number
+ * 	- an ordered list of parameters the system call expects, represented
+ * 	by the abstract SystemCallParameter base class.
  * 	- a human readable name to identify the system call
  *
- * 	The actual instance type SystemCall knows all about the individual
- * 	system call parameters and type of return value etc.
+ * 	The actual derived type knows all about the individual system call
+ * 	parameters and type of return value etc.
  *
- * 	Also a virtual print() function allows to generically assemble
- * 	information about a system call
+ * 	Also a the stream output operator<< allows to generical output
+ * 	information about a system call.
  **/
 class SystemCall
 {
@@ -57,22 +58,61 @@ public: // types
 
 public: // functions
 
+	/**
+	 * \brief
+	 * 	Instantiates a new SystemCall object with given properties
+	 * \param[in] nr
+	 *	The unique well-known number of this system call
+	 * \param[in] name
+	 * 	A friendly, human readable name for the system call. This is
+	 * 	considered to be statically allocated literal string, that
+	 * 	will not be freed.
+	 * \param[in] ret
+	 * 	If applicable, a pointer to the return parameter definition
+	 * 	for this syscall. nullptr if there is no return value. The
+	 * 	pointer ownership will be moved to the new SystemCall
+	 * 	instance, i.e. it will be deleted during destruction of
+	 * 	SystemCall.
+	 * \param[in] pars
+	 * 	A vector of the parameters in the order they need to be passed
+	 * 	to the system call. The ownership moves into the SystemCall
+	 * 	instance.
+	 **/
 	SystemCall(
 		const SystemCallNr nr,
 		const char *name,
 		SystemCallParameter *ret,
 		ParameterVector &&pars,
 		const size_t open_id_par = SIZE_MAX,
-		const size_t close_fd_par = SIZE_MAX);
+		const size_t close_fd_par = SIZE_MAX
+	);
 
 	~SystemCall();
 
+	/**
+	 * \brief
+	 * 	Update the stored parameter values from the given tracee
+	 * \details
+	 * 	The given tracee is about to start the system call in
+	 * 	question. Introspect the parameter values and update them in
+	 * 	the current syscall object's parameters.
+	 **/
 	void setEntryRegs(const TracedProc &proc, const RegisterSet &r);
+
+	/**
+	 * \brief
+	 * 	Update possible out and return paremter values from the given
+	 * 	tracee
+	 * \details
+	 * 	The given tracee just finished the system call in question.
+	 * 	Introspect the return value and update out or in-out
+	 * 	parameters as applicable.
+	 **/
 	void setExitRegs(const TracedProc &proc, const RegisterSet &r);
 
 	void updateOpenFiles(DescriptorPathMapping &mapping);
 
-	//! returns the system call's name
+	//! returns the system call's human readable name
 	const char* name() const { return m_name; }
 	//! returns the number of parameters for this system call
 	size_t numPars() const { return m_pars.size(); }
@@ -81,12 +121,12 @@ public: // functions
 
 	//! access to the parameters associated with this system call
 	const ParameterVector& parameters() const { return m_pars; }
-	//! access to the return value parameter associated with this sys. c.
+	//! access to the return value parameter associated with this syscall
 	const SystemCallParameter& result() const { return *m_return; }
 
 protected: // functions	
 
-protected:
+protected: // data
 
 	//! the raw sytem call number we represent
 	SystemCallNr m_nr;

@@ -101,8 +101,8 @@ protected: // data
  * \brief
  * 	A pass by value parameter for a system call
  * \details
- * 	These are typically INT parameter denoting IDs, enums, flags etc. that
- * 	are pass to a system call or returned from a system call.
+ * 	These are typically INT parameters denoting IDs, enums, flags etc.
+ * 	that are pass to a system call or returned from a system call.
  *
  * 	The enteredCall and exitedCall functions are implemented as no-ops,
  * 	because no additional data needs to be fetched from the tracee for
