@@ -1,6 +1,9 @@
 #ifndef CLUES_SYSTEMCALLPARAMETER_HXX
 #define CLUES_SYSTEMCALLPARAMETER_HXX
 
+// C++
+#include <iosfwd>
+
 // clues
 #include "clues/SystemCall.hxx"
 
@@ -111,13 +114,13 @@ protected: // data
 class ValueParameter :
 	public SystemCallParameter
 {
-public:
+public: // functions
 
 	ValueParameter(const char *name, const FlowType &flow) :
 		SystemCallParameter(name, flow)
 	{}
 
-protected:
+protected: // functions
 
 	void enteredCall(const TracedProc &proc) override {}
 
@@ -145,9 +148,9 @@ public:
 class ValueOutParameter :
 	public ValueParameter
 {
-public:
+public: // functions
 
-	ValueOutParameter(const char *name) :
+	explicit ValueOutParameter(const char *name) :
 		ValueParameter(name, SystemCallParameter::OUT)
 	{}
 };
@@ -164,7 +167,7 @@ public:
 class PointerParameter :
 	public SystemCallParameter
 {
-public:
+public: // functions
 	PointerParameter(const char *name, const FlowType &flow) :
 		SystemCallParameter(name, flow)
 	{}
@@ -181,12 +184,12 @@ public:
 class PointerOutParameter :
 	public PointerParameter
 {
-public:
-	PointerOutParameter(const char *name) :
+public: // functions
+	explicit PointerOutParameter(const char *name) :
 		PointerParameter(name, FlowType::OUT)
 	{}
 
-protected:
+protected: // functions
 
 	//! \brief
 	//! empty implementation of this function, because it's not needed
@@ -206,12 +209,12 @@ protected:
 class PointerInParameter :
 	public PointerParameter
 {
-public:
-	PointerInParameter(const char *name) :
+public: // functions
+	explicit PointerInParameter(const char *name) :
 		PointerParameter(name, FlowType::IN)
 	{}
 
-protected:
+protected: // functions
 
 	void exitedCall(const TracedProc &proc) override {}
 };
