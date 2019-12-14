@@ -9,7 +9,7 @@ enum class TraceState
 	UNKNOWN,
 	//! we're knowingly initially attached to the tracee
 	ATTACHED,
-	//! the tracee is currently about to entering a system call
+	//! the tracee is currently about to enter a system call
 	SYSCALL_ENTER,
 	//! the tracee just left a system call
 	SYSCALL_EXIT,
@@ -17,7 +17,7 @@ enum class TraceState
 	EXITED
 };
 
-};
+}; // end ns
 
 #endif // inc. guard
 
