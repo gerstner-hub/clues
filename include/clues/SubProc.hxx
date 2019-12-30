@@ -91,7 +91,7 @@ protected: // functions
 
 	//! \brief
 	//! performs settings done after forking i.e. in the child process but
-	//! before exec() ing
+	//! before exec()'ing
 	void postFork();
 
 	void exec(CStringVector &v);
