@@ -54,9 +54,8 @@ public: // functions
 	 * \brief
 	 *	Close the underlying file descriptor
 	 **/
-	void close()
+	virtual void close()
 	{
-		*this << std::flush;
 		m_buffer.close();
 	}
 
@@ -103,6 +102,12 @@ public: // functions
 	explicit OutputStreamAdaptor(Pipe &p) :
 		OutputStreamAdaptor(p.takeWriteEndOwnership())
 	{}
+
+	void close() override
+	{
+		*this << std::flush;
+		StreamAdaptor::close();
+	}
 };
 
 class InputOutputStreamAdaptor :
@@ -115,6 +120,12 @@ public: // functions
 			fd, std::ios_base::in | std::ios_base::out
 		)
 	{}
+
+	void close() override
+	{
+		*this << std::flush;
+		StreamAdaptor::close();
+	}
 };
 
 } // end ns
