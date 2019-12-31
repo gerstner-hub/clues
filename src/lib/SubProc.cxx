@@ -57,7 +57,7 @@ void SubProc::run(const StringVector &sv)
 
 		CStringVector argv;
 
-		for( auto arg: args )
+		for( auto &arg: args )
 		{
 			argv.push_back(arg.c_str());
 		}
