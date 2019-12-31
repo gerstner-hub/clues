@@ -4,7 +4,8 @@ tracelib = env['libs']['clues']
 
 tests = (
 	"exceptions",
-	"arch"
+	"arch",
+	"pipe"
 )
 
 for test in tests:
