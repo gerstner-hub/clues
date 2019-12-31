@@ -59,6 +59,8 @@ public: // functions
 		m_buffer.close();
 	}
 
+	FileDesc fileDesc() { return m_buffer.fd(); }
+
 protected: // functions
 
 	StreamAdaptor(FileDesc fd, std::ios_base::openmode mode) :
