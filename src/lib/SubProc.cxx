@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <unistd.h>
 
 // clues
 #include "clues/errors/ApiError.hxx"
@@ -42,8 +43,13 @@ void SubProc::run(const StringVector &sv)
 	switch( (m_pid = ::fork()) )
 	{
 	default: // parent process with child pid
+		// as documented, to prevent future inheritance of undefined
+		// file descriptor state
+		resetStdFiles();
 		return;
 	case -1: // an error occured
+		// see above, same for error case
+		resetStdFiles();
 		clues_throw( ApiError() );
 		return;
 	case 0: // the child process
@@ -85,6 +91,12 @@ void SubProc::postFork()
 		}
 	}
 
+	redirectFD(STDOUT_FILENO, m_stdout);
+	redirectFD(STDERR_FILENO, m_stderr);
+	redirectFD(STDIN_FILENO, m_stdin);
+
+	resetStdFiles();
+
 	if( m_trace )
 	{
 #if 0
@@ -102,6 +114,26 @@ void SubProc::postFork()
 		// this allows our parent to wait for us such that is knows
 		// we're a tracee now
 		Signal::raiseSignal( Signal(SIGSTOP) );
+	}
+}
+
+void SubProc::redirectFD(FileDesc orig, FileDesc redirect)
+{
+	if( redirect == INVALID_FILE_DESC )
+		return;
+
+	/*
+	 * the second parameter is newfd, the number under which the first
+	 * parameter will be known in the future. a bit confusing naming
+	 * scheme.
+	 *
+	 * note that dup2 automatically removes any O_CLOEXEC flag from the
+	 * orig file descriptor, so inheriting it across exec*() is not a
+	 * problem.
+	 */
+	if( dup2(redirect, orig) == -1 )
+	{
+		clues_throw( ApiError() );
 	}
 }
 
