@@ -88,6 +88,11 @@ public: // functions
 		return (m_status >> 8) == (SIGTRAP | ((int)event << 8));
 	}
 
+	bool exitedSuccessfully() const
+	{
+		return exited() && exitStatus() == 0;
+	}
+
 	Type* raw() { return &m_status; }
 	const Type* raw() const { return &m_status; }
 
