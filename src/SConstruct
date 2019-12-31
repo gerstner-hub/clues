@@ -15,7 +15,8 @@ lib_srcs = [
 	"SystemCallParameter.cxx",
 	"Parameters.cxx",
 	"RegisterSet.cxx",
-	"Pipe.cxx"
+	"Pipe.cxx",
+	"Process.cxx"
 ]
 
 tracer_srcs = [
