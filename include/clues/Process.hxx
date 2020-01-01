@@ -37,6 +37,23 @@ public: // functions
 			cachePPid() : m_parent_pid;
 	}
 
+	/**
+	 * \brief
+	 * 	Returns the real user ID the current process is running as
+	 **/
+	UserID getRealUserID() const;
+
+	/**
+	 * \brief
+	 * 	Returns the effective user ID the current process is running
+	 * 	as
+	 * \details
+	 * 	This ID may differ from getRealUserID() if a privileged
+	 * 	process temporarily drops privileges or an unprivileged user
+	 * 	calls a privileged program with setuid bit.
+	 **/
+	UserID getEffectiveUserID() const;
+
 protected: // functions
 
 	ProcessID cachePid() const;

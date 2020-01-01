@@ -3,6 +3,7 @@
 
 // Linux
 #include <unistd.h>
+#include <sys/types.h>
 
 namespace clues
 {
@@ -17,6 +18,8 @@ constexpr pid_t INVALID_PID = -1;
 //! a plain integer file descriptor
 typedef int FileDesc;
 constexpr int INVALID_FILE_DESC = -1;
+
+typedef uid_t UserID;
 
 } // end ns
 

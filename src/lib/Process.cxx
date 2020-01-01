@@ -20,6 +20,16 @@ ProcessID Process::cachePPid() const
 	return m_parent_pid;
 }
 
+UserID Process::getRealUserID() const
+{
+	return ::getuid();
+}
+
+UserID Process::getEffectiveUserID() const
+{
+	return ::geteuid();
+}
+
 Process g_process;
 
 } // end ns
