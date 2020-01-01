@@ -16,7 +16,8 @@ lib_srcs = [
 	"Parameters.cxx",
 	"RegisterSet.cxx",
 	"Pipe.cxx",
-	"Process.cxx"
+	"Process.cxx",
+	"fs/FileSystem.cxx"
 ]
 
 tracer_srcs = [
