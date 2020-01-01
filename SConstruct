@@ -1,4 +1,22 @@
-env = Environment()
+import os
+
+prefix = os.environ.get("SCONS_CROSS_PREFIX", None)
+
+env_options = {}
+
+if prefix:
+	env_options = {
+	    "CC"    : "{prefix}-gcc",
+	    "CXX"   : "{prefix}-g++",
+	    "LD"    : "{prefix}-g++",
+	    "AR"    : "{prefix}-ar",
+	    "STRIP" : "{prefix}-strip",
+	}
+
+	for key in env_options:
+		env_options[key] = env_options[key].format(prefix = prefix)
+
+env = Environment(**env_options)
 
 env.Append( CXXFLAGS = "-std=c++17" )
 env.Append( CCFLAGS = "-g" )
