@@ -72,6 +72,8 @@ public: // functions
 
 	const StringVector& args() const { return m_argv; }
 
+	StringVector& args() { return m_argv; }
+
 	void setArgs(const StringVector &sv) { m_argv = sv; }
 
 	void clearArgs(const bool and_exe = false)
