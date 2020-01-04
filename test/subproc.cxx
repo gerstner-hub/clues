@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
+// POSIX
+#include <signal.h>
+
 class RedirectOutputTestBase
 {
 public:
@@ -325,6 +328,67 @@ protected:
 	const size_t m_expected_lines = 5;
 };
 
+class TimeoutTest
+{
+public:
+	explicit TimeoutTest() :
+		m_sleep_bin("/usr/bin/sleep")
+	{
+		// currently a requisite for using the timeout variant of
+		// SubProc.
+		sigset_t sigs;
+		sigemptyset(&sigs);
+		sigaddset(&sigs, SIGCHLD);
+		if( sigprocmask(SIG_BLOCK, &sigs, nullptr) != 0 )
+		{
+			clues_throw( clues::ApiError() );
+		}
+	}
+
+	void run()
+	{
+		// let the child sleep some seconds
+		m_proc.setArgs({m_sleep_bin, "5"});
+		m_proc.run();
+
+		size_t num_timeouts = 0;
+		clues::WaitRes res;
+
+		while(true)
+		{
+			// wait at max one second
+			auto exited = m_proc.waitTimed(1000, res);
+
+			if( !exited )
+			{
+				num_timeouts++;
+				continue;
+			}
+			else if( res.exited() && res.exitStatus() == 0 )
+			{
+				// correctly exited
+				break;
+			}
+			else
+			{
+				clues_throw( clues::InternalError("Child process unexpectedly exited unsuccesfully") );
+			}
+		}
+
+		if( num_timeouts == 0 )
+		{
+			clues_throw( clues::InternalError("Child process waitTimed() unexpectedly didn't timeout") );
+		}
+
+		std::cout << "Child process wait timed out " << num_timeouts << " times. Successfully tested timeouts" << std::endl;
+	}
+
+protected:
+
+	clues::SubProc m_proc;
+	const std::string m_sleep_bin;
+};
+
 int main()
 {
 	try
@@ -332,6 +396,7 @@ int main()
 		/*
 		 * test redirection of each std. file descriptor
 		 */
+
 		{
 			RedirectStdoutTest out_test;
 			out_test.run();
@@ -349,6 +414,13 @@ int main()
 		{
 			PipeInTest in_test;
 			in_test.run();
+		}
+
+		std::cout << "\n\n";
+
+		{
+			TimeoutTest to_test;
+			to_test.run();
 		}
 
 		return 0;

@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <unistd.h>
+#include <signal.h>
 
 // clues
 #include "clues/errors/ApiError.hxx"
@@ -167,6 +168,68 @@ WaitRes SubProc::wait()
 	}
 
 	return wr;
+}
+
+bool SubProc::waitTimed(const size_t max_ms, WaitRes &res)
+{
+	res = WaitRes();
+	sigset_t sigs;
+	sigemptyset(&sigs);
+	sigaddset(&sigs, SIGCHLD);
+
+	struct timespec ts;
+	auto left_ms = max_ms % 1000;
+	ts.tv_sec = (max_ms - left_ms) / 1000;
+	ts.tv_nsec = left_ms * 1000 * 1000;
+
+	while(true)
+	{
+		auto res = sigtimedwait(&sigs, nullptr, &ts);
+
+		if( res != -1 )
+			break;
+
+		switch(errno)
+		{
+		case EINTR:
+			// TODO: the interface doesn't allow to sleep for the
+			// correct left time, so we'll probably sleep to long
+			// in this case. Rather claim it's an early timeout.
+			return false;
+		case EAGAIN:
+			return false;
+		default:
+			clues_throw( ApiError() );
+		}
+	}
+
+	// okay, something happened, let's check
+	//
+	// NOTE: in the timeout case the value in res.m_status can't be
+	// differentiated from the non-timeout case if the child exited
+	// successfully with exit code 0. Therefore we need to distuingish the
+	// timeout condition using a separate bool and can't rely on the
+	// WaitRes type.
+	auto pid = ::waitpid(m_pid, &res.m_status, WNOHANG);
+
+	if( pid == 0 )
+	{
+		// the child still didn't exit, bogus
+		// sigtimedwait()? claim it's an early timeout
+		return false;
+	}
+	else if( pid == -1 )
+	{
+		// something went wrong, clean up our state,
+		// the child is probably lost in some way.
+		m_pid = INVALID_PID;
+		clues_throw( ApiError() );
+	}
+
+	m_pid = INVALID_PID;
+
+	// okay the child actually exited
+	return true;
 }
 
 void SubProc::gone(const WaitRes &r)

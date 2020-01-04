@@ -92,6 +92,25 @@ public: // functions
 
 	WaitRes wait();
 
+	/**
+	 * \brief
+	 * 	Wait for child process exit with a timeout in milliseconds
+	 * \details
+	 * 	This currently requires that the SIGCHLD signal is blocked for
+	 * 	all threads in the process to work. Otherwise undefined
+	 * 	behaviour occurs.
+	 *
+	 * 	This also requires that no other threads in the process
+	 * 	consume the SIGCHLD signal, otherwise a lost wakeup can occur.
+	 *
+	 * 	If the timeout occured then WaitRes.anyEvent() returns \c
+	 * 	false.
+	 * \return
+	 * 	\c true if the child exited and \c res is valid. \c false if
+	 * 	the timeout occured and \c res is invalid.
+	 **/
+	bool waitTimed(const size_t max_ms, WaitRes &res);
+
 	void kill(const Signal &signal);
 
 	void setCWD(const std::string &cwd) { m_cwd = cwd; }
