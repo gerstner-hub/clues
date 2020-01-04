@@ -39,6 +39,9 @@ public: // functions
 	//! returns whether the child exited
 	bool exited() const { return WIFEXITED(m_status) != 0; }
 
+	//! returns whether the child was terminated by a signal
+	bool signaled() const { return WIFSIGNALED(m_status) != 0; }
+
 	/**
 	 * \brief
 	 *	Returns the exit status of the child
@@ -60,6 +63,17 @@ public: // functions
 	{
 		return stopped() ?
 			Signal(WSTOPSIG(m_status) & (~0x80)) : Signal(0);
+	}
+
+	/**
+	 * \brief
+	 * 	Returns the signal that caused the child to terminated if
+	 * 	signaled()
+	 **/
+	Signal termSignal() const
+	{
+		return signaled() ?
+			Signal(WTERMSIG(m_status)) : Signal(0);
 	}
 
 	/**
