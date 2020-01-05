@@ -17,7 +17,8 @@ lib_srcs = [
 	"RegisterSet.cxx",
 	"Pipe.cxx",
 	"Process.cxx",
-	"fs/FileSystem.cxx"
+	"fs/FileSystem.cxx",
+	"threading/Mutex.cxx"
 ]
 
 tracer_srcs = [
@@ -35,3 +36,6 @@ clues = env.Program(
 )
 
 env['libs']['clues'] = tracelib
+
+# required to link against us regarding threading functionality
+env.Append( LINKFLAGS = "-pthread" )

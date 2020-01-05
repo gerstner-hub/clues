@@ -6,7 +6,8 @@ tests = (
 	"exceptions",
 	"arch",
 	"pipe",
-	"subproc"
+	"subproc",
+	"thread_primitives"
 )
 
 for test in tests:
