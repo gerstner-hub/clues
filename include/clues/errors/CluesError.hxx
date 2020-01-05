@@ -29,7 +29,7 @@ namespace clues
  * 	error message content at the time what() is called.
  **/
 class CluesError :
-	std::exception
+	public std::exception
 {
 public: // functions
 
