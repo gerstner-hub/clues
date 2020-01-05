@@ -198,12 +198,33 @@ bool SubProc::waitTimed(const size_t max_ms, WaitRes &res)
 	ts.tv_sec = (max_ms - left_ms) / 1000;
 	ts.tv_nsec = left_ms * 1000 * 1000;
 
+	siginfo_t siginfo;
+
 	while(true)
 	{
-		auto res = sigtimedwait(&sigs, nullptr, &ts);
+		auto res = sigtimedwait(&sigs, &siginfo, &ts);
 
 		if( res != -1 )
+		{
+			// this means some unrelated child exited
+			// TODO: does that mean another thread/context might
+			// have lost this information now and a corresponding
+			// waitpid() for the child will block?
+			//
+			// the issue here is that other processes existing and
+			// using waitpid() on them doesn't collect the SIGCHLD
+			// if it is blocked in the process, so it will be
+			// delivered to us although the status has long been
+			// collected
+			//
+			// it might make sense to keep a static map of pid ->
+			// siginfo structures and use sigwait for all types of
+			// SubProc::wait* to make this more harmonic and less
+			// error prone
+			if( siginfo.si_pid != m_pid )
+				continue;
 			break;
+		}
 
 		switch(errno)
 		{
