@@ -140,6 +140,8 @@ protected: // functions
 	//! before exec()'ing
 	void postFork();
 
+	void resetSignals();
+
 	void exec(CStringVector &v);
 
 	/**

@@ -82,8 +82,24 @@ void SubProc::run(const StringVector &sv)
 	}
 }
 
+void SubProc::resetSignals()
+{
+	/*
+	 * the blocked signal mask is inherited via execve(), thus we need to
+	 * initialize defaults here again.
+	 */
+	sigset_t sigs;
+	sigfillset(&sigs);
+	if( sigprocmask(SIG_UNBLOCK, &sigs, nullptr) != 0 )
+	{
+		clues_throw( ApiError() );
+	}
+}
+
 void SubProc::postFork()
 {
+	resetSignals();
+
 	if( ! m_cwd.empty() )
 	{
 		if( ::chdir(m_cwd.c_str()) != 0 )
