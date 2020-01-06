@@ -8,6 +8,7 @@
 // Clues
 #include "clues/errors/ApiError.hxx"
 #include "clues/threading/Mutex.hxx"
+#include "clues/time/Clock.hxx"
 
 namespace clues
 {
@@ -36,16 +37,7 @@ public: // functions
 	 *	\c lock is never destroyed before the associated Condition
 	 *	object is destroyed.
 	 **/
-	explicit Condition(Mutex &lock) :
-		m_lock(lock)
-	{
-		auto res = ::pthread_cond_init(&m_pcond, nullptr);
-
-		if( res != 0 )
-		{
-			clues_throw( ApiError(res) );
-		}
-	}
+	explicit Condition(Mutex &lock);
 
 	~Condition()
 	{
@@ -63,6 +55,32 @@ public: // functions
 		{
 			clues_throw( ApiError(res) );
 		}
+	}
+
+	/**
+	 * \brief
+	 *	Like wait() but waits at most until the given absolute time
+	 *	has been reached
+	 * \return
+	 *	\c true If a signal was received, \c false if a timeout
+	 *	occured.
+	 **/
+	bool waitTimed(const TimeSpec &ts)
+	{
+		auto res = ::pthread_cond_timedwait(&m_pcond, &(m_lock.m_pmutex), &ts);
+
+		switch(res)
+		{
+		default: clues_throw( ApiError(res) );
+		case 0: return true;
+		case ETIMEDOUT: return false;
+		}
+	}
+
+	//! returns the clock type used for waitTimed()
+	static ClockType clockType()
+	{
+		return ClockType::MONOTONIC;
 	}
 
 	void signal()
