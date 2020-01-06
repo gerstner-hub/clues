@@ -15,39 +15,51 @@ Mutex::Mutex()
 	::pthread_mutexattr_t* attr = nullptr;
 	int res = -1;
 
-	if( DEBUG_MUTEX )
+	try
 	{
-		::pthread_mutexattr_t debug_attr;
+		if( DEBUG_MUTEX )
+		{
+			::pthread_mutexattr_t debug_attr;
 
-		res = ::pthread_mutexattr_init(&debug_attr);
+			res = ::pthread_mutexattr_init(&debug_attr);
+			if( res != 0 )
+			{
+				clues_throw( ApiError(res) );
+			}
+
+			res = ::pthread_mutexattr_settype(
+				&debug_attr, PTHREAD_MUTEX_ERRORCHECK
+			);
+
+			if( res != 0 )
+			{
+				clues_throw( ApiError(res) );
+			}
+
+
+			attr = &debug_attr;
+		}
+
+		res = ::pthread_mutex_init(&m_pmutex, attr);
 		if( res != 0 )
 		{
 			clues_throw( ApiError(res) );
 		}
 
-		res = ::pthread_mutexattr_settype(
-			&debug_attr, PTHREAD_MUTEX_ERRORCHECK
-		);
-
-		if( res != 0 )
+		if( DEBUG_MUTEX )
 		{
-			clues_throw( ApiError(res) );
+			res = ::pthread_mutexattr_destroy(attr);
+			assert( res == 0 );
+		}
+	}
+	catch(...)
+	{
+		if(attr)
+		{
+			(void)::pthread_mutexattr_destroy(attr);
 		}
 
-
-		attr = &debug_attr;
-	}
-
-	res = ::pthread_mutex_init(&m_pmutex, attr);
-	if( res != 0 )
-	{
-		clues_throw( ApiError(res) );
-	}
-
-	if( DEBUG_MUTEX )
-	{
-		res = ::pthread_mutexattr_destroy(attr);
-		assert( res == 0 );
+		throw;
 	}
 }
 
