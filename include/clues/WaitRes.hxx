@@ -107,6 +107,8 @@ public: // functions
 		return exited() && exitStatus() == 0;
 	}
 
+	void reset() { m_status = 0; }
+
 	Type* raw() { return &m_status; }
 	const Type* raw() const { return &m_status; }
 
