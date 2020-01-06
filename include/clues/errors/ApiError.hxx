@@ -27,6 +27,8 @@ public: // functions
 
 	void raise() override { throw *this; }
 
+	std::string msg() const { return msg(m_errno); }
+
 	/**
 	 * \brief
 	 * 	Returns a human readable error message for the given errno
