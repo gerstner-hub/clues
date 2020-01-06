@@ -24,6 +24,9 @@ public:
 	//! deliberately don't initialize the members for performance reasons
 	TimeSpec() {}
 
+	bool isZero() const { return this->tv_sec == 0 && this->tv_nsec == 0; }
+	void reset() { this->tv_sec = 0; this->tv_nsec = 0; }
+
 	time_t getSeconds() const { return this->tv_sec; }
 	long getNanoSeconds() const { return this->tv_nsec; }
 
@@ -38,6 +41,14 @@ public:
 	void addNanoSeconds(const long nano_seconds)
 	{
 		this->tv_nsec += nano_seconds;
+	}
+
+	TimeSpec& setAsMilliseconds(const size_t milliseconds)
+	{
+		auto left_ms = milliseconds % 1000;
+		this->tv_sec = (milliseconds - left_ms) / 1000;
+		this->tv_nsec = left_ms * 1000 * 1000;
+		return *this;
 	}
 
 	//! converts the time representation into a single milliseconds value
@@ -60,6 +71,22 @@ public:
 			return true;
 
 		return false;
+	}
+
+	bool operator>=(const TimeSpec &other) const
+	{
+		return !operator<(other);
+	}
+
+	bool operator==(const TimeSpec &other) const
+	{
+		return this->tv_sec == other.tv_sec &&
+			this->tv_nsec == other.tv_nsec;
+	}
+
+	bool operator<=(const TimeSpec &other) const
+	{
+		return *this < other || *this == other;
 	}
 
 	constexpr long nanosecondBase() const
