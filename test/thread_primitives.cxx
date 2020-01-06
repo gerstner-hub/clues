@@ -2,12 +2,15 @@
 #include "clues/threading/Mutex.hxx"
 #include "clues/threading/Condition.hxx"
 #include "clues/time/Clock.hxx"
+#include "clues/Init.hxx"
 
 // C++
 #include <iostream>
 
 int main()
 {
+	clues::Init init;
+
 	try
 	{
 		/*

@@ -6,6 +6,7 @@
 #include <iostream>
 
 // clues
+#include "clues/Init.hxx"
 #include "clues/TracedProc.hxx"
 #include "clues/SubProc.hxx"
 #include "clues/errors/CluesError.hxx"
@@ -132,6 +133,7 @@ int main(const int argc, const char **argv)
 {
 	try
 	{
+		clues::Init init;
 		return clues::TermTracer().run(argc, argv);
 	}
 	catch( const clues::CluesError &ce )

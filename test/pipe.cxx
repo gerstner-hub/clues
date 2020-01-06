@@ -6,9 +6,11 @@
 #include "clues/Pipe.hxx"
 #include "clues/StreamAdaptor.hxx"
 #include "clues/SubProc.hxx"
+#include "clues/Init.hxx"
 
 int main()
 {
+	clues::Init init;
 	clues::Pipe pip;
 	clues::OutputStreamAdaptor pip_out(pip);
 	clues::InputStreamAdaptor pip_in(pip);

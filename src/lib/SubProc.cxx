@@ -14,9 +14,43 @@
 #include "clues/errors/InternalError.hxx"
 #include "clues/errors/UsageError.hxx"
 #include "clues/SubProc.hxx"
+#include "clues/private/ChildCollector.hxx"
 
 namespace clues
 {
+
+ChildCollector g_collector;
+
+ChildCollector::ChildCollector() :
+	Initable(InitPrio::CHILD_COLLECTOR)
+{}
+
+void ChildCollector::libInit()
+{
+	// currently a prerequisite for using the ChildCollector
+	// sigtimedwait() based approach
+	sigset_t sigs;
+	sigemptyset(&sigs);
+	sigaddset(&sigs, SIGCHLD);
+
+	if( sigprocmask(SIG_BLOCK, &sigs, nullptr) != 0 )
+	{
+		clues_throw( clues::ApiError() );
+	}
+}
+
+void ChildCollector::libExit()
+{
+	// restore the default block unmask for SIGCHLD
+	sigset_t sigs;
+	sigemptyset(&sigs);
+	sigaddset(&sigs, SIGCHLD);
+
+	if( sigprocmask(SIG_UNBLOCK, &sigs, nullptr) != 0 )
+	{
+		std::cerr << "failed to unblock SIGCHLD: " << ApiError().msg();
+	}
+}
 
 SubProc::SubProc()
 {}
@@ -174,99 +208,43 @@ void SubProc::kill(const Signal &s)
 WaitRes SubProc::wait()
 {
 	WaitRes wr;
-
-	pid_t pid = m_pid;
+	auto pid = m_pid;
 	m_pid = INVALID_PID;
 
-	if( ::waitpid(pid, &wr.m_status, 0) == -1 )
-	{
-		clues_throw( ApiError() );
-	}
+	g_collector.collect(pid, wr);
 
 	return wr;
 }
 
 bool SubProc::waitTimed(const size_t max_ms, WaitRes &res)
 {
-	res = WaitRes();
-	sigset_t sigs;
-	sigemptyset(&sigs);
-	sigaddset(&sigs, SIGCHLD);
+	res.reset();
+	bool exited = false;
 
-	struct timespec ts;
-	auto left_ms = max_ms % 1000;
-	ts.tv_sec = (max_ms - left_ms) / 1000;
-	ts.tv_nsec = left_ms * 1000 * 1000;
-
-	siginfo_t siginfo;
-
-	while(true)
+	if( max_ms == SIZE_MAX )
 	{
-		auto res = sigtimedwait(&sigs, &siginfo, &ts);
-
-		if( res != -1 )
-		{
-			// this means some unrelated child exited
-			// TODO: does that mean another thread/context might
-			// have lost this information now and a corresponding
-			// waitpid() for the child will block?
-			//
-			// the issue here is that other processes existing and
-			// using waitpid() on them doesn't collect the SIGCHLD
-			// if it is blocked in the process, so it will be
-			// delivered to us although the status has long been
-			// collected
-			//
-			// it might make sense to keep a static map of pid ->
-			// siginfo structures and use sigwait for all types of
-			// SubProc::wait* to make this more harmonic and less
-			// error prone
-			if( siginfo.si_pid != m_pid )
-				continue;
-			break;
-		}
-
-		switch(errno)
-		{
-		case EINTR:
-			// TODO: the interface doesn't allow to sleep for the
-			// correct left time, so we'll probably sleep to long
-			// in this case. Rather claim it's an early timeout.
-			return false;
-		case EAGAIN:
-			return false;
-		default:
-			clues_throw( ApiError() );
-		}
+		// this conflicts with the interpretation of SIZE_MAX in
+		// ChildCollector as "use no timeout".
+		clues_throw( UsageError("max_ms parameter is too large") );
 	}
 
-	// okay, something happened, let's check
-	//
-	// NOTE: in the timeout case the value in res.m_status can't be
-	// differentiated from the non-timeout case if the child exited
-	// successfully with exit code 0. Therefore we need to distuingish the
-	// timeout condition using a separate bool and can't rely on the
-	// WaitRes type.
-	auto pid = ::waitpid(m_pid, &res.m_status, WNOHANG);
-
-	if( pid == 0 )
+	try
 	{
-		// the child still didn't exit, bogus
-		// sigtimedwait()? claim it's an early timeout
-		return false;
+		exited = g_collector.collect(m_pid, max_ms, res);
 	}
-	else if( pid == -1 )
+	catch(...)
 	{
-		// something went wrong, clean up our state,
-		// the child is probably lost in some way.
+		// probably the child can't be saved
 		m_pid = INVALID_PID;
-		clues_throw( ApiError() );
+		throw;
 	}
 
-	m_pid = INVALID_PID;
+	if( exited )
+	{
+		m_pid = INVALID_PID;
+	}
 
-	// okay the child actually exited
-	return true;
+	return exited;
 }
 
 void SubProc::gone(const WaitRes &r)

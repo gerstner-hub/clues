@@ -20,14 +20,18 @@ lib_srcs = [
 	"fs/FileSystem.cxx",
 	"threading/Mutex.cxx",
 	"threading/Condition.cxx",
-	"time/Clock.cxx"
+	"time/Clock.cxx",
+	"Init.cxx"
 ]
 
 tracer_srcs = [
 	"TermTracer.cxx",
 ]
 
-tracelib = env.SharedLibrary(
+libenv = env.Clone()
+libenv.Append( CPPPATH = ["."] )
+
+tracelib = libenv.SharedLibrary(
 	"clues",
 	[ "lib/" + src for src in lib_srcs ]
 )

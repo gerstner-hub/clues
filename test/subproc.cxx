@@ -6,6 +6,7 @@
 #include "clues/errors/InternalError.hxx"
 #include "clues/errors/ApiError.hxx"
 #include "clues/types.hxx"
+#include "clues/Init.hxx"
 
 // C++
 #include <iostream>
@@ -163,6 +164,7 @@ public:
 
 		if( ! res.exited() || res.exitStatus() != 1 )
 		{
+			std::cerr << res << std::endl;
 			clues_throw( clues::InternalError("Child process with redirected stderr ended in unexpected state") );
 		}
 
@@ -334,15 +336,6 @@ public:
 	explicit TimeoutTest() :
 		m_sleep_bin("/usr/bin/sleep")
 	{
-		// currently a requisite for using the timeout variant of
-		// SubProc.
-		sigset_t sigs;
-		sigemptyset(&sigs);
-		sigaddset(&sigs, SIGCHLD);
-		if( sigprocmask(SIG_BLOCK, &sigs, nullptr) != 0 )
-		{
-			clues_throw( clues::ApiError() );
-		}
 	}
 
 	void run()
@@ -389,10 +382,105 @@ protected:
 	const std::string m_sleep_bin;
 };
 
+/*
+ * there's a special situation with collecting child process exit statuses:
+ *
+ * a signal based wait implementation might lose it's signal when a different
+ * child process is waited for in the meantime and the implementation discards
+ * its result.
+ *
+ * Therefore test this situation.
+ */
+class MixedWaitInvocationTest
+{
+public:
+	explicit MixedWaitInvocationTest() :
+		m_sleep_bin("/usr/bin/sleep")
+	{
+
+	}
+
+	void collectResults()
+	{
+		clues::WaitRes wr;
+		/*
+		 * this should time out but in the problematic case still
+		 * collect the result from the short running process, causing
+		 * it "never to return".
+		 */
+		bool exited = m_long_proc.waitTimed(3000, wr);
+		const auto short_pid = m_short_proc.pid();
+		const auto long_pid = m_long_proc.pid();
+
+		if( exited )
+		{
+			clues_throw( clues::InternalError("long running proc unexpectedly returned early") );
+		}
+
+		exited = m_long_proc.waitTimed(10000, wr);
+
+		if( !exited )
+		{
+			clues_throw( clues::InternalError("long running proc unexpectedly didn't return in time") );
+		}
+
+		std::cout << "PID " << long_pid << " returned:\n" << wr << "\n\n";
+
+		// this should long have exited
+		exited = m_short_proc.waitTimed(10000, wr);
+
+		if( !exited )
+
+		{
+			clues_throw( clues::InternalError("short running proc seemingly didn't return in time") );
+		}
+
+		std::cout << "PID " << short_pid << " returned:\n" << wr << "\n\n";
+	}
+
+	void run()
+	{
+		m_short_proc.setArgs({m_sleep_bin, "5"});
+		m_long_proc.setArgs({m_sleep_bin, "10"});
+
+		m_short_proc.run();
+		m_long_proc.run();
+
+		std::cout << "started " << m_short_proc.args() << " with PID " << m_short_proc.pid() << std::endl;
+		std::cout << "started " << m_long_proc.args() << " with PID " << m_long_proc.pid() << std::endl;
+
+		try
+		{
+			collectResults();
+		}
+		catch( const std::exception &ex )
+		{
+			std::cerr << "Failed: " << ex.what() << std::endl;
+
+			const auto sig = clues::Signal(SIGKILL);
+
+			for( auto *proc: { &m_short_proc, &m_long_proc } )
+			{
+				if(!proc->running())
+					continue;
+				proc->kill(sig);
+				proc->wait();
+			}
+		}
+
+	}
+protected:
+
+	clues::SubProc m_short_proc;
+	clues::SubProc m_long_proc;
+	const std::string m_sleep_bin;
+};
+
 int main()
 {
 	try
 	{
+		clues::Init init;
 		/*
 		 * test redirection of each std. file descriptor
 		 */
@@ -421,6 +509,13 @@ int main()
 		{
 			TimeoutTest to_test;
 			to_test.run();
+		}
+
+		std::cout << "\n\n";
+
+		{
+			MixedWaitInvocationTest mixed_test;
+			mixed_test.run();
 		}
 
 		return 0;

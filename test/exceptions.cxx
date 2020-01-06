@@ -4,9 +4,11 @@
 
 #include "clues/errors/ApiError.hxx"
 #include "clues/errors/UsageError.hxx"
+#include "clues/Init.hxx"
 
 int main()
 {
+	clues::Init init;
 	errno = ENOENT;
 	try
 	{
