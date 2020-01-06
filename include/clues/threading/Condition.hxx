@@ -93,6 +93,22 @@ protected: // data
 	Mutex &m_lock;
 };
 
+/**
+ * \brief
+ *	An aggregate of a Mutex and a Condition coupled together for typical
+ *	usage
+ **/
+class ConditionMutex :
+	public Mutex,
+	public Condition
+{
+public: // functions
+
+	ConditionMutex() :
+		Condition(static_cast<Mutex&>(*this))
+	{}
+};
+
 } // end ns
 
 #endif // inc. guard
