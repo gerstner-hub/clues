@@ -18,7 +18,9 @@ lib_srcs = [
 	"Pipe.cxx",
 	"Process.cxx",
 	"fs/FileSystem.cxx",
-	"threading/Mutex.cxx"
+	"threading/Mutex.cxx",
+	"threading/Condition.cxx",
+	"time/Clock.cxx"
 ]
 
 tracer_srcs = [
