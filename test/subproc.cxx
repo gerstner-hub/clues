@@ -350,7 +350,7 @@ public:
 		while(true)
 		{
 			// wait at max one second
-			auto exited = m_proc.waitTimed(1000, res);
+			auto exited = m_proc.waitTimed(500, res);
 
 			if( !exited )
 			{
