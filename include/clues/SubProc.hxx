@@ -133,6 +133,35 @@ public: // functions
 		m_stderr = m_stdout = m_stdin = INVALID_FILE_DESC;
 	}
 
+	// there don't seem to be preprocessor constants around for these
+	static constexpr int minNiceValue() { return -20; }
+	static constexpr int maxNiceValue() { return 19; }
+
+	/**
+	 * \brief
+	 * 	Sets the nice priority for the child process
+	 * \details
+	 * 	The nice value provides some basic CPU time
+	 * 	prioritization for processes. It doesn't offer any hard
+	 * 	guarantees but provides some general tendency for prefer or
+	 * 	disregard a process when it comes to scheduling CPU time.
+	 *
+	 * 	Currently this setting only affects newly created child
+	 * 	processes, not one that is already running.
+	 *
+	 * 	Lower nice values mean more CPU time resources for the
+	 * 	process. See minNiceValue() and maxNiceValue() for the lower
+	 * 	and upper bound of this value.
+	 *
+	 * 	Note that on Linux this setting affects only a single thread
+	 * 	as opposed to the complete process as POSIX mandates. Since
+	 * 	this call currently only supports this setting for newly
+	 * 	created child processes this aspect doesn't matter much,
+	 * 	however, because the nice value will be inherited by child
+	 * 	threads and processes alike.
+	 **/
+	void setNiceValue(int value) { m_nice_prio = value; }
+
 protected: // functions
 
 	//! \brief
@@ -179,6 +208,10 @@ protected: // data
 	std::string m_env;
 	//! whether the child process shall become a tracee of us
 	bool m_trace = false;
+	//! an arbitrary constant to denote an invalide nice value
+	static const int INVALID_NICE_PRIO;
+	//! nice priority to apply to the child process, if any
+	int m_nice_prio = INVALID_NICE_PRIO;
 
 	//! file descriptor to use as child's stdin
 	FileDesc m_stdout = INVALID_FILE_DESC;

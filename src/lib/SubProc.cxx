@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <signal.h>
 
@@ -18,6 +19,8 @@
 
 namespace clues
 {
+
+const int SubProc::INVALID_NICE_PRIO = SubProc::maxNiceValue() + 1;
 
 ChildCollector g_collector;
 
@@ -132,6 +135,18 @@ void SubProc::resetSignals()
 
 void SubProc::postFork()
 {
+	if( m_nice_prio != INVALID_NICE_PRIO )
+	{
+		if( setpriority(PRIO_PROCESS, 0, m_nice_prio) != 0 )
+		{
+			// treat this as non-critical, the process can still
+			// run, even if not prioritized.
+			std::cerr
+				<< "[" << getpid() << "] " << __FUNCTION__
+				<< ": setpriority: " << ApiError().msg()
+				<< std::endl;
+		}
+	}
 	resetSignals();
 
 	if( ! m_cwd.empty() )
