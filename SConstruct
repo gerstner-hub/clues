@@ -20,6 +20,9 @@ env = Environment(**env_options)
 
 env.Append( CXXFLAGS = "-std=c++17" )
 env.Append( CCFLAGS = "-g" )
+if "CXXFLAGS" in os.environ:
+	env.MergeFlags(os.environ["CXXFLAGS"])
+env.Append( CCFLAGS = "-g" )
 env.Append( CCFLAGS = "-Wall" )
 env.Append( CPPPATH = "../../include" )
 env.VariantDir("build", ".", duplicate = False)
