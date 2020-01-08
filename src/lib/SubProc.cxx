@@ -16,11 +16,10 @@
 #include "clues/errors/UsageError.hxx"
 #include "clues/SubProc.hxx"
 #include "clues/private/ChildCollector.hxx"
+#include "clues/private/Scheduler.hxx"
 
 namespace clues
 {
-
-const int SubProc::INVALID_NICE_PRIO = SubProc::maxNiceValue() + 1;
 
 ChildCollector g_collector;
 
@@ -135,18 +134,23 @@ void SubProc::resetSignals()
 
 void SubProc::postFork()
 {
-	if( m_nice_prio != INVALID_NICE_PRIO )
+	if( m_sched_settings )
 	{
-		if( setpriority(PRIO_PROCESS, 0, m_nice_prio) != 0 )
+		try
+		{
+			m_sched_settings->apply(0);
+		}
+		catch( const std::exception &ex )
 		{
 			// treat this as non-critical, the process can still
 			// run, even if not prioritized.
 			std::cerr
 				<< "[" << getpid() << "] " << __FUNCTION__
-				<< ": setpriority: " << ApiError().msg()
+				<< ": sched_setscheduler: " << ex.what()
 				<< std::endl;
 		}
 	}
+
 	resetSignals();
 
 	if( ! m_cwd.empty() )

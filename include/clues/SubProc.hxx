@@ -12,6 +12,7 @@
 #include "clues/types.hxx"
 #include "clues/ostypes.hxx"
 #include "clues/WaitRes.hxx"
+#include "clues/Scheduler.hxx"
 
 namespace clues
 {
@@ -133,34 +134,21 @@ public: // functions
 		m_stderr = m_stdout = m_stdin = INVALID_FILE_DESC;
 	}
 
-	// there don't seem to be preprocessor constants around for these
-	static constexpr int minNiceValue() { return -20; }
-	static constexpr int maxNiceValue() { return 19; }
-
 	/**
 	 * \brief
-	 * 	Sets the nice priority for the child process
+	 * 	Sets scheduler type and settings for newly created childs
 	 * \details
-	 * 	The nice value provides some basic CPU time
-	 * 	prioritization for processes. It doesn't offer any hard
-	 * 	guarantees but provides some general tendency for prefer or
-	 * 	disregard a process when it comes to scheduling CPU time.
+	 * 	By default the parent's scheduling settings will be inherited.
+	 * 	If you want to explicitly change scheduling settings then
+	 * 	apply the appropriate settings here.
 	 *
-	 * 	Currently this setting only affects newly created child
-	 * 	processes, not one that is already running.
-	 *
-	 * 	Lower nice values mean more CPU time resources for the
-	 * 	process. See minNiceValue() and maxNiceValue() for the lower
-	 * 	and upper bound of this value.
-	 *
-	 * 	Note that on Linux this setting affects only a single thread
-	 * 	as opposed to the complete process as POSIX mandates. Since
-	 * 	this call currently only supports this setting for newly
-	 * 	created child processes this aspect doesn't matter much,
-	 * 	however, because the nice value will be inherited by child
-	 * 	threads and processes alike.
+	 * 	Note that this is a pointer that needs to stay valid for each
+	 * 	time you call run(). To restore default behaviour call this
+	 * 	with ss set to \c nullptr.
 	 **/
-	void setNiceValue(int value) { m_nice_prio = value; }
+	void setSchedulerSettings(const SchedulerSettings *ss) { m_sched_settings = ss; };
+
+	const SchedulerSettings* schedulerSettings() const { return m_sched_settings; }
 
 protected: // functions
 
@@ -208,10 +196,8 @@ protected: // data
 	std::string m_env;
 	//! whether the child process shall become a tracee of us
 	bool m_trace = false;
-	//! an arbitrary constant to denote an invalide nice value
-	static const int INVALID_NICE_PRIO;
-	//! nice priority to apply to the child process, if any
-	int m_nice_prio = INVALID_NICE_PRIO;
+	//! scheduler policy settings, if any
+	const SchedulerSettings *m_sched_settings = nullptr;
 
 	//! file descriptor to use as child's stdin
 	FileDesc m_stdout = INVALID_FILE_DESC;

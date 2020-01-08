@@ -21,7 +21,8 @@ lib_srcs = [
 	"threading/Mutex.cxx",
 	"threading/Condition.cxx",
 	"time/Clock.cxx",
-	"Init.cxx"
+	"Init.cxx",
+	"Scheduler.cxx"
 ]
 
 tracer_srcs = [
