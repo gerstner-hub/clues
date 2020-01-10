@@ -2,7 +2,13 @@
 #define CLUES_ARCH_HXX
 
 // Linux
-#include <sys/reg.h> // provides offsets into the register data structure
+#if defined(__x86_64__) || defined(__i386__)
+// provides offsets into the ptrace register data structure
+// does only seem to exist on x86/64, on ARM it's simply 18 GP registers from
+// 0 to 18?
+// TODO: there's also a struct for accessing that, maybe that's better?
+#	include <sys/reg.h>
+#endif
 
 /*
  * this header provides facilities to abstract some of the architectural
@@ -64,6 +70,17 @@ static const int SYSCALL_PAR3_REG = EDX;
 static const int SYSCALL_PAR4_REG = ESI;
 static const int SYSCALL_PAR5_REG = EDI;
 static const int SYSCALL_PAR6_REG = EBP;
+#elif defined(__arm__)
+static const int SYSCALL_MAX_PARS = 7;
+static const int SYSCALL_NR_REG = 7;
+static const int SYSCALL_RES_REG = 0;
+static const int SYSCALL_PAR1_REG = 0;
+static const int SYSCALL_PAR2_REG = 1;
+static const int SYSCALL_PAR3_REG = 2;
+static const int SYSCALL_PAR4_REG = 3;
+static const int SYSCALL_PAR5_REG = 4;
+static const int SYSCALL_PAR6_REG = 5;
+static const int SYSCALL_PAR7_REG = 6;
 #else
 #	error "not yet supported architecture"
 #endif

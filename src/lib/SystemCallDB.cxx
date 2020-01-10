@@ -78,13 +78,6 @@ SystemCall* SystemCallDB::createSysCall(
 				new TimespecParameter("remaining", TimespecParameter::OUT)
 			}
 		);
-	case SYS_alarm:
-		return new Call(nr, "alarm",
-			new ValueOutParameter("prev_remaining_seconds"),
-			{
-				new ValueInParameter("seconds")
-			}
-		);
 	case SYS_access:
 		return new Call(nr, "access",
 			new ErrnoResult(),
@@ -118,6 +111,14 @@ SystemCall* SystemCallDB::createSysCall(
 				new StatParameter()
 			}
 		);
+#ifdef __x86_64__
+	case SYS_alarm:
+		return new Call(nr, "alarm",
+			new ValueOutParameter("prev_remaining_seconds"),
+			{
+				new ValueInParameter("seconds")
+			}
+		);
 	case SYS_mmap:
 		return new Call(nr, "mmap",
 			new GenericPointerParameter("new_memory", GenericPointerParameter::OUT),
@@ -130,6 +131,23 @@ SystemCall* SystemCallDB::createSysCall(
 				new ValueInParameter("offset")
 			}
 		);
+	case SYS_arch_prctl:
+		return new Call(nr, "arch_prctl",
+			new ErrnoResult(),
+			{
+				new ArchCodeParameter(),
+				new GenericPointerParameter("addr")
+			}
+		);
+	case SYS_getrlimit:
+		return new Call(nr, "getrlimit",
+			new ErrnoResult(),
+			{
+				new ResourceType(),
+				new ResourceLimit()
+			}
+		);
+#endif
 	case SYS_munmap:
 		return new Call(nr, "munmap",
 			new ErrnoResult(),
@@ -145,14 +163,6 @@ SystemCall* SystemCallDB::createSysCall(
 				new GenericPointerParameter("addr"),
 				new ValueInParameter("length"),
 				new MemoryProtectionParameter()
-			}
-		);
-	case SYS_arch_prctl:
-		return new Call(nr, "arch_prctl",
-			new ErrnoResult(),
-			{
-				new ArchCodeParameter(),
-				new GenericPointerParameter("addr")
 			}
 		);
 	case SYS_open:
@@ -308,14 +318,6 @@ SystemCall* SystemCallDB::createSysCall(
 				new TimespecParameter("timeout"),
 				new GenericPointerParameter("requeue_futex"),
 				new ValueInParameter("requeue_check_val")
-			}
-		);
-	case SYS_getrlimit:
-		return new Call(nr, "getrlimit",
-			new ErrnoResult(),
-			{
-				new ResourceType(),
-				new ResourceLimit()
 			}
 		);
 	default:

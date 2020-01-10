@@ -8,8 +8,10 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#ifdef __x86_64__
 #include <sys/prctl.h> // arch_prctl constants
 #include <asm/prctl.h> // "	"
+#endif
 #include <linux/futex.h> // futex(2)
 #include <time.h>
 #include <signal.h>
@@ -368,6 +370,7 @@ std::string MemoryProtectionParameter::str() const
 	return ss.str();
 }
 
+#ifdef __x86_64__
 #define chk_arch_case(MODE) case MODE: return #MODE;
 
 std::string ArchCodeParameter::str() const
@@ -382,6 +385,7 @@ std::string ArchCodeParameter::str() const
 		return "unknown";
 	}
 }
+#endif
 
 StatParameter::~StatParameter() { delete m_stat; }
 

@@ -1,8 +1,8 @@
 // Linux
-#include <sys/reg.h>
 
 // Clues
 #include "clues/errors/UsageError.hxx"
+#include "clues/Arch.hxx"
 
 namespace clues
 {
@@ -58,6 +58,8 @@ const char* getRegisterName(const size_t number)
 	case EFL: return "EFL";
 	case UESP: return "UESP";
 	case SS: return "SS";
+#elif defined(__arm__)
+	#warning "ARM not yet implemented"
 #else
 #	error "not yet supported architecture"
 #endif
