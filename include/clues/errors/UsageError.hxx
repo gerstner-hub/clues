@@ -21,6 +21,10 @@ public: // functions
 		m_error_msg(msg)
 	{}
 
+	explicit UsageError(const std::string &msg) :
+		UsageError(msg.c_str())
+	{}
+
 	void raise() override { throw *this; }
 
 protected: // functions
