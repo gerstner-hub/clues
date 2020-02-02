@@ -17,6 +17,7 @@ lib_srcs = [
 	"RegisterSet.cxx",
 	"Pipe.cxx",
 	"Process.cxx",
+	"fs/Directory.cxx",
 	"fs/FileSystem.cxx",
 	"threading/Mutex.cxx",
 	"threading/Condition.cxx",

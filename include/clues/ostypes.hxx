@@ -21,6 +21,8 @@ constexpr int INVALID_FILE_DESC = -1;
 
 typedef uid_t UserID;
 
+typedef ino_t Inode;
+
 } // end ns
 
 #endif // inc. agurd

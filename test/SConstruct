@@ -7,7 +7,8 @@ tests = (
 	"arch",
 	"pipe",
 	"subproc",
-	"thread_primitives"
+	"thread_primitives",
+	"dirs"
 )
 
 for test in tests:
