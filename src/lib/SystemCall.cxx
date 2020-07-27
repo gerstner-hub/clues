@@ -62,6 +62,7 @@ void SystemCall::setExitRegs(const TracedProc &proc, const RegisterSet &r)
 
 void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping)
 {
+	// TODO: this implementation is not finished / not sane yet.
 	if( m_open_id_par != SIZE_MAX )
 	{
 		const int new_fd = (int)m_return->value();

@@ -12,6 +12,7 @@ void SystemCallParameter::set(
 	const RegisterSet::Word word)
 {
 	m_val = word;
+	// TODO: this doesn't really suit return parameters
 	enteredCall(proc);
 }
 

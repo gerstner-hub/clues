@@ -53,6 +53,10 @@ public: // functions
 	const bool isOut() const { return m_flow == OUT; }
 	const bool isInOut() const { return m_flow == IN_OUT; }
 
+	/**
+	 * \brief
+	 *	Sets ??? XXX broken interfaces for return parameters
+	 **/
 	void set(const TracedProc &proc, const RegisterSet::Word word);
 
 	//! returns whether the parameter data needs to be updated after the
@@ -66,11 +70,11 @@ public: // functions
 
 	/**
 	 * \brief
-	 *	returns a human readable string representation of the
+	 *	Returns a human readable string representation of the
 	 *	parameter
 	 * \details
 	 * 	This member function should be specialized by derived classes
-	 * 	for output the parameter data in a fahsion more suitable the
+	 * 	to output the parameter data in a fahsion more suitable the
 	 * 	concrete parameter type.
 	 **/
 	virtual std::string str() const;

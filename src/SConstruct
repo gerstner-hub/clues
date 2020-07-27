@@ -23,7 +23,8 @@ lib_srcs = [
 	"threading/Condition.cxx",
 	"time/Clock.cxx",
 	"Init.cxx",
-	"Scheduler.cxx"
+	"Scheduler.cxx",
+	"utils.cxx"
 ]
 
 tracer_srcs = [
