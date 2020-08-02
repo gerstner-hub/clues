@@ -13,18 +13,18 @@ int main()
 	errno = ENOENT;
 	try
 	{
-		clues_throw( cosmos::ApiError() );
+		cosmos_throw( cosmos::ApiError() );
 	}
-	catch( const cosmos::CluesError &ce )
+	catch( const cosmos::CosmosError &ce )
 	{
 		std::cerr << "Testing ApiError (ENOENT): " << ce.what() << std::endl;
 	}
 
 	try
 	{
-		clues_throw( cosmos::UsageError("testing is good") );
+		cosmos_throw( cosmos::UsageError("testing is good") );
 	}
-	catch( const cosmos::CluesError &ce )
+	catch( const cosmos::CosmosError &ce )
 	{
 		std::cerr << "Testing UsageError: " << ce.what() << std::endl;
 	}

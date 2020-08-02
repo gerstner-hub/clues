@@ -40,7 +40,7 @@ void TracedProc::cont(
 		signal.raw() ? &signal.raw() : nullptr,
 		nullptr ) )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -54,7 +54,7 @@ unsigned long TracedProc::getEventMsg() const
 		nullptr,
 		&ret) )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	return ret;
@@ -68,7 +68,7 @@ void TracedProc::setOptions(int options)
 		nullptr,
 		options) )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -76,7 +76,7 @@ void TracedProc::interrupt()
 {
 	if( ::ptrace( PTRACE_INTERRUPT, m_tracee, nullptr, nullptr ) )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -84,7 +84,7 @@ void TracedProc::seize()
 {
 	if( ::ptrace( PTRACE_SEIZE, m_tracee, nullptr, nullptr ) != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -92,7 +92,7 @@ void TracedProc::wait(WaitRes &res)
 {
 	if( ::waitpid(m_tracee, res.raw(), 0) == -1 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -160,7 +160,7 @@ void TracedProc::getRegisters(RegisterSet &rs)
 
 	if( ::ptrace( PTRACE_GETREGSET, m_tracee, rs.registerType(), &reg_vector ) != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	//std::cout << "Read registers " << reg_vector.iov_len << " vs. " << sizeof(regs) << std::endl;
@@ -173,7 +173,7 @@ long TracedProc::getData(const long *addr) const
 
 	if( errno != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	return ret;
@@ -215,7 +215,7 @@ void TracedSeizedProc::detach()
 	{
 		if( ::ptrace( PTRACE_DETACH, m_tracee, nullptr, nullptr ) != 0 )
 		{
-			clues_throw( ApiError() );
+			cosmos_throw( ApiError() );
 		}
 
 		m_tracee = INVALID_PID;
@@ -228,7 +228,7 @@ TracedSeizedProc::~TracedSeizedProc()
 	{
 		detach();
 	}
-	catch( const CluesError &ce )
+	catch( const CosmosError &ce )
 	{
 		std::cerr
 			<< "Couldn't detach from " << m_tracee << ":\n\n"
@@ -265,7 +265,7 @@ TracedSubProc::~TracedSubProc()
 
 		detach();
 	}
-	catch( const CluesError &ce )
+	catch( const CosmosError &ce )
 	{
 		std::cerr << "Error detaching from child process " << m_child
 			<< ":\n\n" << ce.what();

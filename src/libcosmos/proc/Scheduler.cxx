@@ -28,7 +28,7 @@ void SchedulerSettings::apply(ProcessID pid) const
 	// only supports the priority property and FIFO/RR, nothing else.
 	if( ::syscall(__NR_sched_setattr, pid, &attrs, 0) != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -38,7 +38,7 @@ int RealtimeSchedulerSettings::getMinPriority() const
 
 	if( ret == -1 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	return ret;
@@ -50,7 +50,7 @@ int RealtimeSchedulerSettings::getMaxPriority() const
 
 	if( ret == -1 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	return ret;
@@ -60,7 +60,7 @@ void SchedulerSettings::fillStruct(sched_attr &attr) const
 {
 	if( m_policy == SchedulerPolicy::INVALID )
 	{
-		clues_throw( UsageError("Tried to fill sched_attr for invalid policy") );
+		cosmos_throw( UsageError("Tried to fill sched_attr for invalid policy") );
 	}
 	std::memset(&attr, 0, sizeof(attr));
 	attr.size = sizeof(attr);

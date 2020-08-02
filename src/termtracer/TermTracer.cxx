@@ -8,7 +8,7 @@
 // cosmos
 #include "cosmos/Init.hxx"
 #include "cosmos/proc/SubProc.hxx"
-#include "cosmos/errors/CluesError.hxx"
+#include "cosmos/errors/CosmosError.hxx"
 
 // clues
 #include "clues/TracedProc.hxx"
@@ -138,7 +138,7 @@ int main(const int argc, const char **argv)
 		cosmos::Init init;
 		return clues::TermTracer().run(argc, argv);
 	}
-	catch( const cosmos::CluesError &ce )
+	catch( const cosmos::CosmosError &ce )
 	{
 		std::cerr
 			<< "Exception catched:\n\n"

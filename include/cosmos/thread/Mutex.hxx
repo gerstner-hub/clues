@@ -53,7 +53,7 @@ public: // functions
 
 		if( lock_res )
 		{
-			clues_throw( ApiError(lock_res) );
+			cosmos_throw( ApiError(lock_res) );
 		}
 	}
 
@@ -63,7 +63,7 @@ public: // functions
 
 		if( unlock_res )
 		{
-			clues_throw( ApiError(unlock_res) );
+			cosmos_throw( ApiError(unlock_res) );
 		}
 	}
 

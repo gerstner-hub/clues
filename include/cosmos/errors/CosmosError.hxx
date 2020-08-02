@@ -1,5 +1,5 @@
-#ifndef COSMOS_CLUESERROR_HXX
-#define COSMOS_CLUESERROR_HXX
+#ifndef COSMOS_COSMOSERROR_HXX
+#define COSMOS_COSMOSERROR_HXX
 
 // C++
 #include <exception>
@@ -7,7 +7,7 @@
 
 // throw the given Exception type after added contextual information from the
 // callers location
-#define clues_throw(e) (e.setInfo(__FILE__, __LINE__, __FUNCTION__).raise())
+#define cosmos_throw(e) (e.setInfo(__FILE__, __LINE__, __FUNCTION__).raise())
 
 namespace cosmos
 {
@@ -20,23 +20,23 @@ namespace cosmos
  * 	information from where it was thrown. Furthermore it stores a
  * 	dynamically allocated string with runtime information.
  *
- * 	The clues_throw macro allows to transparently throw any type derived from
- * 	this base class, all contextual information filled in.
+ * 	The cosmos_throw macro allows to transparently throw any type derived
+ * 	from this base class, all contextual information filled in.
  *
  * 	Each derived type must implement the raise() function to allow to
  * 	throw the correct specialized type even when only the base class type
  * 	is known. The generateMsg() function can be overwritten to update the
  * 	error message content at the time what() is called.
  **/
-class CluesError :
+class CosmosError :
 	public std::exception
 {
 public: // functions
 
-	explicit CluesError(const char *error_class) :
+	explicit CosmosError(const char *error_class) :
 		m_error_class(error_class) {}
 
-	CluesError& setInfo(
+	CosmosError& setInfo(
 		const char *file,
 		const size_t line,
 		const char *func)

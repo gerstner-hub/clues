@@ -137,7 +137,7 @@ protected: // functions
 					break;
 				// something went wrong, clean up our state,
 				// the child is probably lost in some way.
-				clues_throw( ApiError() );
+				cosmos_throw( ApiError() );
 			}
 
 			m_proc_res_map.insert( std::make_pair(pid, WaitRes(status)) );
@@ -163,7 +163,7 @@ bool ChildCollector::collect(ProcessID pid, const size_t max_wait_ms, WaitRes &r
 {
 	if( ! libInitialized() )
 	{
-		clues_throw( UsageError("libcosmos was not initialized") );
+		cosmos_throw( UsageError("libcosmos was not initialized") );
 	}
 
 	auto clock = Clock(Condition::clockType());
@@ -307,7 +307,7 @@ bool ChildCollector::waitForChildSignal(Clock &clock, const TimeSpec &endtime) c
 			// timed out
 			return false;
 		default:
-			clues_throw( ApiError() );
+			cosmos_throw( ApiError() );
 		}
 	}
 }

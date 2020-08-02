@@ -15,7 +15,7 @@ Condition::Condition(Mutex &lock) :
 
 	if( res != 0 )
 	{
-		clues_throw( ApiError(res) );
+		cosmos_throw( ApiError(res) );
 	}
 
 	try
@@ -29,14 +29,14 @@ Condition::Condition(Mutex &lock) :
 
 		if( res != 0 )
 		{
-			clues_throw( ApiError(res) );
+			cosmos_throw( ApiError(res) );
 		}
 
 		auto res = ::pthread_cond_init(&m_pcond, &attr);
 
 		if( res != 0 )
 		{
-			clues_throw( ApiError(res) );
+			cosmos_throw( ApiError(res) );
 		}
 	}
 	catch(...)

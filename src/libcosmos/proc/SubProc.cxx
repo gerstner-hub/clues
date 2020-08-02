@@ -37,7 +37,7 @@ void ChildCollector::libInit()
 
 	if( sigprocmask(SIG_BLOCK, &sigs, nullptr) != 0 )
 	{
-		clues_throw( cosmos::ApiError() );
+		cosmos_throw( cosmos::ApiError() );
 	}
 }
 
@@ -72,7 +72,7 @@ void SubProc::run(const StringVector &sv)
 
 	if( args.empty() )
 	{
-		clues_throw( UsageError(
+		cosmos_throw( UsageError(
 			"attempted to run a subprocess w/o specifying an executable path"
 		) );
 	}
@@ -87,7 +87,7 @@ void SubProc::run(const StringVector &sv)
 	case -1: // an error occured
 		// see above, same for error case
 		resetStdFiles();
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 		return;
 	case 0: // the child process
 		// let's do something!
@@ -109,7 +109,7 @@ void SubProc::run(const StringVector &sv)
 
 		this->exec(argv);
 	}
-	catch( const CluesError &ce )
+	catch( const CosmosError &ce )
 	{
 		std::cerr
 			<< "Execution of child process failed:\n"
@@ -128,7 +128,7 @@ void SubProc::resetSignals()
 	sigfillset(&sigs);
 	if( sigprocmask(SIG_UNBLOCK, &sigs, nullptr) != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -157,7 +157,7 @@ void SubProc::postFork()
 	{
 		if( ::chdir(m_cwd.c_str()) != 0 )
 		{
-			clues_throw( ApiError() );
+			cosmos_throw( ApiError() );
 		}
 	}
 
@@ -177,7 +177,7 @@ void SubProc::postFork()
 		// the parent can SEIZE us.
 		if( ::ptrace( PTRACE_TRACEME, INVALID_PID, 0, 0 ) != 0 )
 		{
-			clues_throw( ApiError() );
+			cosmos_throw( ApiError() );
 		}
 #endif
 
@@ -203,7 +203,7 @@ void SubProc::redirectFD(FileDesc orig, FileDesc redirect)
 	 */
 	if( dup2(redirect, orig) == -1 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -211,12 +211,12 @@ void SubProc::exec(CStringVector &v)
 {
 	if( v.empty() )
 	{
-		clues_throw( InternalError("called with empty argument vector") );
+		cosmos_throw( InternalError("called with empty argument vector") );
 	}
 
 	::execvp( v[0], const_cast<char**>(v.data()) );
 
-	clues_throw( ApiError() );
+	cosmos_throw( ApiError() );
 }
 
 void SubProc::kill(const Signal &s)
@@ -244,7 +244,7 @@ bool SubProc::waitTimed(const size_t max_ms, WaitRes &res)
 	{
 		// this conflicts with the interpretation of SIZE_MAX in
 		// ChildCollector as "use no timeout".
-		clues_throw( UsageError("max_ms parameter is too large") );
+		cosmos_throw( UsageError("max_ms parameter is too large") );
 	}
 
 	try

@@ -2,7 +2,7 @@
 #define COSMOS_APIERROR_HXX
 
 // cosmos
-#include "cosmos/errors/CluesError.hxx"
+#include "cosmos/errors/CosmosError.hxx"
 
 namespace cosmos
 {
@@ -15,7 +15,7 @@ namespace cosmos
  * 	format a human readable error message from it.
  **/
 class ApiError :
-	public CluesError
+	public CosmosError
 {
 public: // functions
 

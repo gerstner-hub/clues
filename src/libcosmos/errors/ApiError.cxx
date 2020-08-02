@@ -17,7 +17,7 @@ ApiError::ApiError() :
 }
 
 ApiError::ApiError(const int p_errno) :
-	CluesError("ApiError"),
+	CosmosError("ApiError"),
 	m_errno(p_errno)
 {}
 

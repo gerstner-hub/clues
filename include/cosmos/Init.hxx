@@ -14,9 +14,9 @@ namespace cosmos
  * 	Multiple initializations can be performed but finishLibcosmos() needs
  * 	to be called the same number of times for cleanup to occur.
  **/
-void initLibClues();
+void initLibCosmos();
 
-void finishLibClues();
+void finishLibCosmos();
 
 /**
  * \brief
@@ -28,9 +28,9 @@ void finishLibClues();
 class Init
 {
 public:
-	Init() { initLibClues(); }
+	Init() { initLibCosmos(); }
 
-	~Init() { finishLibClues(); }
+	~Init() { finishLibCosmos(); }
 };
 
 } // end ns

@@ -16,7 +16,7 @@ Pipe::Pipe()
 	int ends[2];
 	if( pipe2(ends, O_CLOEXEC | O_DIRECT) != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	m_read_end = ends[0];

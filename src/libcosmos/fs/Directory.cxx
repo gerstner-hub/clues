@@ -21,7 +21,7 @@ void Directory::close()
 
 	if( ret == -1 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -41,7 +41,7 @@ void Directory::open(const std::string &path, const bool follow_links)
 
 	if( fd == -1 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	try
@@ -64,7 +64,7 @@ void Directory::open(FileDesc fd)
 
 	if( !m_stream )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -75,7 +75,7 @@ FileDesc Directory::fd() const
 
 	if( ret == -1 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	return ret;
@@ -104,7 +104,7 @@ DirEntry Directory::nextEntry()
 
 	if( errno != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 
 	return DirEntry(nullptr);

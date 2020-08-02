@@ -51,7 +51,7 @@ void Initable::registerInitable(const InitPrio prio)
 	}
 }
 
-void initLibClues()
+void initLibCosmos()
 {
 	if( g_init_counter++ != 0 )
 		return;
@@ -65,7 +65,7 @@ void initLibClues()
 	}
 }
 
-void finishLibClues()
+void finishLibCosmos()
 {
 	if( --g_init_counter != 0 )
 		return;

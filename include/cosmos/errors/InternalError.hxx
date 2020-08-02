@@ -2,7 +2,7 @@
 #define COSMOS_INTERNALERROR_HXX
 
 // cosmos
-#include "cosmos/errors/CluesError.hxx"
+#include "cosmos/errors/CosmosError.hxx"
 
 namespace cosmos
 {
@@ -15,12 +15,12 @@ namespace cosmos
  * 	given are not fulfilled.
  **/
 class InternalError :
-	public CluesError
+	public CosmosError
 {
 public: // functions
 
 	explicit InternalError(const char *msg) :
-		CluesError("InternalError"),
+		CosmosError("InternalError"),
 		m_error_msg(msg)
 	{}
 

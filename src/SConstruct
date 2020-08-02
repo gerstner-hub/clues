@@ -3,7 +3,7 @@ Import('env')
 libcosmos_srcs = [
 	"Init.cxx",
 	"errors/ApiError.cxx",
-	"errors/CluesError.cxx",
+	"errors/CosmosError.cxx",
 	"fs/Directory.cxx",
 	"fs/FileSystem.cxx",
 	"io/Pipe.cxx",

@@ -17,7 +17,7 @@ bool FileSystem::existsFile(const std::string &path)
 	if( lstat(path.c_str(), &s) == 0 )
 		return true;
 	else if( errno != ENOENT )
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 
 	return false;
 }

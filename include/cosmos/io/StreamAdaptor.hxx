@@ -68,7 +68,7 @@ protected: // functions
 	{
 		if( fd == INVALID_FILE_DESC )
 		{
-			clues_throw( UsageError("Construct StreamAdaptor for invalid FD") );
+			cosmos_throw( UsageError("Construct StreamAdaptor for invalid FD") );
 		}
 
 		this->rdbuf(&m_buffer);

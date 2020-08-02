@@ -24,7 +24,7 @@ Mutex::Mutex()
 			res = ::pthread_mutexattr_init(&debug_attr);
 			if( res != 0 )
 			{
-				clues_throw( ApiError(res) );
+				cosmos_throw( ApiError(res) );
 			}
 
 			res = ::pthread_mutexattr_settype(
@@ -33,7 +33,7 @@ Mutex::Mutex()
 
 			if( res != 0 )
 			{
-				clues_throw( ApiError(res) );
+				cosmos_throw( ApiError(res) );
 			}
 
 
@@ -43,7 +43,7 @@ Mutex::Mutex()
 		res = ::pthread_mutex_init(&m_pmutex, attr);
 		if( res != 0 )
 		{
-			clues_throw( ApiError(res) );
+			cosmos_throw( ApiError(res) );
 		}
 
 		if( DEBUG_MUTEX )

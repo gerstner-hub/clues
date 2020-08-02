@@ -21,7 +21,7 @@ void Signal::raiseSignal(const Signal &s)
 {
 	if( ::raise( s.raw() ) )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 
@@ -29,7 +29,7 @@ void Signal::sendSignal(const ProcessID &proc, const Signal &s)
 {
 	if( ::kill( proc, s.raw() ) )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 

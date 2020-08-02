@@ -11,7 +11,7 @@ void Clock::now(TimeSpec &ts) const
 
 	if( res != 0 )
 	{
-		clues_throw( ApiError() );
+		cosmos_throw( ApiError() );
 	}
 }
 

@@ -54,7 +54,7 @@ int main()
 			std::cerr << "spent too much time in waitTimed()?!" << std::endl;
 		}
 	}
-	catch( const cosmos::CluesError &ex )
+	catch( const cosmos::CosmosError &ex )
 	{
 		std::cerr << ex.what() << std::endl;
 		return 1;

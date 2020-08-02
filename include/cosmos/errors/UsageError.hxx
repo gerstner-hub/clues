@@ -2,7 +2,7 @@
 #define COSMOS_USAGEERROR_HXX
 
 // cosmos
-#include "cosmos/errors/CluesError.hxx"
+#include "cosmos/errors/CosmosError.hxx"
 
 namespace cosmos
 {
@@ -12,12 +12,12 @@ namespace cosmos
  * 	Exception type for logical usage errors within the application
  **/
 class UsageError :
-	public CluesError
+	public CosmosError
 {
 public: // functions
 
 	explicit UsageError(const char *msg) :
-		CluesError("UsageError"),
+		CosmosError("UsageError"),
 		m_error_msg(msg)
 	{}
 

@@ -155,7 +155,7 @@ public: // functions
 
 		if( ret == -1 )
 		{
-			clues_throw( ApiError() );
+			cosmos_throw( ApiError() );
 		}
 
 		return ret;
@@ -195,7 +195,7 @@ protected: // functions
 	{
 		if( !isOpen() )
 		{
-			clues_throw( UsageError(std::string(context) + " on unassociated Directory") );
+			cosmos_throw( UsageError(std::string(context) + " on unassociated Directory") );
 		}
 	}
 

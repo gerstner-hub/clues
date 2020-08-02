@@ -82,7 +82,7 @@ public: // functions
 	{
 		if( number >= MAX_SYSCALL_PARS )
 		{
-			clues_throw( UsageError("invalid system call parameter nr.") );
+			cosmos_throw( UsageError("invalid system call parameter nr.") );
 		}
 
 		return m_regs[SYSCALL_PAR_REGISTER[number]];
@@ -103,7 +103,7 @@ public: // functions
 	{
 		if( number >= numRegisters() )
 		{
-			clues_throw( UsageError("invalid register nr.") );
+			cosmos_throw( UsageError("invalid register nr.") );
 		}
 
 		return m_regs[number];

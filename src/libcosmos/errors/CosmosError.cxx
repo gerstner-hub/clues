@@ -2,12 +2,12 @@
 #include <sstream>
 
 // cosmos
-#include "cosmos/errors/CluesError.hxx"
+#include "cosmos/errors/CosmosError.hxx"
 
 namespace cosmos
 {
 
-const char* CluesError::what() const throw()
+const char* CosmosError::what() const throw()
 {
 	if( !m_msg.empty() )
 		return m_msg.c_str();

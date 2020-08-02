@@ -33,8 +33,8 @@ enum class InitPrio : std::size_t
  **/
 class Initable
 {
-	friend void initLibClues();
-	friend void finishLibClues();
+	friend void initLibCosmos();
+	friend void finishLibCosmos();
 
 protected: // functions
 

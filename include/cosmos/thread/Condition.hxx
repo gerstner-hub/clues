@@ -53,7 +53,7 @@ public: // functions
 
 		if( res != 0 )
 		{
-			clues_throw( ApiError(res) );
+			cosmos_throw( ApiError(res) );
 		}
 	}
 
@@ -71,7 +71,7 @@ public: // functions
 
 		switch(res)
 		{
-		default: clues_throw( ApiError(res) );
+		default: cosmos_throw( ApiError(res) );
 		case 0: return true;
 		case ETIMEDOUT: return false;
 		}
@@ -89,7 +89,7 @@ public: // functions
 
 		if( res != 0 )
 		{
-			clues_throw( ApiError(res) );
+			cosmos_throw( ApiError(res) );
 		}
 	}
 
@@ -99,7 +99,7 @@ public: // functions
 
 		if( res != 0 )
 		{
-			clues_throw( ApiError(res) );
+			cosmos_throw( ApiError(res) );
 		}
 	}
 
