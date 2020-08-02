@@ -1,17 +1,17 @@
 #ifndef COSMOS_INIT_HXX
 #define COSMOS_INIT_HXX
 
-namespace clues
+namespace cosmos
 {
 
 /**
  * \brief
- * 	Initializes the clues library before first use
+ * 	Initializes the cosmos library before first use
  * \details
  * 	The initialization of the library is required before any other
- * 	functionality of libclues is accessed.
+ * 	functionality of libcosmos is accessed.
  *
- * 	Multiple initializations can be performed but finishLibClues() needs
+ * 	Multiple initializations can be performed but finishLibcosmos() needs
  * 	to be called the same number of times for cleanup to occur.
  **/
 void initLibClues();
@@ -22,7 +22,7 @@ void finishLibClues();
  * \brief
  * 	Convenience initialization object
  * \details
- * 	During the lifetime of this object the clues library remains
+ * 	During the lifetime of this object the cosmos library remains
  * 	initialized.
  **/
 class Init

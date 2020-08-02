@@ -10,10 +10,10 @@
 
 int main()
 {
-	clues::Init init;
-	clues::Pipe pip;
-	clues::OutputStreamAdaptor pip_out(pip);
-	clues::InputStreamAdaptor pip_in(pip);
+	cosmos::Init init;
+	cosmos::Pipe pip;
+	cosmos::OutputStreamAdaptor pip_out(pip);
+	cosmos::InputStreamAdaptor pip_in(pip);
 
 	pip_out << "test" << std::flush;
 	pip_out.close();

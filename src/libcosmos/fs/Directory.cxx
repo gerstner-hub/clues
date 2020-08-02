@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-namespace clues
+namespace cosmos
 {
 
 void Directory::close()

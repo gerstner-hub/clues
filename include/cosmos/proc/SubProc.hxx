@@ -14,15 +14,15 @@
 #include "cosmos/proc/WaitRes.hxx"
 #include "cosmos/proc/Scheduler.hxx"
 
-namespace clues
+namespace cosmos
 {
 	class SubProc;
 	class Signal;
 }
 
-std::ostream& operator<<(std::ostream&, const clues::SubProc &);
+std::ostream& operator<<(std::ostream&, const cosmos::SubProc &);
 
-namespace clues
+namespace cosmos
 {
 
 /**
@@ -211,7 +211,7 @@ protected: // data
 
 } // end ns
 
-clues::SubProc& operator<<(clues::SubProc &proc, const std::string &arg);
+cosmos::SubProc& operator<<(cosmos::SubProc &proc, const std::string &arg);
 
 #endif // inc. guard
 

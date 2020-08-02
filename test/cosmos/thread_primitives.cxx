@@ -9,7 +9,7 @@
 
 int main()
 {
-	clues::Init init;
+	cosmos::Init init;
 
 	try
 	{
@@ -17,19 +17,19 @@ int main()
 		 * lacking actualy threads yet this is a bit of a over
 		 * simplified test, but still better than nothing.
 		 */
-		clues::Mutex lock;
+		cosmos::Mutex lock;
 
 		lock.lock();
 		lock.unlock();
 
-		clues::Condition cond(lock);
+		cosmos::Condition cond(lock);
 		cond.signal();
 		cond.broadcast();
 
-		clues::ConditionMutex condmux;
-		clues::Clock clock(condmux.clockType());
+		cosmos::ConditionMutex condmux;
+		cosmos::Clock clock(condmux.clockType());
 		auto starttime = clock.now();
-		auto endtime = starttime + clues::TimeSpec(5);
+		auto endtime = starttime + cosmos::TimeSpec(5);
 
 		condmux.lock();
 		auto signaled = condmux.waitTimed(endtime);
@@ -54,7 +54,7 @@ int main()
 			std::cerr << "spent too much time in waitTimed()?!" << std::endl;
 		}
 	}
-	catch( const clues::CluesError &ex )
+	catch( const cosmos::CluesError &ex )
 	{
 		std::cerr << ex.what() << std::endl;
 		return 1;

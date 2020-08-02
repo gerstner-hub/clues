@@ -9,12 +9,12 @@
 // callers location
 #define clues_throw(e) (e.setInfo(__FILE__, __LINE__, __FUNCTION__).raise())
 
-namespace clues
+namespace cosmos
 {
 
 /**
  * \brief
- * 	Base class for Clues exceptions
+ * 	Base class for Cosmos exceptions
  * \details
  * 	This base class carries the file, line and function contextual
  * 	information from where it was thrown. Furthermore it stores a

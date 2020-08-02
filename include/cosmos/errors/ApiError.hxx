@@ -1,10 +1,10 @@
 #ifndef COSMOS_APIERROR_HXX
 #define COSMOS_APIERROR_HXX
 
-// clues
+// cosmos
 #include "cosmos/errors/CluesError.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

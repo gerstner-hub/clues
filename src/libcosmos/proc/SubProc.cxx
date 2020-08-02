@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-// clues
+// cosmos
 #include "cosmos/errors/ApiError.hxx"
 #include "cosmos/errors/InternalError.hxx"
 #include "cosmos/errors/UsageError.hxx"
@@ -18,7 +18,7 @@
 #include "cosmos/private/ChildCollector.hxx"
 #include "cosmos/private/Scheduler.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 ChildCollector g_collector;
@@ -37,7 +37,7 @@ void ChildCollector::libInit()
 
 	if( sigprocmask(SIG_BLOCK, &sigs, nullptr) != 0 )
 	{
-		clues_throw( clues::ApiError() );
+		clues_throw( cosmos::ApiError() );
 	}
 }
 
@@ -273,7 +273,7 @@ void SubProc::gone(const WaitRes &r)
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::SubProc &proc)
+std::ostream& operator<<(std::ostream &o, const cosmos::SubProc &proc)
 {
 	o << "Subprocess PID " << proc.m_pid << "\n";
 	o << "Arguments: " << proc.args() << "\n";

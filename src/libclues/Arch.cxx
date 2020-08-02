@@ -6,6 +6,8 @@
 // Clues
 #include "clues/Arch.hxx"
 
+using namespace cosmos;
+
 namespace clues
 {
 

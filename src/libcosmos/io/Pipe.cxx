@@ -6,7 +6,7 @@
 #include "cosmos/io/Pipe.hxx"
 #include "cosmos/errors/ApiError.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 	size_t Pipe::MAX_ATOMIC_WRITE = PIPE_BUF;

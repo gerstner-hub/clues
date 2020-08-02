@@ -7,7 +7,7 @@
 // Cosmos
 #include "cosmos/ostypes.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 struct sched_attr;

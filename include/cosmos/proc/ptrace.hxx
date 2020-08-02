@@ -8,7 +8,7 @@
 // ptrace
 #include <sys/ptrace.h>
 
-namespace clues
+namespace cosmos
 {
 
 /**

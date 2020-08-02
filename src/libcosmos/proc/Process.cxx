@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-namespace clues
+namespace cosmos
 {
 
 ProcessID Process::cachePid() const

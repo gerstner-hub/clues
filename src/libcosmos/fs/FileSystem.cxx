@@ -1,4 +1,4 @@
-// Clues
+// cosmos
 #include "cosmos/fs/FileSystem.hxx"
 #include "cosmos/errors/ApiError.hxx"
 
@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-namespace clues
+namespace cosmos
 {
 
 bool FileSystem::existsFile(const std::string &path)

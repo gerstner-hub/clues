@@ -4,7 +4,7 @@
 // Linux
 #include <time.h>
 
-namespace clues
+namespace cosmos
 {
 
 /**

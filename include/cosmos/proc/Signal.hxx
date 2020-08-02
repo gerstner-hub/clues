@@ -8,7 +8,7 @@
 // cosmos
 #include "cosmos/ostypes.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**
@@ -63,7 +63,7 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::Signal &sig);
+std::ostream& operator<<(std::ostream &o, const cosmos::Signal &sig);
 
 #endif // inc. guard
 

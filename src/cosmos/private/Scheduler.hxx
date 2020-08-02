@@ -1,10 +1,10 @@
-#ifndef CLUES_PRIVATE_SCHEDULER_HXX
-#define CLUES_PRIVATE_SCHEDULER_HXX
+#ifndef COSMOS_PRIVATE_SCHEDULER_HXX
+#define COSMOS_PRIVATE_SCHEDULER_HXX
 
 // C
 #include <stdint.h>
 
-namespace clues
+namespace cosmos
 {
 
 /*

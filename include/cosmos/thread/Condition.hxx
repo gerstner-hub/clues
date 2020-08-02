@@ -5,12 +5,12 @@
 #include <pthread.h>
 #include <assert.h>
 
-// Clues
+// cosmos
 #include "cosmos/errors/ApiError.hxx"
 #include "cosmos/thread/Mutex.hxx"
 #include "cosmos/time/Clock.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

@@ -1,7 +1,7 @@
-// Clues
+// Cosmos
 #include "cosmos/thread/Condition.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 Condition::Condition(Mutex &lock) :

@@ -5,10 +5,10 @@
 // Linux
 #include <errno.h>
 
-// clues
+// cosmos
 #include "cosmos/errors/ApiError.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 ApiError::ApiError() :

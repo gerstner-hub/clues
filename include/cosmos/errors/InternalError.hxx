@@ -4,7 +4,7 @@
 // cosmos
 #include "cosmos/errors/CluesError.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

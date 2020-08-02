@@ -22,7 +22,7 @@ public:
 
 	int testBasicLogic()
 	{
-		clues::Directory dir;
+		cosmos::Directory dir;
 
 		if( dir.isOpen() )
 		{
@@ -71,7 +71,7 @@ public:
 
 	int testOpenDir()
 	{
-		clues::Directory dir;
+		cosmos::Directory dir;
 
 		dir.open(m_dir_path);
 
@@ -86,7 +86,7 @@ public:
 		auto startpos = dir.tell();
 		std::string first_name;
 
-		clues::DirEntry entry;
+		cosmos::DirEntry entry;
 
 		while( (entry = dir.nextEntry()).isValid() )
 		{

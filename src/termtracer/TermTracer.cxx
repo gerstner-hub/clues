@@ -135,10 +135,10 @@ int main(const int argc, const char **argv)
 {
 	try
 	{
-		clues::Init init;
+		cosmos::Init init;
 		return clues::TermTracer().run(argc, argv);
 	}
-	catch( const clues::CluesError &ce )
+	catch( const cosmos::CluesError &ce )
 	{
 		std::cerr
 			<< "Exception catched:\n\n"

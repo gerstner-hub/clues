@@ -12,7 +12,7 @@
 #include "cosmos/proc/Signal.hxx"
 #include "cosmos/proc/ptrace.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**
@@ -120,7 +120,7 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::WaitRes &res);
+std::ostream& operator<<(std::ostream &o, const cosmos::WaitRes &res);
 
 #endif // inc. guard
 

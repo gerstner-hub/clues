@@ -8,10 +8,10 @@
 // C++
 #include <cstring>
 
-// Clues
+// cosmos
 #include "cosmos/ostypes.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

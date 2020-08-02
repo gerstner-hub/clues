@@ -1,5 +1,5 @@
-#ifndef CLUES_CHILDCOLLECTOR_HXX
-#define CLUES_CHILDCOLLECTOR_HXX
+#ifndef COSMOS_CHILDCOLLECTOR_HXX
+#define COSMOS_CHILDCOLLECTOR_HXX
 
 // Linux
 #include <signal.h>
@@ -17,7 +17,7 @@
 #include "cosmos/thread/Condition.hxx"
 #include "cosmos/time/TimeSpec.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**
@@ -152,7 +152,7 @@ protected: // functions from Initable
 protected: // data
 
 	//! protects and synchronizes m_proc_res_map
-	clues::ConditionMutex m_proc_res_condition;
+	cosmos::ConditionMutex m_proc_res_condition;
 	//! here any already collected child exit states will be kept by PID
 	ProcessResultMap m_proc_res_map;
 	//! whether any thread is currently in the sigtimedwait() context
@@ -163,7 +163,7 @@ bool ChildCollector::collect(ProcessID pid, const size_t max_wait_ms, WaitRes &r
 {
 	if( ! libInitialized() )
 	{
-		clues_throw( UsageError("libclues was not initialized") );
+		clues_throw( UsageError("libcosmos was not initialized") );
 	}
 
 	auto clock = Clock(Condition::clockType());

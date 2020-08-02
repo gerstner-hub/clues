@@ -20,7 +20,7 @@
 #include <iostream>
 #include <ext/stdio_filebuf.h>
 
-namespace clues
+namespace cosmos
 {
 
 /**

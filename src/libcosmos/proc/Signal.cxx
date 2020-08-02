@@ -9,7 +9,7 @@
 #include <signal.h>
 #include <string.h>
 
-namespace clues
+namespace cosmos
 {
 
 std::string Signal::name() const
@@ -35,7 +35,7 @@ void Signal::sendSignal(const ProcessID &proc, const Signal &s)
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::Signal &sig)
+std::ostream& operator<<(std::ostream &o, const cosmos::Signal &sig)
 {
 	o << sig.name() << " (" << sig.raw() << ")";
 

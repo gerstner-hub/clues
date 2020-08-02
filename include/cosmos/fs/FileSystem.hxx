@@ -4,7 +4,7 @@
 // C++
 #include <string>
 
-namespace clues
+namespace cosmos
 {
 
 /**

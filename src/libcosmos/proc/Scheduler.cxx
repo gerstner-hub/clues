@@ -10,7 +10,7 @@
 // Linux
 #include <sys/syscall.h>
 
-namespace clues
+namespace cosmos
 {
 
 const int OtherSchedulerSettings::INVALID_NICE_PRIO = OtherSchedulerSettings::maxNiceValue() + 1;

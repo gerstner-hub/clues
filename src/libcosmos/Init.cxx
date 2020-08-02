@@ -10,7 +10,7 @@
 #include "cosmos/Init.hxx"
 #include "cosmos/private/Initable.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 std::atomic<std::size_t> g_init_counter;

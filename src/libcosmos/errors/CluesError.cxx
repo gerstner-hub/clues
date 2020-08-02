@@ -1,10 +1,10 @@
 // C++
 #include <sstream>
 
-// clues
+// cosmos
 #include "cosmos/errors/CluesError.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 const char* CluesError::what() const throw()

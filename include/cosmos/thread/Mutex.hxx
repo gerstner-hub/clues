@@ -5,10 +5,10 @@
 #include <pthread.h>
 #include <assert.h>
 
-// Clues
+// cosmos
 #include "cosmos/errors/ApiError.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 // fwd. decl.

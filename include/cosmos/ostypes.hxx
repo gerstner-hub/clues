@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-namespace clues
+namespace cosmos
 {
 
 /*

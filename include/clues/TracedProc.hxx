@@ -16,6 +16,8 @@
 #include "clues/types.hxx"
 #include "clues/TraceState.hxx"
 
+using namespace cosmos;
+
 namespace clues
 {
 

@@ -36,14 +36,14 @@ public:
 		}
 	}
 
-	clues::FileDesc getTempFile()
+	cosmos::FileDesc getTempFile()
 	{
 		m_tmp_file_path = "/tmp/subproc_test.XXXXXX";
 		auto ret = mkostemp(&m_tmp_file_path[0], O_CLOEXEC);
 
-		if( ret == clues::INVALID_FILE_DESC )
+		if( ret == cosmos::INVALID_FILE_DESC )
 		{
-			clues_throw( clues::ApiError() );
+			clues_throw( cosmos::ApiError() );
 		}
 
 		std::cout << "Using temporary file: " << m_tmp_file_path << std::endl;
@@ -55,7 +55,7 @@ protected:
 
 	std::string m_tmp_file_path;
 	const std::string m_cat_path;
-	clues::SubProc m_proc;
+	cosmos::SubProc m_proc;
 };
 
 class RedirectStdoutTest :
@@ -68,7 +68,7 @@ public:
 
 	void run()
 	{
-		clues::InputStreamAdaptor file(getTempFile());
+		cosmos::InputStreamAdaptor file(getTempFile());
 
 		/*
 		 * the test case is:
@@ -85,7 +85,7 @@ public:
 
 		if( ! res.exitedSuccessfully() )
 		{
-			clues_throw( clues::InternalError("Child process with redirected stdout failed") );
+			clues_throw( cosmos::InternalError("Child process with redirected stdout failed") );
 		}
 
 		compareFiles(file);
@@ -100,7 +100,7 @@ public:
 
 		if( ! copy.good() || !orig.good() )
 		{
-			clues_throw( clues::InternalError("bad stream state(s)") );
+			clues_throw( cosmos::InternalError("bad stream state(s)") );
 		}
 
 		std::string line1, line2;
@@ -116,14 +116,14 @@ public:
 			{
 				std::cout << "orig.fail(): " << orig.fail() << std::endl;
 				std::cout << "copy.fail(): " << copy.fail() << std::endl;
-				clues_throw( clues::InternalError("inconsistent stream state(s)") );
+				clues_throw( cosmos::InternalError("inconsistent stream state(s)") );
 			}
 			else if( line1 != line2 )
 			{
 				std::cerr
 					<< "output file doesn't match input file\n"
 					<< line1 << " != " << line2 << std::endl;
-				clues_throw( clues::InternalError("file comparison failed") );
+				clues_throw( cosmos::InternalError("file comparison failed") );
 			}
 
 			//std::cout << line1 << " == " << line2 << "\n";
@@ -147,7 +147,7 @@ public:
 
 	void run()
 	{
-		clues::InputStreamAdaptor file(getTempFile());
+		cosmos::InputStreamAdaptor file(getTempFile());
 
 		/*
 		 * the test case is:
@@ -165,7 +165,7 @@ public:
 		if( ! res.exited() || res.exitStatus() != 1 )
 		{
 			std::cerr << res << std::endl;
-			clues_throw( clues::InternalError("Child process with redirected stderr ended in unexpected state") );
+			clues_throw( cosmos::InternalError("Child process with redirected stderr ended in unexpected state") );
 		}
 
 		checkErrorMessage(file);
@@ -180,7 +180,7 @@ public:
 
 		if( errfile.fail() )
 		{
-			clues_throw( clues::InternalError("Failed to read back cat error message") );
+			clues_throw( cosmos::InternalError("Failed to read back cat error message") );
 		}
 
 		// TODO: be aware of locale settings that might change the
@@ -192,7 +192,7 @@ public:
 				continue;
 
 			std::cerr << "Couldn't find '" << item << "' in error message: '" << line << "'\n";
-			clues_throw( clues::InternalError("Couldn't find expected item in error message") );
+			clues_throw( cosmos::InternalError("Couldn't find expected item in error message") );
 		}
 
 		std::cout << "error message contains expected elements" << std::endl;
@@ -241,7 +241,7 @@ public:
 		}
 		catch(...)
 		{
-			m_proc.kill(clues::Signal(SIGTERM));
+			m_proc.kill(cosmos::Signal(SIGTERM));
 			m_proc.wait();
 			throw;
 		}
@@ -250,13 +250,13 @@ public:
 
 		if( ! res.exitedSuccessfully() )
 		{
-			clues_throw( clues::InternalError("Child process with redirected stdin failed") );
+			clues_throw( cosmos::InternalError("Child process with redirected stdin failed") );
 		}
 	}
 
 	void performPipeIO()
 	{
-		clues::StringVector test_lines;
+		cosmos::StringVector test_lines;
 		for(size_t i = 0; i < m_expected_lines * 2; i++ )
 		{
 			std::stringstream ss;
@@ -264,8 +264,8 @@ public:
 			test_lines.push_back(ss.str());
 		}
 
-		clues::InputStreamAdaptor from_head(m_pipe_from_head);
-		clues::OutputStreamAdaptor to_head(m_pipe_to_head);
+		cosmos::InputStreamAdaptor from_head(m_pipe_from_head);
+		cosmos::OutputStreamAdaptor to_head(m_pipe_to_head);
 
 		for(const auto &line: test_lines)
 		{
@@ -290,7 +290,7 @@ public:
 				break;
 			else if( from_head.fail() )
 			{
-				clues_throw( clues::InternalError("bad stream state") );
+				clues_throw( cosmos::InternalError("bad stream state") );
 			}
 
 			// re-add the newline for comparison
@@ -299,7 +299,7 @@ public:
 			if( test_lines.at(received_lines) != copy_line )
 			{
 				std::cerr << "'" << copy_line << "' != '" << test_lines[received_lines] << "'" << std::endl;
-				clues_throw( clues::InternalError("received bad line copy") );
+				clues_throw( cosmos::InternalError("received bad line copy") );
 			}
 			else
 			{
@@ -311,7 +311,7 @@ public:
 
 		if( received_lines != m_expected_lines )
 		{
-			clues_throw( clues::InternalError("Didn't receive back the expected amount of lines") );
+			clues_throw( cosmos::InternalError("Didn't receive back the expected amount of lines") );
 		}
 
 		from_head.close();
@@ -322,9 +322,9 @@ public:
 
 protected:
 
-	clues::Pipe m_pipe_to_head;
-	clues::Pipe m_pipe_from_head;
-	clues::SubProc m_proc;
+	cosmos::Pipe m_pipe_to_head;
+	cosmos::Pipe m_pipe_from_head;
+	cosmos::SubProc m_proc;
 	const std::string m_head_path;
 	const std::string m_test_file;
 	const size_t m_expected_lines = 5;
@@ -345,7 +345,7 @@ public:
 		m_proc.run();
 
 		size_t num_timeouts = 0;
-		clues::WaitRes res;
+		cosmos::WaitRes res;
 
 		while(true)
 		{
@@ -364,13 +364,13 @@ public:
 			}
 			else
 			{
-				clues_throw( clues::InternalError("Child process unexpectedly exited unsuccesfully") );
+				clues_throw( cosmos::InternalError("Child process unexpectedly exited unsuccesfully") );
 			}
 		}
 
 		if( num_timeouts == 0 )
 		{
-			clues_throw( clues::InternalError("Child process waitTimed() unexpectedly didn't timeout") );
+			clues_throw( cosmos::InternalError("Child process waitTimed() unexpectedly didn't timeout") );
 		}
 
 		std::cout << "Child process wait timed out " << num_timeouts << " times. Successfully tested timeouts" << std::endl;
@@ -378,7 +378,7 @@ public:
 
 protected:
 
-	clues::SubProc m_proc;
+	cosmos::SubProc m_proc;
 	const std::string m_sleep_bin;
 };
 
@@ -402,7 +402,7 @@ public:
 
 	void collectResults()
 	{
-		clues::WaitRes wr;
+		cosmos::WaitRes wr;
 		/*
 		 * this should time out but in the problematic case still
 		 * collect the result from the short running process, causing
@@ -414,14 +414,14 @@ public:
 
 		if( exited )
 		{
-			clues_throw( clues::InternalError("long running proc unexpectedly returned early") );
+			clues_throw( cosmos::InternalError("long running proc unexpectedly returned early") );
 		}
 
 		exited = m_long_proc.waitTimed(10000, wr);
 
 		if( !exited )
 		{
-			clues_throw( clues::InternalError("long running proc unexpectedly didn't return in time") );
+			clues_throw( cosmos::InternalError("long running proc unexpectedly didn't return in time") );
 		}
 
 		std::cout << "PID " << long_pid << " returned:\n" << wr << "\n\n";
@@ -432,7 +432,7 @@ public:
 		if( !exited )
 
 		{
-			clues_throw( clues::InternalError("short running proc seemingly didn't return in time") );
+			clues_throw( cosmos::InternalError("short running proc seemingly didn't return in time") );
 		}
 
 		std::cout << "PID " << short_pid << " returned:\n" << wr << "\n\n";
@@ -457,7 +457,7 @@ public:
 		{
 			std::cerr << "Failed: " << ex.what() << std::endl;
 
-			const auto sig = clues::Signal(SIGKILL);
+			const auto sig = cosmos::Signal(SIGKILL);
 
 			for( auto *proc: { &m_short_proc, &m_long_proc } )
 			{
@@ -471,8 +471,8 @@ public:
 	}
 protected:
 
-	clues::SubProc m_short_proc;
-	clues::SubProc m_long_proc;
+	cosmos::SubProc m_short_proc;
+	cosmos::SubProc m_long_proc;
 	const std::string m_sleep_bin;
 };
 
@@ -480,7 +480,7 @@ int main()
 {
 	try
 	{
-		clues::Init init;
+		cosmos::Init init;
 		/*
 		 * test redirection of each std. file descriptor
 		 */
@@ -520,7 +520,7 @@ int main()
 
 		return 0;
 	}
-	catch( const clues::CluesError &ex )
+	catch( const cosmos::CluesError &ex )
 	{
 		std::cerr << ex.what() << std::endl;
 		return 1;

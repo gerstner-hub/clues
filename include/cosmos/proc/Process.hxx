@@ -1,10 +1,10 @@
 #ifndef COSMOS_PROCESS_HXX
 #define COSMOS_PROCESS_HXX
 
-// Clues
+// cosmos
 #include "cosmos/ostypes.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

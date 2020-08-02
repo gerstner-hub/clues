@@ -7,11 +7,11 @@
 #include <vector>
 #include <map>
 
-namespace clues
+namespace cosmos
 {
 
 /*
- * some general types used across Clues
+ * some general types used across cosmos
  */
 
 typedef std::vector<std::string> StringVector;

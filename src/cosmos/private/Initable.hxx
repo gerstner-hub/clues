@@ -1,10 +1,10 @@
-#ifndef CLUES_PRIV_INIT_HXX
-#define CLUES_PRIV_INIT_HXX
+#ifndef COSMOS_PRIV_INIT_HXX
+#define COSMOS_PRIV_INIT_HXX
 
 // cosmos
 #include "cosmos/Init.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

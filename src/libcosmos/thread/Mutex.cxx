@@ -1,7 +1,7 @@
 // Cosmos
 #include "cosmos/thread/Mutex.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 #ifndef NDEBUG

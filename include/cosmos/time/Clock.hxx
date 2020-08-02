@@ -4,10 +4,10 @@
 // Linux
 #include <time.h>
 
-// Clues
+// cosmos
 #include "cosmos/time/TimeSpec.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 //! available clock types

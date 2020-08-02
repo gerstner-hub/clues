@@ -8,13 +8,13 @@
 // Linux
 #include <dirent.h>
 
-// Clues
+// cosmos
 #include "cosmos/errors/ApiError.hxx"
 #include "cosmos/errors/UsageError.hxx"
 #include "cosmos/fs/DirEntry.hxx"
 #include "cosmos/ostypes.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

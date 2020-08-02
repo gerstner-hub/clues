@@ -4,10 +4,10 @@
 // linux
 #include <unistd.h>
 
-// Clues
+// cosmos
 #include "cosmos/ostypes.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 /**

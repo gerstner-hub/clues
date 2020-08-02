@@ -1,8 +1,8 @@
-// Clues
+// Cosmos
 #include "cosmos/time/Clock.hxx"
 #include "cosmos/errors/ApiError.hxx"
 
-namespace clues
+namespace cosmos
 {
 
 void Clock::now(TimeSpec &ts) const
