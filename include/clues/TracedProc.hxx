@@ -7,12 +7,14 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 
+// cosmos
+#include "cosmos/proc/SubProc.hxx"
+#include "cosmos/proc/Signal.hxx"
+#include "cosmos/proc/ptrace.hxx"
+
 // clues
 #include "clues/types.hxx"
 #include "clues/TraceState.hxx"
-#include "clues/SubProc.hxx"
-#include "clues/Signal.hxx"
-#include "clues/ptrace.hxx"
 
 namespace clues
 {

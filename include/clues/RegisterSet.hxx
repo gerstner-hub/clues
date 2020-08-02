@@ -10,9 +10,11 @@
 // unclear what the official headers for these are ...
 #include <elf.h> // NT_PRSTATUS is in here
 
+// cosmos
+#include "cosmos/errors/UsageError.hxx"
+
 // clues
 #include "clues/Arch.hxx"
-#include "clues/errors/UsageError.hxx"
 
 namespace clues
 {

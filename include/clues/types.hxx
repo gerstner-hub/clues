@@ -1,11 +1,8 @@
 #ifndef CLUES_TYPES_HXX
 #define CLUES_TYPES_HXX
 
-// C++
-#include <ostream>
-#include <string>
-#include <vector>
-#include <map>
+// cosmos
+#include "cosmos/types.hxx"
 
 namespace clues
 {
@@ -14,47 +11,11 @@ namespace clues
  * some general types used across Clues
  */
 
-typedef std::vector<std::string> StringVector;
-typedef std::vector<const char*> CStringVector;
-
 //! a mapping of file descriptor numbers to their file system paths or
 //! other human readable description of the descriptor
 typedef std::map<int, std::string> DescriptorPathMapping;
 
 } // end ns
-
-/**
- * \brief
- * 	Output all the elements of a vector as a comma separated list
- **/
-template <typename T>
-inline std::ostream& operator<<(std::ostream &o, const std::vector<T> &sv)
-{
-	for( auto it = sv.begin(); it != sv.end(); it++ )
-	{
-		if( it != sv.begin() )
-			o << ", ";
-		o << *it;
-	}
-
-	return o;
-}
-
-/**
- * \brief
- * 	Output all the elements of a map as a "key:value" newline separated
- * 	list
- **/
-template <typename K, typename V>
-inline std::ostream& operator<<(std::ostream &o, const std::map<K,V> &m)
-{
-	for( auto it: m )
-	{
-		o << it.first << ": " << it.second << "\n";
-	}
-
-	return o;
-}
 
 #endif // inc. guard
 

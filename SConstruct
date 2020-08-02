@@ -32,5 +32,6 @@ Export("env")
 env['libs'] = dict()
 
 SConscript('build/src/SConstruct')
-SConscript('build/test/SConstruct')
+SConscript('build/test/cosmos/SConstruct')
+SConscript('build/test/clues/SConstruct')
 Default('build/src/clues')

@@ -1,29 +1,31 @@
 Import('env')
 
-lib_srcs = [
+libcosmos_srcs = [
+	"Init.cxx",
+	"errors/ApiError.cxx",
+	"errors/CluesError.cxx",
+	"fs/Directory.cxx",
+	"fs/FileSystem.cxx",
+	"io/Pipe.cxx",
+	"proc/Process.cxx",
+	"proc/Scheduler.cxx",
+	"proc/Signal.cxx",
+	"proc/SubProc.cxx",
+	"proc/WaitRes.cxx",
+	"thread/Condition.cxx",
+	"thread/Mutex.cxx",
+	"time/Clock.cxx",
+]
+
+libclues_srcs = [
 	"Arch.cxx",
 	"TracedProc.cxx",
 	"TracedThread.cxx",
-	"SubProc.cxx",
-	"errors/ApiError.cxx",
-	"errors/CluesError.cxx",
-	"types.cxx",
-	"WaitRes.cxx",
-	"Signal.cxx",
 	"SystemCall.cxx",
 	"SystemCallDB.cxx",
 	"SystemCallParameter.cxx",
 	"Parameters.cxx",
 	"RegisterSet.cxx",
-	"Pipe.cxx",
-	"Process.cxx",
-	"fs/Directory.cxx",
-	"fs/FileSystem.cxx",
-	"threading/Mutex.cxx",
-	"threading/Condition.cxx",
-	"time/Clock.cxx",
-	"Init.cxx",
-	"Scheduler.cxx",
 	"utils.cxx"
 ]
 
@@ -34,17 +36,25 @@ tracer_srcs = [
 libenv = env.Clone()
 libenv.Append( CPPPATH = ["."] )
 
-tracelib = libenv.SharedLibrary(
+libcosmos = libenv.SharedLibrary(
+	"cosmos",
+	[ "libcosmos/" + src for src in libcosmos_srcs ]
+)
+
+libclues = libenv.SharedLibrary(
 	"clues",
-	[ "lib/" + src for src in lib_srcs ]
+	[ "libclues/" + src for src in libclues_srcs ]
 )
 
 clues = env.Program(
 	"clues",
-	[ "termtracer/" + src for src in tracer_srcs ] + [tracelib]
+	[ "termtracer/" + src for src in tracer_srcs ] + [libclues, libcosmos]
 )
 
-env['libs']['clues'] = tracelib
+env.Alias("clues", clues)
+
+env['libs']['libclues'] = libclues
+env['libs']['libcosmos'] = libcosmos
 
 # required to link against us regarding threading functionality
 env.Append( LINKFLAGS = "-pthread" )

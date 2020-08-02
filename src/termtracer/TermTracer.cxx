@@ -5,11 +5,13 @@
 #include <cstdlib>
 #include <iostream>
 
+// cosmos
+#include "cosmos/Init.hxx"
+#include "cosmos/proc/SubProc.hxx"
+#include "cosmos/errors/CluesError.hxx"
+
 // clues
-#include "clues/Init.hxx"
 #include "clues/TracedProc.hxx"
-#include "clues/SubProc.hxx"
-#include "clues/errors/CluesError.hxx"
 #include "clues/SystemCall.hxx"
 
 namespace clues
