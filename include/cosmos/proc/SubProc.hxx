@@ -48,8 +48,6 @@ namespace cosmos
  **/
 class SubProc
 {
-	friend class TracedSubProc;
-
 public: // functions
 
 	SubProc();
@@ -149,6 +147,21 @@ public: // functions
 	void setSchedulerSettings(const SchedulerSettings *ss) { m_sched_settings = ss; };
 
 	const SchedulerSettings* schedulerSettings() const { return m_sched_settings; }
+
+	/**
+	 * \brief
+	 * 	Report a child process WaitRes to the SubProc engine
+	 * \details
+	 * 	In case a third-party component collects a child status exit
+	 * 	status via a native system call then this function can be used
+	 * 	to re-inject the information into the SubProc engine to avoid
+	 * 	inconsistencies that could lead to infinite waits when
+	 * 	somebody calls wait().
+	 * \note
+	 * 	This functionality is experimental and may not work in a
+	 * 	robust way when multi-threading is involved.
+	 **/
+	static void reportStolenWaitRes(ProcessID pid, const WaitRes &wr);
 
 protected: // functions
 

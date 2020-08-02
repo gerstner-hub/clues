@@ -76,6 +76,16 @@ public: // functions
 		return collect(pid, SIZE_MAX, res);
 	}
 
+	void reportStolenChild(ProcessID pid, const WaitRes &res)
+	{
+		{
+			MutexGuard rg(m_proc_res_condition);
+			m_proc_res_map.insert( std::make_pair(pid, res) );
+		}
+
+		m_proc_res_condition.broadcast();
+	}
+
 protected: // functions
 
 	bool waitForChildSignal(Clock &clock, const TimeSpec &endtime) const;

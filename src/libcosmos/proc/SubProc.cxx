@@ -271,6 +271,11 @@ void SubProc::gone(const WaitRes &r)
 	m_pid = INVALID_PID;
 }
 
+void SubProc::reportStolenWaitRes(ProcessID pid, const WaitRes &wr)
+{
+	g_collector.reportStolenChild(pid, wr);
+}
+
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const cosmos::SubProc &proc)

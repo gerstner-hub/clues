@@ -309,7 +309,7 @@ void TracedSubProc::detach()
 
 void TracedSubProc::exited(const WaitRes &r)
 {
-	m_child.gone(r);
+	m_child.reportStolenWaitRes(m_child.pid(), r);
 }
 
 } // end ns
