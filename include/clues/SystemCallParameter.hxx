@@ -47,11 +47,11 @@ public: // functions
 
 	virtual ~SystemCallParameter() {}
 
-	const FlowType type() const { return m_flow; }
+	FlowType type() const { return m_flow; }
 
-	const bool isIn() const { return m_flow == IN; }
-	const bool isOut() const { return m_flow == OUT; }
-	const bool isInOut() const { return m_flow == IN_OUT; }
+	bool isIn() const { return m_flow == IN; }
+	bool isOut() const { return m_flow == OUT; }
+	bool isInOut() const { return m_flow == IN_OUT; }
 
 	/**
 	 * \brief

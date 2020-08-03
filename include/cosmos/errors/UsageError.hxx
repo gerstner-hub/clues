@@ -25,7 +25,7 @@ public: // functions
 		UsageError(msg.c_str())
 	{}
 
-	void raise() override { throw *this; }
+	[[ noreturn ]] void raise() override { throw *this; }
 
 protected: // functions
 

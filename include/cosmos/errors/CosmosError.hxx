@@ -63,7 +63,7 @@ public: // functions
 	 * 	throw the most specialized type of this object in the
 	 * 	inheritance hierarchy.
 	 **/
-	virtual void raise() = 0;
+	[[ noreturn ]] virtual void raise() = 0;
 
 protected: // functions
 

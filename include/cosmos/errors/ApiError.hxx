@@ -25,7 +25,7 @@ public: // functions
 	//! stores the given errno code in the exception
 	explicit ApiError(const int p_errno);
 
-	void raise() override { throw *this; }
+	[[ noreturn ]] void raise() override { throw *this; }
 
 	std::string msg() const { return msg(m_errno); }
 

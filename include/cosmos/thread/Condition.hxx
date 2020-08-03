@@ -71,7 +71,7 @@ public: // functions
 
 		switch(res)
 		{
-		default: cosmos_throw( ApiError(res) );
+		default: cosmos_throw( ApiError(res) ); return false;
 		case 0: return true;
 		case ETIMEDOUT: return false;
 		}

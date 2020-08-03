@@ -32,7 +32,7 @@ Condition::Condition(Mutex &lock) :
 			cosmos_throw( ApiError(res) );
 		}
 
-		auto res = ::pthread_cond_init(&m_pcond, &attr);
+		res = ::pthread_cond_init(&m_pcond, &attr);
 
 		if( res != 0 )
 		{

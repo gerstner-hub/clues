@@ -563,8 +563,13 @@ std::string printLimit(uint64_t lim)
 {
 	if( lim == RLIM_INFINITY )
 		return "RLIM_INFINITY";
+	// these seem to have the the same value on some platforms, triggering
+	// -Wduplicated-cond. So only make the check if the constants actually
+	// differ.
+#	if RLIM_INFINITY != RLIM64_INFINITY
 	else if( lim == RLIM64_INFINITY )
 		return "RLIM64_INFINITY";
+#	endif
 	else if( (lim % 1024) == 0 )
 		return std::to_string(lim / 1024) + " * " + "1024";
 	else

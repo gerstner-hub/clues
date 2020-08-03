@@ -23,7 +23,7 @@ env.Append( CCFLAGS = "-g" )
 if "CXXFLAGS" in os.environ:
 	env.MergeFlags(os.environ["CXXFLAGS"])
 env.Append( CCFLAGS = "-g" )
-env.Append( CCFLAGS = "-Wall" )
+env.Append( CCFLAGS = "-Wall -Wextra -Wno-unused-parameter -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wshadow -Wformat=2 -Wdouble-promotion -Wnull-dereference" )
 env.Append( CPPPATH = "../../include" )
 env.VariantDir("build", ".", duplicate = False)
 

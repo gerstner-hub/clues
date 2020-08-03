@@ -24,7 +24,7 @@ public: // functions
 		m_error_msg(msg)
 	{}
 
-	void raise() override { throw *this; }
+	[[ noreturn ]] void raise() override { throw *this; }
 
 protected: // functions
 
