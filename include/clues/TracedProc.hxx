@@ -224,7 +224,7 @@ protected: // data
 
 	//! sub-process we're tracing
 	SubProc m_child;
-	int m_exit_code;
+	int m_exit_code = 0;
 };
 
 
