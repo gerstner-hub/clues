@@ -85,8 +85,6 @@ static const int SYSCALL_PAR7_REG = 6;
 #	error "not yet supported architecture"
 #endif
 
-static const int MAX_SYSCALL_PARS = 6;
-
 /**
  * \brief
  * 	register table for system call parameters

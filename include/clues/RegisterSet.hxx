@@ -26,7 +26,7 @@ namespace clues
  *	Holds a set of registers for the hosts CPU architecture
  * \details
  * 	This type is able to hold data for each of the host's CPU specific
- * 	registers. The 
+ * 	registers.
  **/
 class RegisterSet
 {
@@ -73,14 +73,14 @@ public: // functions
 	 * 	Returns the content of the given system call parameter
 	 * 	register
 	 * \details
-	 * 	The current architecture can pass up to MAX_SYSCALL_PARS
+	 * 	The current architecture can pass up to SYSCALL_MAX_PARS
 	 * 	registers to system calls. To get the n'th system call
 	 * 	parameter register content pass (n - 1) as \c number (i.e.
 	 * 	counting starts at zero).
 	 **/
 	Word syscallParameter(const size_t number) const
 	{
-		if( number >= MAX_SYSCALL_PARS )
+		if( number >= SYSCALL_MAX_PARS )
 		{
 			cosmos_throw( UsageError("invalid system call parameter nr.") );
 		}
