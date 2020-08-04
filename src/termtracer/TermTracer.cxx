@@ -100,15 +100,14 @@ int TermTracer::run(const int argc, const char **argv)
 
 		for( auto arg = 1; arg < argc; arg++ )
 		{
-			if( std::string(argv[arg]) == "--" )
-			{
-				found_sep = true;
-				continue;
-			}
-
 			if( found_sep )
 			{
 				sv.push_back( argv[arg] );
+			}
+			else if( std::string(argv[arg]) == "--" )
+			{
+				found_sep = true;
+				continue;
 			}
 		}
 
