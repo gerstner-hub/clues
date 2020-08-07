@@ -32,7 +32,7 @@ enum class ContinueMode
 enum class TraceOpts
 {
 	//! when the tracer exits all tracees will be sent SIGKILL
-	//EXITKILL = PTRACE_O_EXITKILL,
+	EXITKILL = PTRACE_O_EXITKILL,
 	//! stop on clone(2) and trace the newly cloned process
 	TRACECLONE = PTRACE_O_TRACECLONE,
 	//! stop on the next execve(2)
@@ -68,7 +68,7 @@ enum class TraceEvent
 	//! exit is upcoming
 	EXIT = PTRACE_EVENT_EXIT,
 	//! initial tracee stop after SEIZE or on new child creations
-	//STOP = PTRACE_EVENT_STOP
+	STOP = PTRACE_EVENT_STOP
 };
 
 } // end ns

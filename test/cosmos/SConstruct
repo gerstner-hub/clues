@@ -3,11 +3,12 @@ Import('env')
 libcosmos = env['libs']['libcosmos']
 
 tests = (
+	"bitmask",
+	"dirs",
 	"exceptions",
 	"pipe",
 	"subproc",
 	"thread_primitives",
-	"dirs"
 )
 
 for test in tests:
