@@ -147,9 +147,9 @@ protected:
 	//! callback interface receiving our information
 	TraceEventConsumer &m_consumer;
 	//! the current state the tracee is in
-	TraceState m_state;
+	TraceState m_state = TraceState::UNKNOWN;
 	//! PID of the tracee we're dealing with
-	pid_t m_tracee;
+	pid_t m_tracee = INVALID_PID;
 	//! here we store our current knowledge open file descriptions
 	DescriptorPathMapping m_fd_path_map;
 };

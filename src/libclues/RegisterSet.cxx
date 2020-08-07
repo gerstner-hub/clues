@@ -1,5 +1,5 @@
 // C++
-#include <iostream>
+#include <ostream>
 
 // Clues
 #include "clues/RegisterSet.hxx"

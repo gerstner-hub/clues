@@ -20,9 +20,7 @@ namespace clues
 {
 
 TracedProc::TracedProc(TraceEventConsumer &consumer) :
-	m_consumer(consumer),
-	m_state(TraceState::UNKNOWN),
-	m_tracee(INVALID_PID)
+	m_consumer(consumer)
 {}
 
 void TracedProc::setTracee(const pid_t &tracee)
