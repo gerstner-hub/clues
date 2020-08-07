@@ -60,13 +60,13 @@ unsigned long TracedProc::getEventMsg() const
 	return ret;
 }
 
-void TracedProc::setOptions(int options)
+void TracedProc::setOptions(const cosmos::TraceOptsMask &opts)
 {
 	if( ::ptrace(
 		PTRACE_SETOPTIONS,
 		m_tracee,
 		nullptr,
-		options) )
+		opts.get()) )
 	{
 		cosmos_throw( ApiError() );
 	}
@@ -204,7 +204,7 @@ void TracedSeizedProc::attach()
 	}
 	while( ! wr.stopped() && ! (wr.stopSignal().raw() == SIGTRAP) );
 
-	setOptions( (int)TraceOpts::TRACESYSGOOD );
+	setOptions( TraceOptsMask({TraceOpts::TRACESYSGOOD}) );
 	m_state = TraceState::ATTACHED;
 	cont(ContinueMode::SYSCALL);
 }
@@ -289,7 +289,7 @@ void TracedSubProc::attach()
 	}
 	while( ! r.stopped() && ! r.exited() );
 
-	setOptions( (int) TraceOpts::TRACESYSGOOD );
+	setOptions( TraceOptsMask({TraceOpts::TRACESYSGOOD}) );
 
 	if( r.stopped() )
 	{

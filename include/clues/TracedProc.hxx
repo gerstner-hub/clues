@@ -117,7 +117,7 @@ protected:
 	 * \brief
 	 * 	Sets \c options, a bitmask of TraceOpts
 	 **/
-	void setOptions(int options);
+	void setOptions(const cosmos::TraceOptsMask &opts);
 
 	/**
 	 * \brief

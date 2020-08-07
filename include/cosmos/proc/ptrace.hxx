@@ -5,8 +5,14 @@
  * wrappers for some of the ptrace constants and calls
  */
 
+// C++
+#include <stdint.h>
+
 // ptrace
 #include <sys/ptrace.h>
+
+// cosmos
+#include "cosmos/BitMask.hxx"
 
 namespace cosmos
 {
@@ -29,7 +35,7 @@ enum class ContinueMode
  * \brief
  * 	Different options we can set for a tracee
  **/
-enum class TraceOpts
+enum class TraceOpts : intptr_t /* is a void* in ptrace(2), so we pointer width */
 {
 	//! when the tracer exits all tracees will be sent SIGKILL
 	EXITKILL = PTRACE_O_EXITKILL,
@@ -48,6 +54,8 @@ enum class TraceOpts
 	//! on system call traps the bit 7 in sig number (SIGTRAP|0x80)
 	TRACESYSGOOD = PTRACE_O_TRACESYSGOOD
 };
+
+typedef BitMask<TraceOpts> TraceOptsMask;
 
 /**
  * \brief
