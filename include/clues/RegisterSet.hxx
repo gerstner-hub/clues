@@ -92,7 +92,7 @@ public: // functions
 	 * \brief
 	 * 	Returns the content of the given register number
 	 * \details
-	 * 	The exact order registers is platform and architecture
+	 * 	The exact order of registers is platform and architecture
 	 * 	dependent. See sys/regs.h for the index offsets for the
 	 * 	various registers.
 	 *

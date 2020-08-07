@@ -45,7 +45,7 @@ class SystemCallParameter;
  * 	The actual derived type knows all about the individual system call
  * 	parameters and type of return value etc.
  *
- * 	Also a the stream output operator<< allows to generical output
+ * 	Also the stream output operator<< allows to generically output
  * 	information about a system call.
  **/
 class SystemCall
@@ -101,7 +101,7 @@ public: // functions
 
 	/**
 	 * \brief
-	 * 	Update possible out and return paremter values from the given
+	 * 	Update possible out and return parameter values from the given
 	 * 	tracee
 	 * \details
 	 * 	The given tracee just finished the system call in question.
@@ -136,7 +136,7 @@ protected: // data
 	SystemCallParameter *m_return = nullptr;
 	//! the array of system call parameters, if any
 	ParameterVector m_pars;
-	//! if this is a open-like system call this gives the number of the
+	//! if this is an open-like system call this gives the number of the
 	//! parameter that contains the open identifier
 	const size_t m_open_id_par;
 	//! if this is a close-like system call this gives the number of the

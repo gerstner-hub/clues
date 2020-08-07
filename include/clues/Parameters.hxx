@@ -83,7 +83,7 @@ protected:
 /**
  *
  * 	TODO: support to get the length of the data area from a
- * 	context-sensitive sibbling parameter and the print out the
+ * 	context-sensitive sibbling parameter and then print out the
  * 	binary/ascii data as appropriate
  **/
 class GenericPointerParameter :

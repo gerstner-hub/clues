@@ -183,7 +183,7 @@ public: // functions
  * \details
  * 	This specialization is pre-configured to have implemented the
  * 	enteredCall() member function that serves no purpose for out
- * 	parameters.  Also the flow type is predetermined to OUT.
+ * 	parameters. Also the flow type is predetermined to OUT.
  **/
 class PointerOutParameter :
 	public PointerParameter

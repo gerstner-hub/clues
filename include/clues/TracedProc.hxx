@@ -227,7 +227,6 @@ protected: // data
 	int m_exit_code = 0;
 };
 
-
 } // end ns
 
 #endif // inc. guard
