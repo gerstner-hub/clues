@@ -60,7 +60,7 @@ public: // functions
 	}
 
 	//! the type to pass to PTRACE_GETREGSET for obtaining the gp-registers
-	static int registerType() { return NT_PRSTATUS; }
+	static constexpr int registerType() { return NT_PRSTATUS; }
 
 	//! returns the active system call number on entry to a syscall
 	Word syscall() const { return m_regs[SYSCALL_NR_REG]; }
@@ -110,7 +110,7 @@ public: // functions
 	}
 
 	//! returns the number of registers available in a RegisterSet
-	static size_t numRegisters()
+	static constexpr size_t numRegisters()
 	{
 		return ELF_NGREG;
 	}
