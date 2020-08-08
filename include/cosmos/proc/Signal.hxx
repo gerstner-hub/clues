@@ -29,6 +29,9 @@ public: // functions
 
 	Signal& operator=(const Signal &o) { m_sig = o.m_sig; return *this; }
 
+	bool operator==(const Signal &o) const { return m_sig == o.m_sig; }
+	bool operator!=(const Signal &o) const { return !(*this == o); }
+
 	//! returns the primitive signal number stored in this object
 	const Type& raw() const { return m_sig; }
 
