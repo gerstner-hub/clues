@@ -14,6 +14,8 @@
 
 // clues
 #include "clues/types.hxx"
+#include "clues/RegisterSet.hxx"
+#include "clues/SystemCallDB.hxx"
 #include "clues/TraceState.hxx"
 
 using namespace cosmos;
@@ -143,6 +145,10 @@ protected:
 	 **/
 	void getRegisters(RegisterSet &rs);
 
+	void handleSystemCall();
+
+	void handleSignal(const WaitRes &wr);
+
 protected:
 	//! callback interface receiving our information
 	TraceEventConsumer &m_consumer;
@@ -152,6 +158,12 @@ protected:
 	pid_t m_tracee = INVALID_PID;
 	//! here we store our current knowledge open file descriptions
 	DescriptorPathMapping m_fd_path_map;
+	//! reusable database object for tracing system calls
+	SystemCallDB m_syscall_db;
+	//! reusable register set object for tracing system calls
+	RegisterSet m_reg_set;
+	//! holds state for the currently executing system call
+	SystemCall *m_current_syscall = nullptr;
 };
 
 /**

@@ -12,9 +12,7 @@
 
 // clues
 #include "clues/TracedProc.hxx"
-#include "clues/RegisterSet.hxx"
 #include "clues/SystemCall.hxx"
-#include "clues/SystemCallDB.hxx"
 
 namespace clues
 {
@@ -94,14 +92,41 @@ void TracedProc::wait(WaitRes &res)
 	}
 }
 
+void TracedProc::handleSystemCall()
+{
+	if( m_state != TraceState::SYSCALL_ENTER )
+	{
+		m_state = TraceState::SYSCALL_ENTER;
+		getRegisters(m_reg_set);
+		m_current_syscall = &m_syscall_db.get(m_reg_set.syscall());
+		m_current_syscall->setEntryRegs(*this, m_reg_set);
+		m_consumer.syscallEntry(*m_current_syscall);
+	}
+	else
+	{
+		m_state = TraceState::SYSCALL_EXIT;
+		getRegisters(m_reg_set);
+		m_current_syscall->setExitRegs(*this, m_reg_set);
+		m_current_syscall->updateOpenFiles(m_fd_path_map);
+		m_consumer.syscallExit(*m_current_syscall);
+	}
+}
+
+void TracedProc::handleSignal(const WaitRes &wr)
+{
+	const auto &signal = wr.stopSignal();
+
+	if( signal == Signal(SIGTRAP) )
+		// our own tracing point
+		return;
+
+	std::cout << "Got signal: " << wr.stopSignal() << std::endl;
+}
+
 void TracedProc::trace()
 {
 	WaitRes wr;
 	interrupt();
-
-	SystemCallDB scdb;
-	RegisterSet rs;
-	SystemCall *sc = nullptr;
 
 	while( true )
 	{
@@ -109,30 +134,13 @@ void TracedProc::trace()
 
 		if( wr.stopped() )
 		{
-			//std::cout << "Tracee stopped" << std::endl;
-
 			if( wr.syscallTrace() )
 			{
-				if( m_state != TraceState::SYSCALL_ENTER )
-				{
-					m_state = TraceState::SYSCALL_ENTER;
-					getRegisters(rs);
-					sc = &scdb.get(rs.syscall());
-					sc->setEntryRegs(*this, rs);
-					m_consumer.syscallEntry(*sc);
-				}
-				else
-				{
-					m_state = TraceState::SYSCALL_EXIT;
-					getRegisters(rs);
-					sc->setExitRegs(*this, rs);
-					sc->updateOpenFiles(m_fd_path_map);
-					m_consumer.syscallExit(*sc);
-				}
+				handleSystemCall();
 			}
 			else
 			{
-				std::cout << "Got signal: " << wr.stopSignal() << std::endl;
+				handleSignal(wr);
 			}
 
 			cont(ContinueMode::SYSCALL, wr.stopSignal());
