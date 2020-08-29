@@ -29,7 +29,7 @@ namespace clues
 //! a system call table number
 typedef RegisterSet::Word SystemCallNr;
 
-class SystemCallParameter;
+class SystemCallValue;
 
 /**
  * \brief
@@ -39,7 +39,7 @@ class SystemCallParameter;
  *
  * 	- the system call number
  * 	- an ordered list of parameters the system call expects, represented
- * 	by the abstract SystemCallParameter base class.
+ * 	by the abstract SystemCallValue base class.
  * 	- a human readable name to identify the system call
  *
  * 	The actual derived type knows all about the individual system call
@@ -54,7 +54,7 @@ class SystemCall
 public: // types
 
 	//! vector of the required parameters for a system call
-	typedef std::vector<SystemCallParameter*> ParameterVector;
+	typedef std::vector<SystemCallValue*> ParameterVector;
 
 public: // functions
 
@@ -81,8 +81,8 @@ public: // functions
 	SystemCall(
 		const SystemCallNr nr,
 		const char *name,
-		SystemCallParameter *ret,
 		ParameterVector &&pars,
+		SystemCallValue *ret = nullptr,
 		const size_t open_id_par = SIZE_MAX,
 		const size_t close_fd_par = SIZE_MAX
 	);
@@ -122,7 +122,7 @@ public: // functions
 	//! access to the parameters associated with this system call
 	const ParameterVector& parameters() const { return m_pars; }
 	//! access to the return value parameter associated with this syscall
-	const SystemCallParameter& result() const { return *m_return; }
+	const SystemCallValue& result() const { return *m_return; }
 
 protected: // functions	
 
@@ -133,7 +133,7 @@ protected: // data
 	//! the basic name of the system call we're representing
 	const char *m_name = nullptr;
 	//! the return value type of the system call
-	SystemCallParameter *m_return = nullptr;
+	SystemCallValue *m_return = nullptr;
 	//! the array of system call parameters, if any
 	ParameterVector m_pars;
 	//! if this is an open-like system call this gives the number of the

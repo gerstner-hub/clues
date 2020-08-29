@@ -5,7 +5,7 @@
 // clues
 #include "clues/SystemCall.hxx"
 #include "clues/SystemCallDB.hxx"
-#include "clues/SystemCallParameter.hxx"
+#include "clues/SystemCallValue.hxx"
 
 namespace clues
 {
@@ -13,8 +13,8 @@ namespace clues
 SystemCall::SystemCall(
 	const SystemCallNr nr,
 	const char *name,
-	SystemCallParameter *ret,
 	ParameterVector &&pars,
+	SystemCallValue *ret,
 	const size_t open_id_par,
 	const size_t close_fd_par
 ) :
@@ -43,20 +43,23 @@ void SystemCall::setEntryRegs(const TracedProc &proc, const RegisterSet &r)
 {
 	for( size_t par = 0; par < m_pars.size(); par++ )
 	{
-		m_pars[par]->set(proc, r.syscallParameter(par));
+		m_pars[par]->fill(proc, r.syscallParameter(par));
 	}
 }
 
 void SystemCall::setExitRegs(const TracedProc &proc, const RegisterSet &r)
 {
 	if( m_return )
-		m_return->set(proc, r.syscallRes());
-
+	{
+		m_return->fill(proc, r.syscallRes());
+	}
 
 	for( auto &par: m_pars )
 	{
 		if( par->needsUpdate() )
-			par->exitedCall(proc);
+		{
+			par->updateData(proc);
+		}
 	}
 }
 

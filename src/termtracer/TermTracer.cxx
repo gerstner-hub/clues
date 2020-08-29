@@ -73,7 +73,6 @@ TermTracer::~TermTracer()
 
 void TermTracer::syscallEntry(const SystemCall &sc)
 {
-
 }
 
 void TermTracer::syscallExit(const SystemCall &sc)

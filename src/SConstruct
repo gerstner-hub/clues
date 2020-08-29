@@ -23,9 +23,9 @@ libclues_srcs = [
 	"TracedThread.cxx",
 	"SystemCall.cxx",
 	"SystemCallDB.cxx",
-	"SystemCallParameter.cxx",
-	"Parameters.cxx",
+	"SystemCallValue.cxx",
 	"RegisterSet.cxx",
+	"Data.cxx",
 	"utils.cxx"
 ]
 

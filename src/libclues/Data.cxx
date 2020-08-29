@@ -18,7 +18,7 @@
 #include <sys/resource.h> // *rlimit()
 
 // clues
-#include "clues/Parameters.hxx"
+#include "clues/values.hxx"
 #include "cosmos/errors/ApiError.hxx"
 #include "clues/TracedProc.hxx"
 #include "clues/utils.hxx"
@@ -34,33 +34,41 @@ std::string ErrnoResult::str() const
 		return std::to_string((int)m_val);
 }
 
-std::string GenericPointerParameter::str() const
+std::string GenericPointerValue::str() const
 {
 	std::stringstream ss;
 	ss << (long*)m_val;
 	return ss.str();
 }
 
-std::string FileDescriptorParameter::str() const
+std::string FileDescriptor::str() const
 {
 	int fd = (int)m_val;
 
 	if( m_at_semantics && fd == AT_FDCWD )
 		return "AT_FDCWD";
-	else if( fd >= 0 || !m_error_semantics )
+	else
+		return std::to_string((int)m_val);
+}
+
+std::string FileDescriptorReturnValue::str() const
+{
+	int fd = (int)m_val;
+
+	if( fd >= 0 )
 		return std::to_string((int)m_val);
 
 	return std::string("Failed: ") + ApiError::msg(fd * -1);
 }
 
-void StringParameter::fill(const TracedProc &proc)
+void StringData::fetch(const TracedProc &proc)
 {
 	// the address of the string in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
 	readTraceeString(proc, addr, m_str);
 }
 
-void StringArrayParameter::enteredCall(const TracedProc &proc)
+void StringArrayData::processValue(const TracedProc &proc)
 {
 	const long *array_start = reinterpret_cast<long*>(m_val);
 	std::vector<long*> string_addrs;
@@ -76,7 +84,7 @@ void StringArrayParameter::enteredCall(const TracedProc &proc)
 	}
 }
 
-std::string StringArrayParameter::str() const
+std::string StringArrayData::str() const
 {
 	std::string ret;
 
@@ -94,7 +102,7 @@ std::string StringArrayParameter::str() const
 
 #define chk_open_flag(FLAG) if( m_val & FLAG ) ss << "|" << #FLAG;
 
-std::string OpenFlagsParameter::str() const
+std::string OpenFlagsValue::str() const
 {
 	std::stringstream ss;
 
@@ -211,7 +219,7 @@ std::string StatParameter::str() const
 	return ss.str();
 }
 
-void StatParameter::exitedCall(const TracedProc &proc)
+void StatParameter::updateData(const TracedProc &proc)
 {
 	readStruct(proc, m_val, m_stat);
 }
@@ -261,7 +269,7 @@ std::string DirEntries::str() const
 	return ss.str();
 }
 
-void DirEntries::exitedCall(const TracedProc &proc)
+void DirEntries::updateData(const TracedProc &proc)
 {
 	m_entries.clear();
 
@@ -339,7 +347,7 @@ std::string FutexOperation::str() const
 	}
 }
 
-void TimespecParameter::fill(const TracedProc &proc)
+void TimespecParameter::fetch(const TracedProc &proc)
 {
 	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
@@ -454,7 +462,7 @@ void printSignalSet(std::string &s, const sigset_t &set)
 	s = ss.str();
 }
 
-std::string SignalParameter::str() const
+std::string SignalNumber::str() const
 {
 	std::string s;
 	printSignal(s, m_val);
@@ -514,14 +522,14 @@ std::string SigactionParameter::str() const
 
 SigactionParameter::~SigactionParameter() { delete m_sigaction; }
 
-void SigactionParameter::enteredCall(const TracedProc &proc)
+void SigactionParameter::processValue(const TracedProc &proc)
 {
 	readStruct(proc, m_val, m_sigaction);
 }
 
 SigSetParameter::~SigSetParameter() { delete m_sigset; }
 
-void SigSetParameter::enteredCall(const TracedProc &proc)
+void SigSetParameter::processValue(const TracedProc &proc)
 {
 	readStruct(proc, m_val, m_sigset);
 }
@@ -592,7 +600,7 @@ std::string ResourceLimit::str() const
 
 ResourceLimit::~ResourceLimit() { delete m_limit; }
 
-void ResourceLimit::exitedCall(const TracedProc &proc)
+void ResourceLimit::updateData(const TracedProc &proc)
 {
 	readStruct(proc, m_val, m_limit);
 }
