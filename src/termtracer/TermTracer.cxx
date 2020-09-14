@@ -29,8 +29,12 @@ public: // functions
 
 	int run(const int argc, const char **argv);
 
-protected: // event consumer interface
+protected: // functions
 
+	void processPars();
+
+
+protected: // event consumer interface
 
 	void syscallEntry(const SystemCall &sc) override;
 
@@ -45,11 +49,15 @@ protected: // data
 	TCLAP::SwitchArg m_start_proc;
 	//! increase verbosity of tracing output
 	TCLAP::SwitchArg m_verbose;
+	//! maximum length of parameter values to print
+	TCLAP::ValueArg<int> m_max_value_len;
 
 	TracedSeizedProc m_seized_proc;
 	TracedSubProc m_sub_proc;
 	//! generic handling of either TracedSeizedProc or TracedSubProc
 	TracedProc *m_proc = nullptr;
+	bool m_print_values = true;
+	size_t m_value_truncation_len = 64;
 };
 
 TermTracer::TermTracer() :
@@ -68,6 +76,12 @@ TermTracer::TermTracer() :
 		"v", "verbose",
 		"increase verbosity of tracing output",
 		false),
+	m_max_value_len(
+		"s", "max-len",
+		"maximum length of parameter values to print. 0 to to print not at all, -1 to disable truncation",
+		false,
+		64,
+		"number of bytes"),
 	m_seized_proc(*this),
 	m_sub_proc(*this)
 {
@@ -76,6 +90,18 @@ TermTracer::TermTracer() :
 TermTracer::~TermTracer()
 {
 	m_proc = nullptr;
+}
+
+void TermTracer::processPars()
+{
+	auto max_len = m_max_value_len.getValue();
+
+	if( max_len == 0 )
+		m_print_values = false;
+	else if( max_len < 0 )
+		m_value_truncation_len = SIZE_MAX;
+	else
+		m_value_truncation_len = static_cast<size_t>(max_len);
 }
 
 void TermTracer::syscallEntry(const SystemCall &sc)
@@ -93,8 +119,20 @@ void TermTracer::syscallExit(const SystemCall &sc)
 		else
 			std::cerr << ", ";
 
-		std::cerr << (m_verbose.isSet() ? par->longName() : par->shortName())
-			<< "=" << par->str();
+		std::cerr << (m_verbose.isSet() ? par->longName() : par->shortName());
+
+		if( m_print_values )
+		{
+			auto value = par->str();
+
+			if( value.size() > m_value_truncation_len )
+			{
+				value.resize(m_value_truncation_len);
+				value += "...";
+			}
+
+			std::cerr << "=" << value;
+		}
 	}
 
 	const auto &res = sc.result();
@@ -107,6 +145,8 @@ int TermTracer::run(const int argc, const char **argv)
 	m_cmdline.add(m_attach_proc);
 	m_cmdline.add(m_start_proc);
 	m_cmdline.parse(argc, argv);
+
+	processPars();
 
 	if( m_attach_proc.isSet() )
 	{
