@@ -75,6 +75,7 @@ void StringArrayData::processValue(const TracedProc &proc)
 {
 	const long *array_start = reinterpret_cast<long*>(m_val);
 	std::vector<long*> string_addrs;
+	m_strs.clear();
 
 	// first read in all start adresses of the c-strings for the string
 	// array
