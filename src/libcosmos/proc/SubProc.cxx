@@ -68,7 +68,7 @@ SubProc::~SubProc()
 
 void SubProc::run(const StringVector &sv)
 {
-	const StringVector &args = sv.empty() ? m_argv : sv;
+	const auto &args = sv.empty() ? m_argv : sv;
 
 	if( args.empty() )
 	{
