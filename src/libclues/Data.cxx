@@ -91,15 +91,19 @@ void StringArrayData::processValue(const TracedProc &proc)
 std::string StringArrayData::str() const
 {
 	std::string ret;
+	ret += "[";
 
 	for( const auto &str: m_strs )
 	{
+		ret += "\"";
 		ret += str;
-		ret += " ";
+		ret += "\", ";
 	}
 
-	if( ! ret.empty() )
-		ret.erase( ret.end() - 1 );
+	if( ! m_strs.empty() )
+		ret.erase( ret.size() - 2 );
+
+	ret += "]";
 
 	return ret;
 }

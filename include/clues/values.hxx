@@ -153,7 +153,7 @@ public:
 		SystemCallValue( type, short_name ? short_name : "string", long_name )
 	{}
 
-	std::string str() const override { return m_str; }
+	std::string str() const override { return std::string("\"") + m_str + "\""; }
 
 protected:
 
