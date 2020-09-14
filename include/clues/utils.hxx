@@ -11,6 +11,12 @@ class TracedProc;
 
 /**
  * \brief
+ * 	Returns a short errno label like ENOENT for the given errno integer
+ **/
+const char* getErrnoLabel(int num);
+
+/**
+ * \brief
  * 	Reads a \0 terminated C-string from the tracee
  * \details
  * 	Read from the address space starting at \c addr of the tracee \c proc

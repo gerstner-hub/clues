@@ -13,6 +13,7 @@
 // clues
 #include "clues/TracedProc.hxx"
 #include "clues/SystemCall.hxx"
+#include "clues/SystemCallValue.hxx"
 
 namespace clues
 {
@@ -42,6 +43,8 @@ protected: // data
 	TCLAP::ValueArg<pid_t> m_attach_proc;
 	//! switch to express we want to start a new process as a frontend
 	TCLAP::SwitchArg m_start_proc;
+	//! increase verbosity of tracing output
+	TCLAP::SwitchArg m_verbose;
 
 	TracedSeizedProc m_seized_proc;
 	TracedSubProc m_sub_proc;
@@ -61,6 +64,10 @@ TermTracer::TermTracer() :
 		"c", "create",
 		"create a new process using arguments specified after '--'",
 		false),
+	m_verbose(
+		"v", "verbose",
+		"increase verbosity of tracing output",
+		false),
 	m_seized_proc(*this),
 	m_sub_proc(*this)
 {
@@ -77,7 +84,22 @@ void TermTracer::syscallEntry(const SystemCall &sc)
 
 void TermTracer::syscallExit(const SystemCall &sc)
 {
-	std::cout << sc << std::endl;
+	std::cerr << sc.name() << "(";
+	bool first = true;
+	for( const auto par: sc.parameters() )
+	{
+		if( first )
+			first = false;
+		else
+			std::cerr << ", ";
+
+		std::cerr << (m_verbose.isSet() ? par->longName() : par->shortName())
+			<< "=" << par->str();
+	}
+
+	const auto &res = sc.result();
+
+	std::cerr << ") = " << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")\n";
 }
 
 int TermTracer::run(const int argc, const char **argv)

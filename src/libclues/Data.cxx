@@ -28,8 +28,11 @@ namespace clues
 
 std::string ErrnoResult::str() const
 {
-	if( (int)m_val <= m_highest )
-		return ApiError::msg(((int)m_val) * -1);
+	if( (int)m_val < m_highest )
+	{
+		const auto err = -(int)m_val;
+		return std::string(getErrnoLabel(err)) + " (" + std::to_string(err) + ")";
+	}
 	else
 		return std::to_string((int)m_val);
 }

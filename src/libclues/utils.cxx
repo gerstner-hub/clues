@@ -1,6 +1,7 @@
 // Clues
 #include "clues/utils.hxx"
 #include "clues/TracedProc.hxx"
+#include "libclues/errnodb.h"
 
 // C++
 #include <string>
@@ -8,6 +9,14 @@
 
 namespace clues
 {
+
+const char* getErrnoLabel(int num)
+{
+	if( num < 0 || num >= ERRNO_NAMES_MAX )
+		return "E<INVALID>";
+
+	return ERRNO_NAMES[num];
+}
 
 void readTraceeString(
 	const TracedProc &proc,
