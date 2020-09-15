@@ -153,6 +153,36 @@ std::string OpenFlagsValue::str() const
 	return ss.str();
 }
 
+std::string AccessModeParameter::str() const
+{
+	if( m_val == F_OK )
+		return "F_OK";
+
+	std::stringstream ss;
+
+	if( m_val & R_OK )
+	{
+		ss << "R_OK|";
+	}
+	if( m_val & W_OK )
+	{
+		ss << "W_OK|";
+	}
+	if( m_val & X_OK )
+	{
+		ss << "X_OK";
+	}
+
+	auto ret = ss.str();
+
+	if( !ret.empty() && *ret.rbegin() == '|' )
+	{
+		ret.erase(ret.size() - 1);
+	}
+
+	return ret;
+}
+
 #define chk_mode_flag(FLAG, ch) if( m_val & FLAG) ss << ch; else ss << "-";
 
 std::string FileModeParameter::str() const

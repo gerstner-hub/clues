@@ -231,6 +231,17 @@ protected: // functions
 	void updateData(const TracedProc &proc) override {}
 };
 
+class AccessModeParameter :
+	public ValueInParameter
+{
+public:
+	explicit AccessModeParameter() :
+		ValueInParameter("check", "access check")
+	{}
+
+	std::string str() const override;
+};
+
 /**
  * \brief
  * 	The code parameter to the arch_prctl system call

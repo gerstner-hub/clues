@@ -78,7 +78,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr)
 		return new Call(nr, "access",
 			{
 				new StringData("path"),
-				new ValueInParameter("mode")
+				new AccessModeParameter()
 			},
 			new ErrnoResult()
 		);
