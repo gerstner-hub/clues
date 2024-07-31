@@ -32,7 +32,7 @@ void readTraceeString(
  * \brief
  * 	Reads an arbitrary binary blob of fixed length from the tracee
  **/
-void readTraceeBlob(
+void CLUES_API readTraceeBlob(
 	const TracedProc &proc,
 	const long *addr,
 	char *buffer,

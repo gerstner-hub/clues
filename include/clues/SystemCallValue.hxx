@@ -16,7 +16,7 @@ namespace clues
  * \details
  * 	This can represent a system call parameter or return value.
  **/
-class SystemCallValue
+class CLUES_API SystemCallValue
 {
 	friend SystemCall;
 public: // types
@@ -133,9 +133,9 @@ public:
 
 protected: // functions
 
-	void processValue(const TracedProc &proc) override {}
+	void processValue(const TracedProc &) override {}
 
-	void updateData(const TracedProc &proc) override {}
+	void updateData(const TracedProc &) override {}
 };
 
 /**
@@ -163,9 +163,9 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const TracedProc &proc) override {}
+	void processValue(const TracedProc &) override {}
 
-	void updateData(const TracedProc &proc) override {}
+	void updateData(const TracedProc &) override {}
 };
 
 /**
@@ -245,7 +245,7 @@ protected: // functions
 	//! \brief
 	//! empty implementation of this function, because it's not needed
 	//! for out parameters
-	void processValue(const TracedProc &proc) override {}
+	void processValue(const TracedProc &) override {}
 };
 
 /**
@@ -268,12 +268,12 @@ public: // functions
 
 protected: // functions
 
-	void updateData(const TracedProc &proc) override {}
+	void updateData(const TracedProc &) override {}
 };
 
 } // end ns
 
-std::ostream& operator<<(
+CLUES_API std::ostream& operator<<(
 	std::ostream &o,
 	const clues::SystemCallValue &value
 );

@@ -8,17 +8,17 @@
 #include <sys/ptrace.h>
 
 // cosmos
+#include "cosmos/proc/ChildCloner.hxx"
 #include "cosmos/proc/SubProc.hxx"
 #include "cosmos/proc/Signal.hxx"
 #include "cosmos/proc/ptrace.hxx"
+#include "cosmos/string.hxx"
 
 // clues
 #include "clues/types.hxx"
 #include "clues/RegisterSet.hxx"
 #include "clues/SystemCallDB.hxx"
 #include "clues/TraceState.hxx"
-
-using namespace cosmos;
 
 namespace clues
 {
@@ -47,7 +47,7 @@ protected: // functions
  * 	The concrete implementation of TracedProc defines the means of how the
  * 	traced process is attached to and detached from etc.
  **/
-class TracedProc
+class CLUES_API TracedProc
 {
 public:
 	virtual ~TracedProc() {}
@@ -89,7 +89,7 @@ protected:
 	 * \brief
 	 * 	Waits for the next trace event of this tracee
 	 **/
-	void wait(WaitRes &res);
+	virtual void wait(cosmos::WaitRes &res) = 0;
 
 	/**
 	 * \brief
@@ -102,8 +102,8 @@ protected:
 	 * 	Continues the traced process, optionally delivering \c signal
 	 **/
 	void cont(
-		const ContinueMode &mode = ContinueMode::NORMAL,
-		const Signal &signal = Signal(0)
+		const cosmos::ContinueMode &mode = cosmos::ContinueMode::NORMAL,
+		const cosmos::Signal signal = cosmos::signal::NONE
 	);
 
 	/**
@@ -119,7 +119,7 @@ protected:
 	 * \brief
 	 * 	Sets \c options, a bitmask of TraceOpts
 	 **/
-	void setOptions(const cosmos::TraceOptsMask &opts);
+	void setOptions(const cosmos::TraceFlags flags);
 
 	/**
 	 * \brief
@@ -131,10 +131,10 @@ protected:
 	 * \brief
 	 * 	Sets the tracee, if not already done so
 	 **/
-	void setTracee(const pid_t &tracee);
+	void setTracee(const cosmos::ProcessID tracee);
 
 	//! called when the tracee exits
-	virtual void exited(const WaitRes &r) {}
+	virtual void exited(const cosmos::WaitRes &) {}
 
 	/**
 	 * \brief
@@ -147,7 +147,7 @@ protected:
 
 	void handleSystemCall();
 
-	void handleSignal(const WaitRes &wr);
+	void handleSignal(const cosmos::WaitRes &wr);
 
 protected:
 	//! callback interface receiving our information
@@ -155,7 +155,7 @@ protected:
 	//! the current state the tracee is in
 	TraceState m_state = TraceState::UNKNOWN;
 	//! PID of the tracee we're dealing with
-	pid_t m_tracee = INVALID_PID;
+	cosmos::ProcessID m_tracee = cosmos::ProcessID::INVALID;
 	//! here we store our current knowledge open file descriptions
 	DescriptorPathMapping m_fd_path_map;
 	//! reusable database object for tracing system calls
@@ -171,7 +171,7 @@ protected:
  * 	Specialization of TracedProc that attaches to an existing, unrelated
  * 	process in the system
  **/
-class TracedSeizedProc :
+class CLUES_API TracedSeizedProc :
 	public TracedProc
 {
 public: // functions
@@ -189,10 +189,12 @@ public: // functions
 	 * \brief
 	 * 	Sets the given process ID as the process to be traced
 	 **/
-	void configure(const pid_t &tracee);
+	void configure(const cosmos::ProcessID tracee);
 
 	void attach() override;
 	void detach() override;
+
+	void wait(cosmos::WaitRes &res) override;
 
 protected: // data
 
@@ -203,7 +205,7 @@ protected: // data
  * 	Specialization of TracedProc that creates a new child process for
  * 	tracing
  **/
-class TracedSubProc :
+class CLUES_API TracedSubProc :
 	public TracedProc
 {
 public: // functions
@@ -221,22 +223,23 @@ public: // functions
 	 * \brief
 	 * 	Set the child process executable and parameters to trace
 	 **/
-	void configure(const StringVector &prog_args);
+	void configure(const cosmos::StringVector &prog_args);
 	void attach() override;
 	void detach() override;
 
 	//! the exit code of the sub-process, valid only after detach()
-	int exitCode() const { return m_exit_code; }
+	cosmos::ExitStatus exitCode() const { return m_exit_code; }
+
+	void wait(cosmos::WaitRes &res) override;
 
 protected: // functions
 
-	void exited(const WaitRes &r) override;
-
 protected: // data
 
+	cosmos::ChildCloner m_cloner;
 	//! sub-process we're tracing
-	SubProc m_child;
-	int m_exit_code = 0;
+	cosmos::SubProc m_child;
+	cosmos::ExitStatus m_exit_code = cosmos::ExitStatus::SUCCESS;
 };
 
 } // end ns

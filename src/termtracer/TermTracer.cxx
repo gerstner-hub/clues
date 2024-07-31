@@ -6,9 +6,9 @@
 #include <iostream>
 
 // cosmos
-#include "cosmos/Init.hxx"
+#include "cosmos/cosmos.hxx"
 #include "cosmos/proc/SubProc.hxx"
-#include "cosmos/errors/CosmosError.hxx"
+#include "cosmos/error/CosmosError.hxx"
 
 // clues
 #include "clues/TracedProc.hxx"
@@ -27,7 +27,7 @@ public: // functions
 
 	~TermTracer();
 
-	int run(const int argc, const char **argv);
+	cosmos::ExitStatus run(const int argc, const char **argv);
 
 protected: // functions
 
@@ -44,7 +44,7 @@ protected: // data
 
 	TCLAP::CmdLine m_cmdline;
 	//! already running process to attach to
-	TCLAP::ValueArg<pid_t> m_attach_proc;
+	TCLAP::ValueArg<std::underlying_type<cosmos::ProcessID>::type> m_attach_proc;
 	//! switch to express we want to start a new process as a frontend
 	TCLAP::SwitchArg m_start_proc;
 	//! increase verbosity of tracing output
@@ -66,7 +66,7 @@ TermTracer::TermTracer() :
 		"p", "process",
 		"attach to the given already running process for tracing",
 		false,
-		INVALID_PID,
+		cosmos::to_integral(cosmos::ProcessID::INVALID),
 		"Process ID"),
 	m_start_proc(
 		"c", "create",
@@ -104,7 +104,7 @@ void TermTracer::processPars()
 		m_value_truncation_len = static_cast<size_t>(max_len);
 }
 
-void TermTracer::syscallEntry(const SystemCall &sc)
+void TermTracer::syscallEntry(const SystemCall &)
 {
 }
 
@@ -140,7 +140,7 @@ void TermTracer::syscallExit(const SystemCall &sc)
 	std::cerr << ") = " << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")\n";
 }
 
-int TermTracer::run(const int argc, const char **argv)
+cosmos::ExitStatus TermTracer::run(const int argc, const char **argv)
 {
 	m_cmdline.add(m_attach_proc);
 	m_cmdline.add(m_start_proc);
@@ -150,13 +150,13 @@ int TermTracer::run(const int argc, const char **argv)
 
 	if( m_attach_proc.isSet() )
 	{
-		m_seized_proc.configure( m_attach_proc.getValue() );
+		m_seized_proc.configure( cosmos::ProcessID{m_attach_proc.getValue()} );
 		m_proc = &m_seized_proc;
 	}
 	else if( m_start_proc.isSet() )
 	{
 		// extract any additional arguments into a StringVector
-		StringVector sv;
+		cosmos::StringVector sv;
 		bool found_sep = false;
 
 		for( auto arg = 1; arg < argc; arg++ )
@@ -178,7 +178,7 @@ int TermTracer::run(const int argc, const char **argv)
 	else
 	{
 		std::cerr << "Neither -p nor -c was given. Nothing to do.\n";
-		return EXIT_FAILURE;
+		return cosmos::ExitStatus::FAILURE;
 	}
 
 	m_proc->attach();
@@ -186,7 +186,7 @@ int TermTracer::run(const int argc, const char **argv)
 
 	m_proc->detach();
 
-	return m_attach_proc.isSet() ? EXIT_SUCCESS : m_sub_proc.exitCode();
+	return m_attach_proc.isSet() ? cosmos::ExitStatus::SUCCESS : m_sub_proc.exitCode();
 }
 
 }
@@ -196,7 +196,7 @@ int main(const int argc, const char **argv)
 	try
 	{
 		cosmos::Init init;
-		return clues::TermTracer().run(argc, argv);
+		return cosmos::to_integral(clues::TermTracer().run(argc, argv));
 	}
 	catch( const cosmos::CosmosError &ce )
 	{

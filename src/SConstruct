@@ -62,61 +62,58 @@ env.Append(BUILDERS = {'ErrnoHeaderBuilder': errnoHeaderBuilder})
 
 errno_header = env.ErrnoHeaderBuilder("libclues/errnodb.c")
 
-libcosmos_srcs = [
-	"Init.cxx",
-	"errors/ApiError.cxx",
-	"errors/CosmosError.cxx",
-	"fs/Directory.cxx",
-	"fs/FileSystem.cxx",
-	"io/Pipe.cxx",
-	"proc/Process.cxx",
-	"proc/Scheduler.cxx",
-	"proc/Signal.cxx",
-	"proc/SubProc.cxx",
-	"proc/WaitRes.cxx",
-	"thread/Condition.cxx",
-	"thread/Mutex.cxx",
-	"time/Clock.cxx",
-]
-
-libclues_srcs = [
-	"Arch.cxx",
-	"TracedProc.cxx",
-	"TracedThread.cxx",
-	"SystemCall.cxx",
-	"SystemCallDB.cxx",
-	"SystemCallValue.cxx",
-	"RegisterSet.cxx",
-	"Data.cxx",
-	"utils.cxx"
-]
-
-tracer_srcs = [
-	"TermTracer.cxx",
-]
-
 libenv = env.Clone()
-libenv.Append( CPPPATH = ["."] )
+public_includes = Dir('.').srcnode().abspath + '/../include'
+libenv.Append(CCFLAGS=['-include', 'clues/dso_export.h'])
+libenv.Append(CPPPATH=public_includes)
+# for finding private includes
+libenv.Append(CPPPATH=["."])
 
-libcosmos = libenv.SharedLibrary(
-	"cosmos",
-	[ "libcosmos/" + src for src in libcosmos_srcs ]
+libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False, subpath='libclues')
+libenv.ConfigureForLibOrPackage('libcosmos', libclues_srcs)
+
+if env['libtype'] == 'static':
+    libclues = libenv.StaticLibrary(
+        'clues',
+        libclues_srcs
+    )
+else:
+
+    libenv.Append(CCFLAGS='-fvisibility=hidden')
+    libenv.Append(CCFLAGS='-DCLUES_EXPORT')
+
+    # the SONAME and SHLIBVERSION are the knobs to tune for ABI versioning, but
+    # libclues currently doesn't really have a concept for that.
+    #
+    # For packaging you can consider using an SONAME matching the exact library
+    # release version resulting in a new ABI for each release. This at least
+    # avoids inconsistencies, but breaks application that aren't rebuild against
+    # the new lib version.
+
+    libclues = libenv.SharedLibrary(
+        'clues',
+        libclues_srcs,
+        SHLIBVERSION='0.1.0',
+        SONAME='libclues.so.0'
+    )
+
+env.RegisterLibConfig(
+    'libclues',
+    libclues,
+    {
+        'CCFLAGS': ['-DCLUES_API='],
+        'CPPPATH': [public_includes]
+    }
 )
 
-libclues = libenv.SharedLibrary(
-	"clues",
-	[ "libclues/" + src for src in libclues_srcs ]
-)
+tracer_env = env.Clone()
+tracer_srcs = tracer_env.GatherSources(suffixes=['.cxx'], recursive=False, subpath='termtracer')
+tracer_env.ConfigureForLibOrPackage('libclues', tracer_srcs)
+tracer_env.ConfigureForLibOrPackage('libcosmos', tracer_srcs)
 
-clues = env.Program(
-	"clues",
-	[ "termtracer/" + src for src in tracer_srcs ] + [libclues, libcosmos]
-)
+clues = tracer_env.Program("clues", tracer_srcs)
 
+env['bins']['clues'] = clues
 env.Alias("clues", clues)
 
-env['libs']['libclues'] = libclues
-env['libs']['libcosmos'] = libcosmos
-
-# required to link against us regarding threading functionality
-env.Append( LINKFLAGS = "-pthread" )
+Return('env')

@@ -1,0 +1,13 @@
+#pragma once
+
+/*
+ * Helper macro to control visibility of public APIs of the cosmos shared
+ * library.
+ * The object files are compiled with -fvisibility=hidden, thus each public
+ * interface needs to be explicitly made visible again.
+ */
+#if defined(CLUES_EXPORT)
+#	define CLUES_API __attribute__ ((visibility ("default")))
+#else
+#	define CLUES_API
+#endif

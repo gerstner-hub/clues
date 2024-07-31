@@ -1,37 +1,38 @@
 import os
+import sys
+from pathlib import Path
 
-prefix = os.environ.get("SCONS_CROSS_PREFIX", None)
+try:
+    # if there is already an environment then simply use that, some other
+    # level of the build system already initialized it
+    Import('env')
+except Exception:
+    try:
+        from buildsystem import initSCons
+    except ImportError:
+        cosmos_scripts = Path(Dir('.').abspath) / 'libcosmos' / 'scripts'
+        sys.path.append(str(cosmos_scripts))
+        from buildsystem import initSCons
+    env = initSCons('clues')
 
-env_options = {}
+env.AddLocalLibrary('libcosmos')
 
-if prefix:
-	env_options = {
-	    "CC"    : "{prefix}-gcc",
-	    "CXX"   : "{prefix}-g++",
-	    "LD"    : "{prefix}-g++",
-	    "AR"    : "{prefix}-ar",
-	    "STRIP" : "{prefix}-strip",
-	}
+env = SConscript(env['buildroot'] + 'src/SConstruct')
 
-	for key in env_options:
-		env_options[key] = env_options[key].format(prefix = prefix)
+instroot = env['instroot']
 
-env = Environment(**env_options)
+install_dev_files = env['install_dev_files']
 
-env.Append( CXXFLAGS = "-std=c++17" )
-env.Append( CCFLAGS = "-g" )
-if "CXXFLAGS" in os.environ:
-	env.MergeFlags(os.environ["CXXFLAGS"])
-env.Append( CCFLAGS = "-g" )
-env.Append( CCFLAGS = "-Wall -Wextra -Wno-unused-parameter -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wshadow -Wformat=2 -Wdouble-promotion -Wnull-dereference" )
-env.Append( CPPPATH = "../../include" )
-env.VariantDir("build", ".", duplicate = False)
+if env['project'] == 'clues':
+    #SConscript(env['buildroot'] + 'test/SConstruct')
+    #SConscript(env['buildroot'] + 'doc/SConstruct')
+    Default(env['bins']['clues'])
 
-Export("env")
+if install_dev_files or env['libtype'] == 'shared':
+    node = env.InstallVersionedLib(os.path.join(instroot, env['lib_base_dir']), env['libs']['libclues'])
+    env.Alias('install', node)
 
-env['libs'] = dict()
-
-SConscript('build/src/SConstruct')
-SConscript('build/test/cosmos/SConstruct')
-SConscript('build/test/clues/SConstruct')
-Default('build/src/clues')
+if install_dev_files:
+    env.InstallHeaders('clues')
+    node = env.Install(Path(instroot) / env['pkg_config_dir'], 'data/libclues.pc')
+    env.Alias('install', node)

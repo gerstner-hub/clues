@@ -48,7 +48,7 @@ class SystemCallValue;
  * 	Also the stream output operator<< allows to generically output
  * 	information about a system call.
  **/
-class SystemCall
+class CLUES_API SystemCall
 {
 	friend std::ostream& ::operator<<(std::ostream&, const SystemCall&);
 public: // types

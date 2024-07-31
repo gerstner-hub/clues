@@ -5,6 +5,8 @@
 #include <list>
 
 // Linux
+#include <sys/stat.h>
+#include <sys/resource.h>
 
 // clues
 #include "clues/SystemCall.hxx"
@@ -22,7 +24,7 @@ namespace clues
  * \brief
  * 	A file descriptor system call parameter
  **/
-class FileDescriptor :
+class CLUES_API FileDescriptor :
 	public SystemCallValue
 {
 public:
@@ -46,9 +48,9 @@ public:
 
 protected:
 
-	void processValue(const TracedProc &proc) override {};
+	void processValue(const TracedProc &) override {};
 
-	void updateData(const TracedProc &proc) override {};
+	void updateData(const TracedProc &) override {};
 
 
 protected:
@@ -68,7 +70,7 @@ public:
  * \brief
  *	A file descriptor return value with added errno semantics
  **/
-class FileDescriptorReturnValue :
+class CLUES_API FileDescriptorReturnValue :
 	public FileDescriptor
 {
 public:
@@ -95,7 +97,7 @@ protected:
  **/
 // TODO: maybe we should model dual natured return values like: PIDReturnValue
 // that outputs an errno in case of error, and alike.
-class ErrnoResult :
+class CLUES_API ErrnoResult :
 	public ReturnValue
 {
 public:
@@ -119,7 +121,7 @@ protected:
  * 	context-sensitive sibbling parameter and then print out the
  * 	binary/ascii data as appropriate
  **/
-class GenericPointerValue :
+class CLUES_API GenericPointerValue :
 	public PointerValue
 {
 public:
@@ -134,15 +136,15 @@ public:
 
 protected:
 
-	void processValue(const TracedProc &proc) override {}
-	void updateData(const TracedProc &proc) override {}
+	void processValue(const TracedProc &) override {}
+	void updateData(const TracedProc &) override {}
 };
 
 /**
  * \brief
  * 	c-string system call data
  **/
-class StringData :
+class CLUES_API StringData :
 	public SystemCallValue
 {
 public:
@@ -171,7 +173,7 @@ protected:
 	}
 
 
-	void fetch(const TracedProc &proc);
+	void fetch(const TracedProc &);
 
 protected:
 
@@ -185,7 +187,7 @@ protected:
  * 	This is currently only used for argv and envp of the execve system
  * 	call
  **/
-class StringArrayData :
+class CLUES_API StringArrayData :
 	public PointerInValue
 {
 public:
@@ -214,7 +216,7 @@ protected:
  * \brief
  * 	The flags passed to e.g. open()
  **/
-class OpenFlagsValue :
+class CLUES_API OpenFlagsValue :
 	public SystemCallValue
 {
 public:
@@ -227,8 +229,8 @@ public:
 
 protected: // functions
 
-	void processValue(const TracedProc &proc) override {}
-	void updateData(const TracedProc &proc) override {}
+	void processValue(const TracedProc &) override {}
+	void updateData(const TracedProc &) override {}
 };
 
 class AccessModeParameter :
@@ -246,7 +248,7 @@ public:
  * \brief
  * 	The code parameter to the arch_prctl system call
  **/
-class ArchCodeParameter :
+class CLUES_API ArchCodeParameter :
 	public ValueInParameter
 {
 public:
@@ -277,7 +279,7 @@ public:
  * \brief
  * 	The stat structure used in stat() & friends
  **/
-class StatParameter :
+class CLUES_API StatParameter :
 	public PointerOutValue
 {
 public:
@@ -294,7 +296,7 @@ protected:
 
 protected:
 	FileModeParameter m_mode;
-	struct stat *m_stat = nullptr;
+	struct ::stat *m_stat = nullptr;
 };
 
 
@@ -318,7 +320,7 @@ public:
  * \brief
  * 	A list of directory entries
  **/
-class DirEntries :
+class CLUES_API DirEntries :
 	public PointerOutValue
 {
 public:
@@ -342,7 +344,7 @@ protected:
  * \brief
  * 	The operation to performed on a signal set
  **/
-class SigSetOperation :
+class CLUES_API SigSetOperation :
 	public ValueInParameter
 {
 public:
@@ -358,7 +360,7 @@ public:
  * 	The struct timespec used for various timing and timeout operations
  * 	in system calls
  **/
-class TimespecParameter :
+class CLUES_API TimespecParameter :
 	public SystemCallValue
 {
 public:
@@ -399,7 +401,7 @@ protected:
  * 	The futex operation to be performed in the context of a futex system
  * 	call
  **/
-class FutexOperation :
+class CLUES_API FutexOperation :
 	public ValueInParameter
 {
 public:
@@ -429,7 +431,7 @@ public:
  * \brief
  * 	The struct sigaction used in various signal related system calls
  **/
-class SigactionParameter :
+class CLUES_API SigactionParameter :
 	public PointerInValue
 {
 public:
@@ -457,13 +459,13 @@ protected:
  * 	A set of POSIX signals for setting or masking in the context of
  * 	various system calls
  **/
-class SigSetParameter :
+class CLUES_API SigSetParameter :
 	public PointerInValue
 {
 public:
 	explicit SigSetParameter(
 		const char *short_name = "sigset", const char *name = "signal set") :
-		PointerInValue(name)
+		PointerInValue(short_name, name)
 	{}
 
 	~SigSetParameter() override;
@@ -483,7 +485,7 @@ protected:
  * \brief
  * 	A resource kind specification as used in getrlimit & friends
  **/
-class ResourceType :
+class CLUES_API ResourceType :
 	public ValueInParameter
 {
 public:
@@ -494,7 +496,7 @@ public:
 	std::string str() const override;
 };
 
-class ResourceLimit :
+class CLUES_API ResourceLimit :
 	public PointerOutValue
 {
 public:

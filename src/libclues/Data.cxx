@@ -19,7 +19,7 @@
 
 // clues
 #include "clues/values.hxx"
-#include "cosmos/errors/ApiError.hxx"
+#include "cosmos/error/ApiError.hxx"
 #include "clues/TracedProc.hxx"
 #include "clues/utils.hxx"
 
@@ -61,7 +61,7 @@ std::string FileDescriptorReturnValue::str() const
 	if( fd >= 0 )
 		return std::to_string((int)m_val);
 
-	return std::string("Failed: ") + ApiError::msg(fd * -1);
+	return std::string("Failed: ") + cosmos::ApiError::msg(cosmos::Errno{fd * -1});
 }
 
 void StringData::fetch(const TracedProc &proc)

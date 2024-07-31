@@ -7,8 +7,9 @@
 #include <sys/wait.h>
 
 // cosmos
-#include "cosmos/errors/ApiError.hxx"
+#include "cosmos/error/ApiError.hxx"
 #include "cosmos/proc/WaitRes.hxx"
+#include "cosmos/proc/process.hxx"
 
 // clues
 #include "clues/TracedProc.hxx"
@@ -21,22 +22,24 @@ TracedProc::TracedProc(TraceEventConsumer &consumer) :
 	m_consumer(consumer)
 {}
 
-void TracedProc::setTracee(const pid_t &tracee)
+void TracedProc::setTracee(const cosmos::ProcessID tracee)
 {
 	m_tracee = tracee;
 }
 
 void TracedProc::cont(
-	const ContinueMode &mode,
-	const Signal &signal)
+	const cosmos::ContinueMode &mode,
+	const cosmos::Signal signal)
 {
+	const auto raw_signal = signal.raw();
+
 	if( ::ptrace(
 		static_cast<__ptrace_request>(mode),
 		m_tracee,
-		signal.raw() ? &signal.raw() : nullptr,
+		signal.valid() ? &raw_signal: nullptr,
 		nullptr ) )
 	{
-		cosmos_throw( ApiError() );
+		cosmos_throw( cosmos::ApiError("ptrace") );
 	}
 }
 
@@ -50,21 +53,21 @@ unsigned long TracedProc::getEventMsg() const
 		nullptr,
 		&ret) )
 	{
-		cosmos_throw( ApiError() );
+		cosmos_throw( cosmos::ApiError("ptrace") );
 	}
 
 	return ret;
 }
 
-void TracedProc::setOptions(const cosmos::TraceOptsMask &opts)
+void TracedProc::setOptions(const cosmos::TraceFlags flags)
 {
 	if( ::ptrace(
 		PTRACE_SETOPTIONS,
 		m_tracee,
 		nullptr,
-		opts.get()) )
+		flags.raw()) )
 	{
-		cosmos_throw( ApiError() );
+		cosmos_throw( cosmos::ApiError("ptrace") );
 	}
 }
 
@@ -72,7 +75,7 @@ void TracedProc::interrupt()
 {
 	if( ::ptrace( PTRACE_INTERRUPT, m_tracee, nullptr, nullptr ) )
 	{
-		cosmos_throw( ApiError() );
+		cosmos_throw( cosmos::ApiError("ptrace") );
 	}
 }
 
@@ -80,15 +83,7 @@ void TracedProc::seize()
 {
 	if( ::ptrace( PTRACE_SEIZE, m_tracee, nullptr, nullptr ) != 0 )
 	{
-		cosmos_throw( ApiError() );
-	}
-}
-
-void TracedProc::wait(WaitRes &res)
-{
-	if( ::waitpid(m_tracee, res.raw(), 0) == -1 )
-	{
-		cosmos_throw( ApiError() );
+		cosmos_throw( cosmos::ApiError("ptrace") );
 	}
 }
 
@@ -112,11 +107,11 @@ void TracedProc::handleSystemCall()
 	}
 }
 
-void TracedProc::handleSignal(const WaitRes &wr)
+void TracedProc::handleSignal(const cosmos::WaitRes &wr)
 {
 	const auto &signal = wr.stopSignal();
 
-	if( signal == Signal(SIGTRAP) )
+	if (signal == cosmos::Signal{cosmos::signal::TRAP})
 		// our own tracing point
 		return;
 
@@ -125,16 +120,16 @@ void TracedProc::handleSignal(const WaitRes &wr)
 
 void TracedProc::trace()
 {
-	WaitRes wr;
+	cosmos::WaitRes wr;
 	interrupt();
 
 	while( true )
 	{
 		wait(wr);
 
-		if( wr.stopped() )
+		if( wr.trapped() )
 		{
-			if( wr.syscallTrace() )
+			if( wr.isSyscallTrap() )
 			{
 				handleSystemCall();
 			}
@@ -143,7 +138,7 @@ void TracedProc::trace()
 				handleSignal(wr);
 			}
 
-			cont(ContinueMode::SYSCALL, wr.stopSignal());
+			cont(cosmos::ContinueMode::SYSCALL, wr.stopSignal());
 		}
 		else if( wr.exited() )
 		{
@@ -166,7 +161,7 @@ void TracedProc::getRegisters(RegisterSet &rs)
 
 	if( ::ptrace( PTRACE_GETREGSET, m_tracee, rs.registerType(), &reg_vector ) != 0 )
 	{
-		cosmos_throw( ApiError() );
+		cosmos_throw( cosmos::ApiError("ptrace") );
 	}
 
 	//std::cout << "Read registers " << reg_vector.iov_len << " vs. " << sizeof(regs) << std::endl;
@@ -179,7 +174,7 @@ long TracedProc::getData(const long *addr) const
 
 	if( errno != 0 )
 	{
-		cosmos_throw( ApiError() );
+		cosmos_throw( cosmos::ApiError("ptrace") );
 	}
 
 	return ret;
@@ -190,16 +185,21 @@ TracedSeizedProc::TracedSeizedProc(TraceEventConsumer &consumer) :
 {
 }
 
-void TracedSeizedProc::configure(const pid_t &tracee)
+void TracedSeizedProc::configure(const cosmos::ProcessID tracee)
 {
 	m_tracee = tracee;
+}
+
+void TracedSeizedProc::wait(cosmos::WaitRes &res)
+{
+	res = *cosmos::proc::wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
 }
 
 void TracedSeizedProc::attach()
 {
 	seize();
 	interrupt();
-	WaitRes wr;
+	cosmos::WaitRes wr;
 
 	do
 	{
@@ -208,23 +208,23 @@ void TracedSeizedProc::attach()
 		if( wr.exited() )
 			return;
 	}
-	while( ! wr.stopped() && ! (wr.stopSignal().raw() == SIGTRAP) );
+	while( ! wr.stopped() && ! (wr.stopSignal() == cosmos::signal::TRAP) );
 
-	setOptions( TraceOptsMask({TraceOpts::TRACESYSGOOD}) );
+	setOptions( cosmos::TraceFlags(cosmos::TraceFlag::TRACESYSGOOD) );
 	m_state = TraceState::ATTACHED;
-	cont(ContinueMode::SYSCALL);
+	cont(cosmos::ContinueMode::SYSCALL);
 }
 
 void TracedSeizedProc::detach()
 {
-	if( m_tracee != INVALID_PID && m_state != TraceState::EXITED )
+	if( m_tracee != cosmos::ProcessID::INVALID && m_state != TraceState::EXITED )
 	{
 		if( ::ptrace( PTRACE_DETACH, m_tracee, nullptr, nullptr ) != 0 )
 		{
-			cosmos_throw( ApiError() );
+			cosmos_throw( cosmos::ApiError("ptrace") );
 		}
 
-		m_tracee = INVALID_PID;
+		m_tracee = cosmos::ProcessID::INVALID;
 	}
 }
 
@@ -234,25 +234,39 @@ TracedSeizedProc::~TracedSeizedProc()
 	{
 		detach();
 	}
-	catch( const CosmosError &ce )
+	catch( const cosmos::CosmosError &ce )
 	{
 		std::cerr
-			<< "Couldn't detach from " << m_tracee << ":\n\n"
+			<< "Couldn't detach from PID " << cosmos::to_integral(m_tracee) << ":\n\n"
 			<< ce.what() << "\n";
 	}
 }
 
 
 TracedSubProc::TracedSubProc(TraceEventConsumer &consumer) :
-	TracedProc(consumer),
-	m_exit_code(EXIT_SUCCESS)
+	TracedProc(consumer)
 {
 }
 
-void TracedSubProc::configure(const StringVector &prog_args)
+void TracedSubProc::configure(const cosmos::StringVector &prog_args)
 {
-	m_child.setArgs(prog_args);
-	m_child.setTrace(true);
+	m_cloner.setArgs(prog_args);
+	m_cloner.setPostForkCB([](const cosmos::ChildCloner &){
+#if 0
+               // actually if we make our parent a tracer this way then we
+               // can't deal with it the "new" way that is possible with SEIZED
+               // processes. So we only raise a SIGSTOP instead to have the
+               // parent catch us before doing anything else and otherwise
+               // the parent can SEIZE us.
+               if( ::ptrace( PTRACE_TRACEME, INVALID_PID, 0, 0 ) != 0 )
+               {
+                       cosmos_throw( ApiError() );
+               }
+#endif
+
+               // this allows our parent to wait for us, such that is knows we're a tracee now
+               cosmos::signal::raise(cosmos::signal::STOP);
+	});
 }
 
 TracedSubProc::~TracedSubProc()
@@ -264,43 +278,51 @@ TracedSubProc::~TracedSubProc()
 			// make sure we can wait for it
 			try
 			{
-				m_child.kill(Signal(SIGKILL));
+				m_child.kill(cosmos::signal::KILL);
 			}
 			catch( ... ) { }
 		}
 
 		detach();
 	}
-	catch( const CosmosError &ce )
+	catch( const cosmos::CosmosError &ce )
 	{
-		std::cerr << "Error detaching from child process " << m_child
+		std::cerr << "Error detaching from child process PID " << cosmos::to_integral(m_child.pid())
 			<< ":\n\n" << ce.what();
 	}
 }
 
+void TracedSubProc::wait(cosmos::WaitRes &res)
+{
+	res = m_child.wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
+}
+
 void TracedSubProc::attach()
 {
-	m_exit_code = EXIT_SUCCESS;
-	m_child.run();
+	m_exit_code = cosmos::ExitStatus::SUCCESS;
+	m_child = std::move(m_cloner.run());
 
 	setTracee(m_child.pid());
 
 	seize();
 
-	WaitRes r;
+	cosmos::WaitRes r;
 
 	do
 	{
 		wait(r);
+
+		if (r.exited())
+			return;
 	}
-	while( ! r.stopped() && ! r.exited() );
+	while( ! r.trapped() );
 
-	setOptions( TraceOptsMask({TraceOpts::TRACESYSGOOD}) );
+	setOptions( cosmos::TraceFlags(cosmos::TraceFlag::TRACESYSGOOD) );
 
-	if( r.stopped() )
+	if( r.trapped() )
 	{
 		m_state = TraceState::ATTACHED;
-		cont(ContinueMode::SYSCALL);
+		cont(cosmos::ContinueMode::SYSCALL);
 	}
 }
 
@@ -308,14 +330,9 @@ void TracedSubProc::detach()
 {
 	if( m_child.running() )
 	{
-		WaitRes wr = m_child.wait();
+		cosmos::WaitRes wr = m_child.wait();
 		m_exit_code = wr.exitStatus();
 	}
-}
-
-void TracedSubProc::exited(const WaitRes &r)
-{
-	m_child.reportStolenWaitRes(m_child.pid(), r);
 }
 
 } // end ns

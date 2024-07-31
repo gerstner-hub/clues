@@ -11,12 +11,10 @@
 #include <elf.h> // NT_PRSTATUS is in here
 
 // cosmos
-#include "cosmos/errors/UsageError.hxx"
+#include "cosmos/error/UsageError.hxx"
 
 // clues
 #include "clues/Arch.hxx"
-
-using namespace cosmos;
 
 namespace clues
 {
@@ -82,7 +80,7 @@ public: // functions
 	{
 		if( number >= SYSCALL_MAX_PARS )
 		{
-			cosmos_throw( UsageError("invalid system call parameter nr.") );
+			cosmos_throw( cosmos::UsageError("invalid system call parameter nr.") );
 		}
 
 		return m_regs[SYSCALL_PAR_REGISTER[number]];
@@ -103,7 +101,7 @@ public: // functions
 	{
 		if( number >= numRegisters() )
 		{
-			cosmos_throw( UsageError("invalid register nr.") );
+			cosmos_throw( cosmos::UsageError("invalid register nr.") );
 		}
 
 		return m_regs[number];
