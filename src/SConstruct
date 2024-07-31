@@ -60,7 +60,7 @@ errnoHeaderBuilder = env.Builder(action = buildErrnosHeader, suffix = '.h', src_
 
 env.Append(BUILDERS = {'ErrnoHeaderBuilder': errnoHeaderBuilder})
 
-errno_header = env.ErrnoHeaderBuilder("libclues/errnodb.c")
+errno_header = env.ErrnoHeaderBuilder("clues/errnodb.c")
 
 libenv = env.Clone()
 public_includes = Dir('.').srcnode().abspath + '/../include'
@@ -69,7 +69,7 @@ libenv.Append(CPPPATH=public_includes)
 # for finding private includes
 libenv.Append(CPPPATH=["."])
 
-libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False, subpath='libclues')
+libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False, subpath='clues')
 libenv.ConfigureForLibOrPackage('libcosmos', libclues_srcs)
 
 if env['libtype'] == 'static':
@@ -111,7 +111,7 @@ tracer_srcs = tracer_env.GatherSources(suffixes=['.cxx'], recursive=False, subpa
 tracer_env.ConfigureForLibOrPackage('libclues', tracer_srcs)
 tracer_env.ConfigureForLibOrPackage('libcosmos', tracer_srcs)
 
-clues = tracer_env.Program("clues", tracer_srcs)
+clues = tracer_env.Program("termtracer/clues", tracer_srcs)
 
 env['bins']['clues'] = clues
 env.Alias("clues", clues)

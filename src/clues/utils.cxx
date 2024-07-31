@@ -1,7 +1,7 @@
 // Clues
 #include "clues/utils.hxx"
 #include "clues/TracedProc.hxx"
-#include "libclues/errnodb.h"
+#include "clues/errnodb.h"
 
 // C++
 #include <string>
