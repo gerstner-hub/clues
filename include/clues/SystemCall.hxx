@@ -1,5 +1,4 @@
-#ifndef CLUES_SYSTEMCALL_HXX
-#define CLUES_SYSTEMCALL_HXX
+#pragma once
 
 // C++
 #include <iosfwd>
@@ -145,6 +144,3 @@ protected: // data
 };
 
 } // end ns
-
-#endif // inc. guard
-

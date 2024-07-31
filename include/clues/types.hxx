@@ -1,5 +1,4 @@
-#ifndef CLUES_TYPES_HXX
-#define CLUES_TYPES_HXX
+#pragma once
 
 // cosmos
 #include "cosmos/types.hxx"
@@ -16,6 +15,3 @@ namespace clues
 typedef std::map<int, std::string> DescriptorPathMapping;
 
 } // end ns
-
-#endif // inc. guard
-

@@ -1,5 +1,4 @@
-#ifndef CLUES_UTILS_HXX
-#define CLUES_UTILS_HXX
+#pragma once
 
 // C++
 #include <string>
@@ -87,8 +86,4 @@ void readTraceeVector(
 	VECTOR &out
 );
 
-
 } // end ns
-
-#endif // inc. guard
-

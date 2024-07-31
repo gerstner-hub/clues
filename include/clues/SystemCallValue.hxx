@@ -1,5 +1,4 @@
-#ifndef CLUES_SYSTEMCALLVALUE_HXX
-#define CLUES_SYSTEMCALLVALUE_HXX
+#pragma once
 
 // C++
 #include <iosfwd>
@@ -277,6 +276,3 @@ CLUES_API std::ostream& operator<<(
 	std::ostream &o,
 	const clues::SystemCallValue &value
 );
-
-#endif // inc. guard
-

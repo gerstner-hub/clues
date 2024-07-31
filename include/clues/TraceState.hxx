@@ -1,5 +1,4 @@
-#ifndef CLUES_TRACESTATE_HXX
-#define CLUES_TRACESTATE_HXX
+#pragma once
 
 namespace clues
 {
@@ -18,6 +17,3 @@ enum class TraceState
 };
 
 }; // end ns
-
-#endif // inc. guard
-

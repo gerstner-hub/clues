@@ -1,5 +1,4 @@
-#ifndef CLUES_SYSTEMCALLDB_HXX
-#define CLUES_SYSTEMCALLDB_HXX
+#pragma once
 
 // clues
 #include "clues/SystemCall.hxx"
@@ -33,6 +32,3 @@ protected:
 };
 
 } // end ns
-
-#endif // inc. guard
-

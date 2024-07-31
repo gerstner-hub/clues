@@ -1,5 +1,4 @@
-#ifndef CLUES_ARCH_HXX
-#define CLUES_ARCH_HXX
+#pragma once
 
 // Linux
 #if defined(__x86_64__) || defined(__i386__)
@@ -132,6 +131,3 @@ static const int SYSCALL_PAR_REGISTER[] =
 const char* getRegisterName(const size_t nr);
 
 } // end ns
-
-#endif // inc. guard
-

@@ -1,5 +1,4 @@
-#ifndef CLUES_VALUES_HXX
-#define CLUES_VALUES_HXX
+#pragma once
 
 // C++
 #include <list>
@@ -518,6 +517,3 @@ protected:
 };
 
 } // end ns
-
-#endif // inc. guard
-

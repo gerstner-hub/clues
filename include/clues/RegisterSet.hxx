@@ -1,5 +1,4 @@
-#ifndef CLUES_REGISTERSET_HXX
-#define CLUES_REGISTERSET_HXX
+#pragma once
 
 // C++
 #include <iosfwd>
@@ -136,6 +135,3 @@ protected: // data
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &rs);
-
-#endif // inc. guard
-

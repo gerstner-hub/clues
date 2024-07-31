@@ -1,3 +1,5 @@
+#pragma once
+
 // Linux
 #include <signal.h>
 

@@ -1,5 +1,4 @@
-#ifndef CLUES_TRACEDPROC_HXX
-#define CLUES_TRACEDPROC_HXX
+#pragma once
 
 // C++
 
@@ -243,6 +242,3 @@ protected: // data
 };
 
 } // end ns
-
-#endif // inc. guard
-
