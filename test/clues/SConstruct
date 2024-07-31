@@ -4,16 +4,16 @@ libcosmos = env['libs']['libcosmos']
 libclues = env['libs']['libclues']
 
 tests = (
-	"arch",
+    "arch",
 )
 
 for test in tests:
 
-	test_bin = env.Program(
-		"test_{}".format(test),
-		["{}.cxx".format(test), libcosmos, libclues]
-	)
+    test_bin = env.Program(
+        "test_{}".format(test),
+        ["{}.cxx".format(test), libcosmos, libclues]
+    )
 
-	env.Alias("clues_tests", test_bin)
+    env.Alias("clues_tests", test_bin)
 
 env.Alias("tests", "clues_tests")

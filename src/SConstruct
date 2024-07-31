@@ -1,60 +1,60 @@
 Import('env')
 
 def buildErrnosHeader(target, source, env):
-	import subprocess
-	cmdline = [env["CC"], "-E", "-dD", str(source[0])]
-	output = subprocess.check_output(cmdline)
-	output = output.decode('utf8')
+    import subprocess
+    cmdline = [env["CC"], "-E", "-dD", str(source[0])]
+    output = subprocess.check_output(cmdline)
+    output = output.decode('utf8')
 
-	errnos = [(0, "EOK")]
+    errnos = [(0, "EOK")]
 
-	for line in output.splitlines():
-		line = line.strip()
-		if not line:
-			continue
-		parts = line.split(None)
-		if len(parts) != 3:
-			continue
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(None)
+        if len(parts) != 3:
+            continue
 
-		define, name, value = parts
-		if define != "#define":
-			continue
-		elif not name.startswith('E'):
-			continue
-		elif not value.isnumeric():
-			continue
+        define, name, value = parts
+        if define != "#define":
+            continue
+        elif not name.startswith('E'):
+            continue
+        elif not value.isnumeric():
+            continue
 
-		has_lower = False
-		for ch in name:
-			if not ch.isupper():
-				has_lower = True
-				break
-		if has_lower:
-			continue
+        has_lower = False
+        for ch in name:
+            if not ch.isupper():
+                has_lower = True
+                break
+        if has_lower:
+            continue
 
-		errnos.append( (int(value), name) )
+        errnos.append( (int(value), name) )
 
-	max_errno = max( [ errno[0] for errno in errnos ] )
-	all_errnos = set( [ errno[0] for errno in errnos ] )
+    max_errno = max( [ errno[0] for errno in errnos ] )
+    all_errnos = set( [ errno[0] for errno in errnos ] )
 
-	for errno in range(max_errno):
-		if errno not in all_errnos:
-			errnos.append( (errno, "E{}".format(str(errno))) )
+    for errno in range(max_errno):
+        if errno not in all_errnos:
+            errnos.append( (errno, "E{}".format(str(errno))) )
 
-	errnos.sort()
+    errnos.sort()
 
-	with open(str(target[0]), 'w') as out_fd:
-		out_fd.write("const char* const ERRNO_NAMES[] = {\n")
-		for nr, name in errnos:
-			out_fd.write('\t"{}"'.format(name))
-			if nr != len(errnos) - 1:
-				out_fd.write(",")
-			out_fd.write("\n")
-		out_fd.write("};\n")
+    with open(str(target[0]), 'w') as out_fd:
+        out_fd.write("const char* const ERRNO_NAMES[] = {\n")
+        for nr, name in errnos:
+            out_fd.write('\t"{}"'.format(name))
+            if nr != len(errnos) - 1:
+                out_fd.write(",")
+            out_fd.write("\n")
+        out_fd.write("};\n")
 
-		out_fd.write("\nconstexpr auto ERRNO_NAMES_MAX = {};\n".format(len(errnos) - 1))
+        out_fd.write("\nconstexpr auto ERRNO_NAMES_MAX = {};\n".format(len(errnos) - 1))
 
-	return 0
+    return 0
 
 errnoHeaderBuilder = env.Builder(action = buildErrnosHeader, suffix = '.h', src_suffix = '.c')
 
