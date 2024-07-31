@@ -1,5 +1,6 @@
 Import('env')
 
+
 def buildErrnosHeader(target, source, env):
     import subprocess
     cmdline = [env["CC"], "-E", "-dD", str(source[0])]
@@ -32,14 +33,14 @@ def buildErrnosHeader(target, source, env):
         if has_lower:
             continue
 
-        errnos.append( (int(value), name) )
+        errnos.append((int(value), name))
 
-    max_errno = max( [ errno[0] for errno in errnos ] )
-    all_errnos = set( [ errno[0] for errno in errnos ] )
+    max_errno = max([errno[0] for errno in errnos])
+    all_errnos = set([errno[0] for errno in errnos])
 
     for errno in range(max_errno):
         if errno not in all_errnos:
-            errnos.append( (errno, "E{}".format(str(errno))) )
+            errnos.append((errno, "E{}".format(str(errno))))
 
     errnos.sort()
 
@@ -56,9 +57,10 @@ def buildErrnosHeader(target, source, env):
 
     return 0
 
-errnoHeaderBuilder = env.Builder(action = buildErrnosHeader, suffix = '.h', src_suffix = '.c')
 
-env.Append(BUILDERS = {'ErrnoHeaderBuilder': errnoHeaderBuilder})
+errnoHeaderBuilder = env.Builder(action=buildErrnosHeader, suffix='.h', src_suffix='.c')
+
+env.Append(BUILDERS={'ErrnoHeaderBuilder': errnoHeaderBuilder})
 
 errno_header = env.ErrnoHeaderBuilder("clues/errnodb.c")
 
