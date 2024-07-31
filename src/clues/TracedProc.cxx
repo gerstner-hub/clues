@@ -300,7 +300,7 @@ void TracedSubProc::wait(cosmos::WaitRes &res)
 void TracedSubProc::attach()
 {
 	m_exit_code = cosmos::ExitStatus::SUCCESS;
-	m_child = std::move(m_cloner.run());
+	m_child = m_cloner.run();
 
 	setTracee(m_child.pid());
 
