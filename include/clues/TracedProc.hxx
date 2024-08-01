@@ -1,36 +1,29 @@
 #pragma once
 
-// C++
-
 // Linux
 #include <unistd.h>
 #include <sys/ptrace.h>
 
 // cosmos
-#include "cosmos/proc/ChildCloner.hxx"
-#include "cosmos/proc/SubProc.hxx"
-#include "cosmos/proc/Signal.hxx"
-#include "cosmos/proc/ptrace.hxx"
-#include "cosmos/string.hxx"
+#include <cosmos/proc/ChildCloner.hxx>
+#include <cosmos/proc/SubProc.hxx>
+#include <cosmos/proc/Signal.hxx>
+#include <cosmos/proc/ptrace.hxx>
+#include <cosmos/string.hxx>
 
 // clues
-#include "clues/types.hxx"
-#include "clues/RegisterSet.hxx"
-#include "clues/SystemCallDB.hxx"
-#include "clues/TraceState.hxx"
+#include <clues/types.hxx>
+#include <clues/RegisterSet.hxx>
+#include <clues/SystemCallDB.hxx>
+#include <clues/TraceState.hxx>
 
-namespace clues
-{
+namespace clues {
 
 class RegisterSet;
 class SystemCall;
 
-/**
- * \brief
- * 	pure virtual interface for consumers of tracing events
- **/
-class TraceEventConsumer
-{
+/// pure virtual interface for consumers of tracing events.
+class TraceEventConsumer {
 	friend class TracedProc;
 protected: // functions
 
@@ -39,42 +32,28 @@ protected: // functions
 	virtual void syscallExit(const SystemCall &sc) = 0;
 };
 
+/// Base class for traced processes.
 /**
- * \brief
- * 	Base class for traced processes
- * \details
- * 	The concrete implementation of TracedProc defines the means of how the
- * 	traced process is attached to and detached from etc.
+ * The concrete implementation of TracedProc defines the means of how the
+ * traced process is attached to and detached from etc.
  **/
-class CLUES_API TracedProc
-{
+class CLUES_API TracedProc {
 public:
 	virtual ~TracedProc() {}
 
-	/**
-	 * \brief
-	 * 	Logic to handle attaching to the tracee
-	 **/
+	/// Logic to handle attaching to the tracee.
 	virtual void attach() = 0;
 
-	/**
-	 * \brief
-	 * 	Logic to handle detaching from the tracee
-	 **/
+	/// Logic to handle detaching from the tracee.
 	virtual void detach() = 0;
 
-	/**
-	 * \brief
-	 * 	Actually start tracing the tracee
-	 **/
+	/// Actually start tracing the tracee.
 	void trace();
 
+	/// Reads a word of data from the tracee's memory.
 	/**
-	 * \brief
-	 * 	Reads a word of data from the tracee's memory
-	 * \details
-	 * 	The word found at \c addr is returned from this function on
-	 * 	success. On error an exception is thrown.
+	 * The word found at \c addr is returned from this function on
+	 * success. On error an exception is thrown.
 	 **/
 	long getData(const long *addr) const;
 
@@ -84,63 +63,40 @@ protected:
 
 	explicit TracedProc(TraceEventConsumer &consumer);
 
-	/**
-	 * \brief
-	 * 	Waits for the next trace event of this tracee
-	 **/
+	/// Waits for the next trace event of this tracee.
 	virtual void wait(cosmos::WaitRes &res) = 0;
 
-	/**
-	 * \brief
-	 * 	Causes the traced process to stop
-	 **/
+	/// Causes the traced process to stop.
 	void interrupt();
 
-	/**
-	 * \brief
-	 * 	Continues the traced process, optionally delivering \c signal
-	 **/
+	/// Continues the traced process, optionally delivering \c signal.
 	void cont(
 		const cosmos::ContinueMode &mode = cosmos::ContinueMode::NORMAL,
 		const cosmos::Signal signal = cosmos::signal::NONE
 	);
 
+	/// Returns a message about the current ptrace event.
 	/**
-	 * \brief
-	 * 	Returns a message about the current ptrace event
-	 * \details
-	 * 	This is either the exit status if the child exited or the PID
-	 * 	of a new process for fork/clone tracing.
+	 * This is either the exit status if the child exited or the PID of a
+	 * new process for fork/clone tracing.
 	 **/
 	unsigned long getEventMsg() const;
 
-	/**
-	 * \brief
-	 * 	Sets \c options, a bitmask of TraceOpts
-	 **/
+	/// Sets \c options, a bitmask of TraceOpts.
 	void setOptions(const cosmos::TraceFlags flags);
 
-	/**
-	 * \brief
-	 * 	Makes the tracee a tracee
-	 **/
+	/// Makes the tracee a tracee.
 	void seize();
 
-	/**
-	 * \brief
-	 * 	Sets the tracee, if not already done so
-	 **/
+	/// Sets the tracee, if not already done so.
 	void setTracee(const cosmos::ProcessID tracee);
 
-	//! called when the tracee exits
+	/// Called when the tracee exits
 	virtual void exited(const cosmos::WaitRes &) {}
 
+	/// Reads the current register set from the process.
 	/**
-	 * \brief
-	 * 	Reads the current register set from the process
-	 * \details
-	 * 	This is only possible it the tracee is currently in stopped
-	 * 	state
+	 * This is only possible it the tracee is currently in stopped state
 	 **/
 	void getRegisters(RegisterSet &rs);
 
@@ -149,45 +105,33 @@ protected:
 	void handleSignal(const cosmos::WaitRes &wr);
 
 protected:
-	//! callback interface receiving our information
+	/// Callback interface receiving our information
 	TraceEventConsumer &m_consumer;
-	//! the current state the tracee is in
+	/// The current state the tracee is in
 	TraceState m_state = TraceState::UNKNOWN;
-	//! PID of the tracee we're dealing with
+	/// PID of the tracee we're dealing with
 	cosmos::ProcessID m_tracee = cosmos::ProcessID::INVALID;
-	//! here we store our current knowledge open file descriptions
+	/// Here we store our current knowledge open file descriptions
 	DescriptorPathMapping m_fd_path_map;
-	//! reusable database object for tracing system calls
+	/// Reusable database object for tracing system calls
 	SystemCallDB m_syscall_db;
-	//! reusable register set object for tracing system calls
+	/// Reusable register set object for tracing system calls
 	RegisterSet m_reg_set;
-	//! holds state for the currently executing system call
+	/// Holds state for the currently executing system call
 	SystemCall *m_current_syscall = nullptr;
 };
 
-/**
- * \brief
- * 	Specialization of TracedProc that attaches to an existing, unrelated
- * 	process in the system
- **/
+/// Specialization of TracedProc that attaches to an existing, unrelated process in the system.
 class CLUES_API TracedSeizedProc :
-	public TracedProc
-{
+		public TracedProc {
 public: // functions
 
-	/**
-	 * \brief
-	 * 	Create a traced process object by attaching to the given
-	 * 	process ID
-	 **/
+	/// Create a traced process object by attaching to the given process ID.
 	TracedSeizedProc(TraceEventConsumer &consumer);
 
 	~TracedSeizedProc() override;
 
-	/**
-	 * \brief
-	 * 	Sets the given process ID as the process to be traced
-	 **/
+	/// Sets the given process ID as the process to be traced.
 	void configure(const cosmos::ProcessID tracee);
 
 	void attach() override;
@@ -199,34 +143,22 @@ protected: // data
 
 };
 
-/**
- * \brief
- * 	Specialization of TracedProc that creates a new child process for
- * 	tracing
- **/
+/// Specialization of TracedProc that creates a new child process for tracing.
 class CLUES_API TracedSubProc :
-	public TracedProc
-{
+		public TracedProc {
 public: // functions
 
-	/**
-	 * \brief
-	 * 	Create a traced process by creating a new process from \c
-	 * 	prog_args
-	 **/
+	/// Create a traced process by creating a new process from `prog_args`
 	TracedSubProc(TraceEventConsumer &consumer);
 
 	~TracedSubProc() override;
 
-	/**
-	 * \brief
-	 * 	Set the child process executable and parameters to trace
-	 **/
+	/// Set the child process executable and parameters to trace.
 	void configure(const cosmos::StringVector &prog_args);
 	void attach() override;
 	void detach() override;
 
-	//! the exit code of the sub-process, valid only after detach()
+	/// The exit code of the sub-process, valid only after detach().
 	cosmos::ExitStatus exitCode() const { return m_exit_code; }
 
 	void wait(cosmos::WaitRes &res) override;
@@ -236,7 +168,7 @@ protected: // functions
 protected: // data
 
 	cosmos::ChildCloner m_cloner;
-	//! sub-process we're tracing
+	/// sub-process we're tracing
 	cosmos::SubProc m_child;
 	cosmos::ExitStatus m_exit_code = cosmos::ExitStatus::SUCCESS;
 };

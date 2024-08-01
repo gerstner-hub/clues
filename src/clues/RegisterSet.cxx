@@ -2,14 +2,12 @@
 #include <ostream>
 
 // Clues
-#include "clues/RegisterSet.hxx"
+#include <clues/RegisterSet.hxx>
 
-namespace clues
-{
+namespace clues {
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &rs)
-{
+std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &rs) {
 	for( size_t i = 0; i < rs.numRegisters(); i++ )
 	{
 		if( i )

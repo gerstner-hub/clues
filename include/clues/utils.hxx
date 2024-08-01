@@ -3,23 +3,17 @@
 // C++
 #include <string>
 
-namespace clues
-{
+namespace clues {
 
 class TracedProc;
 
-/**
- * \brief
- * 	Returns a short errno label like ENOENT for the given errno integer
- **/
+/// Returns a short errno label like `ENOENT` for the given errno integer.
 const char* getErrnoLabel(int num);
 
+/// Reads a \0 terminated C-string from the tracee.
 /**
- * \brief
- * 	Reads a \0 terminated C-string from the tracee
- * \details
- * 	Read from the address space starting at \c addr of the tracee \c proc
- * 	into the C++ string object \c out.
+ * Read from the address space starting at \c addr of the tracee \c proc into
+ * the C++ string object \c out.
  **/
 void readTraceeString(
 	const TracedProc &proc,
@@ -27,10 +21,7 @@ void readTraceeString(
 	std::string &out
 );
 
-/**
- * \brief
- * 	Reads an arbitrary binary blob of fixed length from the tracee
- **/
+/// Reads an arbitrary binary blob of fixed length from the tracee.
 void CLUES_API readTraceeBlob(
 	const TracedProc &proc,
 	const long *addr,
@@ -38,47 +29,38 @@ void CLUES_API readTraceeBlob(
 	const size_t bytes
 );
 
-/**
- * \brief
- * 	Reads in a complete data structure STRUCT from the tracee
- **/
+/// Reads in a complete data structure STRUCT from the tracee.
 template <typename STRUCT>
 void readTraceeStruct(
-	const TracedProc &proc,
-	const long *addr,
-	STRUCT &out)
-{
+		const TracedProc &proc,
+		const long *addr,
+		STRUCT &out) {
 	readTraceeBlob(proc, addr, reinterpret_cast<char*>(&out), sizeof(STRUCT));
 }
 
+/// Wrapper to helper functions to implement typical exitedCall functions.
 /**
  * \brief
- * 	Wrapper to helper functions to implement typical exitedCall functions
  **/
 template <typename T>
 void readStruct(
-	const TracedProc &proc,
-	const long pointer,
-	T *&copy)
-{
+		const TracedProc &proc,
+		const long pointer,
+		T *&copy) {
 	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(pointer);
 
-	if( ! addr )
+	if (! addr)
 		// null address specification
 		return;
 
-	if( ! copy )
+	if (! copy)
 		copy = new T;
 
 	readTraceeStruct(proc, addr, *copy);
 }
 
-/**
- * \brief
- * 	Reads in a zero terminated array of data items into the STL-vector
- * 	like parameter \c out
- **/
+/// Reads in a zero terminated array of data items into the STL-vector like parameter \c out.
 template <typename VECTOR>
 void readTraceeVector(
 	const TracedProc &proc,

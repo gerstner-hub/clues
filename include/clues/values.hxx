@@ -8,25 +8,23 @@
 #include <sys/resource.h>
 
 // clues
-#include "clues/SystemCall.hxx"
-#include "clues/SystemCallValue.hxx"
-#include "clues/KernelStructs.hxx"
+#include <clues/SystemCall.hxx>
+#include <clues/SystemCallValue.hxx>
+#include <clues/KernelStructs.hxx>
 
 /*
  * Various specializations of SystemCallValue are found in this header
  */
 
-namespace clues
-{
+namespace clues {
 
 /**
  * \brief
  * 	A file descriptor system call parameter
  **/
 class CLUES_API FileDescriptor :
-	public SystemCallValue
-{
-public:
+		public SystemCallValue {
+public: // functions
 	/**
 	 * \param[in] at_semantics
 	 * 	If set then the file descriptor is considered to be part of an
@@ -39,135 +37,121 @@ public:
 	explicit FileDescriptor(
 		const Type &type,
 		const bool at_semantics = false) :
-		SystemCallValue(type, "fd", "file descriptor"),
-		m_at_semantics(at_semantics)
+			SystemCallValue{type, "fd", "file descriptor"},
+			m_at_semantics{at_semantics}
 	{}
 
 	std::string str() const override;
 
-protected:
+protected: // functions
 
 	void processValue(const TracedProc &) override {};
 
 	void updateData(const TracedProc &) override {};
 
-
-protected:
+protected: // data
 	bool m_at_semantics = false;
 };
 
 class FileDescriptorParameter :
-	public FileDescriptor
-{
+		public FileDescriptor {
 public:
 	explicit FileDescriptorParameter(const bool at_semantics = false) :
-		FileDescriptor(Type::PARAM_IN, at_semantics)
+			FileDescriptor{Type::PARAM_IN, at_semantics}
 	{}
 };
 
-/**
- * \brief
- *	A file descriptor return value with added errno semantics
- **/
+/// A file descriptor return value with added errno semantics.
 class CLUES_API FileDescriptorReturnValue :
-	public FileDescriptor
-{
-public:
+		public FileDescriptor {
+public: // functions
 	explicit FileDescriptorReturnValue() :
-		FileDescriptor(Type::RETVAL, false)
-	{}
+			FileDescriptor{Type::RETVAL, false} {
+	}
 
 protected:
 
 	std::string str() const override;
 };
 
+/// An errno system call result.
 /**
- * \brief
- * 	An errno system call result
- * \details
- * 	Often system call return values are dual natured: a negative return
- * 	value denotes an errno, a positive return value denotes some kind of
- * 	identifier like a PID, for example.
- *
- *	\c highest_errno therefore denotes the largest integer value that is
- *	still to be interpreted as an errno, while any larger value denotes
- *	some kind of successful return data item.
+ * Often system call return values are dual natured: a negative return value
+ * denotes an errno, a positive return value denotes some kind of identifier
+ * like a PID, for example.
+ * 
+ * `highest_errno` therefore denotes the largest integer value that is still
+ * to be interpreted as an errno, while any larger value denotes some kind of
+ * successful return data item.
  **/
 // TODO: maybe we should model dual natured return values like: PIDReturnValue
 // that outputs an errno in case of error, and alike.
 class CLUES_API ErrnoResult :
-	public ReturnValue
-{
-public:
+		public ReturnValue {
+public: // functions
 	ErrnoResult(
 		const int highest_errno = 0,
 		const char *short_label = "errno",
 		const char *long_label = nullptr) :
-		ReturnValue(short_label, long_label),
-		m_highest(highest_errno)
+			ReturnValue{short_label, long_label},
+			m_highest{highest_errno}
 	{}
 
 	std::string str() const override;
-protected:
+
+protected: // data
 
 	int m_highest;
 };
 
 
-/**
+/*
  * 	TODO: support to get the length of the data area from a
- * 	context-sensitive sibbling parameter and then print out the
+ * 	context-sensitive sibling parameter and then print out the
  * 	binary/ascii data as appropriate
- **/
+ */
 class CLUES_API GenericPointerValue :
-	public PointerValue
+		public PointerValue
 {
-public:
+public: // functions
+
 	explicit GenericPointerValue(
 		const char *short_name,
 		const char *long_name = nullptr,
 		const Type &type = Type::PARAM_IN) :
-		PointerValue(type, short_name, long_name)
+			PointerValue{type, short_name, long_name}
 	{}
 
 	std::string str() const override;
 
-protected:
+protected: // data
 
 	void processValue(const TracedProc &) override {}
 	void updateData(const TracedProc &) override {}
 };
 
-/**
- * \brief
- * 	c-string system call data
- **/
+/// c-string system call data.
 class CLUES_API StringData :
-	public SystemCallValue
-{
+		public SystemCallValue {
 public:
 	explicit StringData(
 		const char *short_name = nullptr,
 		const char *long_name = nullptr,
 		const Type &type = Type::PARAM_IN) :
-		SystemCallValue( type, short_name ? short_name : "string", long_name )
+			SystemCallValue{type, short_name ? short_name : "string", long_name}
 	{}
 
-	std::string str() const override { return std::string("\"") + m_str + "\""; }
+	std::string str() const override { return std::string{"\""} + m_str + "\""; }
 
 protected:
 
-	void processValue(const TracedProc &proc) override
-	{
-		if( ! this->isOut() )
-		{
+	void processValue(const TracedProc &proc) override {
+		if (! this->isOut()) {
 			fetch(proc);
 		}
 	}
 
-	void updateData(const TracedProc &proc) override
-	{
+	void updateData(const TracedProc &proc) override {
 		fetch(proc);
 	}
 
@@ -179,26 +163,22 @@ protected:
 	std::string m_str;
 };
 
+/// An array of c-strings system call data.
 /**
- * \brief
- * 	An array of c-strings system call data
- * \details
- * 	This is currently only used for argv and envp of the execve system
- * 	call
+ * This is currently only used for argv and envp of the execve system call.
  **/
 class CLUES_API StringArrayData :
-	public PointerInValue
-{
+		public PointerInValue {
 public:
 
 	explicit StringArrayData(
 		const char *short_name = nullptr,
 		const char *long_name = nullptr) :
-		PointerInValue(
-			short_name ? short_name : "string-array",
-			long_name
-		)
-	{}
+			PointerInValue{
+				short_name ? short_name : "string-array",
+				long_name
+			} {
+	}
 
 	std::string str() const override;
 
@@ -211,17 +191,13 @@ protected:
 	std::vector<std::string> m_strs;
 };
 
-/**
- * \brief
- * 	The flags passed to e.g. open()
- **/
+/// The flags passed to e.g. open().
 class CLUES_API OpenFlagsValue :
-	public SystemCallValue
-{
+		public SystemCallValue {
 public:
 	explicit OpenFlagsValue(const Type &type = Type::PARAM_IN) :
-		SystemCallValue(type, "flags", "open flags")
-	{}
+			SystemCallValue{type, "flags", "open flags"} {
+	}
 
 	std::string str() const override;
 
@@ -233,108 +209,88 @@ protected: // functions
 };
 
 class AccessModeParameter :
-	public ValueInParameter
-{
+		public ValueInParameter {
 public:
 	explicit AccessModeParameter() :
-		ValueInParameter("check", "access check")
-	{}
+		ValueInParameter{"check", "access check"} {
+	}
 
 	std::string str() const override;
 };
 
-/**
- * \brief
- * 	The code parameter to the arch_prctl system call
- **/
+/// The code parameter to the arch_prctl system call.
 class CLUES_API ArchCodeParameter :
-	public ValueInParameter
-{
+		public ValueInParameter {
 public:
 	explicit ArchCodeParameter() :
-		ValueInParameter("subfunction")
-	{}
+			ValueInParameter{"subfunction"} {
+	}
 
 	std::string str() const override;
 };
 
-/**
- * \brief
- * 	File access mode passed e.g. to open(), chmod()
- **/
+/// File access mode passed e.g. to open(), chmod().
 class FileModeParameter :
-	public ValueInParameter
-{
+		public ValueInParameter {
 public:
 
 	FileModeParameter() :
-		ValueInParameter("mode", "file-mode")
-	{}
+		ValueInParameter{"mode", "file-mode"} {
+	}
 
 	std::string str() const override;
 };
 
-/**
- * \brief
- * 	The stat structure used in stat() & friends
- **/
+/// The stat structure used in stat() & friends.
 class CLUES_API StatParameter :
-	public PointerOutValue
-{
-public:
+		public PointerOutValue {
+public: // functions
 	explicit StatParameter() :
-		PointerOutValue("stat", "struct stat")
-	{}
+		PointerOutValue{"stat", "struct stat"} {
+	}
 
 	~StatParameter() override;
 
 	std::string str() const override;
 
-protected:
+protected: // functions
+
 	void updateData(const TracedProc &proc) override;
 
-protected:
+protected: // data
+
 	FileModeParameter m_mode;
 	struct ::stat *m_stat = nullptr;
 };
 
-
-/**
- * \brief
- * 	Memory protection used e.g. in mprotect()
- **/
+/// Memory protection used e.g. in mprotect().
 class MemoryProtectionParameter :
-	public ValueInParameter
-{
-public:
+		public ValueInParameter {
+public: // data
 
 	explicit MemoryProtectionParameter() :
-		ValueInParameter("prot", "protection")
-	{}
+		ValueInParameter{"prot", "protection"} {
+	}
 
 	std::string str() const override;
 };
 
-/**
- * \brief
- * 	A list of directory entries
- **/
+/// A list of directory entries.
 class CLUES_API DirEntries :
-	public PointerOutValue
-{
-public:
+		public PointerOutValue {
+public: // functions
 
 	explicit DirEntries() :
-		PointerOutValue("dirent", "struct linux_dirent")
+			PointerOutValue{"dirent", "struct linux_dirent"}
 	{}
 
 	std::string str() const override;
 
-protected:
+protected: // functions
 
 	void updateData(const TracedProc &proc) override;
 
-protected:
+protected: // data
 
 	std::list<std::string> m_entries;
 };
@@ -354,164 +310,134 @@ public:
 	std::string str() const override;
 };
 
-/**
- * \brief
- * 	The struct timespec used for various timing and timeout operations
- * 	in system calls
- **/
+/// The struct timespec used for various timing and timeout operations in system calls.
 class CLUES_API TimespecParameter :
-	public SystemCallValue
-{
-public:
+		public SystemCallValue {
+public: // functions
 	explicit TimespecParameter(
 		const char *short_name,
 		const char *long_name = nullptr,
 		const Type &type = Type::PARAM_IN) :
-		SystemCallValue(type, short_name, long_name)
-	{}
+			SystemCallValue{type, short_name, long_name} {
+	}
 
 	~TimespecParameter() override;
 
 	std::string str() const override;
 
-protected:
+protected: // functions
 
-	void processValue(const TracedProc &proc) override
-	{
-		if( !this->isOut() )
+	void processValue(const TracedProc &proc) override {
+		if (!this->isOut())
 			fetch(proc);
 	}
 
-	void updateData(const TracedProc &proc) override
-	{
+	void updateData(const TracedProc &proc) override {
 		fetch(proc);
 	}
 
 
 	void fetch(const TracedProc &proc);
 
-protected:
+protected: // data
 
 	struct timespec *m_timespec = nullptr;
 };
 
-/**
- * \brief
- * 	The futex operation to be performed in the context of a futex system
- * 	call
- **/
+/// The futex operation to be performed in the context of a futex system call.
 class CLUES_API FutexOperation :
-	public ValueInParameter
-{
-public:
+		public ValueInParameter {
+public: // functions
 	explicit FutexOperation() :
-		ValueInParameter("op", "futex operation")
-	{}
+		ValueInParameter{"op", "futex operation"} {
+	}
 
 	std::string str() const override;
 };
 
-/**
- * \brief
- * 	A signal number specification
- **/
+/// A signal number specification.
 class SignalNumber :
-	public ValueInParameter
-{
-public:
+		public ValueInParameter {
+public: // functions
 	explicit SignalNumber() :
-		ValueInParameter("signum", "signal number")
-	{}
+		ValueInParameter{"signum", "signal number"} {
+	}
 
 	std::string str() const override;
 };
 
-/**
- * \brief
- * 	The struct sigaction used in various signal related system calls
- **/
+/// The struct sigaction used in various signal related system calls.
 class CLUES_API SigactionParameter :
-	public PointerInValue
-{
-public:
+		public PointerInValue {
+public: // functions
 	explicit SigactionParameter(
 		const char *short_name = "sigaction",
 		const char *long_name = "struct sigaction") :
-		PointerInValue(short_name, long_name)
-	{}
+			PointerInValue{short_name, long_name} {
+	}
 
 	~SigactionParameter() override;
 
 	std::string str() const override;
 
-protected:
+protected: // functions
 
 	void processValue(const TracedProc &proc) override;
 
-protected:
+protected: // data
 
 	struct kernel_sigaction *m_sigaction = nullptr;
 };
 
-/**
- * \brief
- * 	A set of POSIX signals for setting or masking in the context of
- * 	various system calls
- **/
+/// A set of POSIX signals for setting or masking in the context of various system calls.
 class CLUES_API SigSetParameter :
-	public PointerInValue
-{
-public:
+		public PointerInValue {
+public: // functions
 	explicit SigSetParameter(
 		const char *short_name = "sigset", const char *name = "signal set") :
-		PointerInValue(short_name, name)
-	{}
+			PointerInValue{short_name, name} {
+	}
 
 	~SigSetParameter() override;
 
 	std::string str() const override;
 
-protected:
+protected: // functions
 
 	void processValue(const TracedProc &proc) override;
 
-protected:
+protected: // data
 
 	sigset_t *m_sigset = nullptr;
 };
 
-/**
- * \brief
- * 	A resource kind specification as used in getrlimit & friends
- **/
+/// A resource kind specification as used in getrlimit & friends.
 class CLUES_API ResourceType :
-	public ValueInParameter
-{
-public:
+		public ValueInParameter {
+public: // functions
 	explicit ResourceType() :
-		ValueInParameter("resource", "resource type")
-	{}
+			ValueInParameter{"resource", "resource type"} {
+	}
 
 	std::string str() const override;
 };
 
 class CLUES_API ResourceLimit :
-	public PointerOutValue
-{
-public:
+		public PointerOutValue {
+public: // functions
 	explicit ResourceLimit() :
-		PointerOutValue("limit")
-	{}
+			PointerOutValue{"limit"} {
+	}
 
 	~ResourceLimit() override;
 
 	std::string str() const override;
 
-protected:
+protected: // functions
 
 	void updateData(const TracedProc &proc) override;
 
-protected:
+protected: // data
 
 	struct rlimit *m_limit;
 };

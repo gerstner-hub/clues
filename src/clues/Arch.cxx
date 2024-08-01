@@ -1,18 +1,15 @@
 // Linux
 
 // Cosmos
-#include "cosmos/error/UsageError.hxx"
+#include <cosmos/error/UsageError.hxx>
 
 // Clues
-#include "clues/Arch.hxx"
+#include <clues/Arch.hxx>
 
-namespace clues
-{
+namespace clues {
 
-const char* getRegisterName(const size_t number)
-{
-	switch(number)
-	{
+const char* getRegisterName(const size_t number) {
+	switch(number) {
 	default: cosmos_throw( cosmos::UsageError("Invalid register number encountered") ); return "";
 #ifdef __x86_64__
 	case R15: return "R15";

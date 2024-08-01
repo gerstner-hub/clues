@@ -18,89 +18,77 @@
 #include <sys/resource.h> // *rlimit()
 
 // clues
-#include "clues/values.hxx"
-#include "cosmos/error/ApiError.hxx"
-#include "clues/TracedProc.hxx"
-#include "clues/utils.hxx"
+#include <clues/values.hxx>
+#include <cosmos/error/ApiError.hxx>
+#include <clues/TracedProc.hxx>
+#include <clues/utils.hxx>
 
-namespace clues
-{
+namespace clues {
 
-std::string ErrnoResult::str() const
-{
-	if( (int)m_val < m_highest )
-	{
+std::string ErrnoResult::str() const {
+	if ((int)m_val < m_highest) {
 		const auto err = -(int)m_val;
 		return std::string(getErrnoLabel(err)) + " (" + std::to_string(err) + ")";
-	}
-	else
+	} else {
 		return std::to_string((int)m_val);
+	}
 }
 
-std::string GenericPointerValue::str() const
-{
+std::string GenericPointerValue::str() const {
 	std::stringstream ss;
 	ss << (long*)m_val;
 	return ss.str();
 }
 
-std::string FileDescriptor::str() const
-{
+std::string FileDescriptor::str() const {
 	int fd = (int)m_val;
 
-	if( m_at_semantics && fd == AT_FDCWD )
+	if (m_at_semantics && fd == AT_FDCWD)
 		return "AT_FDCWD";
 	else
 		return std::to_string((int)m_val);
 }
 
-std::string FileDescriptorReturnValue::str() const
-{
+std::string FileDescriptorReturnValue::str() const {
 	int fd = (int)m_val;
 
-	if( fd >= 0 )
+	if (fd >= 0)
 		return std::to_string((int)m_val);
 
-	return std::string("Failed: ") + cosmos::ApiError::msg(cosmos::Errno{fd * -1});
+	return std::string{"Failed: "} + cosmos::ApiError::msg(cosmos::Errno{fd * -1});
 }
 
-void StringData::fetch(const TracedProc &proc)
-{
+void StringData::fetch(const TracedProc &proc) {
 	// the address of the string in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
 	readTraceeString(proc, addr, m_str);
 }
 
-void StringArrayData::processValue(const TracedProc &proc)
-{
+void StringArrayData::processValue(const TracedProc &proc) {
 	const long *array_start = reinterpret_cast<long*>(m_val);
 	std::vector<long*> string_addrs;
 	m_strs.clear();
 
-	// first read in all start adresses of the c-strings for the string
-	// array
+	// first read in all start adresses of the c-strings for the string array
 	readTraceeVector(proc, array_start, string_addrs);
 
-	for( const auto &addr: string_addrs )
-	{
+	for (const auto &addr: string_addrs) {
 		m_strs.push_back( std::string() );
 		readTraceeString(proc, addr, m_strs.back() );
 	}
 }
 
-std::string StringArrayData::str() const
-{
+std::string StringArrayData::str() const {
 	std::string ret;
 	ret += "[";
 
-	for( const auto &str: m_strs )
-	{
+	for (const auto &str: m_strs) {
 		ret += "\"";
 		ret += str;
 		ret += "\", ";
 	}
 
-	if( ! m_strs.empty() )
+	if (! m_strs.empty())
 		ret.erase( ret.size() - 2 );
 
 	ret += "]";
@@ -110,8 +98,7 @@ std::string StringArrayData::str() const
 
 #define chk_open_flag(FLAG) if( m_val & FLAG ) ss << "|" << #FLAG;
 
-std::string OpenFlagsValue::str() const
-{
+std::string OpenFlagsValue::str() const {
 	std::stringstream ss;
 
 	ss << "0x" << std::hex << m_val << " (";
@@ -119,14 +106,11 @@ std::string OpenFlagsValue::str() const
 	// the access mode is made of the lower two bits
 	const int access_mode = m_val & 0x3;
 
-	if( access_mode == O_RDWR )
+	if (access_mode == O_RDWR) {
 		ss << "O_RDWR";
-	else if( access_mode == O_WRONLY )
-	{
+	} else if (access_mode == O_WRONLY) {
 		ss << "O_WRONLY";
-	}
-	else if( access_mode == O_RDONLY )
-	{
+	} else if (access_mode == O_RDONLY) {
 		ss << "O_RDONLY";
 	}
 
@@ -153,30 +137,25 @@ std::string OpenFlagsValue::str() const
 	return ss.str();
 }
 
-std::string AccessModeParameter::str() const
-{
-	if( m_val == F_OK )
+std::string AccessModeParameter::str() const {
+	if (m_val == F_OK)
 		return "F_OK";
 
 	std::stringstream ss;
 
-	if( m_val & R_OK )
-	{
+	if (m_val & R_OK) {
 		ss << "R_OK|";
 	}
-	if( m_val & W_OK )
-	{
+	if (m_val & W_OK) {
 		ss << "W_OK|";
 	}
-	if( m_val & X_OK )
-	{
+	if (m_val & X_OK) {
 		ss << "X_OK";
 	}
 
 	auto ret = ss.str();
 
-	if( !ret.empty() && *ret.rbegin() == '|' )
-	{
+	if (!ret.empty() && *ret.rbegin() == '|') {
 		ret.erase(ret.size() - 1);
 	}
 
@@ -185,8 +164,7 @@ std::string AccessModeParameter::str() const
 
 #define chk_mode_flag(FLAG, ch) if( m_val & FLAG) ss << ch; else ss << "-";
 
-std::string FileModeParameter::str() const
-{
+std::string FileModeParameter::str() const {
 	std::stringstream ss;
 
 	ss << "0x" << std::hex << m_val << " (";
@@ -209,20 +187,19 @@ std::string FileModeParameter::str() const
 	return ss.str();
 }
 
-std::string MemoryProtectionParameter::str() const
-{
+std::string MemoryProtectionParameter::str() const {
 	std::stringstream ss;
 
-	if( m_val == PROT_NONE )
+	if (m_val == PROT_NONE)
 		ss << "PROT_NONE";
 
-	if( m_val & PROT_READ )
+	if (m_val & PROT_READ)
 		ss << "PROT_READ";
 
-	if( m_val & PROT_WRITE )
+	if (m_val & PROT_WRITE)
 		ss << "|PROT_WRITE";
 
-	if( m_val & PROT_EXEC )
+	if (m_val & PROT_EXEC)
 		ss << "|PROT_EXEC";
 
 	return ss.str();
@@ -231,10 +208,8 @@ std::string MemoryProtectionParameter::str() const
 #ifdef __x86_64__
 #define chk_arch_case(MODE) case MODE: return #MODE;
 
-std::string ArchCodeParameter::str() const
-{
-	switch( m_val )
-	{
+std::string ArchCodeParameter::str() const {
+	switch (m_val) {
 	chk_arch_case(ARCH_SET_FS)
 	chk_arch_case(ARCH_GET_FS)
 	chk_arch_case(ARCH_SET_GS)
@@ -245,10 +220,11 @@ std::string ArchCodeParameter::str() const
 }
 #endif
 
-StatParameter::~StatParameter() { delete m_stat; }
+StatParameter::~StatParameter() {
+	delete m_stat;
+}
 
-std::string StatParameter::str() const
-{
+std::string StatParameter::str() const {
 	std::stringstream ss;
 
 	ss << "st_size = " << m_stat->st_size << ", ";
@@ -257,19 +233,16 @@ std::string StatParameter::str() const
 	return ss.str();
 }
 
-void StatParameter::updateData(const TracedProc &proc)
-{
+void StatParameter::updateData(const TracedProc &proc) {
 	readStruct(proc, m_val, m_stat);
 }
 
-extern "C"
-{
+extern "C" {
 
 /*
  * the man page says there's no header for this
  */
-struct linux_dirent
-{
+struct linux_dirent {
 	unsigned long d_ino;
 	unsigned long d_off;
 	unsigned short d_reclen;
@@ -284,22 +257,19 @@ struct linux_dirent
 
 }
 
-std::string DirEntries::str() const
-{
+std::string DirEntries::str() const {
 	std::stringstream ss;
 	const auto &respar = m_call->result();
 	const int result = respar.value();
 
-	if( result < 0 )
+	if (result < 0) {
 		ss << "undefined";
-	else if( result == 0 )
+	} else if(result == 0) {
 		ss << "empty";
-	else
-	{
+	} else {
 		ss << m_entries.size() << " entries: ";
 
-		for( const auto &entry: m_entries )
-		{
+		for (const auto &entry: m_entries) {
 			ss << entry << ", ";
 		}
 	}
@@ -307,8 +277,7 @@ std::string DirEntries::str() const
 	return ss.str();
 }
 
-void DirEntries::updateData(const TracedProc &proc)
-{
+void DirEntries::updateData(const TracedProc &proc) {
 	m_entries.clear();
 
 	// the amount of data stored at the DirEntries location depends on the
@@ -316,7 +285,7 @@ void DirEntries::updateData(const TracedProc &proc)
 	const auto &respar = m_call->result();
 	const size_t bytes = respar.value();
 
-	if( bytes <= 0 )
+	if (bytes <= 0)
 		return;
 
 	/*
@@ -332,8 +301,7 @@ void DirEntries::updateData(const TracedProc &proc)
 	struct linux_dirent *cur = nullptr;
 	size_t pos = 0;
 
-	while( pos < bytes )
-	{
+	while (pos < bytes) {
 		cur = (struct linux_dirent*)(buffer + pos);
 		m_entries.push_back( cur->d_name );
 		pos += cur->d_reclen;
@@ -346,9 +314,7 @@ void DirEntries::updateData(const TracedProc &proc)
 
 std::string SigSetOperation::str() const
 {
-
-	switch(m_val)
-	{
+	switch(m_val) {
 	ENUM_CASE(SIG_BLOCK);
 	ENUM_CASE(SIG_UNBLOCK);
 	ENUM_CASE(SIG_SETMASK);
@@ -359,8 +325,7 @@ std::string SigSetOperation::str() const
 	}
 }
 
-std::string FutexOperation::str() const
-{
+std::string FutexOperation::str() const {
 	/*
 	 * there are a number of undocumented constants and some flags can be
 	 * or'd in like FUTEX_PRIVATE_FLAG. Without exactly understanding that
@@ -369,8 +334,7 @@ std::string FutexOperation::str() const
 	 * understands all the "private" stuff that can also be found in the
 	 * header
 	 */
-	switch(m_val & FUTEX_CMD_MASK)
-	{
+	switch(m_val & FUTEX_CMD_MASK) {
 	ENUM_CASE(FUTEX_WAIT);
 	ENUM_CASE(FUTEX_WAIT_BITSET);
 	ENUM_CASE(FUTEX_WAKE);
@@ -385,27 +349,27 @@ std::string FutexOperation::str() const
 	}
 }
 
-void TimespecParameter::fetch(const TracedProc &proc)
-{
+void TimespecParameter::fetch(const TracedProc &proc) {
 	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
 
-	if( ! addr )
+	if (! addr)
 		// NULL time specification
 		return;
 
-	if( ! m_timespec )
+	if (! m_timespec)
 		m_timespec = new struct timespec;
 
 	readTraceeStruct(proc, addr, *m_timespec);
 }
 
 
-TimespecParameter::~TimespecParameter() { delete m_timespec; }
+TimespecParameter::~TimespecParameter() {
+	delete m_timespec;
+}
 
-std::string TimespecParameter::str() const
-{
-	if( ! m_timespec )
+std::string TimespecParameter::str() const {
+	if (! m_timespec)
 		return "NULL";
 
 	std::stringstream ss;
@@ -417,17 +381,14 @@ std::string TimespecParameter::str() const
 
 #define SIG_CASE(NAME) case NAME: ss << #NAME; break
 
-void printSignal(std::string &s, int signal)
-{
+void printSignal(std::string &s, int signal) {
 	std::stringstream ss;
 	s.clear();
 
 	const auto SIGRTMIN_PRIV = SIGRTMIN - 2;
 
-	if( signal < (SIGRTMIN_PRIV) || signal > SIGRTMAX )
-	{
-		switch( signal )
-		{
+	if (signal < (SIGRTMIN_PRIV) || signal > SIGRTMAX) {
+		switch (signal) {
 		SIG_CASE(SIGINT);
 		SIG_CASE(SIGTERM);
 		SIG_CASE(SIGHUP);
@@ -462,13 +423,9 @@ void printSignal(std::string &s, int signal)
 		default:
 			ss << "unknown (" << signal << ")";
 		}
-	}
-	else if( signal >= SIGRTMIN_PRIV && signal < SIGRTMIN )
-	{
+	} else if (signal >= SIGRTMIN_PRIV && signal < SIGRTMIN) {
 		ss << "glibc internal signal";
-	}
-	else
-	{
+	} else {
 		ss << "SIGRT" << signal - SIGRTMIN;
 	}
 
@@ -477,18 +434,15 @@ void printSignal(std::string &s, int signal)
 	s = ss.str();
 }
 
-void printSignalSet(std::string &s, const sigset_t &set)
-{
+void printSignalSet(std::string &s, const sigset_t &set) {
 	std::stringstream ss;
 
 	s.clear();
 
 	ss << "{";
 
-	for( int signum = 1; signum < SIGRTMAX; signum++ )
-	{
-		if( sigismember(&set, signum) )
-		{
+	for (int signum = 1; signum < SIGRTMAX; signum++) {
+		if (sigismember(&set, signum)) {
 			printSignal(s, signum);
 
 			ss << s << ", ";
@@ -500,8 +454,7 @@ void printSignalSet(std::string &s, const sigset_t &set)
 	s = ss.str();
 }
 
-std::string SignalNumber::str() const
-{
+std::string SignalNumber::str() const {
 	std::string s;
 	printSignal(s, m_val);
 	return s;
@@ -514,8 +467,7 @@ std::string SignalNumber::str() const
 	ss << #FLAG;\
 }
 
-std::string saflags_str(const int flags)
-{
+std::string saflags_str(const int flags) {
 	std::stringstream ss;
 	bool first = true;
 
@@ -531,9 +483,8 @@ std::string saflags_str(const int flags)
 	return ss.str();
 }
 
-std::string SigactionParameter::str() const
-{
-	if( ! m_sigaction )
+std::string SigactionParameter::str() const {
+	if (! m_sigaction)
 		return "NULL";
 
 	std::stringstream ss;
@@ -541,9 +492,9 @@ std::string SigactionParameter::str() const
 
 	ss << "handler(";
 
-	if( m_sigaction->handler == SIG_IGN )
+	if (m_sigaction->handler == SIG_IGN)
 		ss << "SIG_IGN";
-	else if( m_sigaction->handler == SIG_DFL )
+	else if (m_sigaction->handler == SIG_DFL)
 		ss << "SIG_DFL";
 	else 
 		ss << (void*)m_sigaction->handler;
@@ -558,32 +509,31 @@ std::string SigactionParameter::str() const
 	return ss.str();
 }
 
-SigactionParameter::~SigactionParameter() { delete m_sigaction; }
+SigactionParameter::~SigactionParameter() {
+	delete m_sigaction;
+}
 
-void SigactionParameter::processValue(const TracedProc &proc)
-{
+void SigactionParameter::processValue(const TracedProc &proc) {
 	readStruct(proc, m_val, m_sigaction);
 }
 
-SigSetParameter::~SigSetParameter() { delete m_sigset; }
+SigSetParameter::~SigSetParameter() {
+	delete m_sigset;
+}
 
-void SigSetParameter::processValue(const TracedProc &proc)
-{
+void SigSetParameter::processValue(const TracedProc &proc) {
 	readStruct(proc, m_val, m_sigset);
 }
 
-std::string SigSetParameter::str() const
-{
+std::string SigSetParameter::str() const {
 	std::string s;
 	printSignalSet(s, *m_sigset);
 
 	return s;
 }
 
-std::string ResourceType::str() const
-{
-	switch(m_val)
-	{
+std::string ResourceType::str() const {
+	switch (m_val) {
 	ENUM_CASE(RLIMIT_AS);
 	ENUM_CASE(RLIMIT_CORE);
 	ENUM_CASE(RLIMIT_CPU);
@@ -605,26 +555,24 @@ std::string ResourceType::str() const
 	}
 }
 
-std::string printLimit(uint64_t lim)
-{
-	if( lim == RLIM_INFINITY )
+std::string printLimit(uint64_t lim) {
+	if (lim == RLIM_INFINITY)
 		return "RLIM_INFINITY";
 	// these seem to have the the same value on some platforms, triggering
 	// -Wduplicated-cond. So only make the check if the constants actually
 	// differ.
 #	if RLIM_INFINITY != RLIM64_INFINITY
-	else if( lim == RLIM64_INFINITY )
+	else if (lim == RLIM64_INFINITY)
 		return "RLIM64_INFINITY";
 #	endif
-	else if( (lim % 1024) == 0 )
+	else if ((lim % 1024) == 0)
 		return std::to_string(lim / 1024) + " * " + "1024";
 	else
 		return std::to_string(lim);
 }
 
-std::string ResourceLimit::str() const
-{
-	if( ! m_limit )
+std::string ResourceLimit::str() const {
+	if (! m_limit)
 		return "NULL";
 
 	std::stringstream ss;
@@ -636,12 +584,12 @@ std::string ResourceLimit::str() const
 	return ss.str();
 }
 
-ResourceLimit::~ResourceLimit() { delete m_limit; }
+ResourceLimit::~ResourceLimit() {
+	delete m_limit;
+}
 
-void ResourceLimit::updateData(const TracedProc &proc)
-{
+void ResourceLimit::updateData(const TracedProc &proc) {
 	readStruct(proc, m_val, m_limit);
 }
 
 } // end ns
-
