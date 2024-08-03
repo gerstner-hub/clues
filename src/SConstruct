@@ -74,6 +74,9 @@ libenv.Append(CPPPATH=["."])
 libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False, subpath='clues')
 libenv.ConfigureForLibOrPackage('libcosmos', libclues_srcs)
 
+version, soname, tag = libenv.GetSharedLibVersionInfo('libclues')
+libenv.AddVersionFileTarget('libclues', tag)
+
 if env['libtype'] == 'static':
     libclues = libenv.StaticLibrary(
         'clues',
@@ -95,8 +98,8 @@ else:
     libclues = libenv.SharedLibrary(
         'clues',
         libclues_srcs,
-        SHLIBVERSION='0.1.0',
-        SONAME='libclues.so.0'
+        SHLIBVERSION=version,
+        SONAME=soname
     )
 
 env.RegisterLibConfig(
@@ -105,6 +108,9 @@ env.RegisterLibConfig(
     {
         'CCFLAGS': ['-DCLUES_API='],
         'CPPPATH': [public_includes]
+    },
+    {
+        'version': version
     }
 )
 

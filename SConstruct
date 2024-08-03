@@ -17,6 +17,8 @@ except Exception:
 
 env.AddLocalLibrary('libcosmos')
 
+env['project_root'] = str(Dir('.').get_abspath())
+
 env = SConscript(env['buildroot'] + 'src/SConstruct')
 
 instroot = env['instroot']
@@ -34,5 +36,3 @@ if install_dev_files or env['libtype'] == 'shared':
 
 if install_dev_files:
     env.InstallHeaders('clues')
-    node = env.Install(Path(instroot) / env['pkg_config_dir'], 'data/libclues.pc')
-    env.Alias('install', node)

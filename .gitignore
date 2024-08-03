@@ -4,3 +4,4 @@ install
 *.swp
 tags
 .tags
+.*.tag

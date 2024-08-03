@@ -1,0 +1,7 @@
+package=libclues
+
+Name: libclues
+Version: @LIB_VERSION@
+Description: libclues C++ tracing library for Linux
+URL: https://www.github.com/gerstner-hub/libclues
+Libs: -lclues
