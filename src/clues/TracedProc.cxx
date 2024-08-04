@@ -2,12 +2,12 @@
 #include <iostream>
 
 // Linux
-#include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 // cosmos
 #include <cosmos/error/ApiError.hxx>
+#include <cosmos/error/errno.hxx>
 #include <cosmos/proc/WaitRes.hxx>
 
 // clues
@@ -16,7 +16,7 @@
 
 namespace clues {
 
-TracedProc::TracedProc(TraceEventConsumer &consumer) :
+TracedProc::TracedProc(EventConsumer &consumer) :
 		m_consumer{consumer} {
 }
 
@@ -42,10 +42,10 @@ unsigned long TracedProc::getEventMsg() const {
 	unsigned long ret;
 
 	if (::ptrace(
-		PTRACE_GETEVENTMSG,
-		m_tracee,
-		nullptr,
-		&ret)) {
+			PTRACE_GETEVENTMSG,
+			m_tracee,
+			nullptr,
+			&ret)) {
 		cosmos_throw(cosmos::ApiError("ptrace"));
 	}
 
@@ -63,14 +63,14 @@ void TracedProc::setOptions(const cosmos::TraceFlags flags) {
 }
 
 void TracedProc::interrupt() {
-	if (::ptrace( PTRACE_INTERRUPT, m_tracee, nullptr, nullptr )) {
+	if (::ptrace(PTRACE_INTERRUPT, m_tracee, nullptr, nullptr) != 0) {
 		cosmos_throw(cosmos::ApiError("ptrace"));
 	}
 }
 
 void TracedProc::seize() {
-	if (::ptrace( PTRACE_SEIZE, m_tracee, nullptr, nullptr ) != 0 ) {
-		cosmos_throw( cosmos::ApiError("ptrace") );
+	if (::ptrace(PTRACE_SEIZE, m_tracee, nullptr, nullptr) != 0) {
+		cosmos_throw(cosmos::ApiError("ptrace"));
 	}
 }
 
@@ -91,13 +91,13 @@ void TracedProc::handleSystemCall() {
 }
 
 void TracedProc::handleSignal(const cosmos::WaitRes &wr) {
-	const auto &signal = wr.stopSignal();
+	const auto signal = wr.stopSignal();
 
 	if (signal == cosmos::Signal{cosmos::signal::TRAP})
 		// our own tracing point
 		return;
 
-	std::cout << "Got signal: " << wr.stopSignal() << std::endl;
+	std::cout << "Got signal: " << signal << std::endl;
 }
 
 void TracedProc::trace() {
@@ -131,18 +131,18 @@ void TracedProc::getRegisters(RegisterSet &rs) {
 	rs.fillIov(reg_vector);
 
 	if (::ptrace(PTRACE_GETREGSET, m_tracee, rs.registerType(), &reg_vector) != 0 ) {
-		cosmos_throw( cosmos::ApiError("ptrace") );
+		cosmos_throw(cosmos::ApiError("ptrace"));
 	}
 
 	//std::cout << "Read registers " << reg_vector.iov_len << " vs. " << sizeof(regs) << std::endl;
 }
 
 long TracedProc::getData(const long *addr) const {
-	errno = 0;
+	cosmos::reset_errno();
 	const long ret = ::ptrace(PTRACE_PEEKDATA, m_tracee, addr, 0);
 
-	if (errno != 0) {
-		cosmos_throw( cosmos::ApiError("ptrace") );
+	if (cosmos::is_errno_set()) {
+		cosmos_throw(cosmos::ApiError("ptrace"));
 	}
 
 	return ret;

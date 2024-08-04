@@ -11,7 +11,7 @@ class CLUES_API TracedSubProc :
 public: // functions
 
 	/// Create a traced process by creating a new process from `prog_args`
-	TracedSubProc(TraceEventConsumer &consumer);
+	TracedSubProc(EventConsumer &consumer);
 
 	~TracedSubProc() override;
 

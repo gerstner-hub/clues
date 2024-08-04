@@ -6,7 +6,7 @@
 
 namespace clues {
 
-TracedSubProc::TracedSubProc(TraceEventConsumer &consumer) :
+TracedSubProc::TracedSubProc(EventConsumer &consumer) :
 	TracedProc{consumer} {
 }
 

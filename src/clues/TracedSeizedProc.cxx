@@ -10,7 +10,7 @@
 
 namespace clues {
 
-TracedSeizedProc::TracedSeizedProc(TraceEventConsumer &consumer) :
+TracedSeizedProc::TracedSeizedProc(EventConsumer &consumer) :
 		TracedProc{consumer} {
 }
 

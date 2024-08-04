@@ -19,7 +19,7 @@
 namespace clues {
 
 class TermTracer :
-		public TraceEventConsumer,
+		public TracedProc::EventConsumer,
        		public cosmos::MainPlainArgs {
 public: // functions
 

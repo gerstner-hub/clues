@@ -11,7 +11,7 @@ class CLUES_API TracedSeizedProc :
 public: // functions
 
 	/// Create a traced process object by attaching to the given process ID.
-	TracedSeizedProc(TraceEventConsumer &consumer);
+	TracedSeizedProc(EventConsumer &consumer);
 
 	~TracedSeizedProc() override;
 

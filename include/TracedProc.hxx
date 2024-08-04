@@ -6,31 +6,20 @@
 
 // cosmos
 #include <cosmos/proc/ChildCloner.hxx>
-#include <cosmos/proc/SubProc.hxx>
-#include <cosmos/proc/Signal.hxx>
 #include <cosmos/proc/ptrace.hxx>
+#include <cosmos/proc/Signal.hxx>
+#include <cosmos/proc/SubProc.hxx>
 #include <cosmos/string.hxx>
 
 // clues
-#include <clues/types.hxx>
 #include <clues/RegisterSet.hxx>
 #include <clues/SystemCallDB.hxx>
-#include <clues/TraceState.hxx>
+#include <clues/types.hxx>
 
 namespace clues {
 
 class RegisterSet;
 class SystemCall;
-
-/// pure virtual interface for consumers of tracing events.
-class TraceEventConsumer {
-	friend class TracedProc;
-protected: // functions
-
-	virtual void syscallEntry(const SystemCall &sc) = 0;
-
-	virtual void syscallExit(const SystemCall &sc) = 0;
-};
 
 /// Base class for traced processes.
 /**
@@ -38,7 +27,20 @@ protected: // functions
  * traced process is attached to and detached from etc.
  **/
 class CLUES_API TracedProc {
-public:
+public: // types
+
+	/// Pure virtual interface for consumers of tracing events.
+	class EventConsumer {
+		friend class TracedProc;
+	protected: // functions
+
+		virtual void syscallEntry(const SystemCall &sc) = 0;
+
+		virtual void syscallExit(const SystemCall &sc) = 0;
+	};
+
+public: // functions
+
 	virtual ~TracedProc() {}
 
 	/// Logic to handle attaching to the tracee.
@@ -47,7 +49,10 @@ public:
 	/// Logic to handle detaching from the tracee.
 	virtual void detach() = 0;
 
-	/// Actually start tracing the tracee.
+	/// Actually start processing events from the tracee.
+	/**
+	 * This call will run until the traced process stops executing.
+	 **/
 	void trace();
 
 	/// Reads a word of data from the tracee's memory.
@@ -57,19 +62,20 @@ public:
 	 **/
 	long getData(const long *addr) const;
 
-public: // types
+protected: // functions
 
-protected:
-
-	explicit TracedProc(TraceEventConsumer &consumer);
+	explicit TracedProc(EventConsumer &consumer);
 
 	/// Waits for the next trace event of this tracee.
 	virtual void wait(cosmos::WaitRes &res) = 0;
 
-	/// Causes the traced process to stop.
+	/// Called when the tracee exits
+	virtual void exited(const cosmos::WaitRes &) {}
+
+	/// Forces the traced process to stop.
 	void interrupt();
 
-	/// Continues the traced process, optionally delivering \c signal.
+	/// Continues the traced process, optionally delivering `signal`.
 	void cont(
 		const cosmos::ContinueMode &mode = cosmos::ContinueMode::NORMAL,
 		const cosmos::Signal signal = cosmos::signal::NONE
@@ -82,17 +88,14 @@ protected:
 	 **/
 	unsigned long getEventMsg() const;
 
-	/// Sets \c options, a bitmask of TraceOpts.
+	/// Applies the given trace `flags`.
 	void setOptions(const cosmos::TraceFlags flags);
 
 	/// Makes the tracee a tracee.
 	void seize();
 
-	/// Sets the tracee, if not already done so.
+	/// Sets the tracee PID
 	void setTracee(const cosmos::ProcessID tracee);
-
-	/// Called when the tracee exits
-	virtual void exited(const cosmos::WaitRes &) {}
 
 	/// Reads the current register set from the process.
 	/**
@@ -104,14 +107,15 @@ protected:
 
 	void handleSignal(const cosmos::WaitRes &wr);
 
-protected:
+protected: // data
+
 	/// Callback interface receiving our information
-	TraceEventConsumer &m_consumer;
+	EventConsumer &m_consumer;
 	/// The current state the tracee is in
 	TraceState m_state = TraceState::UNKNOWN;
 	/// PID of the tracee we're dealing with
 	cosmos::ProcessID m_tracee = cosmos::ProcessID::INVALID;
-	/// Here we store our current knowledge open file descriptions
+	/// Here we store our current knowledge about open file descriptions
 	DescriptorPathMapping m_fd_path_map;
 	/// Reusable database object for tracing system calls
 	SystemCallDB m_syscall_db;
