@@ -62,7 +62,7 @@ errnoHeaderBuilder = env.Builder(action=buildErrnosHeader, suffix='.h', src_suff
 
 env.Append(BUILDERS={'ErrnoHeaderBuilder': errnoHeaderBuilder})
 
-errno_header = env.ErrnoHeaderBuilder("clues/errnodb.c")
+errno_header = env.ErrnoHeaderBuilder("errnodb.c")
 
 libenv = env.Clone()
 public_includes = Dir('.').srcnode().abspath + '/../include'
@@ -71,7 +71,7 @@ libenv.Append(CPPPATH=public_includes)
 # for finding private includes
 libenv.Append(CPPPATH=["."])
 
-libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False, subpath='clues')
+libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False)
 libenv.ConfigureForLibOrPackage('libcosmos', libclues_srcs)
 
 version, soname, tag = libenv.GetSharedLibVersionInfo('libclues')
