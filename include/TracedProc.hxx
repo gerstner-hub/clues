@@ -12,6 +12,7 @@
 #include <cosmos/string.hxx>
 
 // clues
+#include <clues/ptrace.hxx>
 #include <clues/RegisterSet.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/types.hxx>
@@ -73,26 +74,25 @@ protected: // functions
 	virtual void exited(const cosmos::WaitRes &) {}
 
 	/// Forces the traced process to stop.
-	void interrupt();
+	void interrupt() {
+		ptrace::interrupt(m_tracee);
+	}
 
 	/// Continues the traced process, optionally delivering `signal`.
-	void cont(
-		const cosmos::ContinueMode &mode = cosmos::ContinueMode::NORMAL,
-		const cosmos::Signal signal = cosmos::signal::NONE
-	);
-
-	/// Returns a message about the current ptrace event.
-	/**
-	 * This is either the exit status if the child exited or the PID of a
-	 * new process for fork/clone tracing.
-	 **/
-	unsigned long getEventMsg() const;
+	void cont(const cosmos::ContinueMode &mode = cosmos::ContinueMode::NORMAL,
+			const std::optional<cosmos::Signal> signal = {}) {
+		ptrace::cont(m_tracee, mode, signal);
+	}
 
 	/// Applies the given trace `flags`.
-	void setOptions(const cosmos::TraceFlags flags);
+	void setOptions(const cosmos::TraceFlags flags) {
+		ptrace::set_options(m_tracee, flags);
+	}
 
 	/// Makes the tracee a tracee.
-	void seize();
+	void seize() {
+		ptrace::seize(m_tracee);
+	}
 
 	/// Sets the tracee PID
 	void setTracee(const cosmos::ProcessID tracee);

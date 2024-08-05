@@ -10,7 +10,10 @@
 #include <elf.h> // NT_PRSTATUS is in here
 
 // cosmos
+#include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/error/UsageError.hxx>
+#include <cosmos/io/iovector.hxx>
+#include <cosmos/proc/ptrace.hxx>
 
 // clues
 #include <clues/Arch.hxx>
@@ -39,13 +42,19 @@ public: // functions
 	}
 
 	/// Prepares `iov` for doing a ptrace system call PTRACE_GETREGSET.
-	void fillIov(struct iovec &iov) {
-		iov.iov_len = sizeof(m_regs);
-		iov.iov_base = &m_regs;
+	void fillIov(cosmos::InputMemoryRegion &iov) {
+		iov.setBase(&m_regs);
+		iov.setLength(sizeof(m_regs));
+	}
+
+	void iovFilled(const cosmos::InputMemoryRegion &iov) {
+		if (iov.getLength() < sizeof(m_regs)) {
+			cosmos_throw(cosmos::RuntimeError("received incomplete register set"));
+		}
 	}
 
 	/// The type to pass to PTRACE_GETREGSET for obtaining the general purpose registers.
-	static constexpr int registerType() { return NT_PRSTATUS; }
+	static constexpr cosmos::RegisterType registerType() { return cosmos::RegisterType::GENERAL_PURPOSE; }
 
 	/// Returns the active system call number on entry to a syscall.
 	Word syscall() const { return m_regs[SYSCALL_NR_REG]; }

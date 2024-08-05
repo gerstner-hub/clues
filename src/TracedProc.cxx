@@ -8,6 +8,7 @@
 // cosmos
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/errno.hxx>
+#include <cosmos/io/iovector.hxx>
 #include <cosmos/proc/WaitRes.hxx>
 
 // clues
@@ -22,56 +23,6 @@ TracedProc::TracedProc(EventConsumer &consumer) :
 
 void TracedProc::setTracee(const cosmos::ProcessID tracee) {
 	m_tracee = tracee;
-}
-
-void TracedProc::cont(
-		const cosmos::ContinueMode &mode,
-		const cosmos::Signal signal) {
-	const auto raw_signal = signal.raw();
-
-	if (::ptrace(
-			static_cast<__ptrace_request>(mode),
-			m_tracee,
-			signal.valid() ? &raw_signal: nullptr,
-			nullptr)) {
-		cosmos_throw(cosmos::ApiError("ptrace"));
-	}
-}
-
-unsigned long TracedProc::getEventMsg() const {
-	unsigned long ret;
-
-	if (::ptrace(
-			PTRACE_GETEVENTMSG,
-			m_tracee,
-			nullptr,
-			&ret)) {
-		cosmos_throw(cosmos::ApiError("ptrace"));
-	}
-
-	return ret;
-}
-
-void TracedProc::setOptions(const cosmos::TraceFlags flags) {
-	if (::ptrace(
-			PTRACE_SETOPTIONS,
-			m_tracee,
-			nullptr,
-			flags.raw())) {
-		cosmos_throw(cosmos::ApiError("ptrace"));
-	}
-}
-
-void TracedProc::interrupt() {
-	if (::ptrace(PTRACE_INTERRUPT, m_tracee, nullptr, nullptr) != 0) {
-		cosmos_throw(cosmos::ApiError("ptrace"));
-	}
-}
-
-void TracedProc::seize() {
-	if (::ptrace(PTRACE_SEIZE, m_tracee, nullptr, nullptr) != 0) {
-		cosmos_throw(cosmos::ApiError("ptrace"));
-	}
 }
 
 void TracedProc::handleSystemCall() {
@@ -127,12 +78,11 @@ void TracedProc::trace() {
 }
 
 void TracedProc::getRegisters(RegisterSet &rs) {
-	struct iovec reg_vector;
-	rs.fillIov(reg_vector);
+	cosmos::InputMemoryRegion iovec;
+	rs.fillIov(iovec);
 
-	if (::ptrace(PTRACE_GETREGSET, m_tracee, rs.registerType(), &reg_vector) != 0 ) {
-		cosmos_throw(cosmos::ApiError("ptrace"));
-	}
+	ptrace::get_register_set(m_tracee, rs.registerType(), iovec);
+	rs.iovFilled(iovec);
 
 	//std::cout << "Read registers " << reg_vector.iov_len << " vs. " << sizeof(regs) << std::endl;
 }
