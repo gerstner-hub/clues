@@ -1,19 +1,19 @@
 #pragma once
 
 // clues
-#include <clues/TracedProc.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues {
 
-/// Specialization of TracedProc that creates a new child process for tracing.
-class CLUES_API TracedSubProc :
-		public TracedProc {
+/// Specialization of Tracee that creates a new child process for tracing.
+class CLUES_API ChildTracee :
+		public Tracee {
 public: // functions
 
 	/// Create a traced process by creating a new process from `prog_args`
-	TracedSubProc(EventConsumer &consumer);
+	ChildTracee(EventConsumer &consumer);
 
-	~TracedSubProc() override;
+	~ChildTracee() override;
 
 	/// Set the child process executable and parameters to trace.
 	void configure(const cosmos::StringVector &prog_args);

@@ -15,7 +15,7 @@
 
 namespace clues {
 	class SystemCall;
-	class TracedProc;
+	class Tracee;
 }
 
 std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc);
@@ -87,7 +87,7 @@ public: // functions
 	 * Introspect the parameter values and store them in the current
 	 * object's ParameterVector.
 	 **/
-	void setEntryRegs(const TracedProc &proc, const RegisterSet &r);
+	void setEntryRegs(const Tracee &proc, const RegisterSet &r);
 
 	/// Update possible out and return parameter values from the given tracee.
 	/**
@@ -95,7 +95,7 @@ public: // functions
 	 * Introspect the return value and update out or in-out parameters as
 	 * applicable.
 	 **/
-	void setExitRegs(const TracedProc &proc, const RegisterSet &r);
+	void setExitRegs(const Tracee &proc, const RegisterSet &r);
 
 	void updateOpenFiles(DescriptorPathMapping &mapping);
 

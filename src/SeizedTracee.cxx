@@ -6,24 +6,24 @@
 #include <cosmos/proc/process.hxx>
 
 // clues
-#include <clues/TracedSeizedProc.hxx>
+#include <clues/SeizedTracee.hxx>
 
 namespace clues {
 
-TracedSeizedProc::TracedSeizedProc(EventConsumer &consumer) :
-		TracedProc{consumer} {
+SeizedTracee::SeizedTracee(EventConsumer &consumer) :
+		Tracee{consumer} {
 }
 
-void TracedSeizedProc::configure(const cosmos::ProcessID tracee) {
+void SeizedTracee::configure(const cosmos::ProcessID tracee) {
 	m_tracee = tracee;
 }
 
-void TracedSeizedProc::wait(cosmos::WaitRes &res) {
+void SeizedTracee::wait(cosmos::WaitRes &res) {
 	res = *cosmos::proc::wait(
 			cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
 }
 
-void TracedSeizedProc::attach() {
+void SeizedTracee::attach() {
 	seize();
 	interrupt();
 	cosmos::WaitRes wr;
@@ -40,14 +40,14 @@ void TracedSeizedProc::attach() {
 	cont(cosmos::ContinueMode::SYSCALL);
 }
 
-void TracedSeizedProc::detach() {
+void SeizedTracee::detach() {
 	if (m_tracee != cosmos::ProcessID::INVALID && m_state != TraceState::EXITED) {
 		ptrace::detach(m_tracee);
 		m_tracee = cosmos::ProcessID::INVALID;
 	}
 }
 
-TracedSeizedProc::~TracedSeizedProc() {
+SeizedTracee::~SeizedTracee() {
 	try {
 		detach();
 	} catch(const cosmos::CosmosError &ce) {

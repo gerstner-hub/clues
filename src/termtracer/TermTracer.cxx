@@ -13,13 +13,13 @@
 // clues
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallValue.hxx>
-#include <clues/TracedSeizedProc.hxx>
-#include <clues/TracedSubProc.hxx>
+#include <clues/SeizedTracee.hxx>
+#include <clues/ChildTracee.hxx>
 
 namespace clues {
 
 class TermTracer :
-		public TracedProc::EventConsumer,
+		public Tracee::EventConsumer,
        		public cosmos::MainPlainArgs {
 public: // functions
 
@@ -124,7 +124,7 @@ void TermTracer::syscallExit(const SystemCall &sc) {
 }
 
 void TermTracer::runTrace(const cosmos::ProcessID pid) {
-	TracedSeizedProc proc{*this};
+	SeizedTracee proc{*this};
 	proc.configure(pid);
 	proc.attach();
 	proc.trace();
@@ -132,7 +132,7 @@ void TermTracer::runTrace(const cosmos::ProcessID pid) {
 }
 
 cosmos::ExitStatus TermTracer::runTrace(const cosmos::StringVector &cmdline) {
-	TracedSubProc proc{*this};
+	ChildTracee proc{*this};
 	proc.configure(cmdline);
 	proc.attach();
 	proc.trace();

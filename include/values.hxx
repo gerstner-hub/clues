@@ -45,9 +45,9 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const TracedProc &) override {};
+	void processValue(const Tracee &) override {};
 
-	void updateData(const TracedProc &) override {};
+	void updateData(const Tracee &) override {};
 
 protected: // data
 	bool m_at_semantics = false;
@@ -126,8 +126,8 @@ public: // functions
 
 protected: // data
 
-	void processValue(const TracedProc &) override {}
-	void updateData(const TracedProc &) override {}
+	void processValue(const Tracee &) override {}
+	void updateData(const Tracee &) override {}
 };
 
 /// c-string system call data.
@@ -145,18 +145,18 @@ public:
 
 protected:
 
-	void processValue(const TracedProc &proc) override {
+	void processValue(const Tracee &proc) override {
 		if (! this->isOut()) {
 			fetch(proc);
 		}
 	}
 
-	void updateData(const TracedProc &proc) override {
+	void updateData(const Tracee &proc) override {
 		fetch(proc);
 	}
 
 
-	void fetch(const TracedProc &);
+	void fetch(const Tracee &);
 
 protected:
 
@@ -184,7 +184,7 @@ public:
 
 protected:
 
-	void processValue(const TracedProc &proc) override;
+	void processValue(const Tracee &proc) override;
 
 protected:
 
@@ -204,8 +204,8 @@ public:
 
 protected: // functions
 
-	void processValue(const TracedProc &) override {}
-	void updateData(const TracedProc &) override {}
+	void processValue(const Tracee &) override {}
+	void updateData(const Tracee &) override {}
 };
 
 class AccessModeParameter :
@@ -255,7 +255,7 @@ public: // functions
 
 protected: // functions
 
-	void updateData(const TracedProc &proc) override;
+	void updateData(const Tracee &proc) override;
 
 protected: // data
 
@@ -288,7 +288,7 @@ public: // functions
 
 protected: // functions
 
-	void updateData(const TracedProc &proc) override;
+	void updateData(const Tracee &proc) override;
 
 protected: // data
 
@@ -327,17 +327,17 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const TracedProc &proc) override {
+	void processValue(const Tracee &proc) override {
 		if (!this->isOut())
 			fetch(proc);
 	}
 
-	void updateData(const TracedProc &proc) override {
+	void updateData(const Tracee &proc) override {
 		fetch(proc);
 	}
 
 
-	void fetch(const TracedProc &proc);
+	void fetch(const Tracee &proc);
 
 protected: // data
 
@@ -382,7 +382,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const TracedProc &proc) override;
+	void processValue(const Tracee &proc) override;
 
 protected: // data
 
@@ -404,7 +404,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const TracedProc &proc) override;
+	void processValue(const Tracee &proc) override;
 
 protected: // data
 
@@ -435,7 +435,7 @@ public: // functions
 
 protected: // functions
 
-	void updateData(const TracedProc &proc) override;
+	void updateData(const Tracee &proc) override;
 
 protected: // data
 

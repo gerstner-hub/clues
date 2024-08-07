@@ -2,15 +2,15 @@
 #include <iostream>
 
 // clues
-#include <clues/TracedSubProc.hxx>
+#include <clues/ChildTracee.hxx>
 
 namespace clues {
 
-TracedSubProc::TracedSubProc(EventConsumer &consumer) :
-		TracedProc{consumer} {
+ChildTracee::ChildTracee(EventConsumer &consumer) :
+		Tracee{consumer} {
 }
 
-void TracedSubProc::configure(const cosmos::StringVector &prog_args) {
+void ChildTracee::configure(const cosmos::StringVector &prog_args) {
 	m_cloner.setArgs(prog_args);
 	m_cloner.setPostForkCB([](const cosmos::ChildCloner &){
 #if 0
@@ -30,7 +30,7 @@ void TracedSubProc::configure(const cosmos::StringVector &prog_args) {
 	});
 }
 
-TracedSubProc::~TracedSubProc() {
+ChildTracee::~ChildTracee() {
 	try {
 		if (m_child.running()) {
 			// make sure we can wait for it
@@ -46,11 +46,11 @@ TracedSubProc::~TracedSubProc() {
 	}
 }
 
-void TracedSubProc::wait(cosmos::WaitRes &res) {
+void ChildTracee::wait(cosmos::WaitRes &res) {
 	res = m_child.wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
 }
 
-void TracedSubProc::attach() {
+void ChildTracee::attach() {
 	m_exit_code = cosmos::ExitStatus::SUCCESS;
 	m_child = m_cloner.run();
 
@@ -75,7 +75,7 @@ void TracedSubProc::attach() {
 	}
 }
 
-void TracedSubProc::detach() {
+void ChildTracee::detach() {
 	if (m_child.running()) {
 		cosmos::WaitRes wr = m_child.wait();
 		m_exit_code = wr.exitStatus();

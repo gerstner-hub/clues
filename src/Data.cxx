@@ -20,7 +20,7 @@
 // clues
 #include <clues/values.hxx>
 #include <cosmos/error/ApiError.hxx>
-#include <clues/TracedProc.hxx>
+#include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
 
 namespace clues {
@@ -58,13 +58,13 @@ std::string FileDescriptorReturnValue::str() const {
 	return std::string{"Failed: "} + cosmos::ApiError::msg(cosmos::Errno{fd * -1});
 }
 
-void StringData::fetch(const TracedProc &proc) {
+void StringData::fetch(const Tracee &proc) {
 	// the address of the string in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
 	readTraceeString(proc, addr, m_str);
 }
 
-void StringArrayData::processValue(const TracedProc &proc) {
+void StringArrayData::processValue(const Tracee &proc) {
 	const long *array_start = reinterpret_cast<long*>(m_val);
 	std::vector<long*> string_addrs;
 	m_strs.clear();
@@ -233,7 +233,7 @@ std::string StatParameter::str() const {
 	return ss.str();
 }
 
-void StatParameter::updateData(const TracedProc &proc) {
+void StatParameter::updateData(const Tracee &proc) {
 	readStruct(proc, m_val, m_stat);
 }
 
@@ -277,7 +277,7 @@ std::string DirEntries::str() const {
 	return ss.str();
 }
 
-void DirEntries::updateData(const TracedProc &proc) {
+void DirEntries::updateData(const Tracee &proc) {
 	m_entries.clear();
 
 	// the amount of data stored at the DirEntries location depends on the
@@ -349,7 +349,7 @@ std::string FutexOperation::str() const {
 	}
 }
 
-void TimespecParameter::fetch(const TracedProc &proc) {
+void TimespecParameter::fetch(const Tracee &proc) {
 	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(m_val);
 
@@ -513,7 +513,7 @@ SigactionParameter::~SigactionParameter() {
 	delete m_sigaction;
 }
 
-void SigactionParameter::processValue(const TracedProc &proc) {
+void SigactionParameter::processValue(const Tracee &proc) {
 	readStruct(proc, m_val, m_sigaction);
 }
 
@@ -521,7 +521,7 @@ SigSetParameter::~SigSetParameter() {
 	delete m_sigset;
 }
 
-void SigSetParameter::processValue(const TracedProc &proc) {
+void SigSetParameter::processValue(const Tracee &proc) {
 	readStruct(proc, m_val, m_sigset);
 }
 
@@ -588,7 +588,7 @@ ResourceLimit::~ResourceLimit() {
 	delete m_limit;
 }
 
-void ResourceLimit::updateData(const TracedProc &proc) {
+void ResourceLimit::updateData(const Tracee &proc) {
 	readStruct(proc, m_val, m_limit);
 }
 

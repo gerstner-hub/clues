@@ -35,13 +35,13 @@ SystemCall::~SystemCall() {
 	delete m_return;
 }
 
-void SystemCall::setEntryRegs(const TracedProc &proc, const RegisterSet &r) {
+void SystemCall::setEntryRegs(const Tracee &proc, const RegisterSet &r) {
 	for (size_t par = 0; par < m_pars.size(); par++) {
 		m_pars[par]->fill(proc, r.syscallParameter(par));
 	}
 }
 
-void SystemCall::setExitRegs(const TracedProc &proc, const RegisterSet &r) {
+void SystemCall::setExitRegs(const Tracee &proc, const RegisterSet &r) {
 	if (m_return) {
 		m_return->fill(proc, r.syscallRes());
 	}

@@ -1,6 +1,6 @@
 // Clues
 #include <clues/utils.hxx>
-#include <clues/TracedProc.hxx>
+#include <clues/Tracee.hxx>
 #include <clues/errnodb.h>
 
 // C++
@@ -17,7 +17,7 @@ const char* getErrnoLabel(int num) {
 }
 
 void readTraceeString(
-		const TracedProc &proc,
+		const Tracee &proc,
 		const long *addr,
 		std::string &out) {
 	return readTraceeVector(proc, addr, out);
@@ -26,7 +26,7 @@ void readTraceeString(
 /// reads data from the tracee and feeds it to \c eater until it's saturated.
 template <typename EATER>
 void readTraceeData(
-		const TracedProc &proc,
+		const Tracee &proc,
 		const long *addr,
 		EATER &eater) {
 	long word;
@@ -73,7 +73,7 @@ protected:
 
 template <typename VECTOR>
 void readTraceeVector(
-		const TracedProc &proc,
+		const Tracee &proc,
 		const long *addr,
 		VECTOR &out) {
 	out.clear();
@@ -108,7 +108,7 @@ protected: // data
 };
 
 void readTraceeBlob(
-		const TracedProc &proc,
+		const Tracee &proc,
 		const long *addr,
 		char *buffer,
 		const size_t bytes) {
@@ -116,6 +116,6 @@ void readTraceeBlob(
 	readTraceeData(proc, addr, eater);
 }
 
-template void readTraceeVector<std::vector<long*>>(const TracedProc&, const long*, std::vector<long*>&);
+template void readTraceeVector<std::vector<long*>>(const Tracee&, const long*, std::vector<long*>&);
 
 } // end ns

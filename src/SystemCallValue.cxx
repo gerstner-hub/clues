@@ -6,7 +6,7 @@
 
 namespace clues {
 
-void SystemCallValue::fill(const TracedProc &proc, const RegisterSet::Word word) {
+void SystemCallValue::fill(const Tracee &proc, const RegisterSet::Word word) {
 	m_val = word;
 	processValue(proc);
 }

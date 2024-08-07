@@ -24,15 +24,15 @@ class SystemCall;
 
 /// Base class for traced processes.
 /**
- * The concrete implementation of TracedProc defines the means of how the
+ * The concrete implementation of Tracee defines the means of how the
  * traced process is attached to and detached from etc.
  **/
-class CLUES_API TracedProc {
+class CLUES_API Tracee {
 public: // types
 
 	/// Pure virtual interface for consumers of tracing events.
 	class EventConsumer {
-		friend class TracedProc;
+		friend class Tracee;
 	protected: // functions
 
 		virtual void syscallEntry(const SystemCall &sc) = 0;
@@ -42,7 +42,7 @@ public: // types
 
 public: // functions
 
-	virtual ~TracedProc() {}
+	virtual ~Tracee() {}
 
 	/// Logic to handle attaching to the tracee.
 	virtual void attach() = 0;
@@ -65,7 +65,7 @@ public: // functions
 
 protected: // functions
 
-	explicit TracedProc(EventConsumer &consumer);
+	explicit Tracee(EventConsumer &consumer);
 
 	/// Waits for the next trace event of this tracee.
 	virtual void wait(cosmos::WaitRes &res) = 0;

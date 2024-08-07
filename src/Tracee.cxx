@@ -12,20 +12,20 @@
 #include <cosmos/proc/WaitRes.hxx>
 
 // clues
-#include <clues/TracedProc.hxx>
+#include <clues/Tracee.hxx>
 #include <clues/SystemCall.hxx>
 
 namespace clues {
 
-TracedProc::TracedProc(EventConsumer &consumer) :
+Tracee::Tracee(EventConsumer &consumer) :
 		m_consumer{consumer} {
 }
 
-void TracedProc::setTracee(const cosmos::ProcessID tracee) {
+void Tracee::setTracee(const cosmos::ProcessID tracee) {
 	m_tracee = tracee;
 }
 
-void TracedProc::handleSystemCall() {
+void Tracee::handleSystemCall() {
 	if (m_state != TraceState::SYSCALL_ENTER) {
 		m_state = TraceState::SYSCALL_ENTER;
 		getRegisters(m_reg_set);
@@ -41,7 +41,7 @@ void TracedProc::handleSystemCall() {
 	}
 }
 
-void TracedProc::handleSignal(const cosmos::WaitRes &wr) {
+void Tracee::handleSignal(const cosmos::WaitRes &wr) {
 	const auto signal = wr.stopSignal();
 
 	if (signal == cosmos::Signal{cosmos::signal::TRAP})
@@ -51,7 +51,7 @@ void TracedProc::handleSignal(const cosmos::WaitRes &wr) {
 	std::cout << "Got signal: " << signal << std::endl;
 }
 
-void TracedProc::trace() {
+void Tracee::trace() {
 	cosmos::WaitRes wr;
 	interrupt();
 
@@ -77,7 +77,7 @@ void TracedProc::trace() {
 	}
 }
 
-void TracedProc::getRegisters(RegisterSet &rs) {
+void Tracee::getRegisters(RegisterSet &rs) {
 	cosmos::InputMemoryRegion iovec;
 	rs.fillIov(iovec);
 
@@ -87,7 +87,7 @@ void TracedProc::getRegisters(RegisterSet &rs) {
 	//std::cout << "Read registers " << reg_vector.iov_len << " vs. " << sizeof(regs) << std::endl;
 }
 
-long TracedProc::getData(const long *addr) const {
+long Tracee::getData(const long *addr) const {
 	cosmos::reset_errno();
 	const long ret = ::ptrace(PTRACE_PEEKDATA, m_tracee, addr, 0);
 

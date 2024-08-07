@@ -58,7 +58,7 @@ public: // functions
 	bool isReturnValue() const { return m_type == Type::RETVAL; }
 
 	/// Fills the system call value from the given register data.
-	void fill(const TracedProc &proc, const RegisterSet::Word word);
+	void fill(const Tracee &proc, const RegisterSet::Word word);
 
 	/// Returns whether the value needs to be updated after the system call is finished.
 	bool needsUpdate() const { return m_type != Type::PARAM_IN; }
@@ -84,10 +84,10 @@ public: // functions
 protected: // functions
 
 	/// Processes the value stored in m_val acc. to the actual value type.
-	virtual void processValue(const TracedProc &proc) = 0;
+	virtual void processValue(const Tracee &proc) = 0;
 
 	/// Called upon exit of the system call to update possible out parameters.
-	virtual void updateData(const TracedProc &proc) = 0;
+	virtual void updateData(const Tracee &proc) = 0;
 
 	/// Sets the system call context this value is a part of.
 	void setSystemCall(const SystemCall &sc) { m_call = &sc; }
@@ -116,9 +116,9 @@ public:
 
 protected: // functions
 
-	void processValue(const TracedProc &) override {}
+	void processValue(const Tracee &) override {}
 
-	void updateData(const TracedProc &) override {}
+	void updateData(const Tracee &) override {}
 };
 
 /// A pass by value parameter for a system call.
@@ -143,9 +143,9 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const TracedProc &) override {}
+	void processValue(const Tracee &) override {}
 
-	void updateData(const TracedProc &) override {}
+	void updateData(const Tracee &) override {}
 };
 
 /// Specialization of ValueParameter for IN parameters.
@@ -211,7 +211,7 @@ public: // functions
 protected: // functions
 
 	/// Empty implementation of this function, because it's not needed for out parameters.
-	void processValue(const TracedProc &) override {}
+	void processValue(const Tracee &) override {}
 };
 
 /// Specialization of a PointerValue for in-parameters.
@@ -232,7 +232,7 @@ public: // functions
 
 protected: // functions
 
-	void updateData(const TracedProc &) override {}
+	void updateData(const Tracee &) override {}
 };
 
 } // end ns

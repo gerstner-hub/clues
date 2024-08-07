@@ -5,7 +5,7 @@
 
 namespace clues {
 
-class TracedProc;
+class Tracee;
 
 /// Returns a short errno label like `ENOENT` for the given errno integer.
 const char* getErrnoLabel(int num);
@@ -16,14 +16,14 @@ const char* getErrnoLabel(int num);
  * the C++ string object \c out.
  **/
 void readTraceeString(
-	const TracedProc &proc,
+	const Tracee &proc,
 	const long *addr,
 	std::string &out
 );
 
 /// Reads an arbitrary binary blob of fixed length from the tracee.
 void CLUES_API readTraceeBlob(
-	const TracedProc &proc,
+	const Tracee &proc,
 	const long *addr,
 	char *buffer,
 	const size_t bytes
@@ -32,7 +32,7 @@ void CLUES_API readTraceeBlob(
 /// Reads in a complete data structure STRUCT from the tracee.
 template <typename STRUCT>
 void readTraceeStruct(
-		const TracedProc &proc,
+		const Tracee &proc,
 		const long *addr,
 		STRUCT &out) {
 	readTraceeBlob(proc, addr, reinterpret_cast<char*>(&out), sizeof(STRUCT));
@@ -44,7 +44,7 @@ void readTraceeStruct(
  **/
 template <typename T>
 void readStruct(
-		const TracedProc &proc,
+		const Tracee &proc,
 		const long pointer,
 		T *&copy) {
 	// the address of the struct in the userspace address space
@@ -63,7 +63,7 @@ void readStruct(
 /// Reads in a zero terminated array of data items into the STL-vector like parameter \c out.
 template <typename VECTOR>
 void readTraceeVector(
-	const TracedProc &proc,
+	const Tracee &proc,
 	const long *addr,
 	VECTOR &out
 );
