@@ -11,7 +11,9 @@
 namespace clues {
 
 // deprecated flag that's still set in the sigaction flags obviously
-#define SA_RESTORER 0x04000000
+#ifndef SA_RESTORER
+#	define SA_RESTORER 0x04000000
+#endif
 
 /// This is the sigaction structure used by the kernel for e.g. rt_sigaction.
 /**
@@ -29,4 +31,3 @@ struct kernel_sigaction {
 };
 
 } // end ns
-

@@ -9,8 +9,8 @@
 namespace clues {
 
 const char* getRegisterName(const size_t number) {
-	switch(number) {
-	default: cosmos_throw( cosmos::UsageError("Invalid register number encountered") ); return "";
+	switch (number) {
+	default: cosmos_throw (cosmos::UsageError("Invalid register number encountered")); return "";
 #ifdef __x86_64__
 	case R15: return "R15";
 	case R14: return "R14";

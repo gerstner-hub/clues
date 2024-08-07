@@ -108,10 +108,10 @@ static constexpr int SYSCALL_PAR_REGISTER[] = {
 	SYSCALL_PAR3_REG,
 	SYSCALL_PAR4_REG,
 	SYSCALL_PAR5_REG,
-	SYSCALL_PAR6_REG
+	SYSCALL_PAR6_REG,
 	// only few architectures have a 7th system call parameter register
 #ifdef HAVE_PAR7_REG
-	,SYSCALL_PAR7_REG
+	SYSCALL_PAR7_REG,
 #endif
 };
 

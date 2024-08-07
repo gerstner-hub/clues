@@ -14,6 +14,7 @@
 #include <cosmos/error/UsageError.hxx>
 #include <cosmos/io/iovector.hxx>
 #include <cosmos/proc/ptrace.hxx>
+#include <cosmos/utils.hxx>
 
 // clues
 #include <clues/Arch.hxx>
@@ -30,10 +31,11 @@ public: // types
 
 	/// An integer being able to hold a word for the current architecture.
 	using Word = elf_greg_t;
+	using ZeroInit = cosmos::NamedBool<struct zero_init_t, false>;
 
 public: // functions
 
-	explicit RegisterSet(bool zero_init = false) {
+	explicit RegisterSet(const ZeroInit zero_init = ZeroInit{false}) {
 		if (zero_init) {
 			for (size_t reg = 0; reg < numRegisters(); reg++) {
 				m_regs[reg] = 0;
@@ -53,7 +55,7 @@ public: // functions
 		}
 	}
 
-	/// The type to pass to PTRACE_GETREGSET for obtaining the general purpose registers.
+	/// The type to pass to TraceRequest::GETREGSET for obtaining the general purpose registers.
 	static constexpr cosmos::RegisterType registerType() { return cosmos::RegisterType::GENERAL_PURPOSE; }
 
 	/// Returns the active system call number on entry to a syscall.
@@ -70,7 +72,7 @@ public: // functions
 	 **/
 	Word syscallParameter(const size_t number) const {
 		if (number >= SYSCALL_MAX_PARS) {
-			cosmos_throw(cosmos::UsageError("invalid system call parameter nr."));
+			cosmos_throw (cosmos::UsageError("invalid system call parameter nr."));
 		}
 
 		return m_regs[SYSCALL_PAR_REGISTER[number]];
@@ -100,7 +102,7 @@ public: // functions
 
 protected: // data
 
-	/// The raw data structure holding the registers
+	/// The raw data structure holding the registers.
 	/**
 	 * This is actually just an array of words with each word representing
 	 * a register. It doesn't necessarily match the hardware register
