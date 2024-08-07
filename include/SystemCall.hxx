@@ -4,8 +4,8 @@
 #include <iosfwd>
 #include <map>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 // Linux
 
@@ -110,8 +110,6 @@ public: // functions
 	const ParameterVector& parameters() const { return m_pars; }
 	/// Access to the return value parameter associated with this syscall
 	const SystemCallValue& result() const { return *m_return; }
-
-protected: // functions	
 
 protected: // data
 

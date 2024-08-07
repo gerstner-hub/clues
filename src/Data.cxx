@@ -28,7 +28,7 @@ namespace clues {
 std::string ErrnoResult::str() const {
 	if ((int)m_val < m_highest) {
 		const auto err = -(int)m_val;
-		return std::string(getErrnoLabel(err)) + " (" + std::to_string(err) + ")";
+		return std::string(get_errno_label(cosmos::Errno{err})) + " (" + std::to_string(err) + ")";
 	} else {
 		return std::to_string((int)m_val);
 	}

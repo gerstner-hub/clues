@@ -3,12 +3,15 @@
 // C++
 #include <string>
 
+// cosmos
+#include <cosmos/error/errno.hxx>
+
 namespace clues {
 
 class Tracee;
 
 /// Returns a short errno label like `ENOENT` for the given errno integer.
-const char* getErrnoLabel(int num);
+const char* get_errno_label(const cosmos::Errno err);
 
 /// Reads a \0 terminated C-string from the tracee.
 /**
@@ -39,9 +42,6 @@ void readTraceeStruct(
 }
 
 /// Wrapper to helper functions to implement typical exitedCall functions.
-/**
- * \brief
- **/
 template <typename T>
 void readStruct(
 		const Tracee &proc,
@@ -50,11 +50,11 @@ void readStruct(
 	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(pointer);
 
-	if (! addr)
+	if (!addr)
 		// null address specification
 		return;
 
-	if (! copy)
+	if (!copy)
 		copy = new T;
 
 	readTraceeStruct(proc, addr, *copy);

@@ -10,17 +10,17 @@
 namespace clues {
 
 SystemCall::SystemCall(
-	const SystemCallNr nr,
-	const char *name,
-	ParameterVector &&pars,
-	SystemCallValue *ret,
-	const size_t open_id_par,
-	const size_t close_fd_par) :
+		const SystemCallNr nr,
+		const char *name,
+		ParameterVector &&pars,
+		SystemCallValue *ret,
+		const size_t open_id_par,
+		const size_t close_fd_par) :
 		m_nr{nr}, m_name{name}, m_return{ret}, m_pars{pars},
-		m_open_id_par{open_id_par}, m_close_fd_par{close_fd_par}
-{
-	assert( open_id_par == SIZE_MAX || open_id_par < m_pars.size() );
-	assert( close_fd_par == SIZE_MAX || close_fd_par < m_pars.size() );
+		m_open_id_par{open_id_par}, m_close_fd_par{close_fd_par} {
+
+	assert (open_id_par == SIZE_MAX || open_id_par < m_pars.size());
+	assert (close_fd_par == SIZE_MAX || close_fd_par < m_pars.size());
 
 	for (auto &par: m_pars)
 		par->setSystemCall(*this);

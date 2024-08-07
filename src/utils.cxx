@@ -9,7 +9,8 @@
 
 namespace clues {
 
-const char* getErrnoLabel(int num) {
+const char* get_errno_label(const cosmos::Errno err) {
+	const auto num = cosmos::to_integral(err);
 	if (num < 0 || num >= ERRNO_NAMES_MAX)
 		return "E<INVALID>";
 
