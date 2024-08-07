@@ -36,4 +36,7 @@ void CLUES_API set_options(const cosmos::ProcessID proc, const cosmos::TraceFlag
 /// Retrieve a set of register from the given tracee.
 void CLUES_API get_register_set(const cosmos::ProcessID, const cosmos::RegisterType type, cosmos::InputMemoryRegion &iovec);
 
+/// Detach from the given tracee.
+void CLUES_API detach(const cosmos::ProcessID proc);
+
 } // end ns

@@ -22,9 +22,6 @@ public: // functions
 	void detach() override;
 
 	void wait(cosmos::WaitRes &res) override;
-
-protected: // data
-
 };
 
 } // end ns

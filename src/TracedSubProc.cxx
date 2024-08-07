@@ -7,7 +7,7 @@
 namespace clues {
 
 TracedSubProc::TracedSubProc(EventConsumer &consumer) :
-	TracedProc{consumer} {
+		TracedProc{consumer} {
 }
 
 void TracedSubProc::configure(const cosmos::StringVector &prog_args) {
@@ -65,10 +65,9 @@ void TracedSubProc::attach() {
 
 		if (r.exited())
 			return;
-	}
-	while (! r.trapped());
+	} while (!r.trapped());
 
-	setOptions(cosmos::TraceFlags(cosmos::TraceFlag::TRACESYSGOOD));
+	setOptions(cosmos::TraceFlags{cosmos::TraceFlag::TRACESYSGOOD});
 
 	if (r.trapped()) {
 		m_state = TraceState::ATTACHED;

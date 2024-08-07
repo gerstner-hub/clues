@@ -25,8 +25,6 @@ public: // functions
 
 	void wait(cosmos::WaitRes &res) override;
 
-protected: // functions
-
 protected: // data
 
 	cosmos::ChildCloner m_cloner;

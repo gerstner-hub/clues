@@ -33,19 +33,16 @@ void TracedSeizedProc::attach() {
 
 		if (wr.exited())
 			return;
-	} while (!wr.stopped() && !(wr.stopSignal() == cosmos::signal::TRAP));
+	} while (!wr.stopped() && wr.stopSignal() != cosmos::signal::TRAP);
 
-	setOptions(cosmos::TraceFlags(cosmos::TraceFlag::TRACESYSGOOD));
+	setOptions(cosmos::TraceFlags{cosmos::TraceFlag::TRACESYSGOOD});
 	m_state = TraceState::ATTACHED;
 	cont(cosmos::ContinueMode::SYSCALL);
 }
 
 void TracedSeizedProc::detach() {
 	if (m_tracee != cosmos::ProcessID::INVALID && m_state != TraceState::EXITED) {
-		if (::ptrace(PTRACE_DETACH, m_tracee, nullptr, nullptr) != 0) {
-			cosmos_throw(cosmos::ApiError("ptrace"));
-		}
-
+		ptrace::detach(m_tracee);
 		m_tracee = cosmos::ProcessID::INVALID;
 	}
 }

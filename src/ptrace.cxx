@@ -68,4 +68,8 @@ void get_register_set(const cosmos::ProcessID proc, const cosmos::RegisterType t
 	raw_ptrace(cosmos::TraceRequest::GETREGSET, proc, reinterpret_cast<void*>(cosmos::to_integral(type)), &iovec, "ptrace-get-register-set");
 }
 
+void detach(const cosmos::ProcessID proc) {
+	raw_ptrace(cosmos::TraceRequest::DETACH, proc, nullptr, nullptr, "ptrace-detach");
+}
+
 } // end ns
