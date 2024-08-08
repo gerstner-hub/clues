@@ -1,17 +1,12 @@
-// C++
-#include <iostream>
-
-// Linux
-#include <sys/types.h>
-#include <sys/wait.h>
-
 // cosmos
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/errno.hxx>
+#include <cosmos/io/ILogger.hxx>
 #include <cosmos/io/iovector.hxx>
 #include <cosmos/proc/WaitRes.hxx>
 
 // clues
+#include <clues/clues.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/SystemCall.hxx>
 
@@ -48,7 +43,9 @@ void Tracee::handleSignal(const cosmos::WaitRes &wr) {
 		// our own tracing point
 		return;
 
-	std::cout << "Got signal: " << signal << std::endl;
+	if (logger) {
+		logger->info() << "Got signal: " << signal << std::endl;
+	}
 }
 
 void Tracee::trace() {
@@ -67,12 +64,13 @@ void Tracee::trace() {
 
 			cont(cosmos::ContinueMode::SYSCALL, wr.stopSignal());
 		} else if (wr.exited()) {
-			std::cout << "Tracee exited" << std::endl;
 			this->exited(wr);
 			m_state = TraceState::EXITED;
 			break;
 		} else {
-			std::cout << "Other Tracee event" << std::endl;
+			if (logger) {
+				logger->debug() << "Other Tracee event" << std::endl;
+			}
 		}
 	}
 }

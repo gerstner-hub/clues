@@ -1,11 +1,10 @@
-// C++
-#include <iostream>
-
 // cosmos
 #include <cosmos/error/ApiError.hxx>
+#include <cosmos/io/ILogger.hxx>
 #include <cosmos/proc/process.hxx>
 
 // clues
+#include <clues/clues.hxx>
 #include <clues/SeizedTracee.hxx>
 
 namespace clues {
@@ -50,10 +49,12 @@ void SeizedTracee::detach() {
 SeizedTracee::~SeizedTracee() {
 	try {
 		detach();
-	} catch(const cosmos::CosmosError &ce) {
-		std::cerr
-			<< "Couldn't detach from PID " << cosmos::to_integral(m_tracee) << ":\n\n"
-			<< ce.what() << "\n";
+	} catch (const cosmos::CosmosError &ce) {
+		if (logger) {
+			logger->debug()
+				<< "Couldn't detach from PID " << cosmos::to_integral(m_tracee) << ":\n\n"
+				<< ce.what() << "\n";
+		}
 	}
 }
 

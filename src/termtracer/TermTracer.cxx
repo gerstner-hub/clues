@@ -4,17 +4,23 @@
 // C++
 #include <cstdlib>
 #include <iostream>
+#include <map>
+#include <string_view>
 
 // cosmos
 #include <cosmos/cosmos.hxx>
 #include <cosmos/error/CosmosError.hxx>
+#include <cosmos/io/StdLogger.hxx>
 #include <cosmos/main.hxx>
+#include <cosmos/proc/process.hxx>
+#include <cosmos/string.hxx>
 
 // clues
+#include <clues/ChildTracee.hxx>
+#include <clues/clues.hxx>
+#include <clues/SeizedTracee.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallValue.hxx>
-#include <clues/SeizedTracee.hxx>
-#include <clues/ChildTracee.hxx>
 
 namespace clues {
 
@@ -35,6 +41,8 @@ protected: // functions
 
 	cosmos::ExitStatus runTrace(const cosmos::StringVector &cmdline);
 
+	void configureLogger();
+
 protected: // event consumer interface
 
 	void syscallEntry(const SystemCall &sc) override;
@@ -52,6 +60,9 @@ protected: // data
 	TCLAP::SwitchArg m_verbose;
 	/// Maximum length of parameter values to print.
 	TCLAP::ValueArg<int> m_max_value_len;
+
+	/// cosmos ILogger instance for clues library logging.
+	cosmos::StdLogger m_logger;
 
 	bool m_print_values = true;
 	size_t m_value_truncation_len = 64;
@@ -90,6 +101,35 @@ void TermTracer::processPars() {
 		m_value_truncation_len = SIZE_MAX;
 	else
 		m_value_truncation_len = static_cast<size_t>(max_len);
+}
+
+void TermTracer::configureLogger() {
+	std::map<std::string_view, bool> settings = {
+		{"error", true},
+		{"warn", true},
+		{"info", false},
+		{"debug", false}
+	};
+
+	if (auto config = cosmos::proc::get_env_var("CLUES_LOGGING"); config != std::nullopt) {
+		for (auto &stream: cosmos::split(
+					config->view(), ",", cosmos::SplitFlags{cosmos::SplitFlag::STRIP_PARTS})) {
+			stream = cosmos::to_lower(stream);
+			bool enabled = true;
+
+			if (stream[0] == '!') {
+				enabled = false;
+				stream = stream.substr(1);
+			}
+
+			if (auto it = settings.find(stream); it != settings.end()) {
+				it->second = enabled;
+			}
+		}
+	}
+
+	m_logger.setChannels(settings["error"], settings["warn"], settings["info"], settings["debug"]);
+	clues::set_logger(m_logger);
 }
 
 void TermTracer::syscallEntry(const SystemCall &) {
@@ -144,6 +184,8 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	m_cmdline.add(m_attach_proc);
 	m_cmdline.add(m_start_proc);
 	m_cmdline.parse(argc, argv);
+
+	configureLogger();
 
 	processPars();
 

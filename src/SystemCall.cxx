@@ -1,11 +1,14 @@
 // C++
-#include <iostream>
 #include <cassert>
+
+// cosmos
+#include <cosmos/io/ILogger.hxx>
 
 // clues
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCallValue.hxx>
+#include <clues/clues.hxx>
 
 namespace clues {
 
@@ -19,8 +22,8 @@ SystemCall::SystemCall(
 		m_nr{nr}, m_name{name}, m_return{ret}, m_pars{pars},
 		m_open_id_par{open_id_par}, m_close_fd_par{close_fd_par} {
 
-	assert (open_id_par == SIZE_MAX || open_id_par < m_pars.size());
-	assert (close_fd_par == SIZE_MAX || close_fd_par < m_pars.size());
+	assert(open_id_par == SIZE_MAX || open_id_par < m_pars.size());
+	assert(close_fd_par == SIZE_MAX || close_fd_par < m_pars.size());
 
 	for (auto &par: m_pars)
 		par->setSystemCall(*this);
@@ -65,8 +68,8 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 			std::make_pair(new_fd, m_pars[m_open_id_par]->str())
 		);
 
-		if (! res.second) {
-			std::cerr
+		if (!res.second && logger) {
+			logger->debug()
 				<< "WARNING: file descriptor already open?!"
 				<< std::endl;
 		}
@@ -77,13 +80,11 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 
 		const int closed_fd = (int)m_pars[m_close_fd_par]->value();
 
-		if (mapping.erase(closed_fd) == 0) {
-		#if 0
+		if (mapping.erase(closed_fd) == 0 && logger) {
+#if 0
 			// this is stdout, stderr & friends
-			std::cerr
-				<< "WARNING: closed file that wasn't open?!"
-				<< std::endl;
-		#endif
+			logger->warn() << "closed file that wasn't open?!\n";
+#endif
 		}
 	} else {
 		return;

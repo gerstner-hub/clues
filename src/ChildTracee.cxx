@@ -1,7 +1,8 @@
-// C++
-#include <iostream>
+// cosmos
+#include <cosmos/io/ILogger.hxx>
 
 // clues
+#include <clues/clues.hxx>
 #include <clues/ChildTracee.hxx>
 
 namespace clues {
@@ -41,8 +42,11 @@ ChildTracee::~ChildTracee() {
 
 		detach();
 	} catch (const cosmos::CosmosError &ce) {
-		std::cerr << "Error detaching from child process PID " << cosmos::to_integral(m_child.pid())
-			<< ":\n\n" << ce.what();
+		if (logger) {
+			logger->error() << "Error detaching from child process PID "
+				<< cosmos::to_integral(m_child.pid())
+				<< ":\n\n" << ce.what();
+		}
 	}
 }
 
