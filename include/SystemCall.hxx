@@ -22,9 +22,6 @@ std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc);
 
 namespace clues {
 
-/// A system call table number
-using SystemCallNr = RegisterSet::Word;
-
 class SystemCallValue;
 
 /// Base class to represent system call properties.

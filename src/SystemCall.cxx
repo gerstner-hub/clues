@@ -95,7 +95,7 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc) {
-	o << sc.name() << " (" << sc.callNr() << "): " << sc.numPars() << " parameters";
+	o << sc.name() << " (" << cosmos::to_integral(sc.callNr()) << "): " << sc.numPars() << " parameters";
 
 	for (const auto &par: sc.m_pars) {
 		o << "\n\t" << *par;

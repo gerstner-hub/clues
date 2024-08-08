@@ -33,7 +33,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 	typedef SystemCall Call;
 	typedef SystemCallValue::Type ValueType;
 
-	switch (nr) {
+	switch (cosmos::to_integral(nr)) {
 	case SYS_write:
 		return new Call{nr, "write",
 			{
@@ -94,7 +94,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 		};
 	case SYS_lstat:
 	case SYS_stat:
-		return new Call{nr, nr == SYS_stat ? "stat" : "lstat",
+		return new Call{nr, nr == SystemCallNr{SYS_stat} ? "stat" : "lstat",
 			{
 				new StringData{"path"},
 				new StatParameter{}
@@ -251,11 +251,12 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 		};
 	case SYS_getuid:
 	case SYS_geteuid: {
+		const bool is_uid = nr == SystemCallNr{SYS_getuid};
 		return new Call{
 			nr,
-			nr == SYS_getuid ? "getuid" : "geteuid",
+			is_uid ? "getuid" : "geteuid",
 			{},
-			new ValueOutParameter{"id", nr == SYS_getuid ? "real user ID" : "effective user ID"}
+			new ValueOutParameter{"id", is_uid ? "real user ID" : "effective user ID"}
 		};
 	}
 	case SYS_set_tid_address:

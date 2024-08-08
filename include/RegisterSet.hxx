@@ -18,6 +18,7 @@
 
 // clues
 #include <clues/Arch.hxx>
+#include <clues/types.hxx>
 
 namespace clues {
 
@@ -59,7 +60,7 @@ public: // functions
 	static constexpr cosmos::RegisterType registerType() { return cosmos::RegisterType::GENERAL_PURPOSE; }
 
 	/// Returns the active system call number on entry to a syscall.
-	Word syscall() const { return m_regs[SYSCALL_NR_REG]; }
+	SystemCallNr syscall() const { return SystemCallNr{m_regs[SYSCALL_NR_REG]}; }
 
 	/// Returns the system call result on exit from a syscall
 	Word syscallRes() const { return m_regs[SYSCALL_RES_REG]; }
