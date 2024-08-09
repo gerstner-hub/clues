@@ -44,12 +44,13 @@ public: // functions
 		}
 	}
 
-	/// Prepares `iov` for doing a ptrace system call PTRACE_GETREGSET.
+	/// Prepares `iov` for doing a ptrace system call TraceRequest::GETREGSET.
 	void fillIov(cosmos::InputMemoryRegion &iov) {
 		iov.setBase(&m_regs);
 		iov.setLength(sizeof(m_regs));
 	}
 
+	/// Verify data received from a ptrace system call TraceRequest::GETREGSET.
 	void iovFilled(const cosmos::InputMemoryRegion &iov) {
 		if (iov.getLength() < sizeof(m_regs)) {
 			cosmos_throw(cosmos::RuntimeError("received incomplete register set"));
