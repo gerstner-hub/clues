@@ -25,6 +25,10 @@ public: // functions
 
 	void wait(cosmos::WaitRes &res) override;
 
+	void exited(const cosmos::WaitRes &res) override {
+		m_exit_code = res.exitStatus();
+	}
+
 protected: // data
 
 	cosmos::ChildCloner m_cloner;
