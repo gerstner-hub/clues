@@ -21,7 +21,7 @@ env['project_root'] = str(Dir('.').get_abspath())
 
 env = SConscript(env['buildroot'] + 'src/SConstruct')
 
-instroot = env['instroot']
+instroot = Path(env['instroot'])
 
 install_dev_files = env['install_dev_files']
 
@@ -36,3 +36,5 @@ if install_dev_files or env['libtype'] == 'shared':
 
 if install_dev_files:
     env.InstallHeaders('clues')
+    clues_bin = env.Install(instroot / 'bin', env['bins']['clues'])
+    env.Alias('install', clues_bin)
