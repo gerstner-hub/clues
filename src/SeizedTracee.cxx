@@ -14,7 +14,7 @@ SeizedTracee::SeizedTracee(EventConsumer &consumer) :
 }
 
 void SeizedTracee::configure(const cosmos::ProcessID tracee) {
-	m_tracee = tracee;
+	setTracee(tracee);
 }
 
 void SeizedTracee::wait(cosmos::WaitRes &res) {

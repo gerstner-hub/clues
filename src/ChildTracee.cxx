@@ -1,5 +1,6 @@
 // cosmos
 #include <cosmos/io/ILogger.hxx>
+#include <cosmos/proc/ChildCloner.hxx>
 
 // clues
 #include <clues/clues.hxx>
@@ -12,23 +13,7 @@ ChildTracee::ChildTracee(EventConsumer &consumer) :
 }
 
 void ChildTracee::configure(const cosmos::StringVector &prog_args) {
-	m_cloner.setArgs(prog_args);
-	m_cloner.setPostForkCB([](const cosmos::ChildCloner &){
-#if 0
-               // actually if we make our parent a tracer this way then we
-               // can't deal with it the "new" way that is possible with SEIZED
-               // processes. So we only raise a SIGSTOP instead to have the
-               // parent catch us before doing anything else and otherwise
-               // the parent can SEIZE us.
-               if( ::ptrace( PTRACE_TRACEME, INVALID_PID, 0, 0 ) != 0 )
-               {
-                       cosmos_throw( ApiError() );
-               }
-#endif
-
-               // this allows our parent to wait for us, such that is knows we're a tracee now
-               cosmos::signal::raise(cosmos::signal::STOP);
-	});
+	m_args = prog_args;
 }
 
 ChildTracee::~ChildTracee() {
@@ -56,7 +41,26 @@ void ChildTracee::wait(cosmos::WaitRes &res) {
 
 void ChildTracee::attach() {
 	m_exit_code = cosmos::ExitStatus::SUCCESS;
-	m_child = m_cloner.run();
+
+	cosmos::ChildCloner cloner;
+	cloner.setArgs(m_args);
+	cloner.setPostForkCB([](const cosmos::ChildCloner &){
+#if 0
+               // actually if we make our parent a tracer this way then we
+               // can't deal with it the "new" way that is possible with SEIZED
+               // processes. So we only raise a SIGSTOP instead to have the
+               // parent catch us before doing anything else and otherwise
+               // the parent can SEIZE us.
+               if( ::ptrace( PTRACE_TRACEME, INVALID_PID, 0, 0 ) != 0 )
+               {
+                       cosmos_throw( ApiError() );
+               }
+#endif
+
+               // this allows our parent to wait for us, such that is knows we're a tracee now
+               cosmos::signal::raise(cosmos::signal::STOP);
+	});
+	m_child = cloner.run();
 
 	setTracee(m_child.pid());
 

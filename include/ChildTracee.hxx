@@ -31,7 +31,7 @@ public: // functions
 
 protected: // data
 
-	cosmos::ChildCloner m_cloner;
+	cosmos::StringVector m_args;
 	/// sub-process we're tracing
 	cosmos::SubProc m_child;
 	cosmos::ExitStatus m_exit_code = cosmos::ExitStatus::SUCCESS;

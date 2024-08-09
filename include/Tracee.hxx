@@ -5,7 +5,6 @@
 #include <sys/ptrace.h>
 
 // cosmos
-#include <cosmos/proc/ChildCloner.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/Signal.hxx>
 #include <cosmos/proc/SubProc.hxx>
