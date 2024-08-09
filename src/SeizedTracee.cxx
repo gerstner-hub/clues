@@ -36,7 +36,7 @@ void SeizedTracee::attach() {
 
 		if (wr.exited())
 			return;
-	} while (!wr.stopped() && wr.stopSignal() != cosmos::signal::TRAP);
+	} while (!(wr.stopped() && wr.stopSignal() != cosmos::signal::TRAP) && !wr.trapped());
 
 	setOptions(cosmos::TraceFlags{cosmos::TraceFlag::TRACESYSGOOD});
 	m_state = TraceState::ATTACHED;
