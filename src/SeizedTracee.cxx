@@ -19,7 +19,11 @@ void SeizedTracee::configure(const cosmos::ProcessID tracee) {
 
 void SeizedTracee::wait(cosmos::WaitRes &res) {
 	res = *cosmos::proc::wait(
-			cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
+			m_tracee,
+			cosmos::WaitFlags{
+				cosmos::WaitFlag::WAIT_FOR_EXITED,
+				cosmos::WaitFlag::WAIT_FOR_STOPPED
+			});
 }
 
 void SeizedTracee::attach() {
