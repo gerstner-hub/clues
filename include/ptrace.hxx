@@ -39,4 +39,6 @@ void CLUES_API get_register_set(const cosmos::ProcessID, const cosmos::RegisterT
 /// Detach from the given tracee.
 void CLUES_API detach(const cosmos::ProcessID proc);
 
+long CLUES_API get_data(const cosmos::ProcessID proc, const long *addr);
+
 } // end ns

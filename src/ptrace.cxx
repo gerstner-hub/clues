@@ -72,4 +72,15 @@ void detach(const cosmos::ProcessID proc) {
 	raw_ptrace(cosmos::TraceRequest::DETACH, proc, nullptr, nullptr, "ptrace-detach");
 }
 
+long get_data(const cosmos::ProcessID proc, const long *addr) {
+	cosmos::reset_errno();
+	const long ret = raw_ptrace(cosmos::TraceRequest::PEEKDATA, proc, (long*)addr, nullptr);
+
+	if (cosmos::is_errno_set()) {
+		cosmos_throw(cosmos::ApiError("ptrace"));
+	}
+
+	return ret;
+}
+
 } // end ns

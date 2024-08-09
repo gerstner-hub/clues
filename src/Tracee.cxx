@@ -86,14 +86,7 @@ void Tracee::getRegisters(RegisterSet &rs) {
 }
 
 long Tracee::getData(const long *addr) const {
-	cosmos::reset_errno();
-	const long ret = ::ptrace(PTRACE_PEEKDATA, m_tracee, addr, 0);
-
-	if (cosmos::is_errno_set()) {
-		cosmos_throw(cosmos::ApiError("ptrace"));
-	}
-
-	return ret;
+	return ptrace::get_data(m_tracee, addr);
 }
 
 } // end ns
