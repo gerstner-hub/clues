@@ -59,10 +59,52 @@ def buildErrnosHeader(target, source, env):
 
 
 errnoHeaderBuilder = env.Builder(action=buildErrnosHeader, suffix='.h', src_suffix='.c')
-
 env.Append(BUILDERS={'ErrnoHeaderBuilder': errnoHeaderBuilder})
 
+
+def buildSyscallHeader(target, source, env):
+    import subprocess
+    cmdline = [env["CC"], "-E", "-dD", str(source[0])]
+    output = subprocess.check_output(cmdline)
+    output = output.decode('utf8')
+
+    syscalls = []
+
+    for line in output.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = line.split(None)
+        if len(parts) != 3:
+            continue
+
+        define, name, value = parts
+        if define != "#define":
+            continue
+        elif not name.startswith('SYS_'):
+            continue
+        elif not value.startswith('__NR_'):
+            continue
+
+        syscalls.append(name)
+
+    with open(str(target[0]), 'w') as out_fd:
+        out_fd.write("#include <elf.h>\n")
+        out_fd.write("#include <sys/syscall.h>\n\n// C++ class enum for system call numbers found in syscall.h\n")
+        out_fd.write("namespace clues {\n")
+        out_fd.write("enum class SystemCallNr : elf_greg_t {\n")
+        for syscall in syscalls:
+            _, base = syscall.split('_', 1)
+            out_fd.write(f'\t{base.upper()} = {syscall},\n')
+        out_fd.write("};\n} // end ns\n")
+
+    return 0
+
+syscallHeaderBuilder = env.Builder(action=buildSyscallHeader, suffix='.h', src_suffix='.c')
+env.Append(BUILDERS={'SyscallHeaderBuilder': syscallHeaderBuilder})
+
 errno_header = env.ErrnoHeaderBuilder("clues/errnodb.h", "errnodb.c")
+syscall_header = env.SyscallHeaderBuilder("clues/syscallnrs.h", "syscallnrs.c")
 
 libenv = env.Clone()
 public_includes = Dir('.').srcnode().abspath + '/../include'
@@ -107,7 +149,7 @@ env.RegisterLibConfig(
     libclues,
     {
         'CCFLAGS': ['-DCLUES_API='],
-        'CPPPATH': [public_includes]
+        'CPPPATH': [public_includes, Dir(".").abspath]
     },
     {
         'version': version

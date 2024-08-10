@@ -20,6 +20,9 @@
 #include <clues/Arch.hxx>
 #include <clues/types.hxx>
 
+// generated
+#include <clues/syscallnrs.h>
+
 namespace clues {
 
 /// Holds a set of registers for the host's CPU architecture.

@@ -1,8 +1,5 @@
 #pragma once
 
-// Linux
-#include <elf.h> // elf_greg_t
-
 // cosmos
 #include <cosmos/types.hxx>
 
@@ -11,10 +8,6 @@ namespace clues {
 /*
  * some general types used across Clues
  */
-
-/// A system call table number
-enum class SystemCallNr : elf_greg_t {
-};
 
 /// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.
 using DescriptorPathMapping = std::map<int, std::string>;
