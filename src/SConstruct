@@ -62,7 +62,7 @@ errnoHeaderBuilder = env.Builder(action=buildErrnosHeader, suffix='.h', src_suff
 
 env.Append(BUILDERS={'ErrnoHeaderBuilder': errnoHeaderBuilder})
 
-errno_header = env.ErrnoHeaderBuilder("errnodb.c")
+errno_header = env.ErrnoHeaderBuilder("clues/errnodb.h", "errnodb.c")
 
 libenv = env.Clone()
 public_includes = Dir('.').srcnode().abspath + '/../include'
