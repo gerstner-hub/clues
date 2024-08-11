@@ -124,4 +124,4 @@ protected: // data
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &rs);
+CLUES_API std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &rs);
