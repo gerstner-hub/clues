@@ -1,5 +1,9 @@
 #pragma once
 
+// C++
+#include <map>
+#include <string>
+
 // cosmos
 #include <cosmos/types.hxx>
 

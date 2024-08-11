@@ -2,7 +2,6 @@
 
 // C++
 #include <iosfwd>
-#include <map>
 #include <string>
 #include <utility>
 #include <vector>

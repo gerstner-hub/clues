@@ -1,5 +1,8 @@
 #pragma once
 
+// C++
+#include <cstdlib>
+
 // Linux
 #if defined(__x86_64__) || defined(__i386__)
 // provides offsets into the ptrace register data structure
