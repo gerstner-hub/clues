@@ -26,7 +26,7 @@ instroot = Path(env['instroot'])
 install_dev_files = env['install_dev_files']
 
 if env['project'] == 'clues':
-    # SConscript(env['buildroot'] + 'test/SConstruct')
+    SConscript(env['buildroot'] + 'test/SConstruct')
     # SConscript(env['buildroot'] + 'doc/SConstruct')
     Default(env['bins']['clues'])
 

@@ -1,0 +1,36 @@
+Import('env')
+
+libcosmos = env['libs']['libcosmos']
+libclues = env['libs']['libclues']
+
+tests = env.GatherSources(suffixes=['.cxx'])
+
+test_env = env.Clone()
+static_lib_sources = []
+test_env.ConfigureForLibOrPackage('libcosmos', static_lib_sources)
+test_env.ConfigureForLibOrPackage('libclues', static_lib_sources)
+
+run_env = test_env.Clone()
+if not env['use_system_pkgs']:
+    run_env.ConfigureRunForLib('libcosmos')
+run_env.ConfigureRunForLib('libclues')
+
+for test in tests:
+
+    label = '.'.join(test.split('.')[:-1])
+    test_prog_key = f'test_{label}'
+
+    test_bin = test_env.Program(test_prog_key, [test] + static_lib_sources)
+
+    env.Alias('clues_tests', test_prog_key)
+
+    run_test_key = f'run_clues_test_{label}'
+    logfile = Dir('.').abspath + '/' + run_test_key + '.log'
+    binary = test_bin[0].abspath
+    test_action = run_env.Action(f'{binary} >{logfile} 2>&1 || (cat {logfile} && exit 1)')
+    run_cmd = run_env.Command(f'{run_test_key}.command', test_bin, test_action)
+
+    env.Alias(run_test_key, run_cmd)
+    env.Alias('run_clues_tests', run_test_key)
+
+env.Alias("tests", "clues_tests")
