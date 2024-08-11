@@ -8,6 +8,9 @@
 #include <cosmos/proc/Signal.hxx>
 #include <cosmos/proc/types.hxx>
 
+// clues
+#include <clues/dso_export.h>
+
 namespace cosmos {
 	class InputMemoryRegion;
 };
