@@ -19,7 +19,6 @@
 // clues
 #include <clues/Arch.hxx>
 #include <clues/types.hxx>
-
 // generated
 #include <clues/syscallnrs.h>
 

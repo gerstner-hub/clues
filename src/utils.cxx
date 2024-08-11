@@ -1,6 +1,7 @@
 // Clues
 #include <clues/utils.hxx>
 #include <clues/Tracee.hxx>
+// generated
 #include <clues/errnodb.h>
 
 // C++

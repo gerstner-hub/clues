@@ -103,8 +103,12 @@ def buildSyscallHeader(target, source, env):
 syscallHeaderBuilder = env.Builder(action=buildSyscallHeader, suffix='.h', src_suffix='.c')
 env.Append(BUILDERS={'SyscallHeaderBuilder': syscallHeaderBuilder})
 
-errno_header = env.ErrnoHeaderBuilder("clues/errnodb.h", "errnodb.c")
-syscall_header = env.SyscallHeaderBuilder("clues/syscallnrs.h", "syscallnrs.c")
+# this header is only needed in the implementation and does not need to be
+# installed as a public header
+_ = env.ErrnoHeaderBuilder("clues/errnodb.h", "generated/errnodb.c")
+syscall_header = env.SyscallHeaderBuilder("clues/syscallnrs.h", "generated/syscallnrs.c")
+
+env.AddGeneratedHeader(syscall_header)
 
 libenv = env.Clone()
 public_includes = Dir('.').srcnode().abspath + '/../include'
