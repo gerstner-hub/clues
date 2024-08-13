@@ -2,6 +2,7 @@
 #include <cassert>
 
 // cosmos
+#include <cosmos/error/errno.hxx>
 #include <cosmos/io/ILogger.hxx>
 
 // clues
@@ -74,7 +75,7 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 				<< std::endl;
 		}
 	} else if(m_close_fd_par != SIZE_MAX) {
-		if (m_return->value() != 0)
+		if (m_return->valueAs<cosmos::Errno>() != cosmos::Errno::NO_ERROR)
 			// unsuccessful system call, so don't update anything
 			return;
 

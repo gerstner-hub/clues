@@ -2,7 +2,6 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
-#include <iostream>
 
 // Linux
 #include <sys/types.h>
@@ -18,10 +17,17 @@
 #include <sys/resource.h> // *rlimit()
 
 // clues
-#include <clues/values.hxx>
-#include <cosmos/error/ApiError.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
+#include <clues/values.hxx>
+
+// cosmos
+#include <cosmos/formatting.hxx>
+#include <cosmos/error/ApiError.hxx>
+#include <cosmos/fs/filesystem.hxx>
+#include <cosmos/fs/types.hxx>
+#include <cosmos/proc/mman.hxx>
+#include <cosmos/proc/Signal.hxx>
 
 namespace clues {
 
@@ -96,23 +102,24 @@ std::string StringArrayData::str() const {
 	return ret;
 }
 
-#define chk_open_flag(FLAG) if( m_val & FLAG ) ss << "|" << #FLAG;
+#define chk_open_flag(FLAG) if (flags & FLAG) ss << "|" << #FLAG;
 
 std::string OpenFlagsValue::str() const {
 	std::stringstream ss;
 
-	ss << "0x" << std::hex << m_val << " (";
+	ss << "0x" << std::hex << cosmos::to_integral(m_val) << " (";
 
 	// the access mode is made of the lower two bits
-	const int access_mode = m_val & 0x3;
+	const auto open_mode = cosmos::OpenMode{int(cosmos::to_integral(m_val) & 0x3)};
 
-	if (access_mode == O_RDWR) {
-		ss << "O_RDWR";
-	} else if (access_mode == O_WRONLY) {
-		ss << "O_WRONLY";
-	} else if (access_mode == O_RDONLY) {
-		ss << "O_RDONLY";
+	switch (open_mode) {
+		default: ss << "O_???"; break;
+		case cosmos::OpenMode::READ_ONLY: ss << "O_RDONLY"; break;
+		case cosmos::OpenMode::WRITE_ONLY: ss << "O_WRONLY"; break;
+		case cosmos::OpenMode::READ_WRITE: ss << "O_RDWR"; break;
 	}
+
+	const auto flags = cosmos::to_integral(m_val);
 
 	chk_open_flag(O_APPEND);
 	chk_open_flag(O_ASYNC);
@@ -138,49 +145,63 @@ std::string OpenFlagsValue::str() const {
 }
 
 std::string AccessModeParameter::str() const {
-	if (m_val == F_OK)
+	if (m_val == Word::ZERO)
 		return "F_OK";
+
+	using cosmos::fs::AccessCheck;
+	const auto checks = cosmos::fs::AccessChecks{int(m_val)};
 
 	std::stringstream ss;
 
-	if (m_val & R_OK) {
+	if (checks[AccessCheck::READ_OK]) {
 		ss << "R_OK|";
 	}
-	if (m_val & W_OK) {
+	if (checks[AccessCheck::WRITE_OK]) {
 		ss << "W_OK|";
 	}
-	if (m_val & X_OK) {
+	if (checks[AccessCheck::EXEC_OK]) {
 		ss << "X_OK";
 	}
 
 	auto ret = ss.str();
 
-	if (!ret.empty() && *ret.rbegin() == '|') {
+	if (ret.empty()) {
+		ret = "???";
+	} else if (ret.back() == '|') {
 		ret.erase(ret.size() - 1);
 	}
 
 	return ret;
 }
 
-#define chk_mode_flag(FLAG, ch) if( m_val & FLAG) ss << ch; else ss << "-";
-
 std::string FileModeParameter::str() const {
 	std::stringstream ss;
 
-	ss << "0x" << std::hex << m_val << " (";
+	const auto mode = cosmos::FileModeBits{valueAs<mode_t>()};
 
-	chk_mode_flag(S_ISUID, "s");
-	chk_mode_flag(S_ISGID, "S");
-	chk_mode_flag(S_ISVTX, "t");
-	chk_mode_flag(S_IRUSR, "r");
-	chk_mode_flag(S_IWUSR, "w");
-	chk_mode_flag(S_IXUSR, "x");
-	chk_mode_flag(S_IRGRP, "r");
-	chk_mode_flag(S_IWGRP, "w");
-	chk_mode_flag(S_IXGRP, "x");
-	chk_mode_flag(S_IROTH, "r");
-	chk_mode_flag(S_IWOTH, "w");
-	chk_mode_flag(S_IXOTH, "x");
+	auto chk_mode_flag = [&ss, mode](const cosmos::FileModeBit bit, const char *ch) {
+		if (mode[bit])
+			ss << ch;
+		else
+			ss << '-';
+	};
+
+	ss << "0x" << std::hex << cosmos::to_integral(m_val) << " (";
+
+	using cosmos::FileModeBit;
+
+	chk_mode_flag(FileModeBit::SETUID,      "s");
+	chk_mode_flag(FileModeBit::SETGID,      "S");
+	chk_mode_flag(FileModeBit::STICKY,      "t");
+	chk_mode_flag(FileModeBit::OWNER_READ,  "r");
+	chk_mode_flag(FileModeBit::OWNER_WRITE, "w");
+	chk_mode_flag(FileModeBit::OWNER_EXEC,  "x");
+	chk_mode_flag(FileModeBit::GROUP_READ,  "r");
+	chk_mode_flag(FileModeBit::GROUP_WRITE, "w");
+	chk_mode_flag(FileModeBit::GROUP_EXEC,  "x");
+	chk_mode_flag(FileModeBit::OTHER_READ,  "r");
+	chk_mode_flag(FileModeBit::OTHER_WRITE, "w");
+	chk_mode_flag(FileModeBit::OTHER_EXEC,  "x");
 
 	ss << ")";
 
@@ -190,35 +211,48 @@ std::string FileModeParameter::str() const {
 std::string MemoryProtectionParameter::str() const {
 	std::stringstream ss;
 
-	if (m_val == PROT_NONE)
+	using cosmos::mem::AccessFlag;
+	const auto flags = cosmos::mem::AccessFlags{valueAs<AccessFlag>()};
+
+	if (flags == cosmos::mem::AccessFlags{}) {
 		ss << "PROT_NONE";
+	} else {
+		if (flags[AccessFlag::READ])
+			ss << "PROT_READ|";
+		if (flags[AccessFlag::WRITE])
+			ss << "PROT_WRITE|";
+		if (flags[AccessFlag::EXEC])
+			ss << "PROT_EXEC";
+		if (flags[AccessFlag::SEM])
+			ss << "PROT_SEM";
+		if (flags[AccessFlag::SAO])
+			ss << "PROT_SAO";
+	}
 
-	if (m_val & PROT_READ)
-		ss << "PROT_READ";
+	auto ret = ss.str();
 
-	if (m_val & PROT_WRITE)
-		ss << "|PROT_WRITE";
+	if (ret.empty()) {
+		ret = "???";
+	} else if (ret.back() == '|') {
+		ret.erase(ret.size() - 1);
+	}
 
-	if (m_val & PROT_EXEC)
-		ss << "|PROT_EXEC";
-
-	return ss.str();
+	return ret;
 }
 
 #ifdef __x86_64__
-#define chk_arch_case(MODE) case MODE: return #MODE;
 
 std::string ArchCodeParameter::str() const {
-	switch (m_val) {
-	chk_arch_case(ARCH_SET_FS)
-	chk_arch_case(ARCH_GET_FS)
-	chk_arch_case(ARCH_SET_GS)
-	chk_arch_case(ARCH_GET_GS)
-	default:
-		return "unknown";
+#	define chk_arch_case(MODE) case MODE: return #MODE;
+	switch (cosmos::to_integral(m_val)) {
+		chk_arch_case(ARCH_SET_FS)
+		chk_arch_case(ARCH_GET_FS)
+		chk_arch_case(ARCH_SET_GS)
+		chk_arch_case(ARCH_GET_GS)
+		default: return "unknown";
 	}
 }
-#endif
+#endif // __x86_64__
 
 StatParameter::~StatParameter() {
 	delete m_stat;
@@ -259,8 +293,8 @@ struct linux_dirent {
 
 std::string DirEntries::str() const {
 	std::stringstream ss;
-	const auto &respar = m_call->result();
-	const int result = respar.value();
+	const auto &res_par = m_call->result();
+	const auto result = res_par.valueAs<int>();
 
 	if (result < 0) {
 		ss << "undefined";
@@ -282,8 +316,8 @@ void DirEntries::updateData(const Tracee &proc) {
 
 	// the amount of data stored at the DirEntries location depends on the
 	// system call result value
-	const auto &respar = m_call->result();
-	const size_t bytes = respar.value();
+	const auto &res_par = m_call->result();
+	const auto bytes = res_par.valueAs<size_t>();
 
 	if (bytes <= 0)
 		return;
@@ -312,16 +346,12 @@ void DirEntries::updateData(const Tracee &proc) {
 
 #define ENUM_CASE(NAME) case NAME: return #NAME
 
-std::string SigSetOperation::str() const
-{
-	switch(m_val) {
-	ENUM_CASE(SIG_BLOCK);
-	ENUM_CASE(SIG_UNBLOCK);
-	ENUM_CASE(SIG_SETMASK);
-	default:
-		std::stringstream ss;
-		ss << "unknown (" << m_val << ")";
-		return ss.str();
+std::string SigSetOperation::str() const {
+	switch (valueAs<int>()) {
+		ENUM_CASE(SIG_BLOCK);
+		ENUM_CASE(SIG_UNBLOCK);
+		ENUM_CASE(SIG_SETMASK);
+		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
 	}
 }
 
@@ -334,18 +364,15 @@ std::string FutexOperation::str() const {
 	 * understands all the "private" stuff that can also be found in the
 	 * header
 	 */
-	switch(m_val & FUTEX_CMD_MASK) {
-	ENUM_CASE(FUTEX_WAIT);
-	ENUM_CASE(FUTEX_WAIT_BITSET);
-	ENUM_CASE(FUTEX_WAKE);
-	ENUM_CASE(FUTEX_WAKE_BITSET);
-	ENUM_CASE(FUTEX_FD);
-	ENUM_CASE(FUTEX_REQUEUE);
-	ENUM_CASE(FUTEX_CMP_REQUEUE);
-	default:
-		std::stringstream ss;
-		ss << "unknown (" << m_val << ")";
-		return ss.str();
+	switch (int(m_val) & FUTEX_CMD_MASK) {
+		ENUM_CASE(FUTEX_WAIT);
+		ENUM_CASE(FUTEX_WAIT_BITSET);
+		ENUM_CASE(FUTEX_WAKE);
+		ENUM_CASE(FUTEX_WAKE_BITSET);
+		ENUM_CASE(FUTEX_FD);
+		ENUM_CASE(FUTEX_REQUEUE);
+		ENUM_CASE(FUTEX_CMP_REQUEUE);
+		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
 	}
 }
 
@@ -381,55 +408,56 @@ std::string TimespecParameter::str() const {
 
 #define SIG_CASE(NAME) case NAME: ss << #NAME; break
 
-void printSignal(std::string &s, int signal) {
+namespace {
+
+void printSignal(std::string &s, const cosmos::SignalNr signal) {
 	std::stringstream ss;
 	s.clear();
 
 	const auto SIGRTMIN_PRIV = SIGRTMIN - 2;
 
-	if (signal < (SIGRTMIN_PRIV) || signal > SIGRTMAX) {
-		switch (signal) {
-		SIG_CASE(SIGINT);
-		SIG_CASE(SIGTERM);
-		SIG_CASE(SIGHUP);
-		SIG_CASE(SIGQUIT);
-		SIG_CASE(SIGILL);
-		SIG_CASE(SIGABRT);
-		SIG_CASE(SIGFPE);
-		SIG_CASE(SIGKILL);
-		SIG_CASE(SIGPIPE);
-		SIG_CASE(SIGSEGV);
-		SIG_CASE(SIGALRM);
-		SIG_CASE(SIGUSR1);
-		SIG_CASE(SIGUSR2);
-		SIG_CASE(SIGCONT);
-		SIG_CASE(SIGSTOP);
-		SIG_CASE(SIGTSTP);
-		SIG_CASE(SIGTTIN);
-		SIG_CASE(SIGTTOU);
-		SIG_CASE(SIGTRAP);
-		SIG_CASE(SIGBUS);
-		SIG_CASE(SIGSTKFLT);
-		SIG_CASE(SIGCHLD);
-		SIG_CASE(SIGIO);
-		SIG_CASE(SIGPROF);
-		SIG_CASE(SIGSYS);
-		SIG_CASE(SIGWINCH);
-		SIG_CASE(SIGPWR);
-		SIG_CASE(SIGURG);
-		SIG_CASE(SIGXCPU);
-		SIG_CASE(SIGVTALRM);
-		SIG_CASE(SIGXFSZ);
-		default:
-			ss << "unknown (" << signal << ")";
+	if (const auto raw = cosmos::to_integral(signal); raw < (SIGRTMIN_PRIV) || raw > SIGRTMAX) {
+		switch (raw) {
+			SIG_CASE(SIGINT);
+			SIG_CASE(SIGTERM);
+			SIG_CASE(SIGHUP);
+			SIG_CASE(SIGQUIT);
+			SIG_CASE(SIGILL);
+			SIG_CASE(SIGABRT);
+			SIG_CASE(SIGFPE);
+			SIG_CASE(SIGKILL);
+			SIG_CASE(SIGPIPE);
+			SIG_CASE(SIGSEGV);
+			SIG_CASE(SIGALRM);
+			SIG_CASE(SIGUSR1);
+			SIG_CASE(SIGUSR2);
+			SIG_CASE(SIGCONT);
+			SIG_CASE(SIGSTOP);
+			SIG_CASE(SIGTSTP);
+			SIG_CASE(SIGTTIN);
+			SIG_CASE(SIGTTOU);
+			SIG_CASE(SIGTRAP);
+			SIG_CASE(SIGBUS);
+			SIG_CASE(SIGSTKFLT);
+			SIG_CASE(SIGCHLD);
+			SIG_CASE(SIGIO);
+			SIG_CASE(SIGPROF);
+			SIG_CASE(SIGSYS);
+			SIG_CASE(SIGWINCH);
+			SIG_CASE(SIGPWR);
+			SIG_CASE(SIGURG);
+			SIG_CASE(SIGXCPU);
+			SIG_CASE(SIGVTALRM);
+			SIG_CASE(SIGXFSZ);
+			default: ss << "unknown (" << raw << ")"; break;
 		}
-	} else if (signal >= SIGRTMIN_PRIV && signal < SIGRTMIN) {
+	} else if (raw >= SIGRTMIN_PRIV && raw < SIGRTMIN) {
 		ss << "glibc internal signal";
 	} else {
-		ss << "SIGRT" << signal - SIGRTMIN;
+		ss << "SIGRT" << raw - SIGRTMIN;
 	}
 
-	ss << " (" << ::strsignal(signal) << ")";
+	ss << " (" << cosmos::Signal{signal}.name() << ")";
 
 	s = ss.str();
 }
@@ -443,7 +471,7 @@ void printSignalSet(std::string &s, const sigset_t &set) {
 
 	for (int signum = 1; signum < SIGRTMAX; signum++) {
 		if (sigismember(&set, signum)) {
-			printSignal(s, signum);
+			printSignal(s, cosmos::SignalNr{signum});
 
 			ss << s << ", ";
 		}
@@ -454,9 +482,11 @@ void printSignalSet(std::string &s, const sigset_t &set) {
 	s = ss.str();
 }
 
+} // end namespace
+
 std::string SignalNumber::str() const {
 	std::string s;
-	printSignal(s, m_val);
+	printSignal(s, valueAs<cosmos::SignalNr>());
 	return s;
 }
 
@@ -533,25 +563,24 @@ std::string SigSetParameter::str() const {
 }
 
 std::string ResourceType::str() const {
-	switch (m_val) {
-	ENUM_CASE(RLIMIT_AS);
-	ENUM_CASE(RLIMIT_CORE);
-	ENUM_CASE(RLIMIT_CPU);
-	ENUM_CASE(RLIMIT_DATA);
-	ENUM_CASE(RLIMIT_FSIZE);
-	ENUM_CASE(RLIMIT_LOCKS);
-	ENUM_CASE(RLIMIT_MEMLOCK);
-	ENUM_CASE(RLIMIT_MSGQUEUE);
-	ENUM_CASE(RLIMIT_NICE);
-	ENUM_CASE(RLIMIT_NOFILE);
-	ENUM_CASE(RLIMIT_NPROC);
-	ENUM_CASE(RLIMIT_RSS);
-	ENUM_CASE(RLIMIT_RTPRIO);
-	ENUM_CASE(RLIMIT_RTTIME);
-	ENUM_CASE(RLIMIT_SIGPENDING);
-	ENUM_CASE(RLIMIT_STACK);
-	default:
-		return "unknown";
+	switch (valueAs<int>()) {
+		ENUM_CASE(RLIMIT_AS);
+		ENUM_CASE(RLIMIT_CORE);
+		ENUM_CASE(RLIMIT_CPU);
+		ENUM_CASE(RLIMIT_DATA);
+		ENUM_CASE(RLIMIT_FSIZE);
+		ENUM_CASE(RLIMIT_LOCKS);
+		ENUM_CASE(RLIMIT_MEMLOCK);
+		ENUM_CASE(RLIMIT_MSGQUEUE);
+		ENUM_CASE(RLIMIT_NICE);
+		ENUM_CASE(RLIMIT_NOFILE);
+		ENUM_CASE(RLIMIT_NPROC);
+		ENUM_CASE(RLIMIT_RSS);
+		ENUM_CASE(RLIMIT_RTPRIO);
+		ENUM_CASE(RLIMIT_RTTIME);
+		ENUM_CASE(RLIMIT_SIGPENDING);
+		ENUM_CASE(RLIMIT_STACK);
+		default: return "unknown";
 	}
 }
 
@@ -561,10 +590,10 @@ std::string printLimit(uint64_t lim) {
 	// these seem to have the the same value on some platforms, triggering
 	// -Wduplicated-cond. So only make the check if the constants actually
 	// differ.
-#	if RLIM_INFINITY != RLIM64_INFINITY
+#if RLIM_INFINITY != RLIM64_INFINITY
 	else if (lim == RLIM64_INFINITY)
 		return "RLIM64_INFINITY";
-#	endif
+#endif
 	else if ((lim % 1024) == 0)
 		return std::to_string(lim / 1024) + " * " + "1024";
 	else

@@ -7,7 +7,7 @@
 #include <sys/uio.h> // struct iov
 #include <sys/procfs.h> // the elf_greg_t & friends are in here
 // unclear what the official headers for these are ...
-#include <elf.h> // NT_PRSTATUS is in here
+#include <elf.h>
 
 // cosmos
 #include <cosmos/error/RuntimeError.hxx>
@@ -32,8 +32,6 @@ namespace clues {
 class RegisterSet {
 public: // types
 
-	/// An integer being able to hold a word for the current architecture.
-	using Word = elf_greg_t;
 	using ZeroInit = cosmos::NamedBool<struct zero_init_t, false>;
 
 public: // functions
@@ -66,7 +64,7 @@ public: // functions
 	SystemCallNr syscall() const { return SystemCallNr{m_regs[SYSCALL_NR_REG]}; }
 
 	/// Returns the system call result on exit from a syscall
-	Word syscallRes() const { return m_regs[SYSCALL_RES_REG]; }
+	Word syscallRes() const { return Word{m_regs[SYSCALL_RES_REG]}; }
 
 	/// Returns the content of the given system call parameter register.
 	/**
@@ -79,7 +77,7 @@ public: // functions
 			cosmos_throw (cosmos::UsageError("invalid system call parameter nr."));
 		}
 
-		return m_regs[SYSCALL_PAR_REGISTER[number]];
+		return Word{m_regs[SYSCALL_PAR_REGISTER[number]]};
 	}
 
 	/// Returns the content of the given register number.
@@ -96,7 +94,7 @@ public: // functions
 			cosmos_throw(cosmos::UsageError("invalid register nr."));
 		}
 
-		return m_regs[number];
+		return Word{m_regs[number]};
 	}
 
 	/// Returns the number of registers available in a RegisterSet.

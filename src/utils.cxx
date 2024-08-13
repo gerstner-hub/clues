@@ -1,11 +1,10 @@
 // Clues
-#include <clues/utils.hxx>
 #include <clues/Tracee.hxx>
+#include <clues/utils.hxx>
 // generated
 #include <clues/errnodb.h>
 
 // C++
-#include <string>
 #include <cstring>
 
 namespace clues {

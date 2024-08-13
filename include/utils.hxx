@@ -6,6 +6,9 @@
 // cosmos
 #include <cosmos/error/errno.hxx>
 
+// clues
+#include <clues/types.hxx>
+
 namespace clues {
 
 class Tracee;
@@ -45,7 +48,7 @@ void readTraceeStruct(
 template <typename T>
 void readStruct(
 		const Tracee &proc,
-		const long pointer,
+		const Word pointer,
 		T *&copy) {
 	// the address of the struct in the userspace address space
 	const long *addr = reinterpret_cast<long*>(pointer);

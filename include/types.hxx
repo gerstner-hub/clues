@@ -4,6 +4,9 @@
 #include <map>
 #include <string>
 
+// Linux
+#include <elf.h>
+
 // cosmos
 #include <cosmos/types.hxx>
 
@@ -27,6 +30,11 @@ enum class TraceState {
 	SYSCALL_EXIT,
 	/// Tracee is gone.
 	EXITED
+};
+
+/// An integer that is able to hold a word for the current architecture.
+enum class Word : elf_greg_t {
+	ZERO = 0
 };
 
 } // end ns

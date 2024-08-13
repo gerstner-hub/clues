@@ -2,13 +2,15 @@
 
 // C++
 #include <iosfwd>
+#include <type_traits>
 
 // clues
 #include <clues/SystemCall.hxx>
+#include <clues/types.hxx>
 
 namespace clues {
 
-/// Base class for any kind of system call value.
+/// Base class for any kind of system call values.
 /**
  * This can represent a system call parameter or return value.
  **/
@@ -18,14 +20,10 @@ public: // types
 
 	/// Basic type of system call value.
 	enum class Type {
-		/// The value is an input parameter to the system call.
-		PARAM_IN,
-		/// The value is an output parameter filled by in by the system call.
-		PARAM_OUT,
-		/// The value is both an input and output parameter.
-		PARAM_IN_OUT,
-		/// The value is a system call return value.
-		RETVAL
+		PARAM_IN,     ///< An input parameter to the system call.
+		PARAM_OUT,    ///< An output parameter filled by in by the system call.
+		PARAM_IN_OUT, ///< Both an input and output parameter.
+		RETVAL        ///< A system call return value.
 	};
 
 public: // functions
@@ -58,7 +56,7 @@ public: // functions
 	bool isReturnValue() const { return m_type == Type::RETVAL; }
 
 	/// Fills the system call value from the given register data.
-	void fill(const Tracee &proc, const RegisterSet::Word word);
+	void fill(const Tracee &proc, const Word word);
 
 	/// Returns whether the value needs to be updated after the system call is finished.
 	bool needsUpdate() const { return m_type != Type::PARAM_IN; }
@@ -70,9 +68,6 @@ public: // functions
 
 	auto hasLongName() const { return m_long_name != nullptr; }
 
-	/// Returns the currently stored value.
-	auto value() const { return m_val; }
-
 	/// Returns a human readable string representation of the value.
 	/**
 	 * This member function should be specialized by derived classes to
@@ -80,6 +75,31 @@ public: // functions
 	 * value type.
 	 **/
 	virtual std::string str() const;
+
+	/// Returns the currently stored value.
+	auto value() const { return m_val; }
+
+	/// Helper to cast the strongly typed Word value `m_val` to other strong enum types.
+	/**
+	 * This also silences data loss warnings. On x86_64 Word is 64-bit
+	 * wide, but many parameters are actually only 32-bit wide, so this
+	 * warning comes up a lot. There shouldn't be many dangerous
+	 * situations in this context as long as we select the correct target
+	 * type.
+	 **/
+	template <typename OTHER>
+	OTHER valueAs() const {
+		const auto baseval = cosmos::to_integral(m_val);
+		if constexpr (std::is_enum_v<OTHER>) {
+			const auto baseret = static_cast<typename std::underlying_type<OTHER>::type>(baseval);
+			return OTHER{baseret};
+		}
+
+		if constexpr (!std::is_enum_v<OTHER>) {
+			return static_cast<OTHER>(baseval);
+		}
+	}
+
 
 protected: // functions
 
@@ -103,7 +123,7 @@ protected: // data
 	/// A human readable longer name for the value.
 	const char *m_long_name = nullptr;
 	/// The raw register value for the value.
-	RegisterSet::Word m_val;
+	Word m_val;
 };
 
 class ReturnValue :

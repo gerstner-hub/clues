@@ -18,13 +18,11 @@
 
 namespace clues {
 
-/**
- * \brief
- * 	A file descriptor system call parameter
- **/
+/// A file descriptor system call parameter.
 class CLUES_API FileDescriptor :
 		public SystemCallValue {
 public: // functions
+
 	/**
 	 * \param[in] at_semantics
 	 * 	If set then the file descriptor is considered to be part of an
@@ -38,8 +36,8 @@ public: // functions
 		const Type &type,
 		const bool at_semantics = false) :
 			SystemCallValue{type, "fd", "file descriptor"},
-			m_at_semantics{at_semantics}
-	{}
+			m_at_semantics{at_semantics} {
+	}
 
 	std::string str() const override;
 
@@ -55,7 +53,7 @@ protected: // data
 
 class FileDescriptorParameter :
 		public FileDescriptor {
-public:
+public: // functions
 	explicit FileDescriptorParameter(const bool at_semantics = false) :
 			FileDescriptor{Type::PARAM_IN, at_semantics}
 	{}
@@ -69,7 +67,7 @@ public: // functions
 			FileDescriptor{Type::RETVAL, false} {
 	}
 
-protected:
+protected: // functions
 
 	std::string str() const override;
 };
@@ -94,8 +92,8 @@ public: // functions
 		const char *short_label = "errno",
 		const char *long_label = nullptr) :
 			ReturnValue{short_label, long_label},
-			m_highest{highest_errno}
-	{}
+			m_highest{highest_errno} {
+	}
 
 	std::string str() const override;
 
@@ -111,16 +109,15 @@ protected: // data
  * 	binary/ascii data as appropriate
  */
 class CLUES_API GenericPointerValue :
-		public PointerValue
-{
+		public PointerValue {
 public: // functions
 
 	explicit GenericPointerValue(
 		const char *short_name,
 		const char *long_name = nullptr,
 		const Type &type = Type::PARAM_IN) :
-			PointerValue{type, short_name, long_name}
-	{}
+			PointerValue{type, short_name, long_name} {
+	}
 
 	std::string str() const override;
 
@@ -133,17 +130,17 @@ protected: // data
 /// c-string system call data.
 class CLUES_API StringData :
 		public SystemCallValue {
-public:
+public: // functions
 	explicit StringData(
 		const char *short_name = nullptr,
 		const char *long_name = nullptr,
 		const Type &type = Type::PARAM_IN) :
-			SystemCallValue{type, short_name ? short_name : "string", long_name}
-	{}
+			SystemCallValue{type, short_name ? short_name : "string", long_name} {
+	}
 
 	std::string str() const override { return std::string{"\""} + m_str + "\""; }
 
-protected:
+protected: // functions
 
 	void processValue(const Tracee &proc) override {
 		if (! this->isOut()) {
@@ -158,7 +155,7 @@ protected:
 
 	void fetch(const Tracee &);
 
-protected:
+protected: // data
 
 	std::string m_str;
 };
@@ -169,7 +166,7 @@ protected:
  **/
 class CLUES_API StringArrayData :
 		public PointerInValue {
-public:
+public: // functions
 
 	explicit StringArrayData(
 		const char *short_name = nullptr,
@@ -182,11 +179,11 @@ public:
 
 	std::string str() const override;
 
-protected:
+protected: // functions
 
 	void processValue(const Tracee &proc) override;
 
-protected:
+protected: // functions
 
 	std::vector<std::string> m_strs;
 };
@@ -295,17 +292,13 @@ protected: // data
 	std::list<std::string> m_entries;
 };
 
-/**
- * \brief
- * 	The operation to performed on a signal set
- **/
+/// The operation to performed on a signal set.
 class CLUES_API SigSetOperation :
-	public ValueInParameter
-{
+		public ValueInParameter {
 public:
 	explicit SigSetOperation() :
-		ValueInParameter("sigsetop", "signal set operation")
-	{}
+		ValueInParameter{"sigsetop", "signal set operation"} {
+	}
 
 	std::string str() const override;
 };

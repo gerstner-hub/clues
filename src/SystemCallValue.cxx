@@ -6,14 +6,14 @@
 
 namespace clues {
 
-void SystemCallValue::fill(const Tracee &proc, const RegisterSet::Word word) {
+void SystemCallValue::fill(const Tracee &proc, const Word word) {
 	m_val = word;
 	processValue(proc);
 }
 
 std::string SystemCallValue::str() const {
 	// by default simply return the register value as a string
-	return std::to_string(m_val);
+	return std::to_string(cosmos::to_integral(m_val));
 }
 
 } // end ns
