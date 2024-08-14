@@ -7,8 +7,8 @@
 
 // clues
 #include <clues/clues.hxx>
-#include <clues/Tracee.hxx>
 #include <clues/SystemCall.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues {
 
@@ -23,13 +23,13 @@ void Tracee::setTracee(const cosmos::ProcessID tracee) {
 void Tracee::handleSystemCall() {
 	if (m_state != TraceState::SYSCALL_ENTER) {
 		m_state = TraceState::SYSCALL_ENTER;
-		getRegisters(m_reg_set);
+		updateRegisters();
 		m_current_syscall = &m_syscall_db.get(m_reg_set.syscall());
 		m_current_syscall->setEntryRegs(*this, m_reg_set);
 		m_consumer.syscallEntry(*m_current_syscall);
 	} else {
 		m_state = TraceState::SYSCALL_EXIT;
-		getRegisters(m_reg_set);
+		updateRegisters();
 		m_current_syscall->setExitRegs(*this, m_reg_set);
 		m_current_syscall->updateOpenFiles(m_fd_path_map);
 		m_consumer.syscallExit(*m_current_syscall);
@@ -81,8 +81,6 @@ void Tracee::getRegisters(RegisterSet &rs) {
 
 	ptrace::get_register_set(m_tracee, rs.registerType(), iovec);
 	rs.iovFilled(iovec);
-
-	//std::cout << "Read registers " << reg_vector.iov_len << " vs. " << sizeof(regs) << std::endl;
 }
 
 long Tracee::getData(const long *addr) const {

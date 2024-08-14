@@ -98,9 +98,13 @@ protected: // functions
 
 	/// Reads the current register set from the process.
 	/**
-	 * This is only possible it the tracee is currently in stopped state
+	 * This is only possible it the tracee is currently in stopped state.
 	 **/
 	void getRegisters(RegisterSet &rs);
+
+	void updateRegisters() {
+		getRegisters(m_reg_set);
+	}
 
 	void handleSystemCall();
 
