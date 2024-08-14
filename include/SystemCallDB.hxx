@@ -14,6 +14,12 @@ class SystemCallDB :
 		protected std::map<SystemCallNr, SystemCall*> {
 public: // functions
 
+	SystemCallDB() = default;
+
+	// non-copyable semantics
+	SystemCallDB(const SystemCallDB &) = delete;
+	SystemCallDB& operator=(const SystemCallDB &) = delete;
+
 	~SystemCallDB();
 
 	SystemCall& get(const SystemCallNr nr);

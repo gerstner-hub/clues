@@ -1,6 +1,3 @@
-// Linux
-#include <sys/syscall.h> // system call number constants
-			 //
 // clues
 #include <clues/SystemCallDB.hxx>
 #include <clues/values.hxx>
@@ -9,7 +6,7 @@
 namespace clues {
 
 SystemCallDB::~SystemCallDB() {
-	for (auto &pair: *this) {
+	for (auto pair: *this) {
 		delete pair.second;
 	}
 
@@ -20,9 +17,7 @@ SystemCall& SystemCallDB::get(const SystemCallNr nr) {
 	iterator it = find(nr);
 
 	if (it == end()) {
-		auto res = insert(
-			std::make_pair(nr, createSysCall(nr))
-		);
+		auto res = insert(std::make_pair(nr, createSysCall(nr)));
 
 		it = res.first;
 	}
@@ -36,8 +31,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 
 	switch (nr) {
 	case SystemCallNr::WRITE:
-		return new Call{nr, "write",
-			{
+		return new Call{nr, "write", {
 				new FileDescriptorParameter{},
 				new GenericPointerValue{"buf", "source buffer"},
 				new ValueInParameter{"count", "buffer length"}
@@ -45,8 +39,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ReturnValue{"written", "bytes written"}
 		};
 	case SystemCallNr::READ:
-		return new Call{nr, "read",
-			{
+		return new Call{nr, "read", {
 				new FileDescriptorParameter{},
 				new GenericPointerValue{"buf", "target buffer", ValueType::PARAM_OUT},
 				new ValueInParameter{"count", "buffer length"}
@@ -54,31 +47,27 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ReturnValue{"read", "bytes read"}
 		};
 	case SystemCallNr::BRK:
-		return new Call{nr, "brk",
-			{
+		return new Call{nr, "brk", {
 				new GenericPointerValue{"addr", "requested data segment end"}
 			},
 			new GenericPointerValue{"addr", "actual data segment end", ValueType::RETVAL}
 		};
 	case SystemCallNr::NANOSLEEP:
-		return new Call{nr, "nanosleep",
-			{
+		return new Call{nr, "nanosleep", {
 				new TimespecParameter{"req", "requested"},
 				new TimespecParameter{"rem", "remaining", ValueType::PARAM_OUT}
 			},
 			new ErrnoResult{}
 		};
 	case SystemCallNr::ACCESS:
-		return new Call{nr, "access",
-			{
+		return new Call{nr, "access", {
 				new StringData{"path"},
 				new AccessModeParameter{}
 			},
 			new ErrnoResult{}
 		};
 	case SystemCallNr::FCNTL:
-		return new Call{nr, "fcntl",
-			{
+		return new Call{nr, "fcntl", {
 				new FileDescriptorParameter{},
 				new ValueInParameter{"cmd", "command"}
 				/* TODO: Wolpertinger parameter */
@@ -86,8 +75,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ErrnoResult{}
 		};
 	case SystemCallNr::FSTAT:
-		return new Call{nr, "fstat",
-			{
+		return new Call{nr, "fstat", {
 				new FileDescriptorParameter{},
 				new StatParameter{}
 			},
@@ -95,8 +83,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 		};
 	case SystemCallNr::LSTAT:
 	case SystemCallNr::STAT:
-		return new Call{nr, nr == SystemCallNr{SYS_stat} ? "stat" : "lstat",
-			{
+		return new Call{nr, nr == SystemCallNr{SYS_stat} ? "stat" : "lstat", {
 				new StringData{"path"},
 				new StatParameter{}
 			},
@@ -104,15 +91,13 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 		};
 #ifdef __x86_64__
 	case SystemCallNr::ALARM:
-		return new Call{nr, "alarm",
-			{
+		return new Call{nr, "alarm", {
 				new ValueInParameter{"seconds"}
 			},
 			new ValueOutParameter{"old_seconds", "remaining seconds for previous timer"}
 		};
 	case SystemCallNr::MMAP:
-		return new Call{nr, "mmap",
-			{
+		return new Call{nr, "mmap", {
 				new GenericPointerValue{"hint", "address placement hint"},
 				new ValueInParameter{"len", "length"},
 				new ValueInParameter{"prot", "protocol"},
@@ -123,16 +108,14 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new GenericPointerValue{"addr", "mapped memory address", SystemCallValue::Type::PARAM_OUT}
 		};
 	case SystemCallNr::ARCH_PRCTL:
-		return new Call{nr, "arch_prctl",
-			{
+		return new Call{nr, "arch_prctl", {
 				new ArchCodeParameter{},
 				new GenericPointerValue{"addr", "request code ('set') or return pointer ('get')"}
 			},
 			new ErrnoResult{}
 		};
 	case SystemCallNr::GETRLIMIT:
-		return new Call{nr, "getrlimit",
-			{
+		return new Call{nr, "getrlimit", {
 				new ResourceType{},
 				new ResourceLimit{}
 			},
@@ -140,16 +123,14 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 		};
 #endif
 	case SystemCallNr::MUNMAP:
-		return new Call{nr, "munmap",
-			{
+		return new Call{nr, "munmap", {
 				new GenericPointerValue{"addr", "memory addr to unmap"},
 				new ValueInParameter{"len", "length"}
 			},
 			new ErrnoResult{}
 		};
 	case SystemCallNr::MPROTECT:
-		return new Call{nr, "mprotect",
-			{
+		return new Call{nr, "mprotect", {
 				new GenericPointerValue{"addr"},
 				new ValueInParameter{"length"},
 				new MemoryProtectionParameter{}
@@ -157,8 +138,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ErrnoResult{}
 		};
 	case SystemCallNr::OPEN:
-		return new Call{nr, "open",
-			{
+		return new Call{nr, "open", {
 				new StringData{"filename"},
 				new OpenFlagsValue{},
 				new FileModeParameter{}
@@ -167,8 +147,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			0 // number of parameter that is the to-be-opened ID
 		};
 	case SystemCallNr::OPENAT:
-		return new Call{nr, "openat",
-			{
+		return new Call{nr, "openat", {
 				new FileDescriptorParameter{true},
 				new StringData{"filename"},
 				new OpenFlagsValue{},
@@ -177,8 +156,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new FileDescriptorReturnValue{}
 		};
 	case SystemCallNr::CLOSE:
-		return new Call{nr, "close",
-			{
+		return new Call{nr, "close", {
 				new FileDescriptorParameter{}
 			},
 			new ErrnoResult{},
@@ -186,8 +164,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			0 // number of parameter that is the to-be-closed fd
 		};
 	case SystemCallNr::RT_SIGACTION:
-		return new Call{nr, "rt_sigaction",
-			{
+		return new Call{nr, "rt_sigaction", {
 				new SignalNumber{},
 				new SigactionParameter{},
 				new SigactionParameter{"old_action"}
@@ -195,8 +172,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ErrnoResult{}
 		};
 	case SystemCallNr::RT_SIGPROCMASK:
-		return new Call{nr, "rt_sigprocmask",
-			{
+		return new Call{nr, "rt_sigprocmask", {
 				new SigSetOperation{},
 				new SigSetParameter{"new_mask"},
 				new SigSetParameter{"old_mask"},
@@ -209,8 +185,7 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 		 * NOTE: the order of parameters for clone differs between
 		 * architectures
 		 */
-		return new Call{nr, "clone",
-			{
+		return new Call{nr, "clone", {
 				new ValueInParameter{"flags", "clone flags"},
 				new GenericPointerValue{"stack", "stack address"},
 				new GenericPointerValue{"parent tid", "parent thread id", GenericPointerValue::Type::PARAM_OUT},
@@ -220,13 +195,12 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ErrnoResult(-1, "child PID")
 		};
 	case SystemCallNr::FORK:
-		return new Call{nr, "fork",
-			{},
+		return new Call{nr, "fork", {
+			},
 			new ErrnoResult{-1, "child PID"}
 		};
 	case SystemCallNr::EXECVE:
-		return new Call{nr, "execve",
-			{
+		return new Call{nr, "execve", {
 				new StringData{"filename"},
 				new StringArrayData{"argv", "argument vector"},
 				new StringArrayData{"envp", "environment block pointer"}
@@ -234,16 +208,14 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ErrnoResult{}
 		};
 	case SystemCallNr::IOCTL:
-		return new Call{nr, "ioctl",
-			{
+		return new Call{nr, "ioctl", {
 				new FileDescriptorParameter{},
 				new GenericPointerValue{"request", "ioctl request number"}
 			},
 			new ErrnoResult{}
 		};
 	case SystemCallNr::GETDENTS:
-		return new Call{nr, "getdents",
-			{
+		return new Call{nr, "getdents", {
 				new FileDescriptorParameter{},
 				new DirEntries{},
 				new ValueInParameter{"size", "dirent size in bytes"}
@@ -255,21 +227,19 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 		const bool is_uid = nr == SystemCallNr{SYS_getuid};
 		return new Call{
 			nr,
-			is_uid ? "getuid" : "geteuid",
-			{},
+			is_uid ? "getuid" : "geteuid", {
+			},
 			new ValueOutParameter{"id", is_uid ? "real user ID" : "effective user ID"}
 		};
 	}
 	case SystemCallNr::SET_TID_ADDRESS:
-		return new Call{nr, "set_tid_address",
-			{
+		return new Call{nr, "set_tid_address", {
 				new GenericPointerValue{"thread ID location"}
 			},
 			new ValueOutParameter{"tid", "caller thread ID"}
 		};
 	case SystemCallNr::GET_ROBUST_LIST:
-		return new Call{nr, "get_robust_list",
-			{
+		return new Call{nr, "get_robust_list", {
 				new ValueInParameter{"tid", "thread id"},
 				new GenericPointerValue{"robust_list_head"},
 				// TODO: new parameter type that also prints
@@ -279,21 +249,19 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ErrnoResult{}
 		};
 	case SystemCallNr::SET_ROBUST_LIST:
-		return new Call{nr, "set_robust_list",
-			{
+		return new Call{nr, "set_robust_list", {
 				new GenericPointerValue{"robust_list_head"},
 				new ValueInParameter{"len"}
 			},
 			new ErrnoResult{}
 		};
 	case SystemCallNr::FUTEX:
-		return new Call{nr, "futex",
+		return new Call{nr, "futex", {
 			// TODO: requires context-sensitive interpr. of the
 			// non-error returns (the FutexOperation is the
 			// necessary context)
 			// TODO: allows for a number of additional operations
 			// that aren't well documented
-			{
 				new GenericPointerValue{"futex_int"},
 				new FutexOperation{},
 				new ValueInParameter{"val"},
@@ -304,8 +272,8 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			new ErrnoResult{-1, "nwokenup", "processes woken up"}
 		};
 	default:
-		return new Call{nr, "unknown",
-			{},
+		return new Call{nr, "unknown", {
+			},
 			new ValueOutParameter{"result", nullptr}
 		};
 	}
