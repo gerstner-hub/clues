@@ -28,14 +28,14 @@ public: // types
 
 public: // functions
 
-	/// Constructs new SystemCallValue.
+	/// Constructs a new SystemCallValue.
 	/**
+	 * \param[in] type
+	 * 	The basic type of the value
 	 * \param[in] short_name
 	 * 	A short friendly name for this value (one word)
 	 * \param[in] long_name
 	 *	A longer name for this value, optional
-	 * \param[in] type
-	 * 	The basic type of the value
 	 **/
 	explicit SystemCallValue(
 		const Type &type,
@@ -70,14 +70,14 @@ public: // functions
 
 	/// Returns a human readable string representation of the value.
 	/**
-	 * This member function should be specialized by derived classes to
-	 * output the value data in a fashion more suitable for the concrete
-	 * value type.
+	 * This member function should be specialized in derived classes to
+	 * output the value data in a fashion suitable for the concrete value
+	 * type.
 	 **/
 	virtual std::string str() const;
 
-	/// Returns the currently stored value.
-	auto value() const { return m_val; }
+	/// Returns the currently stored raw value.
+	Word value() const { return m_val; }
 
 	/// Helper to cast the strongly typed Word value `m_val` to other strong enum types.
 	/**
@@ -99,7 +99,6 @@ public: // functions
 			return static_cast<OTHER>(baseval);
 		}
 	}
-
 
 protected: // functions
 
@@ -126,9 +125,9 @@ protected: // data
 	Word m_val;
 };
 
+/// Base class for a system call return value.
 class ReturnValue :
-		public SystemCallValue
-{
+		public SystemCallValue {
 public:
 	explicit ReturnValue(const char *short_name, const char *long_name = nullptr) :
 		SystemCallValue{Type::RETVAL, short_name, long_name}
@@ -141,10 +140,10 @@ protected: // functions
 	void updateData(const Tracee &) override {}
 };
 
-/// A pass by value parameter for a system call.
+/// Base class for a pass by value parameter of a system call.
 /**
- * These are typically PARAM_IN types denoting IDs, enums, flags etc.  that
- * are pass to a system call or returned from a system call.
+ * These are typically PARAM_IN types denoting IDs, enums, flags etc. that are
+ * passed to a system call.
  * 
  * The processValue() and updateValue() functions are implemented as no-ops,
  * because no additional data needs to be fetched from the tracee for this
@@ -157,9 +156,9 @@ public: // functions
 	explicit ValueParameter(
 		const Type &type,
 		const char *short_name,
-		const char *long_name) :
-		SystemCallValue{type, short_name, long_name}
-	{}
+		const char *long_name = nullptr) :
+			SystemCallValue{type, short_name, long_name} {
+	}
 
 protected: // functions
 
@@ -168,36 +167,36 @@ protected: // functions
 	void updateData(const Tracee &) override {}
 };
 
-/// Specialization of ValueParameter for IN parameters.
+/// Specialization of ValueParameter for PARAM_IN parameters.
 class ValueInParameter :
-	public ValueParameter {
-public:
+		public ValueParameter {
+public: // functions
 
 	explicit ValueInParameter(
 		const char *short_name,
 		const char *long_name = nullptr) :
-		ValueParameter{Type::PARAM_IN, short_name, long_name}
-	{}
+		ValueParameter{Type::PARAM_IN, short_name, long_name} {
+	}
 };
 
-/// Specialization of ValueParameter for OUT parameters.
+/// Specialization of ValueParameter for PARAM_OUT parameters.
 class ValueOutParameter :
-	public ValueParameter {
+		public ValueParameter {
 public: // functions
 
 	explicit ValueOutParameter(
 		const char *short_name,
 		const char *long_name) :
-		ValueParameter{Type::PARAM_OUT, short_name, long_name}
-	{}
+			ValueParameter{Type::PARAM_OUT, short_name, long_name} {
+	}
 };
 
 /// A value that consists of a pointer to some data area.
 /**
- * Unlike the ValueParameter the PointerValue is only a pointer to some
- * userspace data structure. Thus the processValue() and updateData()
- * functions need to perform more complex operations on the tracee to gather
- * the data as appropriate.
+ * Unlike ValueParameter, PointerValue is a pointer to some userspace
+ * data structure. Thus the processValue() and updateData() functions need to
+ * perform more complex operations on the tracee to gather the data as
+ * appropriate.
  **/
 class PointerValue :
 		public SystemCallValue {
@@ -207,15 +206,15 @@ public: // functions
 		const Type &type,
 		const char *short_name,
 		const char *long_name) :
-		SystemCallValue{type, short_name, long_name}
-	{}
+			SystemCallValue{type, short_name, long_name} {
+	}
 };
 
 /// Specialization of a PointerValue for out-parameters.
 /**
- * This specialization is pre-configured to have implemented the
- * processValue() member function that serves no purpose for out parameters.
- * Also the value type is predetermined to OUT.
+ * This specialization has a no-op implementation of the processValue() member
+ * function that serves no purpose for out parameters. Also the value type is
+ * predetermined to PARAM_OUT.
  **/
 class PointerOutValue :
 		public PointerValue {
@@ -225,8 +224,8 @@ public: // functions
 		const char *short_name,
 		const char *long_name = nullptr,
 		const Type &type = Type::PARAM_OUT) :
-		PointerValue{type, short_name, long_name}
-	{}
+			PointerValue{type, short_name, long_name} {
+	}
 
 protected: // functions
 
@@ -236,9 +235,9 @@ protected: // functions
 
 /// Specialization of a PointerValue for in-parameters.
 /**
- * This specialization is pre-configured to have implemented the updateData()
- * member function that serves no purpose for in parameters. Also the value
- * type is predetermined to in.
+ * This specialization has a no-op implementation of the updateData() member
+ * function that serves no purpose for in parameters. Also the value type is
+ * predetermined to PARAM_IN..
  **/
 class PointerInValue :
 		public PointerValue {
@@ -247,8 +246,8 @@ public: // functions
 	explicit PointerInValue(
 		const char *short_name,
 		const char *long_name = nullptr) :
-		PointerValue{Type::PARAM_IN, short_name, long_name}
-	{}
+			PointerValue{Type::PARAM_IN, short_name, long_name} {
+	}
 
 protected: // functions
 
