@@ -77,6 +77,10 @@ public: // functions
 
 	virtual ~SystemCall();
 
+	// mark as non-copyable
+	SystemCall(const SystemCall &other) = delete;
+	SystemCall& operator=(const SystemCall &other) = delete;
+
 	/// Update the stored parameter values from the given tracee.
 	/**
 	 * The given tracee is about to start the system call in question.
