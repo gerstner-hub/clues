@@ -46,9 +46,7 @@ void SystemCall::setEntryRegs(const Tracee &proc, const RegisterSet &r) {
 }
 
 void SystemCall::setExitRegs(const Tracee &proc, const RegisterSet &r) {
-	if (m_return) {
-		m_return->fill(proc, r.syscallRes());
-	}
+	m_return->fill(proc, r.syscallRes());
 
 	for (auto &par: m_pars) {
 		if (par->needsUpdate()) {
@@ -103,8 +101,7 @@ std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc) {
 		o << "\n\t" << *par;
 	}
 
-	if (sc.m_return)
-		o << "\n\tResult -> " << *(sc.m_return);
+	o << "\n\tResult -> " << *(sc.m_return);
 
 	return o;
 }

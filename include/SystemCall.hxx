@@ -6,8 +6,6 @@
 #include <utility>
 #include <vector>
 
-// Linux
-
 // clues
 #include <clues/RegisterSet.hxx>
 #include <clues/types.hxx>
@@ -42,7 +40,7 @@ class CLUES_API SystemCall {
 	friend std::ostream& ::operator<<(std::ostream&, const SystemCall&);
 public: // types
 
-	/// vector of the required parameters for a system call
+	/// Vector of the parameters required for a system call.
 	using ParameterVector = std::vector<SystemCallValue*>;
 
 public: // functions
@@ -56,21 +54,23 @@ public: // functions
 	 * 	considered to be statically allocated literal string, that
 	 * 	will not be freed.
 	 * \param[in] ret
-	 * 	If applicable, a pointer to the return parameter definition
-	 * 	for this syscall. `nullptr` if there is no return value. The
-	 * 	pointer ownership will be moved to the new SystemCall
+	 * 	A pointer to the return parameter definition for this syscall.
+	 * 	The pointer ownership will be moved to the new SystemCall
 	 * 	instance, i.e. it will be deleted during destruction of
-	 * 	SystemCall.
+	 * 	SystemCall. For system calls where there is no return value
+	 * 	(exit), a synthetic parameter instance should be passed to
+	 * 	avoid having to deal with the possibility of no return value
+	 * 	existing.
 	 * \param[in] pars
 	 * 	A vector of the parameters in the order they need to be passed
-	 * 	to the system call. The ownership moves into the SystemCall
-	 * 	instance.
+	 * 	to the system call. The ownership is transferred to the
+	 * 	SystemCall instance.
 	 **/
 	SystemCall(
 		const SystemCallNr nr,
 		const char *name,
 		ParameterVector &&pars,
-		SystemCallValue *ret = nullptr,
+		SystemCallValue *ret,
 		const size_t open_id_par = SIZE_MAX,
 		const size_t close_fd_par = SIZE_MAX
 	);
@@ -114,7 +114,7 @@ protected: // data
 	/// The basic name of the system call we're representing.
 	const char *m_name = nullptr;
 	/// The return value type of the system call, if any.
-	SystemCallValue *m_return = nullptr;
+	SystemCallValue *m_return;
 	/// The array of system call parameters, if any.
 	ParameterVector m_pars;
 	/// if this is an open-like system call, then this gives the number of the parameter that contains the open identifier.
