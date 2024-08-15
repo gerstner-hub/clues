@@ -31,6 +31,8 @@ public: // functions
 protected: // functions
 
 	SystemCall* createSysCall(const SystemCallNr nr);
+
+	static const char* sysCallLabel(const SystemCallNr nr);
 };
 
 } // end ns

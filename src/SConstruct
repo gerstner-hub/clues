@@ -68,7 +68,9 @@ def buildSyscallHeader(target, source, env):
     output = subprocess.check_output(cmdline)
     output = output.decode('utf8')
 
-    syscalls = []
+    syscalls = {}
+    numbers = {}
+    max_number = 0
 
     for line in output.splitlines():
         line = line.strip()
@@ -81,22 +83,30 @@ def buildSyscallHeader(target, source, env):
         define, name, value = parts
         if define != "#define":
             continue
-        elif not name.startswith('SYS_'):
-            continue
-        elif not value.startswith('__NR_'):
-            continue
-
-        syscalls.append(name)
+        elif name.startswith('SYS_') and value.startswith('__NR_'):
+            syscalls[value] = name
+        elif name.startswith('__NR_') and value.isnumeric():
+            number = int(value)
+            numbers[number] = name
+            max_number = max(max_number, number)
 
     with open(str(target[0]), 'w') as out_fd:
         out_fd.write("#include <elf.h>\n")
         out_fd.write("#include <sys/syscall.h>\n\n// C++ class enum for system call numbers found in syscall.h\n")
         out_fd.write("namespace clues {\n")
         out_fd.write("enum class SystemCallNr : elf_greg_t {\n")
-        for syscall in syscalls:
+        for syscall in syscalls.values():
             _, base = syscall.split('_', 1)
             out_fd.write(f'\t{base.upper()} = {syscall},\n')
-        out_fd.write("};\n} // end ns\n")
+        out_fd.write("};\n\n")
+        out_fd.write(f"constexpr size_t SYSTEM_CALL_MAX = {max_number};\n\n")
+        out_fd.write("constexpr const char *SYSTEM_CALL_NAMES[] = {\n")
+        for nr in range(max_number):
+            number_str = numbers.get(nr, None)
+            label = syscalls.get(number_str, "").lstrip("SYS_");
+            out_fd.write(f'\t"{label}",\n')
+        out_fd.write("};")
+        out_fd.write("\n\n} // end ns\n")
 
     return 0
 
