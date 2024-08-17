@@ -190,7 +190,7 @@ std::string StringData::str() const {
 void StringData::fetch(const Tracee &proc) {
 	// the address of the string in the userspace address space
 	const auto addr = valueAs<long*>();
-	readTraceeString(proc, addr, m_str);
+	tracee::read_string(proc, addr, m_str);
 }
 
 void StringArrayData::processValue(const Tracee &proc) {
@@ -199,11 +199,11 @@ void StringArrayData::processValue(const Tracee &proc) {
 	m_strs.clear();
 
 	// first read in all start adresses of the c-strings for the string array
-	readTraceeVector(proc, array_start, string_addrs);
+	tracee::read_vector(proc, array_start, string_addrs);
 
 	for (const auto &addr: string_addrs) {
 		m_strs.push_back(std::string{});
-		readTraceeString(proc, addr, m_strs.back());
+		tracee::read_string(proc, addr, m_strs.back());
 	}
 }
 
@@ -364,7 +364,7 @@ void StatParameter::updateData(const Tracee &proc) {
 		m_stat = std::make_optional<struct stat>({});
 	}
 
-	if (!readTraceeStruct(proc, m_val, *m_stat)) {
+	if (!tracee::read_struct(proc, m_val, *m_stat)) {
 		m_stat.reset();
 	}
 }
@@ -434,7 +434,7 @@ void DirEntries::updateData(const Tracee &proc) {
 	 * first copy over all the necessary data from the tracee
 	 */
 	std::unique_ptr<char> buffer(new char[bytes]);
-	readTraceeBlob(proc, valueAs<long*>(), buffer.get(), bytes);
+	tracee::read_blob(proc, valueAs<long*>(), buffer.get(), bytes);
 
 	struct linux_dirent *cur = nullptr;
 	size_t pos = 0;
@@ -466,7 +466,7 @@ void TimespecParameter::fetch(const Tracee &proc) {
 		m_timespec = timespec{};
 	}
 
-	if (!readTraceeStruct(proc, m_val, *m_timespec)) {
+	if (!tracee::read_struct(proc, m_val, *m_timespec)) {
 		m_timespec.reset();
 	}
 }
@@ -535,7 +535,7 @@ void SigactionParameter::processValue(const Tracee &proc) {
 		m_sigaction = kernel_sigaction{};
 	}
 
-	if (!readTraceeStruct(proc, m_val, *m_sigaction)) {
+	if (!tracee::read_struct(proc, m_val, *m_sigaction)) {
 		m_sigaction.reset();
 	}
 }
@@ -545,7 +545,7 @@ void SigSetParameter::processValue(const Tracee &proc) {
 		m_sigset = sigset_t{};
 	}
 
-	if (!readTraceeStruct(proc, m_val, *m_sigset)) {
+	if (!tracee::read_struct(proc, m_val, *m_sigset)) {
 		m_sigset.reset();
 	}
 }
@@ -598,7 +598,7 @@ void ResourceLimit::updateData(const Tracee &proc) {
 		m_limit = rlimit{};
 	}
 
-	if (!readTraceeStruct(proc, m_val, *m_limit)) {
+	if (!tracee::read_struct(proc, m_val, *m_limit)) {
 		m_limit.reset();
 	}
 }

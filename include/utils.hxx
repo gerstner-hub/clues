@@ -11,24 +11,26 @@
 
 namespace clues {
 
-class Tracee;
-
 /// Returns a short errno label like `ENOENT` for the given errno integer.
 const char* get_errno_label(const cosmos::Errno err);
+
+class Tracee;
+
+namespace tracee {
 
 /// Reads a \0 terminated C-string from the tracee.
 /**
  * Read from the address space starting at \c addr of the tracee \c proc into
  * the C++ string object \c out.
  **/
-void readTraceeString(
+void read_string(
 	const Tracee &proc,
 	const long *addr,
 	std::string &out
 );
 
 /// Reads an arbitrary binary blob of fixed length from the tracee.
-void CLUES_API readTraceeBlob(
+void CLUES_API read_blob(
 	const Tracee &proc,
 	const long *addr,
 	char *buffer,
@@ -37,7 +39,7 @@ void CLUES_API readTraceeBlob(
 
 /// Wrapper to helper functions to implement typical exitedCall functions.
 template <typename T>
-bool readTraceeStruct(
+bool read_struct(
 		const Tracee &proc,
 		const Word pointer,
 		T &out) {
@@ -50,16 +52,17 @@ bool readTraceeStruct(
 
 	static_assert(std::is_pod_v<T> == true);
 
-	readTraceeBlob(proc, addr, reinterpret_cast<char*>(&out), sizeof(T));
+	read_blob(proc, addr, reinterpret_cast<char*>(&out), sizeof(T));
 	return true;
 }
 
 /// Reads in a zero terminated array of data items into the STL-vector like parameter \c out.
 template <typename VECTOR>
-void readTraceeVector(
+void read_vector(
 	const Tracee &proc,
 	const long *addr,
 	VECTOR &out
 );
 
+} // end ns
 } // end ns

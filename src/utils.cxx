@@ -1,8 +1,7 @@
 // Clues
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
-// generated
-#include <clues/errnodb.h>
+#include <clues/errnodb.h> // generated
 
 // C++
 #include <cstring>
@@ -17,82 +16,58 @@ const char* get_errno_label(const cosmos::Errno err) {
 	return ERRNO_NAMES[num];
 }
 
-void readTraceeString(
-		const Tracee &proc,
-		const long *addr,
-		std::string &out) {
-	return readTraceeVector(proc, addr, out);
-}
+namespace tracee {
 
-/// reads data from the tracee and feeds it to \c eater until it's saturated.
-template <typename EATER>
-void readTraceeData(
-		const Tracee &proc,
-		const long *addr,
-		EATER &eater) {
-	long word;
+namespace {
 
-	do {
-		word = proc.getData(addr);
+/// A filler that fills Tracee data into a container supporting push_back() until a terminating zero element is found.
+/**
+ * This only works for primitive data types that are small than `long` (the
+ * basic I/O size for reading data from a Tracee).
+ **/
+template <typename CONTAINER>
+class ContainerFiller {
+	using ptr_type = typename CONTAINER::pointer;
+public: // functions
 
-		// get the next word
-		addr++;
-	} while (eater(word));
-}
-
-
-/// An EATER that fills eaten data into a vector-like container until a terminating zero element is found.
-template <typename VECTOR>
-class VectorEater {
-	typedef typename VECTOR::value_type *ptr_type;
-public:
-
-	VectorEater(VECTOR &vector) :
-			m_vector{vector} {
+	explicit ContainerFiller(CONTAINER &container) :
+			m_container{container} {
 	}
 
 	bool operator()(long word) {
-		static_assert(sizeof(VALUE_SIZE) <= sizeof(long), "Unexpected VALUE_SIZE");
-		ptr_type unit = reinterpret_cast<ptr_type>(&word);
+		static_assert(std::is_pod_v<typename CONTAINER::value_type> == true);
+		static_assert(sizeof(ITEM_SIZE) <= sizeof(long), "Unexpected ITEM_SIZE (must be <= sizeof(long))");
+		ptr_type word_ptr = reinterpret_cast<ptr_type>(&word);
+		typename CONTAINER::value_type item;
 
-		for (size_t cur = 0; cur < sizeof(word) / VALUE_SIZE; cur++) {
-			const auto &piece = unit[cur];
-			if (piece == 0)
+		for (size_t numitem = 0; numitem < sizeof(word) / ITEM_SIZE; numitem++) {
+			std::memcpy(&item, word_ptr + numitem, sizeof(item));
+			if (item == 0)
 				// termination found
 				return false;
 
-			m_vector.push_back(piece);
+			m_container.push_back(item);
 		}
 
 		return true;
 	}
 
 protected:
-	VECTOR &m_vector;
-	static constexpr size_t VALUE_SIZE = sizeof(typename VECTOR::value_type);
+	CONTAINER &m_container;
+	static constexpr size_t ITEM_SIZE = sizeof(typename CONTAINER::value_type);
 };
 
-template <typename VECTOR>
-void readTraceeVector(
-		const Tracee &proc,
-		const long *addr,
-		VECTOR &out) {
-	out.clear();
-
-	VectorEater<VECTOR> eater(out);
-	readTraceeData(proc, addr, eater);
-}
-
-class BlobEater {
+/// Fills an opaque blog of data with Tracee data a given number of bytes has bee processed.
+class BlobFiller {
 public: // functions
 
-	BlobEater(const size_t bytes, char *buffer) :
-		m_left{bytes},
-		m_buffer{buffer} {
+	BlobFiller(const size_t bytes, char *buffer) :
+			m_left{bytes},
+			m_buffer{buffer} {
 	}
 
 	bool operator()(long word) {
-		const size_t to_copy = std::min( sizeof(word), m_left );
+		const size_t to_copy = std::min(sizeof(word), m_left);
 
 		std::memcpy(m_buffer, &word, to_copy);
 
@@ -108,15 +83,40 @@ protected: // data
 	char *m_buffer;
 };
 
-void readTraceeBlob(
-		const Tracee &proc,
-		const long *addr,
-		char *buffer,
-		const size_t bytes) {
-	BlobEater eater{bytes, buffer};
-	readTraceeData(proc, addr, eater);
+/// Reads data from the Tracee and feeds it to \c filler until it's saturated.
+template <typename FILLER>
+void fill_data(const Tracee &proc, const long *addr, FILLER &filler) {
+	long word;
+
+	do {
+		word = proc.getData(addr);
+
+		// get the next word
+		addr++;
+	} while (filler(word));
 }
 
-template void readTraceeVector<std::vector<long*>>(const Tracee&, const long*, std::vector<long*>&);
+} // end anon ns
 
+void read_string(const Tracee &proc, const long *addr, std::string &out) {
+	return read_vector(proc, addr, out);
+}
+
+template <typename VECTOR>
+void read_vector(const Tracee &proc, const long *addr, VECTOR &out) {
+	out.clear();
+
+	ContainerFiller<VECTOR> filler(out);
+	fill_data(proc, addr, filler);
+}
+
+void read_blob(const Tracee &proc, const long *addr, char *buffer, const size_t bytes) {
+	BlobFiller filler{bytes, buffer};
+	fill_data(proc, addr, filler);
+}
+
+// explicit template instantiations
+template void read_vector<std::vector<long*>>(const Tracee&, const long*, std::vector<long*>&);
+
+} // end ns
 } // end ns
