@@ -95,7 +95,11 @@ public: // functions
 			return OTHER{baseret};
 		}
 
-		if constexpr (!std::is_enum_v<OTHER>) {
+		if constexpr (std::is_pointer_v<OTHER>) {
+			return reinterpret_cast<OTHER>(baseval);
+		}
+
+		if constexpr (!std::is_enum_v<OTHER> && !std::is_pointer_v<OTHER>) {
 			return static_cast<OTHER>(baseval);
 		}
 	}

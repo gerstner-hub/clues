@@ -35,32 +35,23 @@ void CLUES_API readTraceeBlob(
 	const size_t bytes
 );
 
-/// Reads in a complete data structure STRUCT from the tracee.
-template <typename STRUCT>
-void readTraceeStruct(
-		const Tracee &proc,
-		const long *addr,
-		STRUCT &out) {
-	readTraceeBlob(proc, addr, reinterpret_cast<char*>(&out), sizeof(STRUCT));
-}
-
 /// Wrapper to helper functions to implement typical exitedCall functions.
 template <typename T>
-void readStruct(
+bool readTraceeStruct(
 		const Tracee &proc,
 		const Word pointer,
-		T *&copy) {
-	// the address of the struct in the userspace address space
+		T &out) {
+	// the address of the struct in the tracee's address space
 	const long *addr = reinterpret_cast<long*>(pointer);
 
 	if (!addr)
 		// null address specification
-		return;
+		return false;
 
-	if (!copy)
-		copy = new T;
+	static_assert(std::is_pod_v<T> == true);
 
-	readTraceeStruct(proc, addr, *copy);
+	readTraceeBlob(proc, addr, reinterpret_cast<char*>(&out), sizeof(T));
+	return true;
 }
 
 /// Reads in a zero terminated array of data items into the STL-vector like parameter \c out.

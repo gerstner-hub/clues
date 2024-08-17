@@ -1,7 +1,8 @@
 #pragma once
 
 // C++
-#include <list>
+#include <optional>
+#include <vector>
 
 // Linux
 #include <sys/stat.h>
@@ -10,7 +11,7 @@
 // clues
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallValue.hxx>
-#include <clues/KernelStructs.hxx>
+#include <clues/kernel_structs.hxx>
 
 /*
  * Various specializations of SystemCallValue are found in this header
@@ -28,12 +29,9 @@ public: // functions
 	 * 	If set then the file descriptor is considered to be part of an
 	 * 	*at() type system call i.e. the special file descriptor
 	 * 	AT_FDCWD can occur.
-	 * \param[in] error_semantics
-	 * 	If set then negative file descriptor values are interpreted as
-	 * 	errno's, other as unset/undefined/invalid file descriptors.
 	 **/
 	explicit FileDescriptor(
-		const Type &type,
+		const Type type,
 		const bool at_semantics = false) :
 			SystemCallValue{type, "fd", "file descriptor"},
 			m_at_semantics{at_semantics} {
@@ -48,15 +46,16 @@ protected: // functions
 	void updateData(const Tracee &) override {};
 
 protected: // data
-	bool m_at_semantics = false;
+
+	const bool m_at_semantics = false;
 };
 
 class FileDescriptorParameter :
 		public FileDescriptor {
 public: // functions
 	explicit FileDescriptorParameter(const bool at_semantics = false) :
-			FileDescriptor{Type::PARAM_IN, at_semantics}
-	{}
+			FileDescriptor{Type::PARAM_IN, at_semantics} {
+	}
 };
 
 /// A file descriptor return value with added errno semantics.
@@ -78,35 +77,34 @@ protected: // functions
  * denotes an errno, a positive return value denotes some kind of identifier
  * like a PID, for example.
  * 
- * `highest_errno` therefore denotes the largest integer value that is still
- * to be interpreted as an errno, while any larger value denotes some kind of
- * successful return data item.
+ * `first_valid` therefore denotes the smallest integer value that is still
+ * to be interpreted as a data item, while any smaller value denotes an error
+ * number.
+ * TODO: maybe we should model dual natured return values like: PIDReturnValue
+ * that outputs an errno in case of error, and alike, like is currently done
+ * in FileDescriptorReturnValue.
  **/
-// TODO: maybe we should model dual natured return values like: PIDReturnValue
-// that outputs an errno in case of error, and alike.
 class CLUES_API ErrnoResult :
 		public ReturnValue {
 public: // functions
 	ErrnoResult(
-		const int highest_errno = 0,
+		const int first_valid = 0,
 		const char *short_label = "errno",
 		const char *long_label = nullptr) :
 			ReturnValue{short_label, long_label},
-			m_highest{highest_errno} {
+			m_first_valid{first_valid} {
 	}
 
 	std::string str() const override;
 
 protected: // data
 
-	int m_highest;
+	const int m_first_valid;
 };
 
-
 /*
- * 	TODO: support to get the length of the data area from a
- * 	context-sensitive sibling parameter and then print out the
- * 	binary/ascii data as appropriate
+ * TODO: support to get the length of the data area from a context-sensitive
+ * sibling parameter and then print out the binary/ascii data as appropriate
  */
 class CLUES_API GenericPointerValue :
 		public PointerValue {
@@ -115,7 +113,7 @@ public: // functions
 	explicit GenericPointerValue(
 		const char *short_name,
 		const char *long_name = nullptr,
-		const Type &type = Type::PARAM_IN) :
+		const Type type = Type::PARAM_IN) :
 			PointerValue{type, short_name, long_name} {
 	}
 
@@ -127,23 +125,23 @@ protected: // data
 	void updateData(const Tracee &) override {}
 };
 
-/// c-string system call data.
+/// c-string style system call data.
 class CLUES_API StringData :
 		public SystemCallValue {
 public: // functions
 	explicit StringData(
-		const char *short_name = nullptr,
+		const char *short_name = "string",
 		const char *long_name = nullptr,
-		const Type &type = Type::PARAM_IN) :
-			SystemCallValue{type, short_name ? short_name : "string", long_name} {
+		const Type type = Type::PARAM_IN) :
+			SystemCallValue{type, short_name, long_name} {
 	}
 
-	std::string str() const override { return std::string{"\""} + m_str + "\""; }
+	std::string str() const override;
 
 protected: // functions
 
 	void processValue(const Tracee &proc) override {
-		if (! this->isOut()) {
+		if (!this->isOut()) {
 			fetch(proc);
 		}
 	}
@@ -160,7 +158,7 @@ protected: // data
 	std::string m_str;
 };
 
-/// An array of c-strings system call data.
+/// A nullptr-terminated array of pointers to c-strings.
 /**
  * This is currently only used for argv and envp of the execve system call.
  **/
@@ -169,12 +167,9 @@ class CLUES_API StringArrayData :
 public: // functions
 
 	explicit StringArrayData(
-		const char *short_name = nullptr,
+		const char *short_name = "string-array",
 		const char *long_name = nullptr) :
-			PointerInValue{
-				short_name ? short_name : "string-array",
-				long_name
-			} {
+			PointerInValue{short_name, long_name} {
 	}
 
 	std::string str() const override;
@@ -188,11 +183,11 @@ protected: // functions
 	std::vector<std::string> m_strs;
 };
 
-/// The flags passed to e.g. open().
+/// The flags passed to calls like open().
 class CLUES_API OpenFlagsValue :
 		public SystemCallValue {
 public:
-	explicit OpenFlagsValue(const Type &type = Type::PARAM_IN) :
+	explicit OpenFlagsValue(const Type type = Type::PARAM_IN) :
 			SystemCallValue{type, "flags", "open flags"} {
 	}
 
@@ -205,11 +200,12 @@ protected: // functions
 	void updateData(const Tracee &) override {}
 };
 
+/// The mode parameter in access().
 class AccessModeParameter :
 		public ValueInParameter {
 public:
 	explicit AccessModeParameter() :
-		ValueInParameter{"check", "access check"} {
+			ValueInParameter{"check", "access check"} {
 	}
 
 	std::string str() const override;
@@ -232,7 +228,7 @@ class FileModeParameter :
 public:
 
 	FileModeParameter() :
-		ValueInParameter{"mode", "file-mode"} {
+			ValueInParameter{"mode", "file-mode"} {
 	}
 
 	std::string str() const override;
@@ -243,10 +239,8 @@ class CLUES_API StatParameter :
 		public PointerOutValue {
 public: // functions
 	explicit StatParameter() :
-		PointerOutValue{"stat", "struct stat"} {
+			PointerOutValue{"stat", "struct stat"} {
 	}
-
-	~StatParameter() override;
 
 	std::string str() const override;
 
@@ -256,8 +250,7 @@ protected: // functions
 
 protected: // data
 
-	FileModeParameter m_mode;
-	struct ::stat *m_stat = nullptr;
+	std::optional<struct ::stat> m_stat;
 };
 
 /// Memory protection used e.g. in mprotect().
@@ -266,13 +259,13 @@ class MemoryProtectionParameter :
 public: // data
 
 	explicit MemoryProtectionParameter() :
-		ValueInParameter{"prot", "protection"} {
+			ValueInParameter{"prot", "protection"} {
 	}
 
 	std::string str() const override;
 };
 
-/// A list of directory entries.
+/// A range of directory entries from getdents().
 class CLUES_API DirEntries :
 		public PointerOutValue {
 public: // functions
@@ -289,7 +282,7 @@ protected: // functions
 
 protected: // data
 
-	std::list<std::string> m_entries;
+	std::vector<std::string> m_entries;
 };
 
 /// The operation to performed on a signal set.
@@ -297,7 +290,7 @@ class CLUES_API SigSetOperation :
 		public ValueInParameter {
 public:
 	explicit SigSetOperation() :
-		ValueInParameter{"sigsetop", "signal set operation"} {
+			ValueInParameter{"sigsetop", "signal set operation"} {
 	}
 
 	std::string str() const override;
@@ -310,11 +303,9 @@ public: // functions
 	explicit TimespecParameter(
 		const char *short_name,
 		const char *long_name = nullptr,
-		const Type &type = Type::PARAM_IN) :
+		const Type type = Type::PARAM_IN) :
 			SystemCallValue{type, short_name, long_name} {
 	}
-
-	~TimespecParameter() override;
 
 	std::string str() const override;
 
@@ -329,12 +320,11 @@ protected: // functions
 		fetch(proc);
 	}
 
-
 	void fetch(const Tracee &proc);
 
 protected: // data
 
-	struct timespec *m_timespec = nullptr;
+	std::optional<struct timespec> m_timespec;
 };
 
 /// The futex operation to be performed in the context of a futex system call.
@@ -342,7 +332,7 @@ class CLUES_API FutexOperation :
 		public ValueInParameter {
 public: // functions
 	explicit FutexOperation() :
-		ValueInParameter{"op", "futex operation"} {
+			ValueInParameter{"op", "futex operation"} {
 	}
 
 	std::string str() const override;
@@ -369,8 +359,6 @@ public: // functions
 			PointerInValue{short_name, long_name} {
 	}
 
-	~SigactionParameter() override;
-
 	std::string str() const override;
 
 protected: // functions
@@ -379,7 +367,7 @@ protected: // functions
 
 protected: // data
 
-	struct kernel_sigaction *m_sigaction = nullptr;
+	std::optional<struct kernel_sigaction> m_sigaction;
 };
 
 /// A set of POSIX signals for setting or masking in the context of various system calls.
@@ -391,8 +379,6 @@ public: // functions
 			PointerInValue{short_name, name} {
 	}
 
-	~SigSetParameter() override;
-
 	std::string str() const override;
 
 protected: // functions
@@ -401,7 +387,7 @@ protected: // functions
 
 protected: // data
 
-	sigset_t *m_sigset = nullptr;
+	std::optional<sigset_t> m_sigset;
 };
 
 /// A resource kind specification as used in getrlimit & friends.
@@ -422,8 +408,6 @@ public: // functions
 			PointerOutValue{"limit"} {
 	}
 
-	~ResourceLimit() override;
-
 	std::string str() const override;
 
 protected: // functions
@@ -432,7 +416,7 @@ protected: // functions
 
 protected: // data
 
-	struct rlimit *m_limit;
+	std::optional<struct rlimit> m_limit;
 };
 
 } // end ns
