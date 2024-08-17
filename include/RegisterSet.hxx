@@ -70,7 +70,7 @@ public: // functions
 	/**
 	 * The current architecture can pass up to SYSCALL_MAX_PARS registers
 	 * to system calls. To get the n'th system call parameter register
-	 * content, pass (n - 1) as \c number (i.e. counting starts at zero).
+	 * content, pass (n - 1) as `number` (i.e. counting starts at zero).
 	 **/
 	Word syscallParameter(const size_t number) const {
 		if (number >= SYSCALL_MAX_PARS) {

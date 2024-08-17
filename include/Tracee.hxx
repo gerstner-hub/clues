@@ -57,7 +57,7 @@ public: // functions
 
 	/// Reads a word of data from the tracee's memory.
 	/**
-	 * The word found at \c addr is returned from this function on
+	 * The word found at `addr` is returned from this function on
 	 * success. On error an exception is thrown.
 	 **/
 	long getData(const long *addr) const;

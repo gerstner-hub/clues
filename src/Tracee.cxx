@@ -157,7 +157,7 @@ long Tracee::getData(const long *addr) const {
 	return ptrace::get_data(m_tracee, addr);
 }
 
-/// Reads data from the Tracee and feeds it to \c filler until it's saturated.
+/// Reads data from the Tracee and feeds it to `filler` until it's saturated.
 template <typename FILLER>
 void Tracee::fillData(const long *addr, FILLER &filler) const {
 	long word;
