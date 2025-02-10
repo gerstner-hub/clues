@@ -1,0 +1,13 @@
+Import('env')
+
+if not env['build_docs']:
+    Return()
+
+doc_env = env.Clone()
+
+states_cmd = doc_env.Command(
+    '#doc/states.pdf',
+    'states.gv',
+    action='dot -Tpdf $SOURCE -o $TARGET')
+env.Alias('states_graph', states_cmd)
+
