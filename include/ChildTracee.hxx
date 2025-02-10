@@ -23,10 +23,10 @@ public: // functions
 	/// The exit code of the sub-process, valid only after detach().
 	cosmos::ExitStatus exitCode() const { return m_exit_code; }
 
-	void wait(cosmos::WaitRes &res) override;
+	void wait(cosmos::ChildData &data) override;
 
-	void exited(const cosmos::WaitRes &res) override {
-		m_exit_code = res.exitStatus();
+	void exited(const cosmos::ChildData &data) override {
+		m_exit_code = *data.status;
 	}
 
 protected: // data

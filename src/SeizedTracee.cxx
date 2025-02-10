@@ -17,9 +17,9 @@ void SeizedTracee::configure(const cosmos::ProcessID tracee) {
 	setTracee(tracee);
 }
 
-void SeizedTracee::wait(cosmos::WaitRes &res) {
-	res = *cosmos::proc::wait(
-			m_tracee,
+void SeizedTracee::wait(cosmos::ChildData &data) {
+	data = *cosmos::proc::wait(
+			m_ptrace.pid(),
 			cosmos::WaitFlags{
 				cosmos::WaitFlag::WAIT_FOR_EXITED,
 				cosmos::WaitFlag::WAIT_FOR_STOPPED
@@ -27,26 +27,25 @@ void SeizedTracee::wait(cosmos::WaitRes &res) {
 }
 
 void SeizedTracee::attach() {
-	seize();
+	seize(cosmos::ptrace::Opts{cosmos::ptrace::Opt::TRACESYSGOOD});
 	interrupt();
-	cosmos::WaitRes wr;
+	cosmos::ChildData child;
 
 	do {
-		wait(wr);
+		wait(child);
 
-		if (wr.exited())
+		if (child.exited())
 			return;
-	} while (!(wr.stopped() && wr.stopSignal() != cosmos::signal::TRAP) && !wr.trapped());
+	} while (!(child.stopped() && child.signal != cosmos::signal::TRAP) && !child.trapped());
 
-	setOptions(cosmos::TraceFlags{cosmos::TraceFlag::TRACESYSGOOD});
 	m_state = TraceState::ATTACHED;
-	cont(cosmos::ContinueMode::SYSCALL);
+	restart(cosmos::Tracee::RestartMode::SYSCALL);
 }
 
 void SeizedTracee::detach() {
-	if (m_tracee != cosmos::ProcessID::INVALID && m_state != TraceState::EXITED) {
-		ptrace::detach(m_tracee);
-		m_tracee = cosmos::ProcessID::INVALID;
+	if (m_ptrace.valid() && m_state != TraceState::EXITED) {
+		m_ptrace.detach();
+		m_ptrace = cosmos::Tracee{};
 	}
 }
 
@@ -56,7 +55,7 @@ SeizedTracee::~SeizedTracee() {
 	} catch (const cosmos::CosmosError &ce) {
 		if (logger) {
 			logger->debug()
-				<< "Couldn't detach from PID " << cosmos::to_integral(m_tracee) << ":\n\n"
+				<< "Couldn't detach from PID " << cosmos::to_integral(m_ptrace.pid()) << ":\n\n"
 				<< ce.what() << "\n";
 		}
 	}

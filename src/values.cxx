@@ -28,7 +28,7 @@
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/fs/types.hxx>
 #include <cosmos/proc/mman.hxx>
-#include <cosmos/proc/Signal.hxx>
+#include <cosmos/proc/signal.hxx>
 
 namespace {
 

@@ -6,7 +6,6 @@
 #include <cosmos/error/errno.hxx>
 #include <cosmos/io/ILogger.hxx>
 #include <cosmos/io/iovector.hxx>
-#include <cosmos/proc/WaitRes.hxx>
 
 // clues
 #include <clues/clues.hxx>
@@ -87,7 +86,7 @@ Tracee::Tracee(EventConsumer &consumer) :
 }
 
 void Tracee::setTracee(const cosmos::ProcessID tracee) {
-	m_tracee = tracee;
+	m_ptrace = cosmos::Tracee{tracee};
 }
 
 void Tracee::handleSystemCall() {
@@ -106,41 +105,51 @@ void Tracee::handleSystemCall() {
 	}
 }
 
-void Tracee::handleSignal(const cosmos::WaitRes &wr) {
-	const auto signal = wr.stopSignal();
+void Tracee::handleSignal(const cosmos::ChildData &data) {
+	const auto signal = data.signal;
 
-	if (signal == cosmos::Signal{cosmos::signal::TRAP})
+	if (signal == cosmos::signal::TRAP)
 		// our own tracing point
 		return;
 
 	if (logger) {
-		logger->info() << "Got signal: " << signal << std::endl;
+		logger->info() << "Got signal: " << *signal << std::endl;
 	}
 }
 
 void Tracee::trace() {
-	cosmos::WaitRes wr;
+	cosmos::ChildData data;
 	interrupt();
 
 	while (true) {
-		wait(wr);
+		wait(data);
 
-		if (wr.trapped()) {
-			if (wr.isSyscallTrap()) {
+		if (data.trapped()) {
+			if (data.signal == cosmos::signal::SYS_TRAP) {
 				handleSystemCall();
 			} else {
-				handleSignal(wr);
+				// TODO: for ptrace-event-stops the high byte
+				// of the status word contains the
+				// PTRACE_EVENT_<TYPE> constant, this still
+				// needs to be modelled somehow.
+				if (logger) {
+					logger->debug() << "Other trap event" << std::endl;
+				}
 			}
 
-			cont(cosmos::ContinueMode::SYSCALL, wr.stopSignal());
-		} else if (wr.exited()) {
-			this->exited(wr);
+			restart(cosmos::Tracee::RestartMode::SYSCALL);
+		} else if (data.signaled()) {
+			handleSignal(data);
+			restart(cosmos::Tracee::RestartMode::SYSCALL, *data.signal);
+		} else if (data.exited() || data.killed()) {
+			this->exited(data);
 			m_state = TraceState::EXITED;
 			break;
 		} else {
 			if (logger) {
 				logger->debug() << "Other Tracee event" << std::endl;
 			}
+			restart(cosmos::Tracee::RestartMode::SYSCALL);
 		}
 	}
 }
@@ -149,12 +158,12 @@ void Tracee::getRegisters(RegisterSet &rs) {
 	cosmos::InputMemoryRegion iovec;
 	rs.fillIov(iovec);
 
-	ptrace::get_register_set(m_tracee, rs.registerType(), iovec);
+	m_ptrace.getRegisterSet(rs.registerType(), iovec);
 	rs.iovFilled(iovec);
 }
 
 long Tracee::getData(const long *addr) const {
-	return ptrace::get_data(m_tracee, addr);
+	return m_ptrace.peekData(addr);
 }
 
 /// Reads data from the Tracee and feeds it to `filler` until it's saturated.

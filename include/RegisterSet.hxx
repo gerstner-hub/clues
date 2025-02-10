@@ -58,7 +58,9 @@ public: // functions
 	}
 
 	/// The type to pass to TraceRequest::GETREGSET for obtaining the general purpose registers.
-	static constexpr cosmos::RegisterType registerType() { return cosmos::RegisterType::GENERAL_PURPOSE; }
+	static constexpr cosmos::ptrace::RegisterType registerType() {
+		return cosmos::ptrace::RegisterType::GENERAL_PURPOSE;
+	}
 
 	/// Returns the active system call number on entry to a syscall.
 	SystemCallNr syscall() const { return SystemCallNr{m_regs[SYSCALL_NR_REG]}; }

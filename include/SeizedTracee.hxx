@@ -21,7 +21,7 @@ public: // functions
 	void attach() override;
 	void detach() override;
 
-	void wait(cosmos::WaitRes &res) override;
+	void wait(cosmos::ChildData &res) override;
 };
 
 } // end ns

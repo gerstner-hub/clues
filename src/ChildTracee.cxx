@@ -35,8 +35,8 @@ ChildTracee::~ChildTracee() {
 	}
 }
 
-void ChildTracee::wait(cosmos::WaitRes &res) {
-	res = m_child.wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
+void ChildTracee::wait(cosmos::ChildData &data) {
+	data = m_child.wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
 }
 
 void ChildTracee::attach() {
@@ -64,29 +64,29 @@ void ChildTracee::attach() {
 
 	setTracee(m_child.pid());
 
-	seize();
+	seize(cosmos::ptrace::Opts{cosmos::ptrace::Opt::TRACESYSGOOD});
 
-	cosmos::WaitRes r;
+	cosmos::ChildData child;
 
 	do {
-		wait(r);
+		wait(child);
 
-		if (r.exited())
+		if (child.exited())
 			return;
-	} while (!r.trapped());
+	} while (!child.trapped());
 
-	setOptions(cosmos::TraceFlags{cosmos::TraceFlag::TRACESYSGOOD});
-
-	if (r.trapped()) {
+	if (child.trapped()) {
 		m_state = TraceState::ATTACHED;
-		cont(cosmos::ContinueMode::SYSCALL);
+		restart(cosmos::Tracee::RestartMode::SYSCALL);
 	}
 }
 
 void ChildTracee::detach() {
 	if (m_child.running()) {
-		cosmos::WaitRes wr = m_child.wait();
-		m_exit_code = wr.exitStatus();
+		cosmos::ChildData data = m_child.wait();
+		if (data.status) {
+			m_exit_code = *data.status;
+		}
 	}
 }
 
