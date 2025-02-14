@@ -7,6 +7,7 @@ digraph G {
 	init -> unknown [style="solid", label="PTRACE_SEIZE,\n PTRACE_INTERRUPT"]
 
 	signal_delivery_stop [label=<signal-delivery-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp; !event-stop &amp;&amp;<br/>!group-stop &amp;&amp; !syscall-{entry,exit}-stop</font>>]
+	signal_delivery_stop -> group_stop [label=<<font point-size="8">SIGSTOP|SIGTSTP|SIGTTIN|SIGTTOU<br/>received and injected</font>>]
 
 	group_stop [label=<group-stop<br/><br/><font point-size="8">(status&gt;&gt;16) == PTRACE_STOP</font>>]
 	group_stop -> group_stop [label="PTRACE_LISTEN\n (required for properly stopping)" fontsize=8]
@@ -18,8 +19,7 @@ digraph G {
 	syscall_exit_stop [label=<syscall-exit-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp;<br/>WSTOPSIG() == (SIGTRAP &amp; 0x80)</font>>]
 
 	{syscall_entry_stop, syscall_exit_stop, signal_delivery_stop, event_stop} -> running [label="PTRACE_CONT,\n PTRACE_SYSCALL" fontsize=8]
-	running -> group_stop [label="SIGSTOP received" fontsize=8]
-	running -> signal_delivery_stop [label="signal other than SIGSTOP" fontsize=8]
+	running -> signal_delivery_stop [label="signal received" fontsize=8]
 	running -> event_stop [label="clone(), [v]fork(), exec(), exit(), seccomp" fontsize=8]
 	running -> syscall_entry_stop [label="system call invoked" fontsize=8]
 	running -> syscall_exit_stop [label="system call finished" fontsize=8]
