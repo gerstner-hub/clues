@@ -44,7 +44,7 @@ public: // functions
 	virtual ~Tracee() {}
 
 	/// Logic to handle attaching to the tracee.
-	virtual void attach() = 0;
+	virtual void attach();
 
 	/// Logic to handle detaching from the tracee.
 	virtual void detach() = 0;

@@ -18,7 +18,7 @@
 // clues
 #include <clues/ChildTracee.hxx>
 #include <clues/clues.hxx>
-#include <clues/SeizedTracee.hxx>
+#include <clues/ForeignTracee.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallValue.hxx>
 
@@ -164,7 +164,7 @@ void TermTracer::syscallExit(const SystemCall &sc) {
 }
 
 void TermTracer::runTrace(const cosmos::ProcessID pid) {
-	SeizedTracee proc{*this};
+	ForeignTracee proc{*this};
 	proc.configure(pid);
 	proc.attach();
 	proc.trace();
@@ -173,7 +173,7 @@ void TermTracer::runTrace(const cosmos::ProcessID pid) {
 
 cosmos::ExitStatus TermTracer::runTrace(const cosmos::StringVector &cmdline) {
 	ChildTracee proc{*this};
-	proc.configure(cmdline);
+	proc.create(cmdline);
 	proc.attach();
 	proc.trace();
 	proc.detach();

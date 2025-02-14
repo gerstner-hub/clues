@@ -12,8 +12,18 @@ ChildTracee::ChildTracee(EventConsumer &consumer) :
 		Tracee{consumer} {
 }
 
-void ChildTracee::configure(const cosmos::StringVector &prog_args) {
-	m_args = prog_args;
+void ChildTracee::create(const cosmos::StringVector &args) {
+	m_exit_code = std::nullopt;
+
+	cosmos::ChildCloner cloner;
+	cloner.setArgs(args);
+	cloner.setPostForkCB([](const cosmos::ChildCloner &){
+               // this allows our parent to trace us before execve() happens
+               cosmos::signal::raise(cosmos::signal::STOP);
+	});
+	m_child = cloner.run();
+
+	setTracee(m_child.pid());
 }
 
 ChildTracee::~ChildTracee() {
@@ -37,48 +47,6 @@ ChildTracee::~ChildTracee() {
 
 void ChildTracee::wait(cosmos::ChildData &data) {
 	data = m_child.wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
-}
-
-void ChildTracee::attach() {
-	m_exit_code = cosmos::ExitStatus::SUCCESS;
-
-	cosmos::ChildCloner cloner;
-	cloner.setArgs(m_args);
-	cloner.setPostForkCB([](const cosmos::ChildCloner &){
-#if 0
-               // actually if we make our parent a tracer this way then we
-               // can't deal with it the "new" way that is possible with SEIZED
-               // processes. So we only raise a SIGSTOP instead to have the
-               // parent catch us before doing anything else and otherwise
-               // the parent can SEIZE us.
-               if( ::ptrace( PTRACE_TRACEME, INVALID_PID, 0, 0 ) != 0 )
-               {
-                       cosmos_throw( ApiError() );
-               }
-#endif
-
-               // this allows our parent to wait for us, such that is knows we're a tracee now
-               cosmos::signal::raise(cosmos::signal::STOP);
-	});
-	m_child = cloner.run();
-
-	setTracee(m_child.pid());
-
-	seize(cosmos::ptrace::Opts{cosmos::ptrace::Opt::TRACESYSGOOD});
-
-	cosmos::ChildData child;
-
-	do {
-		wait(child);
-
-		if (child.exited())
-			return;
-	} while (!child.trapped());
-
-	if (child.trapped()) {
-		m_state = TraceState::ATTACHED;
-		restart(cosmos::Tracee::RestartMode::SYSCALL);
-	}
 }
 
 void ChildTracee::detach() {

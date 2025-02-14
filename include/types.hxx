@@ -20,16 +20,18 @@ namespace clues {
 using DescriptorPathMapping = std::map<int, std::string>;
 
 /// Current tracing state for a single tracee.
+/**
+ * These states are modelled after the states described in man(2) ptrace.
+ **/
 enum class TraceState {
-	UNKNOWN,
-	/// We're knowingly initially attached to the tracee.
-	ATTACHED,
-	/// The tracee is currently about to enter a system call.
-	SYSCALL_ENTER,
-	/// The tracee just left a system call.
-	SYSCALL_EXIT,
-	/// Tracee is gone.
-	EXITED
+	UNKNOWN, ///< initial PTRACE_SIZE / PTRACE_INTERRUPT.
+	RUNNING, ///< tracee is running normally / not in a special trace state.
+	SYSCALL_ENTER_STOP, ///< system call started.
+	SYSCALL_EXIT_STOP, ///< system call finished.
+	SIGNAL_DELIVERY_STOP, ///< signal was delivered.
+	GROUP_STOP, ///< SIGSTOP executed, the tracee is stopped.
+	EVENT_STOP, ///< special ptrace event occurred.
+	DEAD ///< the tracee no longer exists.
 };
 
 /// An integer that is able to hold a word for the current architecture.

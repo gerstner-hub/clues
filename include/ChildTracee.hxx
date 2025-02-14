@@ -15,13 +15,16 @@ public: // functions
 
 	~ChildTracee() override;
 
-	/// Set the child process executable and parameters to trace.
-	void configure(const cosmos::StringVector &prog_args);
-	void attach() override;
+	/// Create the child process with the given parameters.
+	/**
+	 * This only forks the process, but does not start executing the new
+	 * program until attach() is called.
+	 **/
+	void create(const cosmos::StringVector &args);
 	void detach() override;
 
 	/// The exit code of the sub-process, valid only after detach().
-	cosmos::ExitStatus exitCode() const { return m_exit_code; }
+	cosmos::ExitStatus exitCode() const { return *m_exit_code; }
 
 	void wait(cosmos::ChildData &data) override;
 
@@ -31,10 +34,9 @@ public: // functions
 
 protected: // data
 
-	cosmos::StringVector m_args;
 	/// sub-process we're tracing
 	cosmos::SubProc m_child;
-	cosmos::ExitStatus m_exit_code = cosmos::ExitStatus::SUCCESS;
+	std::optional<cosmos::ExitStatus> m_exit_code;
 };
 
 } // end ns
