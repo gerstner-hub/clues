@@ -13,6 +13,7 @@
 #include <cosmos/io/StdLogger.hxx>
 #include <cosmos/main.hxx>
 #include <cosmos/proc/process.hxx>
+#include <cosmos/proc/signal.hxx>
 #include <cosmos/string.hxx>
 
 // clues
@@ -188,6 +189,8 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	configureLogger();
 
 	processPars();
+
+	cosmos::signal::block(cosmos::SigSet{cosmos::signal::CHILD});
 
 	if (m_attach_proc.isSet()) {
 		runTrace(cosmos::ProcessID{m_attach_proc.getValue()});
