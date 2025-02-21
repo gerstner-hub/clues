@@ -11,6 +11,7 @@
 #include <clues/clues.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/Tracee.hxx>
+#include <clues/utils.hxx>
 
 namespace {
 
@@ -94,15 +95,29 @@ void Tracee::attach() {
 	interrupt();
 }
 
+void Tracee::changeState(const TraceState new_state) {
+	if (logger) {
+		logger->debug() << "state " << m_state << " → " << new_state << "\n";
+	}
+
+	if (new_state == TraceState::SYSCALL_ENTER_STOP) {
+		m_syscall_entered = true;
+	} else if (new_state == TraceState::SYSCALL_EXIT_STOP) {
+		m_syscall_entered = false;
+	}
+
+	m_state = new_state;
+}
+
 void Tracee::handleSystemCall() {
-	if (m_state != TraceState::SYSCALL_ENTER_STOP) {
-		m_state = TraceState::SYSCALL_ENTER_STOP;
+	if (!m_syscall_entered) {
+		changeState(TraceState::SYSCALL_ENTER_STOP);
 		updateRegisters();
 		m_current_syscall = &m_syscall_db.get(m_reg_set.syscall());
 		m_current_syscall->setEntryRegs(*this, m_reg_set);
 		m_consumer.syscallEntry(*m_current_syscall);
 	} else {
-		m_state = TraceState::SYSCALL_EXIT_STOP;
+		changeState(TraceState::SYSCALL_EXIT_STOP);
 		updateRegisters();
 		m_current_syscall->setExitRegs(*this, m_reg_set);
 		m_current_syscall->updateOpenFiles(m_fd_path_map);
@@ -112,12 +127,6 @@ void Tracee::handleSystemCall() {
 
 void Tracee::handleSignal(const cosmos::ChildData &data) {
 	const auto signal = data.signal;
-
-#if 0
-	if (signal == cosmos::signal::TRAP)
-		// our own tracing point
-		return;
-#endif
 
 	if (logger) {
 		logger->info() << "Got signal: " << *signal << std::endl;
@@ -142,41 +151,45 @@ static std::string_view ptrace_event_str(const cosmos::ptrace::Event event) {
 
 void Tracee::trace() {
 	cosmos::ChildData data;
+	std::optional<cosmos::Signal> inject_sig;
 
 	while (true) {
 		wait(data);
 
 		if (data.exited() || data.killed()) {
+			changeState(TraceState::DEAD);
 			this->exited(data);
-			m_state = TraceState::DEAD;
 			break;
 		} else if (data.trapped()) {
 			if (data.signal == cosmos::signal::SYS_TRAP) {
 				handleSystemCall();
 			} else {
 				if (*data.signal > cosmos::signal::MAXIMUM) {
+					changeState(TraceState::EVENT_STOP);
 					auto event = cosmos::ptrace::Event{cosmos::to_integral(data.signal->raw()) >> 8};
 					if (logger) {
-						logger->debug() << "PTRACE_EVENT_" << ptrace_event_str(event) << std::endl;
+						logger->info() << "PTRACE_EVENT_" << ptrace_event_str(event) << std::endl;
 
 					}
 				} else {
 					if (logger) {
-						logger->debug() << "Other trap event ???" << std::endl;
+						logger->warn() << "Other trap event ???" << std::endl;
 					}
 				}
 			}
-
-			restart(cosmos::Tracee::RestartMode::SYSCALL);
 		} else if (data.signaled()) {
+			changeState(TraceState::SIGNAL_DELIVERY_STOP);
 			handleSignal(data);
-			restart(cosmos::Tracee::RestartMode::SYSCALL, *data.signal);
+			inject_sig = *data.signal;
 		} else {
 			if (logger) {
-				logger->debug() << "Other Tracee event" << std::endl;
+				logger->info() << "Other Tracee event" << std::endl;
 			}
-			restart(cosmos::Tracee::RestartMode::SYSCALL);
 		}
+
+		restart(cosmos::Tracee::RestartMode::SYSCALL, inject_sig);
+		changeState(TraceState::RUNNING);
+		inject_sig = {};
 	}
 }
 

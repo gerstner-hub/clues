@@ -100,6 +100,8 @@ protected: // functions
 
 	explicit Tracee(EventConsumer &consumer);
 
+	void changeState(const TraceState new_state);
+
 	/// Waits for the next trace event of this tracee.
 	virtual void wait(cosmos::ChildData &data) = 0;
 
@@ -154,6 +156,8 @@ protected: // data
 	EventConsumer &m_consumer;
 	/// The current state the tracee is in.
 	TraceState m_state = TraceState::UNKNOWN;
+	/// Whether we've seen SYSCALL_ENTER_STOP but not SYSCALL_EXIT_STOP yet.
+	bool m_syscall_entered = false;
 	/// PID of the tracee we're dealing with.
 	cosmos::Tracee m_ptrace;
 	/// Here we store our current knowledge about open file descriptions.
