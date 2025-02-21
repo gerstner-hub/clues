@@ -1,14 +1,11 @@
 #pragma once
 
+// Linux
+#include <sys/procfs.h> // the elf_greg_t & friends are in here
+
 // C++
 #include <map>
 #include <string>
-
-// Linux
-#include <elf.h>
-
-// cosmos
-#include <cosmos/types.hxx>
 
 namespace clues {
 
