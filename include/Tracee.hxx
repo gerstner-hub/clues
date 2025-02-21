@@ -150,19 +150,19 @@ protected: // functions
 
 protected: // data
 
-	/// Callback interface receiving our information
+	/// Callback interface receiving our information.
 	EventConsumer &m_consumer;
-	/// The current state the tracee is in
+	/// The current state the tracee is in.
 	TraceState m_state = TraceState::UNKNOWN;
-	/// PID of the tracee we're dealing with
+	/// PID of the tracee we're dealing with.
 	cosmos::Tracee m_ptrace;
-	/// Here we store our current knowledge about open file descriptions
+	/// Here we store our current knowledge about open file descriptions.
 	DescriptorPathMapping m_fd_path_map;
-	/// Reusable database object for tracing system calls
+	/// Reusable database object for tracing system calls.
 	SystemCallDB m_syscall_db;
-	/// Reusable register set object for tracing system calls
+	/// Reusable register set object for tracing system calls.
 	RegisterSet m_reg_set;
-	/// Holds state for the currently executing system call
+	/// Holds state for the currently executing system call.
 	SystemCall *m_current_syscall = nullptr;
 };
 
