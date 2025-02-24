@@ -279,6 +279,14 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			},
 			new ErrnoResult{-1, "nwokenup", "processes woken up"}
 		);
+	case SystemCallNr::TGKILL:
+		return NewCall({
+				new ValueInParameter("tgid"),
+				new ValueInParameter("tid"),
+				new SignalNumber{},
+			},
+			new ErrnoResult{}
+		);
 	default:
 		return NewCall({
 			},
