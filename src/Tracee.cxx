@@ -134,6 +134,18 @@ void Tracee::changeState(const State new_state) {
 		m_flags.set(Flag::SYSCALL_ENTERED);
 	} else if (new_state == State::SYSCALL_EXIT_STOP) {
 		m_flags.reset(Flag::SYSCALL_ENTERED);
+	} else if (new_state == State::GROUP_STOP) {
+		if (m_flags[Flag::INJECTED_SIGSTOP]) {
+			// our own injected group stop
+			// let the tracee continue and we're tracing syscalls now
+			m_flags.reset(Flag::INJECTED_SIGSTOP);
+			m_inject_sig = cosmos::signal::CONT;
+			m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
+		} else {
+			// enter listen state to avoid restarting a stopped
+			// process as a side-effect.
+			m_restart_mode = cosmos::Tracee::RestartMode::LISTEN;
+		}
 	}
 
 	m_state = new_state;
@@ -175,10 +187,10 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event) {
 	if (event == Event::STOP) {
 		if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
 			// this is the initial ptrace-stop. now we can start tracing
-			m_flags.reset(Flag::WAIT_FOR_ATTACH_STOP);
 			if (logger) {
 				logger->info() << "initial ptrace-stop" << std::endl;
 			}
+			handleAttached();
 		} else {
 			// must be a group stop, unless we're tracing
 			// automatically-attached children, which is not yet
@@ -188,12 +200,19 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event) {
 	}
 }
 
+void Tracee::handleAttached() {
+	m_flags.reset(Flag::WAIT_FOR_ATTACH_STOP);
+
+	if (!m_flags[Flag::INJECTED_SIGSTOP]) {
+		m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
+	}
+}
+
 void Tracee::trace() {
 	cosmos::ChildData data;
-	std::optional<cosmos::Signal> inject_sig;
 
 	while (true) {
-		inject_sig = {};
+		m_inject_sig = {};
 		wait(data);
 
 		if (data.exited() || data.killed()) {
@@ -211,36 +230,22 @@ void Tracee::trace() {
 				} else {
 					changeState(State::SIGNAL_DELIVERY_STOP);
 					handleSignal(data);
-					inject_sig = *data.signal;
+					m_inject_sig = *data.signal;
 				}
 			}
 		} else if (data.signaled()) {
 			changeState(State::SIGNAL_DELIVERY_STOP);
 			handleSignal(data);
-			inject_sig = *data.signal;
+			m_inject_sig = *data.signal;
 		} else {
 			if (logger) {
 				logger->warn() << "Other Tracee event?" << std::endl;
 			}
 		}
 
-		if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
-			// until we've seen the initial ptrace stop for the
-			// ptrace interrupt, don't trace syscalls and don't
-			// change state.
-			restart(cosmos::Tracee::RestartMode::CONT, inject_sig);
-		} else if (m_state == State::GROUP_STOP) {
-			if (m_flags[Flag::INJECTED_SIGSTOP]) {
-				m_flags.reset(Flag::INJECTED_SIGSTOP);
-				inject_sig = cosmos::signal::CONT;
-				restart(cosmos::Tracee::RestartMode::SYSCALL, inject_sig);
-			} else {
-				// enter listen state to avoid restarting a stopped
-				// process as a side-effect.
-				restart(cosmos::Tracee::RestartMode::LISTEN);
-			}
-		} else {
-			restart(cosmos::Tracee::RestartMode::SYSCALL, inject_sig);
+		restart(m_restart_mode, m_inject_sig);
+
+		if (m_restart_mode != cosmos::Tracee::RestartMode::LISTEN) {
 			changeState(State::RUNNING);
 		}
 	}

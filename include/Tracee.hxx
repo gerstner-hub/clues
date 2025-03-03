@@ -183,6 +183,8 @@ protected: // functions
 
 	void handleEvent(const cosmos::ptrace::Event event);
 
+	void handleAttached();
+
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
 	template <typename FILLER>
 	void fillData(const long *addr, FILLER &filler) const;
@@ -205,6 +207,10 @@ protected: // data
 	RegisterSet m_reg_set;
 	/// Holds state for the currently executing system call.
 	SystemCall *m_current_syscall = nullptr;
+	/// current RestartMode to use.
+	cosmos::Tracee::RestartMode m_restart_mode = cosmos::Tracee::RestartMode::CONT;
+	/// signal to inject upon next restart of the tracee.
+	std::optional<cosmos::Signal> m_inject_sig;
 };
 
 } // end ns
