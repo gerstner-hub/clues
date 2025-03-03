@@ -78,63 +78,7 @@ protected: // data
 	char *m_buffer;
 };
 
-} // end anon ns
-
-namespace clues {
-
-Tracee::Tracee(EventConsumer &consumer) :
-		m_consumer{consumer} {
-}
-
-void Tracee::setTracee(const cosmos::ProcessID tracee) {
-	m_ptrace = cosmos::Tracee{tracee};
-}
-
-void Tracee::attach() {
-	seize(cosmos::ptrace::Opts{cosmos::ptrace::Opt::TRACESYSGOOD});
-	interrupt();
-}
-
-void Tracee::changeState(const TraceState new_state) {
-	if (logger) {
-		logger->debug() << "state " << m_state << " → " << new_state << "\n";
-	}
-
-	if (new_state == TraceState::SYSCALL_ENTER_STOP) {
-		m_syscall_entered = true;
-	} else if (new_state == TraceState::SYSCALL_EXIT_STOP) {
-		m_syscall_entered = false;
-	}
-
-	m_state = new_state;
-}
-
-void Tracee::handleSystemCall() {
-	if (!m_syscall_entered) {
-		changeState(TraceState::SYSCALL_ENTER_STOP);
-		updateRegisters();
-		m_current_syscall = &m_syscall_db.get(m_reg_set.syscall());
-		m_current_syscall->setEntryRegs(*this, m_reg_set);
-		m_consumer.syscallEntry(*m_current_syscall);
-	} else {
-		changeState(TraceState::SYSCALL_EXIT_STOP);
-		updateRegisters();
-		m_current_syscall->setExitRegs(*this, m_reg_set);
-		m_current_syscall->updateOpenFiles(m_fd_path_map);
-		m_consumer.syscallExit(*m_current_syscall);
-	}
-}
-
-void Tracee::handleSignal(const cosmos::ChildData &data) {
-	const auto signal = data.signal;
-
-	if (logger) {
-		logger->info() << "Got signal: " << *signal << std::endl;
-	}
-}
-
-
-static std::string_view ptrace_event_str(const cosmos::ptrace::Event event) {
+std::string_view ptrace_event_str(const cosmos::ptrace::Event event) {
 	using Event = cosmos::ptrace::Event;
 	switch (event) {
 		case Event::VFORK: return "VFORK";
@@ -149,15 +93,111 @@ static std::string_view ptrace_event_str(const cosmos::ptrace::Event event) {
 	}
 }
 
+} // end anon ns
+
+namespace clues {
+
+Tracee::Tracee(EventConsumer &consumer) :
+		m_consumer{consumer} {
+}
+
+const char* Tracee::getStateLabel(const State state) {
+	switch (state) {
+		case State::UNKNOWN:              return "UNKNOWN";
+		case State::RUNNING:              return "RUNNING";
+		case State::SYSCALL_ENTER_STOP:   return "SYSCALL_ENTER_STOP";
+		case State::SYSCALL_EXIT_STOP:    return "SYSCALL_EXIT_STOP";
+		case State::SIGNAL_DELIVERY_STOP: return "SIGNAL_DELIVERY_STOP";
+		case State::GROUP_STOP:           return "GROUP_STOP";
+		case State::EVENT_STOP:           return "EVENT_STOP";
+		case State::DEAD:                 return "DEAD";
+		default:                          return "???";
+	}
+}
+
+void Tracee::setTracee(const cosmos::ProcessID tracee) {
+	m_ptrace = cosmos::Tracee{tracee};
+}
+
+void Tracee::attach() {
+	seize(cosmos::ptrace::Opts{cosmos::ptrace::Opt::TRACESYSGOOD});
+	interrupt();
+	m_flags.set(Flag::WAIT_FOR_ATTACH_STOP);
+}
+
+void Tracee::changeState(const State new_state) {
+	if (logger) {
+		logger->debug() << "state " << m_state << " → " << new_state << "\n";
+	}
+
+	if (new_state == State::SYSCALL_ENTER_STOP) {
+		m_flags.set(Flag::SYSCALL_ENTERED);
+	} else if (new_state == State::SYSCALL_EXIT_STOP) {
+		m_flags.reset(Flag::SYSCALL_ENTERED);
+	}
+
+	m_state = new_state;
+}
+
+void Tracee::handleSystemCall() {
+	if (!m_flags[Flag::SYSCALL_ENTERED]) {
+		changeState(State::SYSCALL_ENTER_STOP);
+		updateRegisters();
+		m_current_syscall = &m_syscall_db.get(m_reg_set.syscall());
+		m_current_syscall->setEntryRegs(*this, m_reg_set);
+		m_consumer.syscallEntry(*m_current_syscall);
+	} else {
+		changeState(State::SYSCALL_EXIT_STOP);
+		updateRegisters();
+		m_current_syscall->setExitRegs(*this, m_reg_set);
+		m_current_syscall->updateOpenFiles(m_fd_path_map);
+		m_consumer.syscallExit(*m_current_syscall);
+	}
+}
+
+void Tracee::handleSignal(const cosmos::ChildData &data) {
+	if (logger) {
+		logger->info() << "Signal: " << *data.signal << std::endl;
+	}
+
+	cosmos::SigInfo info;
+	m_ptrace.getSigInfo(info);
+	m_consumer.signaled(info);
+}
+
+void Tracee::handleEvent(const cosmos::ptrace::Event event) {
+	if (logger) {
+		logger->info() << "PTRACE_EVENT_" << ptrace_event_str(event) << std::endl;
+	}
+
+	using Event = cosmos::ptrace::Event;
+
+	if (event == Event::STOP) {
+		if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
+			// this is the initial ptrace-stop. now we can start tracing
+			m_flags.reset(Flag::WAIT_FOR_ATTACH_STOP);
+			if (logger) {
+				logger->info() << "initial ptrace-stop" << std::endl;
+			}
+		} else {
+			// must be a group stop, unless we're tracing
+			// automatically-attached children, which is not yet
+			// implemented
+			changeState(State::GROUP_STOP);
+		}
+	}
+}
+
 void Tracee::trace() {
 	cosmos::ChildData data;
 	std::optional<cosmos::Signal> inject_sig;
 
 	while (true) {
+		inject_sig = {};
 		wait(data);
 
 		if (data.exited() || data.killed()) {
-			changeState(TraceState::DEAD);
+			changeState(State::DEAD);
 			this->exited(data);
 			break;
 		} else if (data.trapped()) {
@@ -165,31 +205,44 @@ void Tracee::trace() {
 				handleSystemCall();
 			} else {
 				if (*data.signal > cosmos::signal::MAXIMUM) {
-					changeState(TraceState::EVENT_STOP);
 					auto event = cosmos::ptrace::Event{cosmos::to_integral(data.signal->raw()) >> 8};
-					if (logger) {
-						logger->info() << "PTRACE_EVENT_" << ptrace_event_str(event) << std::endl;
-
-					}
+					changeState(State::EVENT_STOP);
+					handleEvent(event);
 				} else {
-					if (logger) {
-						logger->warn() << "Other trap event ???" << std::endl;
-					}
+					changeState(State::SIGNAL_DELIVERY_STOP);
+					handleSignal(data);
+					inject_sig = *data.signal;
 				}
 			}
 		} else if (data.signaled()) {
-			changeState(TraceState::SIGNAL_DELIVERY_STOP);
+			changeState(State::SIGNAL_DELIVERY_STOP);
 			handleSignal(data);
 			inject_sig = *data.signal;
 		} else {
 			if (logger) {
-				logger->info() << "Other Tracee event" << std::endl;
+				logger->warn() << "Other Tracee event?" << std::endl;
 			}
 		}
 
-		restart(cosmos::Tracee::RestartMode::SYSCALL, inject_sig);
-		changeState(TraceState::RUNNING);
-		inject_sig = {};
+		if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
+			// until we've seen the initial ptrace stop for the
+			// ptrace interrupt, don't trace syscalls and don't
+			// change state.
+			restart(cosmos::Tracee::RestartMode::CONT, inject_sig);
+		} else if (m_state == State::GROUP_STOP) {
+			if (m_flags[Flag::INJECTED_SIGSTOP]) {
+				m_flags.reset(Flag::INJECTED_SIGSTOP);
+				inject_sig = cosmos::signal::CONT;
+				restart(cosmos::Tracee::RestartMode::SYSCALL, inject_sig);
+			} else {
+				// enter listen state to avoid restarting a stopped
+				// process as a side-effect.
+				restart(cosmos::Tracee::RestartMode::LISTEN);
+			}
+		} else {
+			restart(cosmos::Tracee::RestartMode::SYSCALL, inject_sig);
+			changeState(State::RUNNING);
+		}
 	}
 }
 
@@ -239,3 +292,8 @@ void Tracee::readBlob(const long *addr, char *buffer, const size_t bytes) const 
 template void Tracee::readVector<std::vector<long*>>(const long*, std::vector<long*>&) const;
 
 } // end ns
+
+std::ostream& operator<<(std::ostream &o, const clues::Tracee::State &state) {
+	o << clues::Tracee::getStateLabel(state);
+	return o;
+}

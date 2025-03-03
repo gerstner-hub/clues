@@ -23,6 +23,9 @@ void ChildTracee::create(const cosmos::StringVector &args) {
 	});
 	m_child = cloner.run();
 
+	m_child.wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_STOPPED});
+	m_flags.set(Flag::INJECTED_SIGSTOP);
+
 	setTracee(m_child.pid());
 }
 

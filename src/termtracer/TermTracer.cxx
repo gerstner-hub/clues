@@ -50,6 +50,8 @@ protected: // event consumer interface
 
 	void syscallExit(const SystemCall &sc) override;
 
+	void signaled(const cosmos::SigInfo &info) override;
+
 protected: // data
 
 	TCLAP::CmdLine m_cmdline;
@@ -133,11 +135,11 @@ void TermTracer::configureLogger() {
 	clues::set_logger(m_logger);
 }
 
-void TermTracer::syscallEntry(const SystemCall &) {
+void TermTracer::syscallEntry(const SystemCall &sc) {
+	std::cerr << sc.name() << "(" << std::flush;
 }
 
 void TermTracer::syscallExit(const SystemCall &sc) {
-	std::cerr << sc.name() << "(";
 	bool first = true;
 	for (const auto par: sc.parameters()) {
 		if (first)
@@ -162,6 +164,10 @@ void TermTracer::syscallExit(const SystemCall &sc) {
 	const auto &res = sc.result();
 
 	std::cerr << ") = " << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")\n";
+}
+
+void TermTracer::signaled(const cosmos::SigInfo &info) {
+	std::cerr << "-- " << info.sigNr() << " --\n";
 }
 
 void TermTracer::runTrace(const cosmos::ProcessID pid) {

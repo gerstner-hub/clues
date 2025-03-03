@@ -1,10 +1,14 @@
 #pragma once
 
+// C++
+#include <iosfwd>
+
 // Linux
 #include <unistd.h>
 #include <sys/ptrace.h>
 
 // cosmos
+#include <cosmos/BitMask.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/signal.hxx>
 #include <cosmos/proc/SubProc.hxx>
@@ -37,11 +41,42 @@ public: // types
 		virtual void syscallEntry(const SystemCall &sc) = 0;
 
 		virtual void syscallExit(const SystemCall &sc) = 0;
+
+		virtual void signaled(const cosmos::SigInfo &info) {
+			(void)info;
+		};
 	};
+
+	/// Current tracing state for a single tracee.
+	/**
+	 * These states are modelled after the states described in man(2) ptrace.
+	 **/
+	enum class State {
+		UNKNOWN, ///< initial PTRACE_SIZE / PTRACE_INTERRUPT.
+		RUNNING, ///< tracee is running normally / not in a special trace state.
+		SYSCALL_ENTER_STOP, ///< system call started.
+		SYSCALL_EXIT_STOP, ///< system call finished.
+		SIGNAL_DELIVERY_STOP, ///< signal was delivered.
+		GROUP_STOP, ///< SIGSTOP executed, the tracee is stopped.
+		EVENT_STOP, ///< special ptrace event occurred.
+		DEAD ///< the tracee no longer exists.
+	};
+
+	/// Different flags reflecting the tracer status.
+	enum class Flag {
+		WAIT_FOR_ATTACH_STOP = 1 << 1, ///< we're still waiting for the PTRACE_INTERRUPT event stop.
+		WAIT_FOR_DETACH_STOP = 1 << 2, ///< we're still waiting for the SIGSTOP we injected for detaching.
+		INJECTED_SIGSTOP     = 1 << 3, ///< whether we've injected a SIGSTOP that needs to be undone.
+		SYSCALL_ENTERED      = 1 << 4, ///< we've seen a syscall-enter-stop and wait for the corresponding exit-stop.
+	};
+
+	using Flags = cosmos::BitMask<Flag>;
 
 public: // functions
 
 	virtual ~Tracee() {}
+
+	static const char* getStateLabel(const State state);
 
 	/// Logic to handle attaching to the tracee.
 	virtual void attach();
@@ -100,7 +135,7 @@ protected: // functions
 
 	explicit Tracee(EventConsumer &consumer);
 
-	void changeState(const TraceState new_state);
+	void changeState(const State new_state);
 
 	/// Waits for the next trace event of this tracee.
 	virtual void wait(cosmos::ChildData &data) = 0;
@@ -146,6 +181,8 @@ protected: // functions
 
 	void handleSignal(const cosmos::ChildData &data);
 
+	void handleEvent(const cosmos::ptrace::Event event);
+
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
 	template <typename FILLER>
 	void fillData(const long *addr, FILLER &filler) const;
@@ -155,9 +192,9 @@ protected: // data
 	/// Callback interface receiving our information.
 	EventConsumer &m_consumer;
 	/// The current state the tracee is in.
-	TraceState m_state = TraceState::UNKNOWN;
-	/// Whether we've seen SYSCALL_ENTER_STOP but not SYSCALL_EXIT_STOP yet.
-	bool m_syscall_entered = false;
+	State m_state = State::UNKNOWN;
+	/// These keep track of various state on the tracer side.
+	Flags m_flags;
 	/// PID of the tracee we're dealing with.
 	cosmos::Tracee m_ptrace;
 	/// Here we store our current knowledge about open file descriptions.
@@ -171,3 +208,5 @@ protected: // data
 };
 
 } // end ns
+
+std::ostream& operator<<(std::ostream &o, const clues::Tracee::State &state);
