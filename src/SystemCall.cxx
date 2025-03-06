@@ -67,10 +67,8 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 			std::make_pair(new_fd, m_pars[m_open_id_par]->str())
 		);
 
-		if (!res.second && logger) {
-			logger->debug()
-				<< "WARNING: file descriptor already open?!"
-				<< std::endl;
+		if (!res.second) {
+			LOG_DEBUG("WARNING: file descriptor already open?!");
 		}
 	} else if(m_close_fd_par != SIZE_MAX) {
 		if (m_return->valueAs<cosmos::Errno>() != cosmos::Errno::NO_ERROR)
@@ -79,10 +77,10 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 
 		const int closed_fd = (int)m_pars[m_close_fd_par]->value();
 
-		if (mapping.erase(closed_fd) == 0 && logger) {
+		if (mapping.erase(closed_fd) == 0) {
 #if 0
 			// this is stdout, stderr & friends
-			logger->warn() << "closed file that wasn't open?!\n";
+			LOG_WARN("closed file that wasn't open?!");
 #endif
 		}
 	} else {

@@ -126,9 +126,7 @@ void Tracee::attach() {
 }
 
 void Tracee::changeState(const State new_state) {
-	if (logger) {
-		logger->debug() << "state " << m_state << " → " << new_state << "\n";
-	}
+	LOG_DEBUG("state " << m_state << " → " << new_state);
 
 	if (new_state == State::SYSCALL_ENTER_STOP) {
 		m_flags.set(Flag::SYSCALL_ENTERED);
@@ -168,9 +166,7 @@ void Tracee::handleSystemCall() {
 }
 
 void Tracee::handleSignal(const cosmos::ChildData &data) {
-	if (logger) {
-		logger->info() << "Signal: " << *data.signal << std::endl;
-	}
+	LOG_INFO("Signal: " << *data.signal);
 
 	cosmos::SigInfo info;
 	m_ptrace.getSigInfo(info);
@@ -178,18 +174,14 @@ void Tracee::handleSignal(const cosmos::ChildData &data) {
 }
 
 void Tracee::handleEvent(const cosmos::ptrace::Event event) {
-	if (logger) {
-		logger->info() << "PTRACE_EVENT_" << ptrace_event_str(event) << std::endl;
-	}
+	LOG_INFO("PTRACE_EVENT_" << ptrace_event_str(event));
 
 	using Event = cosmos::ptrace::Event;
 
 	if (event == Event::STOP) {
 		if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
 			// this is the initial ptrace-stop. now we can start tracing
-			if (logger) {
-				logger->info() << "initial ptrace-stop" << std::endl;
-			}
+			LOG_INFO("initial ptrace-stop");
 			handleAttached();
 		} else {
 			// must be a group stop, unless we're tracing
@@ -238,9 +230,7 @@ void Tracee::trace() {
 			handleSignal(data);
 			m_inject_sig = *data.signal;
 		} else {
-			if (logger) {
-				logger->warn() << "Other Tracee event?" << std::endl;
-			}
+			LOG_WARN("Other Tracee event?");
 		}
 
 		restart(m_restart_mode, m_inject_sig);

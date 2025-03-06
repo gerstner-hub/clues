@@ -40,11 +40,8 @@ ChildTracee::~ChildTracee() {
 
 		detach();
 	} catch (const cosmos::CosmosError &ce) {
-		if (logger) {
-			logger->error() << "Error detaching from child process PID "
-				<< cosmos::to_integral(m_child.pid())
-				<< ":\n\n" << ce.what();
-		}
+		LOG_ERROR("Error detaching from child process PID " << cosmos::to_integral(m_child.pid()) << ":\n\n"
+				<< ce.what());
 	}
 }
 

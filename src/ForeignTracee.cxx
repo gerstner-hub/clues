@@ -37,11 +37,7 @@ ForeignTracee::~ForeignTracee() {
 	try {
 		detach();
 	} catch (const cosmos::CosmosError &ce) {
-		if (logger) {
-			logger->debug()
-				<< "Couldn't detach from PID " << cosmos::to_integral(m_ptrace.pid()) << ":\n\n"
-				<< ce.what() << "\n";
-		}
+		LOG_DEBUG("Couldn't detach from PID " << cosmos::to_integral(m_ptrace.pid()) << ":\n\n" << ce.what());
 	}
 }
 
