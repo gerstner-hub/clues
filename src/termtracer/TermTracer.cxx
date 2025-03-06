@@ -184,7 +184,7 @@ cosmos::ExitStatus TermTracer::runTrace(const cosmos::StringVector &cmdline) {
 	proc.attach();
 	proc.trace();
 	proc.detach();
-	return proc.exitCode();
+	return proc.exitStatus();
 }
 
 cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {

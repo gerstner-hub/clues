@@ -141,7 +141,7 @@ protected: // functions
 	virtual void wait(cosmos::ChildData &data) = 0;
 
 	/// Called when the tracee exits
-	virtual void exited(const cosmos::ChildData &) {}
+	virtual void gone(const cosmos::ChildData &) {}
 
 	/// Forces the traced process to stop.
 	void interrupt() {

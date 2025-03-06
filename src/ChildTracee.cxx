@@ -12,8 +12,13 @@ ChildTracee::ChildTracee(EventConsumer &consumer) :
 		Tracee{consumer} {
 }
 
+void ChildTracee::reset() {
+	m_exit_status = std::nullopt;
+	m_kill_signal = std::nullopt;
+}
+
 void ChildTracee::create(const cosmos::StringVector &args) {
-	m_exit_code = std::nullopt;
+	reset();
 
 	cosmos::ChildCloner cloner;
 	cloner.setArgs(args);
@@ -53,7 +58,7 @@ void ChildTracee::detach() {
 	if (m_child.running()) {
 		cosmos::ChildData data = m_child.wait();
 		if (data.status) {
-			m_exit_code = *data.status;
+			m_exit_status = *data.status;
 		}
 	}
 }

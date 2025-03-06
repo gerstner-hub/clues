@@ -209,7 +209,7 @@ void Tracee::trace() {
 
 		if (data.exited() || data.killed()) {
 			changeState(State::DEAD);
-			this->exited(data);
+			this->gone(data);
 			break;
 		} else if (data.trapped()) {
 			if (data.signal == cosmos::signal::SYS_TRAP) {
