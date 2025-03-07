@@ -287,6 +287,16 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			},
 			new ErrnoResult{}
 		);
+	case SystemCallNr::CLOCK_NANOSLEEP:
+		return NewCall({
+				new ClockID{},
+				new ClockNanoSleepFlags{},
+				new TimespecParameter{"req", "requested"},
+				// TODO: this is only filled in if the call failed with EINTR
+				new TimespecParameter{"rem", "remaining", ValueType::PARAM_OUT}
+			},
+			new ErrnoResult{}
+		);
 	default:
 		return NewCall({
 			},

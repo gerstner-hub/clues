@@ -503,6 +503,29 @@ std::string FutexOperation::str() const {
 	}
 }
 
+std::string ClockID::str() const {
+	switch (valueAs<clockid_t>()) {
+		ENUM_CASE(CLOCK_REALTIME);
+		ENUM_CASE(CLOCK_REALTIME_COARSE);
+		ENUM_CASE(CLOCK_TAI);
+		ENUM_CASE(CLOCK_MONOTONIC);
+		ENUM_CASE(CLOCK_MONOTONIC_RAW);
+		ENUM_CASE(CLOCK_MONOTONIC_COARSE);
+		ENUM_CASE(CLOCK_BOOTTIME);
+		ENUM_CASE(CLOCK_PROCESS_CPUTIME_ID);
+		ENUM_CASE(CLOCK_THREAD_CPUTIME_ID);
+		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
+	}
+}
+
+std::string ClockNanoSleepFlags::str() const {
+	switch (valueAs<int>()) {
+		ENUM_CASE(TIMER_ABSTIME);
+		case 0: return "<relative-time>";
+		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
+	}
+}
+
 std::string SignalNumber::str() const {
 	std::string s;
 	return signal_label(valueAs<cosmos::SignalNr>());

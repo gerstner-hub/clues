@@ -338,8 +338,28 @@ public: // functions
 	std::string str() const override;
 };
 
+class CLUES_API ClockID :
+		public ValueInParameter {
+public: // functions
+	explicit ClockID() :
+			ValueInParameter{"clockid", "clock identifier"} {
+	}
+
+	std::string str() const override;
+};
+
+class CLUES_API ClockNanoSleepFlags :
+		public ValueInParameter {
+public: // functions
+	explicit ClockNanoSleepFlags() :
+			ValueInParameter{"flags", "clock sleep flags"} {
+	}
+
+	std::string str() const override;
+};
+
 /// A signal number specification.
-class SignalNumber :
+class CLUES_API SignalNumber :
 		public ValueInParameter {
 public: // functions
 	explicit SignalNumber() :
