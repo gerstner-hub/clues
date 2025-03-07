@@ -9,7 +9,9 @@
 
 // cosmos
 #include <cosmos/cosmos.hxx>
+#include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/CosmosError.hxx>
+#include <cosmos/formatting.hxx>
 #include <cosmos/io/StdLogger.hxx>
 #include <cosmos/main.hxx>
 #include <cosmos/proc/process.hxx>
@@ -38,7 +40,7 @@ protected: // functions
 
 	cosmos::ExitStatus main(const int argc, const char **argv) override;
 
-	void runTrace(const cosmos::ProcessID pid);
+	cosmos::ExitStatus runTrace(const cosmos::ProcessID pid);
 
 	cosmos::ExitStatus runTrace(const cosmos::StringVector &cmdline);
 
@@ -57,8 +59,6 @@ protected: // data
 	TCLAP::CmdLine m_cmdline;
 	/// Already running process to attach to.
 	TCLAP::ValueArg<std::underlying_type<cosmos::ProcessID>::type> m_attach_proc;
-	/// Switch to express we want to start a new process as a frontend.
-	TCLAP::SwitchArg m_start_proc;
 	/// Increase verbosity of tracing output.
 	TCLAP::SwitchArg m_verbose;
 	/// Maximum length of parameter values to print.
@@ -72,17 +72,13 @@ protected: // data
 };
 
 TermTracer::TermTracer() :
-		m_cmdline{"Command line process tracer", ' ', "0.1"},
+		m_cmdline{"Command line process tracer.\nTo use clues as a front-end pass the command line to execute after '--'", ' ', "0.1"},
 		m_attach_proc{
 			"p", "process",
 			"attach to the given already running process for tracing",
 			false,
 			cosmos::to_integral(cosmos::ProcessID::INVALID),
 			"Process ID"},
-		m_start_proc{
-			"c", "create",
-			"create a new process using arguments specified after '--'",
-			false},
 		m_verbose{
 			"v", "verbose",
 			"increase verbosity of tracing output",
@@ -170,12 +166,22 @@ void TermTracer::signaled(const cosmos::SigInfo &info) {
 	std::cerr << "-- " << info.sigNr() << " --\n";
 }
 
-void TermTracer::runTrace(const cosmos::ProcessID pid) {
+cosmos::ExitStatus TermTracer::runTrace(const cosmos::ProcessID pid) {
 	ForeignTracee proc{*this};
 	proc.configure(pid);
-	proc.attach();
+	try {
+		proc.attach();
+	} catch (const cosmos::ApiError &e) {
+		std::cerr << "Failed to attach to PID " << pid << ": " << e.msg() << "\n";
+		if (e.errnum() == cosmos::Errno::PERMISSION) {
+			std::cerr << "You need to be root to attach to processes not owned by you\n";
+			std::cerr << "The YAMA kernel security extension can prevent attaching your own processes.\n";
+		}
+		return cosmos::ExitStatus::FAILURE;
+	}
 	proc.trace();
 	proc.detach();
+	return cosmos::ExitStatus::SUCCESS;
 }
 
 cosmos::ExitStatus TermTracer::runTrace(const cosmos::StringVector &cmdline) {
@@ -189,7 +195,6 @@ cosmos::ExitStatus TermTracer::runTrace(const cosmos::StringVector &cmdline) {
 
 cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	m_cmdline.add(m_attach_proc);
-	m_cmdline.add(m_start_proc);
 	m_cmdline.parse(argc, argv);
 
 	configureLogger();
@@ -199,26 +204,27 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	cosmos::signal::block(cosmos::SigSet{cosmos::signal::CHILD});
 
 	if (m_attach_proc.isSet()) {
-		runTrace(cosmos::ProcessID{m_attach_proc.getValue()});
-		return cosmos::ExitStatus::SUCCESS;
-	} else if (m_start_proc.isSet()) {
-		// extract any additional arguments into a StringVector
-		cosmos::StringVector sv;
-		bool found_sep = false;
+		return runTrace(cosmos::ProcessID{m_attach_proc.getValue()});
+	}
 
-		for (auto arg = 1; arg < argc; arg++) {
-			if (found_sep) {
-				sv.push_back(argv[arg]);
-			} else if (std::string(argv[arg]) == "--") {
-				found_sep = true;
-			}
+	// extract any additional arguments into a StringVector
+	cosmos::StringVector sv;
+	bool found_sep = false;
+
+	for (auto arg = 1; arg < argc; arg++) {
+		if (found_sep) {
+			sv.push_back(argv[arg]);
+		} else if (std::string(argv[arg]) == "--") {
+			found_sep = true;
 		}
+	}
 
-		return runTrace(sv);
-	} else {
-		std::cerr << "Neither -p nor -c was given. Nothing to do.\n";
+	if (sv.empty()) {
+		std::cerr << "Neither -p nor command to execute after '--' was given. Nothing to do.\n";
 		return cosmos::ExitStatus::FAILURE;
 	}
+
+	return runTrace(sv);
 }
 
 } // end ns
