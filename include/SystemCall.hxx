@@ -2,13 +2,17 @@
 
 // C++
 #include <iosfwd>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+// cosmos
+#include <cosmos/proc/ptrace.hxx>
+
 // clues
-#include <clues/RegisterSet.hxx>
 #include <clues/types.hxx>
+#include <clues/values.hxx>
 
 namespace clues {
 	class SystemCall;
@@ -87,7 +91,7 @@ public: // functions
 	 * Introspect the parameter values and store them in the current
 	 * object's ParameterVector.
 	 **/
-	void setEntryRegs(const Tracee &proc, const RegisterSet &r);
+	void setEntryInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::EntryInfo &info);
 
 	/// Update possible out and return parameter values from the given tracee.
 	/**
@@ -95,7 +99,7 @@ public: // functions
 	 * Introspect the return value and update out or in-out parameters as
 	 * applicable.
 	 **/
-	void setExitRegs(const Tracee &proc, const RegisterSet &r);
+	void setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::ExitInfo &info);
 
 	void updateOpenFiles(DescriptorPathMapping &mapping);
 
@@ -106,19 +110,31 @@ public: // functions
 	/// Returns the system call table number for this system call.
 	SystemCallNr callNr() const { return m_nr; }
 
-	/// Access to the parameters associated with this system call
+	/// Access to the parameters associated with this system call.
 	const ParameterVector& parameters() const { return m_pars; }
-	/// Access to the return value parameter associated with this syscall
+	/// Access to the return value parameter associated with this system call.
 	const SystemCallValue& result() const { return *m_return; }
+	/// Access to the errno result seen for this system call.
+	const ErrnoResult& error() const { return *m_error; }
+
+	bool hasResultValue() const {
+		return m_error == std::nullopt;
+	}
+
+	bool hasErrorCode() const {
+		return !hasResultValue();
+	}
 
 protected: // data
 
-	/// The raw system call number we represent.
+	/// The raw system call number of the system call.
 	SystemCallNr m_nr;
-	/// The basic name of the system call we're representing.
+	/// The basic name of the system call.
 	const char *m_name = nullptr;
-	/// The return value type of the system call, if any.
+	/// The return value of the system call.
 	SystemCallValue *m_return;
+	/// If the system call fails, this is the error code.
+	std::optional<ErrnoResult> m_error;
 	/// The array of system call parameters, if any.
 	ParameterVector m_pars;
 	/// if this is an open-like system call, then this gives the number of the parameter that contains the open identifier.

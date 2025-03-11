@@ -16,14 +16,13 @@
 #include <cosmos/string.hxx>
 
 // clues
-#include <clues/RegisterSet.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
 
-class RegisterSet;
 class SystemCall;
+class RegisterSet;
 
 /// Base class for traced processes.
 /**
@@ -173,11 +172,9 @@ protected: // functions
 	 **/
 	void getRegisters(RegisterSet &rs);
 
-	void updateRegisters() {
-		getRegisters(m_reg_set);
-	}
-
 	void handleSystemCall();
+
+	void handleStateMismatch();
 
 	void handleSignal(const cosmos::ChildData &data);
 
@@ -201,10 +198,10 @@ protected: // data
 	cosmos::Tracee m_ptrace;
 	/// Here we store our current knowledge about open file descriptions.
 	DescriptorPathMapping m_fd_path_map;
+	/// The current system call information, if any.
+	std::optional<cosmos::ptrace::SyscallInfo> m_syscall_info;
 	/// Reusable database object for tracing system calls.
 	SystemCallDB m_syscall_db;
-	/// Reusable register set object for tracing system calls.
-	RegisterSet m_reg_set;
 	/// Holds state for the currently executing system call.
 	SystemCall *m_current_syscall = nullptr;
 	/// current RestartMode to use.

@@ -4,6 +4,7 @@
 #include <sys/procfs.h> // the elf_greg_t & friends are in here
 
 // C++
+#include <cstdint>
 #include <map>
 #include <string>
 
@@ -20,6 +21,9 @@ using DescriptorPathMapping = std::map<int, std::string>;
 enum class Word : elf_greg_t {
 	ZERO = 0
 };
+
+// forward declaration
+enum class SystemCallNr : uint64_t;
 
 /// Errno values that can appear in tracing context.
 /**

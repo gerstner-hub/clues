@@ -4,11 +4,16 @@
 #include <iosfwd>
 #include <type_traits>
 
+// cosmos
+#include <cosmos/utils.hxx>
+
 // clues
-#include <clues/SystemCall.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
+
+class SystemCall;
+class Tracee;
 
 /// Base class for any kind of system call values.
 /**

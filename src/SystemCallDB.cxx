@@ -1,7 +1,9 @@
+// generated
+#include <clues/syscallnrs.h>
+
 // clues
 #include <clues/SystemCallDB.hxx>
 #include <clues/values.hxx>
-
 
 namespace clues {
 

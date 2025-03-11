@@ -6,10 +6,11 @@
 #include <cosmos/io/ILogger.hxx>
 
 // clues
-#include <clues/SystemCall.hxx>
-#include <clues/SystemCallDB.hxx>
-#include <clues/SystemCallValue.hxx>
 #include <clues/clues.hxx>
+#include <clues/SystemCallDB.hxx>
+#include <clues/SystemCall.hxx>
+#include <clues/SystemCallValue.hxx>
+#include <clues/types.hxx>
 
 namespace clues {
 
@@ -39,14 +40,27 @@ SystemCall::~SystemCall() {
 	delete m_return;
 }
 
-void SystemCall::setEntryRegs(const Tracee &proc, const RegisterSet &r) {
-	for (size_t par = 0; par < m_pars.size(); par++) {
-		m_pars[par]->fill(proc, r.syscallParameter(par));
+void SystemCall::setEntryInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::EntryInfo &info) {
+	auto args = info.args();
+	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
+		auto &par = *m_pars[numpar];
+		par.fill(proc, Word{args[numpar]});
 	}
+
+	m_error.reset();
 }
 
-void SystemCall::setExitRegs(const Tracee &proc, const RegisterSet &r) {
-	m_return->fill(proc, r.syscallRes());
+void SystemCall::setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::ExitInfo &info) {
+	if (info.isValue()) {
+		m_return->fill(proc, Word{static_cast<uint64_t>(*info.retVal())});
+	} else {
+		m_error = ErrnoResult{};
+		// TODO: makes no sense to cast the Errno back to a Word just
+		// for ErrnoResult to reverse the effect. We need a dedicated
+		// type for this situation.
+		auto raw_errno = cosmos::to_integral(*info.errVal());
+		m_error->fill(proc, Word{raw_errno >= 0 ? static_cast<elf_greg_t>(raw_errno) : 0});
+	}
 
 	for (auto &par: m_pars) {
 		if (par->needsUpdate()) {

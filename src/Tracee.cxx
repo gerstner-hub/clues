@@ -3,12 +3,14 @@
 
 // cosmos
 #include <cosmos/error/ApiError.hxx>
+#include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/error/errno.hxx>
 #include <cosmos/io/ILogger.hxx>
 #include <cosmos/io/iovector.hxx>
 
 // clues
 #include <clues/clues.hxx>
+#include <clues/RegisterSet.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
@@ -149,20 +151,47 @@ void Tracee::changeState(const State new_state) {
 	m_state = new_state;
 }
 
+void Tracee::handleStateMismatch() {
+	LOG_ERROR("encountered system call state mismatch: we believe "
+		<< (m_flags[Flag::SYSCALL_ENTERED] ? "we already entered " : "we did not enter ")
+		<< "a system call, but we got a "
+		<< (m_syscall_info->isEntry() ? "SyscallInfo::ENTRY" : "SyscallInfo::EXIT")
+		<< " event.");
+
+	cosmos_throw (cosmos::RuntimeError("system call state mismatch"));
+}
+
 void Tracee::handleSystemCall() {
-	if (!m_flags[Flag::SYSCALL_ENTERED]) {
-		changeState(State::SYSCALL_ENTER_STOP);
-		updateRegisters();
-		m_current_syscall = &m_syscall_db.get(m_reg_set.syscall());
-		m_current_syscall->setEntryRegs(*this, m_reg_set);
-		m_consumer.syscallEntry(*m_current_syscall);
-	} else {
+
+	m_syscall_info = cosmos::ptrace::SyscallInfo{};
+	auto &info = *m_syscall_info;
+
+	m_ptrace.getSyscallInfo(info);
+
+	if (m_flags[Flag::SYSCALL_ENTERED]) {
+		if (!info.isExit()) {
+			handleStateMismatch();
+		}
+
 		changeState(State::SYSCALL_EXIT_STOP);
-		updateRegisters();
-		m_current_syscall->setExitRegs(*this, m_reg_set);
+		m_current_syscall->setExitInfo(*this, *info.exitInfo());
 		m_current_syscall->updateOpenFiles(m_fd_path_map);
 		m_consumer.syscallExit(*m_current_syscall);
+	} else {
+		if (!info.isEntry()) {
+			handleStateMismatch();
+		}
+
+		auto &entry_info = *info.entryInfo();
+
+		changeState(State::SYSCALL_ENTER_STOP);
+		const SystemCallNr nr{entry_info.syscallNr()};
+		m_current_syscall = &m_syscall_db.get(nr);
+		m_current_syscall->setEntryInfo(*this, entry_info);
+		m_consumer.syscallEntry(*m_current_syscall);
 	}
+
+	m_syscall_info.reset();
 }
 
 void Tracee::handleSignal(const cosmos::ChildData &data) {

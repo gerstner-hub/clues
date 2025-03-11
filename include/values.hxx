@@ -9,7 +9,6 @@
 #include <sys/resource.h>
 
 // clues
-#include <clues/SystemCall.hxx>
 #include <clues/SystemCallValue.hxx>
 #include <clues/kernel_structs.hxx>
 

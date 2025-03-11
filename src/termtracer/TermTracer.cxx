@@ -157,9 +157,16 @@ void TermTracer::syscallExit(const SystemCall &sc) {
 		}
 	}
 
-	const auto &res = sc.result();
 
-	std::cerr << ") = " << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")\n";
+	std::cerr << ") = ";
+
+	if (sc.hasResultValue()) {
+		const auto &res = sc.result();
+		std::cerr << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")\n";
+	} else {
+		const auto &err = sc.error();
+		std::cerr << err.str() << " (" << (m_verbose.isSet() ? err.longName() : err.shortName()) << ")\n";
+	}
 }
 
 void TermTracer::signaled(const cosmos::SigInfo &info) {

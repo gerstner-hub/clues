@@ -91,10 +91,11 @@ def buildSyscallHeader(target, source, env):
             max_number = max(max_number, number)
 
     with open(str(target[0]), 'w') as out_fd:
+        out_fd.write("#include <stdlib.h>\n")
         out_fd.write("#include <elf.h>\n")
         out_fd.write("#include <sys/syscall.h>\n\n// C++ class enum for system call numbers found in syscall.h\n")
         out_fd.write("namespace clues {\n")
-        out_fd.write("enum class SystemCallNr : elf_greg_t {\n")
+        out_fd.write("enum class SystemCallNr : uint64_t {\n")
         for syscall in syscalls.values():
             _, base = syscall.split('_', 1)
             out_fd.write(f'\t{base.upper()} = {syscall},\n')
