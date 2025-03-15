@@ -99,7 +99,7 @@ public: // functions
 
 protected: // data
 
-	const int m_first_valid;
+	int m_first_valid;
 };
 
 /*

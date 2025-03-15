@@ -120,7 +120,7 @@ protected: // data
 	/// The system call context the value is a part of.
 	const SystemCall *m_call = nullptr;
 	/// The type of value.
-	const Type m_type;
+	Type m_type;
 	/// A human readable short name for the value, should be one word only.
 	const char *m_short_name = nullptr;
 	/// A human readable longer name for the value.
