@@ -1,6 +1,3 @@
-// TCLAP
-#include <tclap/CmdLine.h>
-
 // C++
 #include <cstdlib>
 #include <iostream>
@@ -12,9 +9,6 @@
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/CosmosError.hxx>
 #include <cosmos/formatting.hxx>
-#include <cosmos/io/StdLogger.hxx>
-#include <cosmos/main.hxx>
-#include <cosmos/proc/process.hxx>
 #include <cosmos/proc/signal.hxx>
 #include <cosmos/string.hxx>
 
@@ -22,57 +16,10 @@
 #include <clues/ChildTracee.hxx>
 #include <clues/clues.hxx>
 #include <clues/ForeignTracee.hxx>
-#include <clues/SystemCall.hxx>
 #include <clues/SystemCallValue.hxx>
+#include "TermTracer.hxx"
 
 namespace clues {
-
-class TermTracer :
-		public Tracee::EventConsumer,
-       		public cosmos::MainPlainArgs {
-public: // functions
-
-	TermTracer();
-
-protected: // functions
-
-	void processPars();
-
-	cosmos::ExitStatus main(const int argc, const char **argv) override;
-
-	cosmos::ExitStatus runTrace(const cosmos::ProcessID pid);
-
-	cosmos::ExitStatus runTrace(const cosmos::StringVector &cmdline);
-
-	void configureLogger();
-
-	void printEntryPars(const SystemCall::ParameterVector &pars);
-	void printExitPars(const SystemCall::ParameterVector &pars);
-
-protected: // event consumer interface
-
-	void syscallEntry(const SystemCall &sc) override;
-
-	void syscallExit(const SystemCall &sc) override;
-
-	void signaled(const cosmos::SigInfo &info) override;
-
-protected: // data
-
-	TCLAP::CmdLine m_cmdline;
-	/// Already running process to attach to.
-	TCLAP::ValueArg<std::underlying_type<cosmos::ProcessID>::type> m_attach_proc;
-	/// Increase verbosity of tracing output.
-	TCLAP::SwitchArg m_verbose;
-	/// Maximum length of parameter values to print.
-	TCLAP::ValueArg<int> m_max_value_len;
-
-	/// cosmos ILogger instance for clues library logging.
-	cosmos::StdLogger m_logger;
-
-	bool m_print_values = true;
-	size_t m_value_truncation_len = 64;
-};
 
 TermTracer::TermTracer() :
 		m_cmdline{"Command line process tracer.\nTo use clues as a front-end pass the command line to execute after '--'", ' ', "0.1"},
