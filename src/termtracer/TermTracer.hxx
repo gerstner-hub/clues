@@ -32,8 +32,9 @@ protected: // functions
 
 	void configureLogger();
 
-	void printEntryPars(const SystemCall::ParameterVector &pars);
-	void printExitPars(const SystemCall::ParameterVector &pars);
+	void printPar(const SystemCallValue &value, const bool is_last) const;
+	void printEntryPars(const SystemCall::ParameterVector &pars) const;
+	void printExitPars(const SystemCall::ParameterVector &pars) const;
 
 protected: // event consumer interface
 

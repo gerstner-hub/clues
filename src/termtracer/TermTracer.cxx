@@ -81,7 +81,7 @@ void TermTracer::configureLogger() {
 	clues::set_logger(m_logger);
 }
 
-void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) {
+void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) const {
 	/*
 	 * This logic covers printing of parameters during system-call entry.
 	 *
@@ -104,7 +104,11 @@ void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) {
 	 * this case for the not yet available output data, then do a
 	 * carriage-return during syscall-exit to print the end result.
 	 */
-	const auto last = pars.empty() ? nullptr : pars.back();
+
+	if (pars.empty())
+		return;
+
+	const auto last = pars.back();
 
 	for (const auto par: pars) {
 		if (!par->isIn()) {
@@ -112,27 +116,15 @@ void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) {
 			break;
 		}
 
-		std::cerr << (m_verbose.isSet() ? par->longName() : par->shortName());
-
-		if (m_print_values) {
-			auto value = par->str();
-
-			if (value.size() > m_value_truncation_len) {
-				value.resize(m_value_truncation_len);
-				value += "...";
-			}
-
-			std::cerr << "=" << value;
-		}
-
-		if (par != last) {
-			std::cerr << ", ";
-		}
+		printPar(*par, par == last);
 	}
 }
 
-void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) {
-	const auto last = pars.empty() ? nullptr : pars.back();
+void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
+	if (pars.empty())
+		return;
+
+	const auto last = pars.back();
 	bool seen_non_input = false;
 
 	for (const auto par: pars) {
@@ -145,22 +137,26 @@ void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) {
 			}
 		}
 
-		std::cerr << (m_verbose.isSet() ? par->longName() : par->shortName());
+		printPar(*par, par == last);
+	}
+}
 
-		if (m_print_values) {
-			auto value = par->str();
+void TermTracer::printPar(const SystemCallValue &par, const bool is_last) const {
+	std::cerr << (m_verbose.isSet() ? par.longName() : par.shortName());
 
-			if (value.size() > m_value_truncation_len) {
-				value.resize(m_value_truncation_len);
-				value += "...";
-			}
+	if (m_print_values) {
+		auto value = par.str();
 
-			std::cerr << "=" << value;
+		if (value.size() > m_value_truncation_len) {
+			value.resize(m_value_truncation_len);
+			value += "...";
 		}
 
-		if (par != last) {
-			std::cerr << ", ";
-		}
+		std::cerr << "=" << value;
+	}
+
+	if (!is_last) {
+		std::cerr << ", ";
 	}
 }
 
@@ -168,7 +164,7 @@ void TermTracer::syscallEntry(const SystemCall &sc) {
 	std::cerr << sc.name() << "(";
 
 	printEntryPars(sc.parameters());
-       
+
 	std::cerr << std::flush;
 }
 
