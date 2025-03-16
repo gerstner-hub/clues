@@ -55,6 +55,7 @@ protected: // data
 
 	/// cosmos ILogger instance for clues library logging.
 	cosmos::StdLogger m_logger;
+	cosmos::Init m_cosmos;
 
 	bool m_print_values = true;
 	size_t m_value_truncation_len = 64;
