@@ -46,6 +46,9 @@ protected: // functions
 
 	void configureLogger();
 
+	void printEntryPars(const SystemCall::ParameterVector &pars);
+	void printExitPars(const SystemCall::ParameterVector &pars);
+
 protected: // event consumer interface
 
 	void syscallEntry(const SystemCall &sc) override;
@@ -131,17 +134,36 @@ void TermTracer::configureLogger() {
 	clues::set_logger(m_logger);
 }
 
-void TermTracer::syscallEntry(const SystemCall &sc) {
-	std::cerr << sc.name() << "(" << std::flush;
-}
+void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) {
+	/*
+	 * This logic covers printing of parameters during system-call entry.
+	 *
+	 * During entry we can print all input-only parameters and stop once
+	 * we see a non-input parameter or once we are finished with all
+	 * parameters.
+	 *
+	 * During exit we continue printing from the first non-input parameter
+	 * onwards. This way we can present at least some of the system call
+	 * data already for blocking system calls.
+	 *
+	 * There exist system calls where the order of parameters is like
+	 * this:
+	 *
+	 * <input>, <output>, <input>
+	 *
+	 * In this case, while the final parameter would still be printable,
+	 * we will stop at the third parameter which is an output parameter.
+	 * `strace` does this similarly. In theory we could print a '?' in
+	 * this case for the not yet available output data, then do a
+	 * carriage-return during syscall-exit to print the end result.
+	 */
+	const auto last = pars.empty() ? nullptr : pars.back();
 
-void TermTracer::syscallExit(const SystemCall &sc) {
-	bool first = true;
-	for (const auto par: sc.parameters()) {
-		if (first)
-			first = false;
-		else
-			std::cerr << ", ";
+	for (const auto par: pars) {
+		if (!par->isIn()) {
+			// non-input parameter encountered, stop output
+			break;
+		}
 
 		std::cerr << (m_verbose.isSet() ? par->longName() : par->shortName());
 
@@ -155,8 +177,56 @@ void TermTracer::syscallExit(const SystemCall &sc) {
 
 			std::cerr << "=" << value;
 		}
-	}
 
+		if (par != last) {
+			std::cerr << ", ";
+		}
+	}
+}
+
+void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) {
+	const auto last = pars.empty() ? nullptr : pars.back();
+	bool seen_non_input = false;
+
+	for (const auto par: pars) {
+		if (!seen_non_input) {
+		       	if (par->isIn()) {
+				// this was already printed during entry
+				continue;
+			} else {
+				seen_non_input = true;
+			}
+		}
+
+		std::cerr << (m_verbose.isSet() ? par->longName() : par->shortName());
+
+		if (m_print_values) {
+			auto value = par->str();
+
+			if (value.size() > m_value_truncation_len) {
+				value.resize(m_value_truncation_len);
+				value += "...";
+			}
+
+			std::cerr << "=" << value;
+		}
+
+		if (par != last) {
+			std::cerr << ", ";
+		}
+	}
+}
+
+void TermTracer::syscallEntry(const SystemCall &sc) {
+	std::cerr << sc.name() << "(";
+
+	printEntryPars(sc.parameters());
+       
+	std::cerr << std::flush;
+}
+
+void TermTracer::syscallExit(const SystemCall &sc) {
+	printExitPars(sc.parameters());
 
 	std::cerr << ") = ";
 
@@ -167,6 +237,8 @@ void TermTracer::syscallExit(const SystemCall &sc) {
 		const auto &err = sc.error();
 		std::cerr << err.str() << " (" << (m_verbose.isSet() ? err.longName() : err.shortName()) << ")\n";
 	}
+
+	std::cerr << std::flush;
 }
 
 void TermTracer::signaled(const cosmos::SigInfo &info) {
