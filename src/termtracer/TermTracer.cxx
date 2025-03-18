@@ -198,6 +198,7 @@ cosmos::ExitStatus TermTracer::runTrace(const cosmos::ProcessID pid) {
 		if (e.errnum() == cosmos::Errno::PERMISSION) {
 			std::cerr << "You need to be root to attach to processes not owned by you\n";
 			std::cerr << "The YAMA kernel security extension can prevent attaching your own processes.\n";
+			std::cerr << "This also happens when another process is already tracing this process.\n";
 		}
 		return cosmos::ExitStatus::FAILURE;
 	}
