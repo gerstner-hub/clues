@@ -11,34 +11,25 @@ const char* SystemCallDB::sysCallLabel(const SystemCallNr nr) {
 	return SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
 }
 
-SystemCallDB::~SystemCallDB() {
-	for (auto pair: *this) {
-		delete pair.second;
-	}
-
-	this->clear();
-}
-
 SystemCall& SystemCallDB::get(const SystemCallNr nr) {
-	iterator it = find(nr);
-
-	if (it == end()) {
-		auto res = insert(std::make_pair(nr, createSysCall(nr)));
+	if (auto it = m_map.find(nr); it != m_map.end()) {
+		return *(it->second);
+	} else {
+		auto res = m_map.insert(std::make_pair(nr, createSysCall(nr)));
 
 		it = res.first;
+		return *(it->second);
 	}
-
-	return *(it->second);
 }
 
-SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
+std::shared_ptr<SystemCall> SystemCallDB::createSysCall(const SystemCallNr nr) {
 	using ValueType = SystemCallValue::Type;
 
 	auto NewCall = [nr](SystemCall::ParameterVector &&pars,
 			SystemCallValue *ret = nullptr, const size_t open_id_par = SIZE_MAX,
 			const size_t close_fd_par = SIZE_MAX) {
 		const auto LABEL = sysCallLabel(nr);
-		return new SystemCall{nr, LABEL, std::move(pars), ret, open_id_par, close_fd_par};
+		return std::make_shared<SystemCall>(nr, LABEL, std::move(pars), ret, open_id_par, close_fd_par);
 	};
 
 	switch (nr) {
