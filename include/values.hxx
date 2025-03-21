@@ -96,6 +96,10 @@ public: // functions
 
 	std::string str() const override;
 
+	std::optional<cosmos::Errno> errcode() const;
+
+	std::optional<KernelErrno> kernelErrcode() const;
+
 protected: // data
 
 	int m_first_valid;

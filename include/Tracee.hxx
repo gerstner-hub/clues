@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <array>
 #include <iosfwd>
 
 // Linux
@@ -35,15 +36,38 @@ public: // types
 	/// Pure virtual interface for consumers of tracing events.
 	class EventConsumer {
 		friend class Tracee;
+	public: // types
+
+		/// Different status flags that can appear in callbacks.
+		enum class Status {
+			/// A system call was interrupted (only appears during syscallExit()).
+			INTERRUPTED = 1 << 0,
+			/// A previously interrupted system call is resumed (only appears during syscallEntry()).
+			RESUMED     = 1 << 1
+		};
+
+		using State = cosmos::BitMask<Status>;
+
 	protected: // functions
 
-		virtual void syscallEntry(const SystemCall &sc) = 0;
+		virtual void syscallEntry(const SystemCall &sc, const State state) = 0;
 
-		virtual void syscallExit(const SystemCall &sc) = 0;
+		virtual void syscallExit(const SystemCall &sc, const State state) = 0;
 
+		/// The tracee has received a signal.
+		/**
+		 * This callback notifies about signals being deliered to the
+		 * tracee.
+		 **/
 		virtual void signaled(const cosmos::SigInfo &info) {
 			(void)info;
 		};
+
+		/// The tracee entered group-stop due to a stopping signal.
+		virtual void stopped() {}
+
+		/// The tracee resumed due to SIGCONT.
+		virtual void resumed() {}
 	};
 
 	/// Current tracing state for a single tracee.
@@ -130,6 +154,19 @@ public: // functions
 	template <typename VECTOR>
 	void readVector(const long *addr, VECTOR &out) const;
 
+protected: // constants
+
+	/// Array of signals that cause tracee stop.
+	/**
+	 * Stopping signals are treated specially during tracing since they
+	 * result in a group-stop state change. This constexpr array is used
+	 * to identify them.
+	 **/
+	static constexpr std::array<cosmos::Signal, 4> STOPPING_SIGNALS = {
+		cosmos::signal::STOP, cosmos::signal::TERM_STOP,
+		cosmos::signal::TERM_INPUT, cosmos::signal::TERM_OUTPUT
+	};
+
 protected: // functions
 
 	explicit Tracee(EventConsumer &consumer);
@@ -174,11 +211,15 @@ protected: // functions
 
 	void handleSystemCall();
 
+	void handleSystemCallEntry();
+
+	void handleSystemCallExit();
+
 	void handleStateMismatch();
 
-	void handleSignal(const cosmos::ChildData &data);
+	void handleSignal(const cosmos::SigInfo &info);
 
-	void handleEvent(const cosmos::ptrace::Event event);
+	void handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal);
 
 	void handleAttached();
 
@@ -204,6 +245,8 @@ protected: // data
 	SystemCallDB m_syscall_db;
 	/// Holds state for the currently executing system call.
 	SystemCall *m_current_syscall = nullptr;
+	/// Previous system call, if it has been interrupted.
+	SystemCall *m_interrupted_syscall = nullptr;
 	/// current RestartMode to use.
 	cosmos::Tracee::RestartMode m_restart_mode = cosmos::Tracee::RestartMode::CONT;
 	/// signal to inject upon next restart of the tracee.

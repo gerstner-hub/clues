@@ -299,6 +299,11 @@ SystemCall* SystemCallDB::createSysCall(const SystemCallNr nr) {
 			},
 			new ErrnoResult{}
 		);
+	case SystemCallNr::RESTART_SYSCALL:
+		return NewCall({
+			},
+			new ErrnoResult{}
+		);
 	default:
 		return NewCall({
 			},

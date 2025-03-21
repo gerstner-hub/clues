@@ -38,9 +38,9 @@ protected: // functions
 
 protected: // event consumer interface
 
-	void syscallEntry(const SystemCall &sc) override;
+	void syscallEntry(const SystemCall &sc, const State state) override;
 
-	void syscallExit(const SystemCall &sc) override;
+	void syscallExit(const SystemCall &sc, const State state) override;
 
 	void signaled(const cosmos::SigInfo &info) override;
 

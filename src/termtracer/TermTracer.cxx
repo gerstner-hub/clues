@@ -160,7 +160,10 @@ void TermTracer::printPar(const SystemCallValue &par, const bool is_last) const 
 	}
 }
 
-void TermTracer::syscallEntry(const SystemCall &sc) {
+void TermTracer::syscallEntry(const SystemCall &sc, const State state) {
+	if (state[Status::RESUMED]) {
+		std::cerr << "<resuming previously interrupted " << sc.name() << "...>\n";
+	}
 	std::cerr << sc.name() << "(";
 
 	printEntryPars(sc.parameters());
@@ -168,20 +171,24 @@ void TermTracer::syscallEntry(const SystemCall &sc) {
 	std::cerr << std::flush;
 }
 
-void TermTracer::syscallExit(const SystemCall &sc) {
+void TermTracer::syscallExit(const SystemCall &sc, const State state) {
 	printExitPars(sc.parameters());
 
 	std::cerr << ") = ";
 
 	if (sc.hasResultValue()) {
 		const auto &res = sc.result();
-		std::cerr << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")\n";
+		std::cerr << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")";
 	} else {
 		const auto &err = sc.error();
-		std::cerr << err.str() << " (" << (m_verbose.isSet() ? err.longName() : err.shortName()) << ")\n";
+		std::cerr << err.str() << " (" << (m_verbose.isSet() ? err.longName() : err.shortName()) << ")";
 	}
 
-	std::cerr << std::flush;
+	if (state[Status::INTERRUPTED]) {
+		std::cerr << " (interrupted)";
+	}
+
+	std::cerr << std::endl;
 }
 
 void TermTracer::signaled(const cosmos::SigInfo &info) {

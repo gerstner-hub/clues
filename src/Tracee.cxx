@@ -174,36 +174,64 @@ void Tracee::handleSystemCall() {
 		}
 
 		changeState(State::SYSCALL_EXIT_STOP);
-		m_current_syscall->setExitInfo(*this, *info.exitInfo());
-		m_current_syscall->updateOpenFiles(m_fd_path_map);
-		m_consumer.syscallExit(*m_current_syscall);
+		handleSystemCallExit();
 	} else {
 		if (!info.isEntry()) {
 			handleStateMismatch();
 		}
 
-		auto &entry_info = *info.entryInfo();
-
 		changeState(State::SYSCALL_ENTER_STOP);
-		const SystemCallNr nr{entry_info.syscallNr()};
-		m_current_syscall = &m_syscall_db.get(nr);
-		m_current_syscall->setEntryInfo(*this, entry_info);
-		m_consumer.syscallEntry(*m_current_syscall);
+		handleSystemCallEntry();
 	}
 
 	m_syscall_info.reset();
 }
 
-void Tracee::handleSignal(const cosmos::ChildData &data) {
-	LOG_INFO("Signal: " << *data.signal);
+void Tracee::handleSystemCallEntry() {
+	EventConsumer::State state;
+	auto &info = *m_syscall_info->entryInfo();
 
-	cosmos::SigInfo info;
-	m_ptrace.getSigInfo(info);
+	const SystemCallNr nr{info.syscallNr()};
+	m_current_syscall = &m_syscall_db.get(nr);
+
+	if (nr == SystemCallNr::RESTART_SYSCALL) {
+		if (m_interrupted_syscall) {
+			m_current_syscall = m_interrupted_syscall;
+			state.set(EventConsumer::Status::RESUMED);
+		} else {
+			// explicit restart_syscall done by user space?
+			LOG_WARN("unknown system call is resumed");
+		}
+	}
+	m_current_syscall->setEntryInfo(*this, info);
+	m_consumer.syscallEntry(*m_current_syscall, state);
+}
+
+void Tracee::handleSystemCallExit() {
+	EventConsumer::State state;
+	auto &syscall = *m_current_syscall;
+
+	syscall.setExitInfo(*this, *m_syscall_info->exitInfo());
+	syscall.updateOpenFiles(m_fd_path_map);
+
+	if (syscall.hasErrorCode() && syscall.error().kernelErrcode() != std::nullopt) {
+		// system call was interrupted, remember it for later
+		m_interrupted_syscall = m_current_syscall;
+		state.set(EventConsumer::Status::INTERRUPTED);
+	} else {
+		m_interrupted_syscall = nullptr;
+	}
+	m_consumer.syscallExit(syscall, state);
+}
+
+void Tracee::handleSignal(const cosmos::SigInfo &info) {
+	LOG_INFO("Signal: " << info.sigNr());
+
 	m_consumer.signaled(info);
 }
 
-void Tracee::handleEvent(const cosmos::ptrace::Event event) {
-	LOG_INFO("PTRACE_EVENT_" << ptrace_event_str(event));
+void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal) {
+	LOG_INFO("PTRACE_EVENT_" << ptrace_event_str(event) << " (" << signal << ")");
 
 	using Event = cosmos::ptrace::Event;
 
@@ -212,11 +240,22 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event) {
 			// this is the initial ptrace-stop. now we can start tracing
 			LOG_INFO("initial ptrace-stop");
 			handleAttached();
-		} else {
+		} else if (cosmos::in_container(signal, STOPPING_SIGNALS)) {
 			// must be a group stop, unless we're tracing
 			// automatically-attached children, which is not yet
 			// implemented
 			changeState(State::GROUP_STOP);
+			m_consumer.stopped();
+		} else if (signal == cosmos::signal::TRAP) {
+			// SIGTRAP has quite a blurry meaning in the ptrace()
+			// API. From practical experiments and the original
+			// strace code I could deduce that for some reason
+			// PTRACE_EVENT_STOP combined with SIGTRAP is observed
+			// when a SIGCONT is received by a tracee that is
+			// currently in group-stop.
+			// We then need to restart using system call tracing
+			// to see the actual SIGCONT being delivered.
+			m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
 		}
 	}
 }
@@ -243,20 +282,27 @@ void Tracee::trace() {
 		} else if (data.trapped()) {
 			if (data.signal == cosmos::signal::SYS_TRAP) {
 				handleSystemCall();
+			} else if (*data.signal > cosmos::signal::MAXIMUM) {
+				// a ptrace event stop
+				const auto raw_sigval = cosmos::to_integral(data.signal->raw());
+				const auto event = cosmos::ptrace::Event{raw_sigval >> 8};
+				const cosmos::SignalNr signr{raw_sigval & 0xff};
+				changeState(State::EVENT_STOP);
+				handleEvent(event, cosmos::Signal{signr});
 			} else {
-				if (*data.signal > cosmos::signal::MAXIMUM) {
-					auto event = cosmos::ptrace::Event{cosmos::to_integral(data.signal->raw()) >> 8};
-					changeState(State::EVENT_STOP);
-					handleEvent(event);
-				} else {
-					changeState(State::SIGNAL_DELIVERY_STOP);
-					handleSignal(data);
-					m_inject_sig = *data.signal;
-				}
+				// a special signal delivery stop?
+				// this is redundant code to below...
+				changeState(State::SIGNAL_DELIVERY_STOP);
+				cosmos::SigInfo info;
+				m_ptrace.getSigInfo(info);
+				handleSignal(info);
+				m_inject_sig = *data.signal;
 			}
 		} else if (data.signaled()) {
 			changeState(State::SIGNAL_DELIVERY_STOP);
-			handleSignal(data);
+			cosmos::SigInfo info;
+			m_ptrace.getSigInfo(info);
+			handleSignal(info);
 			m_inject_sig = *data.signal;
 		} else {
 			LOG_WARN("Other Tracee event?");
@@ -265,7 +311,11 @@ void Tracee::trace() {
 		restart(m_restart_mode, m_inject_sig);
 
 		if (m_restart_mode != cosmos::Tracee::RestartMode::LISTEN) {
+			const auto resumed = m_state == State::GROUP_STOP;
 			changeState(State::RUNNING);
+			if (resumed) {
+				m_consumer.resumed();
+			}
 		}
 	}
 }

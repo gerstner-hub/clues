@@ -59,7 +59,7 @@ void SystemCall::setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallIn
 		// for ErrnoResult to reverse the effect. We need a dedicated
 		// type for this situation.
 		auto raw_errno = cosmos::to_integral(*info.errVal());
-		m_error->fill(proc, Word{raw_errno >= 0 ? static_cast<elf_greg_t>(raw_errno) : 0});
+		m_error->fill(proc, Word{raw_errno >= 0 ? static_cast<elf_greg_t>(-raw_errno) : 0});
 	}
 
 	for (auto &par: m_pars) {
