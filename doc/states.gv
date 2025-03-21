@@ -1,19 +1,18 @@
 digraph G {
 	unknown -> syscall_exit_stop [label="is running in\nkernel context (EINT will occur)" fontsize=8]
-	unknown -> event_stop [label="SIGTRAP is reported", fontsize=8]
+	unknown -> event_stop [label="PTRACE_EVENT_STOP with SIGTRAP is reported", fontsize=8]
 	unknown -> signal_delivery_stop [label="a signal\noccured in parallel" fontsize=8]
 
 	init [label="", shape=point]
-	init -> unknown [style="solid", label="PTRACE_SEIZE,\n PTRACE_INTERRUPT"]
+	init -> unknown [style="solid", label="PTRACE_SEIZE"]
 
-	signal_delivery_stop [label=<signal-delivery-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp; !event-stop &amp;&amp;<br/>!group-stop &amp;&amp; !syscall-{entry,exit}-stop</font>>]
-	signal_delivery_stop -> group_stop [label=<<font point-size="8">SIGSTOP|SIGTSTP|SIGTTIN|SIGTTOU<br/>received and injected</font>>]
+	signal_delivery_stop [label=<signal-delivery-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp; !event-stop &amp;&amp;<br/>!syscall-{entry,exit}-stop</font>>]
 
-	group_stop [label=<group-stop<br/><br/><font point-size="8">(status&gt;&gt;16) == PTRACE_STOP</font>>]
-	group_stop -> group_stop [label="PTRACE_LISTEN\n (required for properly stopping)" fontsize=8]
-	group_stop -> signal_delivery_stop [label="SIGCONT, SIGKILL, ...?" fontsize=8]
+	group_stop
+	group_stop -> event_stop [label=<<font point-size="8">PTRACE_EVENT_STOP with SIGTRAP<br/>(appears before signal-stop for SIGCONT)</font>>]
 
-	event_stop [label=<event-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp; WSTOPSIG() == SIGTRAP</font>>]
+	event_stop [label=<event-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp; (si_status &gt;&gt; 8) contains PTRACE_EVENT_&lt;reason&gt;<br/>(lower 8 bits contain the signal: usually SIGTRAP,<br/>or stopping signal if a group stop is upcoming)</font>>]
+	event_stop -> group_stop [label=<<font point-size="8">PTRACE_EVENT_STOP with SIGSTOP<br/>(or other stopping signal) occurred<br/>→ restart with PTRACE_LISTEN</font>>]
 
 	syscall_entry_stop [label=<syscall-entry-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp;<br/>WSTOPSIG() == (SIGTRAP &amp; 0x80)</font>>]
 	syscall_exit_stop [label=<syscall-exit-stop<br/><br/><font point-size="8">WIFSTOPPED() &amp;&amp;<br/>WSTOPSIG() == (SIGTRAP &amp; 0x80)</font>>]
@@ -23,4 +22,5 @@ digraph G {
 	running -> event_stop [label="clone(), [v]fork(), exec(), exit(), seccomp" fontsize=8]
 	running -> syscall_entry_stop [label="system call invoked" fontsize=8]
 	running -> syscall_exit_stop [label="system call finished" fontsize=8]
+	running -> event_stop [label=<<font point-size="8">SIGSTOP|SIGTSTP|SIGTTIN|SIGTTOU<br/> injected</font>>]
 }
