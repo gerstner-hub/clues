@@ -14,6 +14,7 @@
 #include <cosmos/error/UsageError.hxx>
 #include <cosmos/io/iovector.hxx>
 #include <cosmos/proc/ptrace.hxx>
+#include <cosmos/types.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -30,17 +31,14 @@ namespace clues {
  * registers.
  **/
 class RegisterSet {
-public: // types
-
-	using ZeroInit = cosmos::NamedBool<struct zero_init_t, false>;
-
 public: // functions
 
-	explicit RegisterSet(const ZeroInit zero_init = ZeroInit{false}) {
-		if (zero_init) {
-			for (size_t reg = 0; reg < numRegisters(); reg++) {
-				m_regs[reg] = 0;
-			}
+	explicit RegisterSet(const cosmos::no_init_t &) {
+	}
+
+	RegisterSet() {
+		for (size_t reg = 0; reg < numRegisters(); reg++) {
+			m_regs[reg] = 0;
 		}
 	}
 
