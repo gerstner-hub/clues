@@ -3,14 +3,13 @@
 // C++
 #include <iosfwd>
 #include <optional>
-#include <string>
-#include <utility>
 #include <vector>
 
 // cosmos
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
+#include <clues/SystemCallValue.hxx>
 #include <clues/types.hxx>
 #include <clues/values.hxx>
 
@@ -91,7 +90,8 @@ public: // functions
 	 * Introspect the parameter values and store them in the current
 	 * object's ParameterVector.
 	 **/
-	void setEntryInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::EntryInfo &info);
+	void setEntryInfo(const Tracee &proc,
+			const cosmos::ptrace::SyscallInfo::EntryInfo &info);
 
 	/// Update possible out and return parameter values from the given tracee.
 	/**
@@ -99,7 +99,8 @@ public: // functions
 	 * Introspect the return value and update out or in-out parameters as
 	 * applicable.
 	 **/
-	void setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::ExitInfo &info);
+	void setExitInfo(const Tracee &proc,
+			const cosmos::ptrace::SyscallInfo::ExitInfo &info);
 
 	void updateOpenFiles(DescriptorPathMapping &mapping);
 
