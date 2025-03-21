@@ -6,15 +6,15 @@
 
 // Clues
 #include "clues/RegisterSet.hxx"
-#include "clues/Arch.hxx"
+#include "clues/arch.hxx"
 
 int main() {
 	cosmos::Init init;
-	std::cout << "is i386? " << clues::isi386() << "\n";
-	std::cout << "is x86_64? " << clues::isx86_64() << "\n";
+	std::cout << "is i386? " << cosmos::arch::I386 << "\n";
+	std::cout << "is x86_64? " << cosmos::arch::X86_64 << "\n";
 	std::cout << "num_syscall_regs: " << clues::SYSCALL_MAX_PARS << "\n";
 
-	clues::RegisterSet rs(clues::RegisterSet::ZeroInit{true});
+	clues::RegisterSet rs;
 	std::cout << "RegisterSet: " << rs << std::endl;
 	return 0;
 }

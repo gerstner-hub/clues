@@ -5,7 +5,7 @@
 #include <cosmos/formatting.hxx>
 
 // Clues
-#include <clues/Arch.hxx>
+#include <clues/arch.hxx>
 
 namespace clues {
 

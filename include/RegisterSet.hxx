@@ -18,7 +18,7 @@
 #include <cosmos/utils.hxx>
 
 // clues
-#include <clues/Arch.hxx>
+#include <clues/arch.hxx>
 #include <clues/types.hxx>
 // generated
 #include <clues/syscallnrs.h>
