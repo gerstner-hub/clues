@@ -3,6 +3,9 @@
 // clues
 #include <clues/Tracee.hxx>
 
+// cosmos
+#include <cosmos/proc/SubProc.hxx>
+
 namespace clues {
 
 /// Specialization of Tracee that creates a new child process for tracing.

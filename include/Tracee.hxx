@@ -6,13 +6,12 @@
 
 // Linux
 #include <unistd.h>
-#include <sys/ptrace.h>
 
 // cosmos
 #include <cosmos/BitMask.hxx>
+#include <cosmos/proc/process.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/signal.hxx>
-#include <cosmos/proc/SubProc.hxx>
 #include <cosmos/proc/Tracee.hxx>
 #include <cosmos/string.hxx>
 

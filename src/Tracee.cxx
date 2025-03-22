@@ -2,11 +2,8 @@
 #include <cstring>
 
 // cosmos
-#include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/RuntimeError.hxx>
-#include <cosmos/error/errno.hxx>
 #include <cosmos/io/ILogger.hxx>
-#include <cosmos/io/iovector.hxx>
 
 // clues
 #include <clues/clues.hxx>
