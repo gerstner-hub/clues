@@ -8,6 +8,9 @@
 #include <sys/stat.h>
 #include <sys/resource.h>
 
+// cosmos
+#include <cosmos/error/errno.hxx>
+
 // clues
 #include <clues/SystemCallItem.hxx>
 #include <clues/kernel_structs.hxx>
