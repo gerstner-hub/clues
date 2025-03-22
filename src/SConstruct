@@ -129,6 +129,8 @@ libenv.Append(CPPPATH=public_includes)
 libenv.Append(CPPPATH=["."])
 
 libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False)
+items_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], subpath="items")
+libclues_srcs += items_srcs
 libenv.ConfigureForLibOrPackage('libcosmos', libclues_srcs)
 
 version, soname, tag = libenv.GetSharedLibVersionInfo('libclues')

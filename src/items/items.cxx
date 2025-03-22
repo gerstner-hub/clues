@@ -19,8 +19,8 @@
 
 // clues
 #include <clues/Tracee.hxx>
+#include <clues/items/items.hxx>
 #include <clues/utils.hxx>
-#include <clues/values.hxx>
 
 // cosmos
 #include <cosmos/error/ApiError.hxx>

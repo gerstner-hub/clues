@@ -3,7 +3,7 @@
 
 // clues
 #include <clues/SystemCallDB.hxx>
-#include <clues/values.hxx>
+#include <clues/items/items.hxx>
 
 namespace clues {
 

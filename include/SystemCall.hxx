@@ -9,8 +9,8 @@
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
+#include <clues/items/items.hxx>
 #include <clues/types.hxx>
-#include <clues/values.hxx>
 
 namespace clues {
 	class SystemCall;
