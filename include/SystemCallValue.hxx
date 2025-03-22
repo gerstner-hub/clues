@@ -15,9 +15,10 @@ namespace clues {
 class SystemCall;
 class Tracee;
 
-/// Base class for any kind of system call values.
+/// Base class for any kind of system call parameter or return value.
 /**
- * This can represent a system call parameter or return value.
+ * This can represent a system call parameter or return value. Concrete types
+ * need to derive from this.
  **/
 class CLUES_API SystemCallValue {
 	friend SystemCall;
@@ -149,7 +150,7 @@ protected: // functions
 	void updateData(const Tracee &) override {}
 };
 
-/// Base class for a pass by value parameter of a system call.
+/// Base class for a pass-by-value parameter of a system call.
 /**
  * These are typically PARAM_IN types denoting IDs, enums, flags etc. that are
  * passed to a system call.
@@ -184,7 +185,7 @@ public: // functions
 	explicit ValueInParameter(
 		const char *short_name,
 		const char *long_name = nullptr) :
-		ValueParameter{Type::PARAM_IN, short_name, long_name} {
+			ValueParameter{Type::PARAM_IN, short_name, long_name} {
 	}
 };
 
