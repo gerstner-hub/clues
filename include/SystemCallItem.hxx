@@ -17,14 +17,14 @@ class Tracee;
 
 /// Base class for any kind of system call parameter or return value.
 /**
- * This can represent a system call parameter or return value. Concrete types
- * need to derive from this.
+ * Concrete types need to derive from this and override virtual methods as
+ * needed.
  **/
-class CLUES_API SystemCallValue {
+class CLUES_API SystemCallItem {
 	friend SystemCall;
 public: // types
 
-	/// Basic type of system call value.
+	/// Basic type of this item.
 	enum class Type {
 		PARAM_IN,     ///< An input parameter to the system call.
 		PARAM_OUT,    ///< An output parameter filled by in by the system call.
@@ -34,16 +34,16 @@ public: // types
 
 public: // functions
 
-	/// Constructs a new SystemCallValue.
+	/// Constructs a new SystemCallItem.
 	/**
 	 * \param[in] type
-	 * 	The basic type of the value
+	 * 	The type of item.
 	 * \param[in] short_name
-	 * 	A short friendly name for this value (one word)
+	 * 	A short friendly name for this item (one word)
 	 * \param[in] long_name
-	 *	A longer name for this value, optional
+	 *	A longer name for this item, optional
 	 **/
-	explicit SystemCallValue(
+	explicit SystemCallItem(
 		const Type &type,
 		const char *short_name,
 		const char *long_name = nullptr) :
@@ -52,7 +52,7 @@ public: // functions
 			m_long_name{long_name}
 	{}
 
-	virtual ~SystemCallValue() {}
+	virtual ~SystemCallItem() {}
 
 	auto type() const { return m_type; }
 
@@ -61,31 +61,31 @@ public: // functions
 	bool isInOut() const       { return m_type == Type::PARAM_IN_OUT; }
 	bool isReturnValue() const { return m_type == Type::RETVAL; }
 
-	/// Fills the system call value from the given register data.
+	/// Fills the item from the given register data.
 	void fill(const Tracee &proc, const Word word);
 
-	/// Returns whether the value needs to be updated after the system call is finished.
+	/// Returns whether the item needs to be updated after the system call is finished.
 	bool needsUpdate() const { return m_type != Type::PARAM_IN; }
 
-	/// Returns the friendly short name for this value.
+	/// Returns the friendly short name for this item.
 	const char* shortName() const { return m_short_name; }
-	/// Returns the friendly long name for this value, if available, else the sort name.
+	/// Returns the friendly long name for this item, if available, else the short name.
 	const char* longName() const { return m_long_name ? m_long_name : shortName(); }
 
 	auto hasLongName() const { return m_long_name != nullptr; }
 
-	/// Returns a human readable string representation of the value.
+	/// Returns a human readable string representation of the item.
 	/**
 	 * This member function should be specialized in derived classes to
-	 * output the value data in a fashion suitable for the concrete value
+	 * output the item's data in a fashion suitable for the concrete item
 	 * type.
 	 **/
 	virtual std::string str() const;
 
-	/// Returns the currently stored raw value.
+	/// Returns the currently stored raw value of the item.
 	Word value() const { return m_val; }
 
-	/// Helper to cast the strongly typed Word value `m_val` to other strong enum types.
+	/// Helper to cast the strongly typed `Word` `m_val` to other strong enum types.
 	/**
 	 * This also silences data loss warnings. On x86_64 Word is 64-bit
 	 * wide, but many parameters are actually only 32-bit wide, so this
@@ -112,69 +112,57 @@ public: // functions
 
 protected: // functions
 
-	/// Processes the value stored in m_val acc. to the actual value type.
-	virtual void processValue(const Tracee &proc) = 0;
+	/// Processes the value stored in m_val acc. to the actual item type.
+	virtual void processValue(const Tracee &) {}
 
 	/// Called upon exit of the system call to update possible out parameters.
-	virtual void updateData(const Tracee &proc) = 0;
+	virtual void updateData(const Tracee &) {}
 
-	/// Sets the system call context this value is a part of.
+	/// Sets the system call context this item is a part of.
 	void setSystemCall(const SystemCall &sc) { m_call = &sc; }
 
 protected: // data
 
-	/// The system call context the value is a part of.
+	/// The system call context this item part of.
 	const SystemCall *m_call = nullptr;
-	/// The type of value.
+	/// The type of item.
 	Type m_type;
-	/// A human readable short name for the value, should be one word only.
+	/// A human readable short name for the item, should be one word only.
 	const char *m_short_name = nullptr;
-	/// A human readable longer name for the value.
+	/// A human readable longer name for the item.
 	const char *m_long_name = nullptr;
-	/// The raw register value for the value.
+	/// The raw register value for the item.
 	Word m_val;
 };
 
-/// Base class for a system call return value.
+/// Base class for a system call return values.
 class ReturnValue :
-		public SystemCallValue {
+		public SystemCallItem {
 public:
 	explicit ReturnValue(const char *short_name, const char *long_name = nullptr) :
-		SystemCallValue{Type::RETVAL, short_name, long_name}
+		SystemCallItem{Type::RETVAL, short_name, long_name}
 	{}
-
-protected: // functions
-
-	void processValue(const Tracee &) override {}
-
-	void updateData(const Tracee &) override {}
 };
 
 /// Base class for a pass-by-value parameter of a system call.
 /**
  * These are typically PARAM_IN types denoting IDs, enums, flags etc. that are
  * passed to a system call.
- * 
+ *
  * The processValue() and updateValue() functions are implemented as no-ops,
  * because no additional data needs to be fetched from the tracee for this
  * kind of parameter.
  **/
 class ValueParameter :
-		public SystemCallValue {
+		public SystemCallItem {
 public: // functions
 
 	explicit ValueParameter(
 		const Type &type,
 		const char *short_name,
 		const char *long_name = nullptr) :
-			SystemCallValue{type, short_name, long_name} {
+			SystemCallItem{type, short_name, long_name} {
 	}
-
-protected: // functions
-
-	void processValue(const Tracee &) override {}
-
-	void updateData(const Tracee &) override {}
 };
 
 /// Specialization of ValueParameter for PARAM_IN parameters.
@@ -209,14 +197,14 @@ public: // functions
  * appropriate.
  **/
 class PointerValue :
-		public SystemCallValue {
+		public SystemCallItem {
 public: // functions
 
 	explicit PointerValue(
 		const Type &type,
 		const char *short_name,
 		const char *long_name) :
-			SystemCallValue{type, short_name, long_name} {
+			SystemCallItem{type, short_name, long_name} {
 	}
 };
 
@@ -236,11 +224,6 @@ public: // functions
 		const Type &type = Type::PARAM_OUT) :
 			PointerValue{type, short_name, long_name} {
 	}
-
-protected: // functions
-
-	/// Empty implementation of this function, because it's not needed for out parameters.
-	void processValue(const Tracee &) override {}
 };
 
 /// Specialization of a PointerValue for in-parameters.
@@ -258,15 +241,11 @@ public: // functions
 		const char *long_name = nullptr) :
 			PointerValue{Type::PARAM_IN, short_name, long_name} {
 	}
-
-protected: // functions
-
-	void updateData(const Tracee &) override {}
 };
 
 } // end ns
 
 CLUES_API std::ostream& operator<<(
 	std::ostream &o,
-	const clues::SystemCallValue &value
+	const clues::SystemCallItem &value
 );

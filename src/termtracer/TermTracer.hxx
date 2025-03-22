@@ -32,7 +32,7 @@ protected: // functions
 
 	void configureLogger();
 
-	void printPar(const SystemCallValue &value, const bool is_last) const;
+	void printPar(const SystemCallItem &value, const bool is_last) const;
 	void printEntryPars(const SystemCall::ParameterVector &pars) const;
 	void printExitPars(const SystemCall::ParameterVector &pars) const;
 

@@ -9,7 +9,6 @@
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
-#include <clues/SystemCallValue.hxx>
 #include <clues/types.hxx>
 #include <clues/values.hxx>
 
@@ -22,7 +21,7 @@ std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc);
 
 namespace clues {
 
-class SystemCallValue;
+class SystemCallItem;
 
 /// Base class to represent system call properties.
 /**
@@ -30,7 +29,7 @@ class SystemCallValue;
  * 
  * - the system call number.
  * - an ordered list of parameters the system call expects, represented
- *   by the abstract SystemCallValue base class.
+ *   by the abstract SystemCallItem base class.
  * - a human readable name to identify the system call.
  * 
  * The actual derived type knows all about the individual system call
@@ -44,7 +43,7 @@ class CLUES_API SystemCall {
 public: // types
 
 	/// Vector of the parameters required for a system call.
-	using ParameterVector = std::vector<SystemCallValue*>;
+	using ParameterVector = std::vector<SystemCallItem*>;
 
 public: // functions
 
@@ -73,7 +72,7 @@ public: // functions
 		const SystemCallNr nr,
 		const char *name,
 		ParameterVector &&pars,
-		SystemCallValue *ret,
+		SystemCallItem *ret,
 		const size_t open_id_par = SIZE_MAX,
 		const size_t close_fd_par = SIZE_MAX
 	);
@@ -114,7 +113,7 @@ public: // functions
 	/// Access to the parameters associated with this system call.
 	const ParameterVector& parameters() const { return m_pars; }
 	/// Access to the return value parameter associated with this system call.
-	const SystemCallValue& result() const { return *m_return; }
+	const SystemCallItem& result() const { return *m_return; }
 	/// Access to the errno result seen for this system call.
 	const ErrnoResult& error() const { return *m_error; }
 
@@ -133,7 +132,7 @@ protected: // data
 	/// The basic name of the system call.
 	const char *m_name = nullptr;
 	/// The return value of the system call.
-	SystemCallValue *m_return;
+	SystemCallItem *m_return;
 	/// If the system call fails, this is the error code.
 	std::optional<ErrnoResult> m_error;
 	/// The array of system call parameters, if any.

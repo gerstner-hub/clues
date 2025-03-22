@@ -9,18 +9,18 @@
 #include <sys/resource.h>
 
 // clues
-#include <clues/SystemCallValue.hxx>
+#include <clues/SystemCallItem.hxx>
 #include <clues/kernel_structs.hxx>
 
 /*
- * Various specializations of SystemCallValue are found in this header
+ * Various specializations of SystemCallItem are found in this header
  */
 
 namespace clues {
 
 /// A file descriptor system call parameter.
 class CLUES_API FileDescriptor :
-		public SystemCallValue {
+		public SystemCallItem {
 public: // functions
 
 	/**
@@ -32,17 +32,11 @@ public: // functions
 	explicit FileDescriptor(
 		const Type type,
 		const bool at_semantics = false) :
-			SystemCallValue{type, "fd", "file descriptor"},
+			SystemCallItem{type, "fd", "file descriptor"},
 			m_at_semantics{at_semantics} {
 	}
 
 	std::string str() const override;
-
-protected: // functions
-
-	void processValue(const Tracee &) override {};
-
-	void updateData(const Tracee &) override {};
 
 protected: // data
 
@@ -130,13 +124,13 @@ protected: // data
 
 /// c-string style system call data.
 class CLUES_API StringData :
-		public SystemCallValue {
+		public SystemCallItem {
 public: // functions
 	explicit StringData(
 		const char *short_name = "string",
 		const char *long_name = nullptr,
 		const Type type = Type::PARAM_IN) :
-			SystemCallValue{type, short_name, long_name} {
+			SystemCallItem{type, short_name, long_name} {
 	}
 
 	std::string str() const override;
@@ -188,19 +182,13 @@ protected: // functions
 
 /// The flags passed to calls like open().
 class CLUES_API OpenFlagsValue :
-		public SystemCallValue {
+		public SystemCallItem {
 public:
 	explicit OpenFlagsValue(const Type type = Type::PARAM_IN) :
-			SystemCallValue{type, "flags", "open flags"} {
+			SystemCallItem{type, "flags", "open flags"} {
 	}
 
 	std::string str() const override;
-
-
-protected: // functions
-
-	void processValue(const Tracee &) override {}
-	void updateData(const Tracee &) override {}
 };
 
 /// The mode parameter in access().
@@ -301,13 +289,13 @@ public:
 
 /// The struct timespec used for various timing and timeout operations in system calls.
 class CLUES_API TimespecParameter :
-		public SystemCallValue {
+		public SystemCallItem {
 public: // functions
 	explicit TimespecParameter(
 		const char *short_name,
 		const char *long_name = nullptr,
 		const Type type = Type::PARAM_IN) :
-			SystemCallValue{type, short_name, long_name} {
+			SystemCallItem{type, short_name, long_name} {
 	}
 
 	std::string str() const override;

@@ -2,23 +2,23 @@
 #include <ostream>
 
 // clues
-#include <clues/SystemCallValue.hxx>
+#include <clues/SystemCallItem.hxx>
 
 namespace clues {
 
-void SystemCallValue::fill(const Tracee &proc, const Word word) {
+void SystemCallItem::fill(const Tracee &proc, const Word word) {
 	m_val = word;
 	processValue(proc);
 }
 
-std::string SystemCallValue::str() const {
+std::string SystemCallItem::str() const {
 	// by default simply return the register value as a string
 	return std::to_string(cosmos::to_integral(m_val));
 }
 
 } // end ns
 
-std::ostream& operator<<(std::ostream &o, const clues::SystemCallValue &value) {
+std::ostream& operator<<(std::ostream &o, const clues::SystemCallItem &value) {
 	o << value.longName() << " = " << value.str();
 	return o;
 }

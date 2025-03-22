@@ -23,10 +23,10 @@ SystemCall& SystemCallDB::get(const SystemCallNr nr) {
 }
 
 std::shared_ptr<SystemCall> SystemCallDB::createSysCall(const SystemCallNr nr) {
-	using ValueType = SystemCallValue::Type;
+	using ValueType = SystemCallItem::Type;
 
 	auto NewCall = [nr](SystemCall::ParameterVector &&pars,
-			SystemCallValue *ret = nullptr, const size_t open_id_par = SIZE_MAX,
+			SystemCallItem *ret = nullptr, const size_t open_id_par = SIZE_MAX,
 			const size_t close_fd_par = SIZE_MAX) {
 		const auto LABEL = sysCallLabel(nr);
 		return std::make_shared<SystemCall>(nr, LABEL, std::move(pars), ret, open_id_par, close_fd_par);
@@ -108,7 +108,7 @@ std::shared_ptr<SystemCall> SystemCallDB::createSysCall(const SystemCallNr nr) {
 				new FileDescriptorParameter{},
 				new ValueInParameter{"offset"}
 			},
-			new GenericPointerValue{"addr", "mapped memory address", SystemCallValue::Type::PARAM_OUT}
+			new GenericPointerValue{"addr", "mapped memory address", SystemCallItem::Type::PARAM_OUT}
 		);
 	case SystemCallNr::ARCH_PRCTL:
 		return NewCall({

@@ -9,7 +9,7 @@
 #include <clues/clues.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
-#include <clues/SystemCallValue.hxx>
+#include <clues/SystemCallItem.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
@@ -18,7 +18,7 @@ SystemCall::SystemCall(
 		const SystemCallNr nr,
 		const char *name,
 		ParameterVector &&pars,
-		SystemCallValue *ret,
+		SystemCallItem *ret,
 		const size_t open_id_par,
 		const size_t close_fd_par) :
 		m_nr{nr}, m_name{name}, m_return{ret}, m_pars{pars},

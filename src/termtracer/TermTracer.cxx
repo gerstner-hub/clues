@@ -16,7 +16,7 @@
 #include <clues/ChildTracee.hxx>
 #include <clues/clues.hxx>
 #include <clues/ForeignTracee.hxx>
-#include <clues/SystemCallValue.hxx>
+#include <clues/SystemCallItem.hxx>
 #include "TermTracer.hxx"
 
 namespace clues {
@@ -141,7 +141,7 @@ void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
 	}
 }
 
-void TermTracer::printPar(const SystemCallValue &par, const bool is_last) const {
+void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
 	std::cerr << (m_verbose.isSet() ? par.longName() : par.shortName());
 
 	if (m_print_values) {
