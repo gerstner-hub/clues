@@ -7,6 +7,7 @@
 
 // clues
 #include <clues/format.hxx>
+#include <clues/kernel_structs.hxx>
 
 namespace clues::format {
 
@@ -82,6 +83,29 @@ std::string signal_set(const sigset_t &set) {
 	}
 
 	return ret;
+}
+
+std::string saflags(const int flags) {
+#define chk_sa_flag(FLAG) if (flags & FLAG) { \
+	if (!first) ss << "|";\
+	else first = false;\
+	\
+	ss << #FLAG;\
+}
+
+	std::stringstream ss;
+	bool first = true;
+
+	chk_sa_flag(SA_NOCLDSTOP);
+	chk_sa_flag(SA_NOCLDWAIT);
+	chk_sa_flag(SA_NODEFER);
+	chk_sa_flag(SA_ONSTACK);
+	chk_sa_flag(SA_RESETHAND);
+	chk_sa_flag(SA_RESTART);
+	chk_sa_flag(SA_SIGINFO);
+	chk_sa_flag(SA_RESTORER);
+
+	return ss.str();
 }
 
 } // end ns

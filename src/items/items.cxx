@@ -33,29 +33,6 @@
 
 namespace {
 
-std::string saflags_label(const int flags) {
-#define chk_sa_flag(FLAG) if (flags & FLAG) { \
-	if (!first) ss << "|";\
-	else first = false;\
-	\
-	ss << #FLAG;\
-}
-
-	std::stringstream ss;
-	bool first = true;
-
-	chk_sa_flag(SA_NOCLDSTOP);
-	chk_sa_flag(SA_NOCLDWAIT);
-	chk_sa_flag(SA_NODEFER);
-	chk_sa_flag(SA_ONSTACK);
-	chk_sa_flag(SA_RESETHAND);
-	chk_sa_flag(SA_RESTART);
-	chk_sa_flag(SA_SIGINFO);
-	chk_sa_flag(SA_RESTORER);
-
-	return ss.str();
-}
-
 std::string format_limit(uint64_t lim) {
 	if (lim == RLIM_INFINITY)
 		return "RLIM_INFINITY";
@@ -499,7 +476,7 @@ std::string SigactionParameter::str() const {
 		ss << (void*)m_sigaction->handler;
 
 	ss << "), sa_mask(" << format::signal_set(m_sigaction->mask) << "), sa_flags("
-		<< saflags_label(m_sigaction->flags) << "), sa_restorer("
+		<< format::saflags(m_sigaction->flags) << "), sa_restorer("
 		<< (void*)m_sigaction->restorer << ")";
 
 	return ss.str();
