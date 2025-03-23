@@ -9,8 +9,8 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #ifdef __x86_64__
-#include <sys/prctl.h> // arch_prctl constants
-#include <asm/prctl.h> // "	"
+#	include <sys/prctl.h> // arch_prctl constants
+#	include <asm/prctl.h> // "	"
 #endif
 #include <linux/futex.h> // futex(2)
 #include <time.h>
@@ -53,63 +53,6 @@ std::string ArchCodeParameter::str() const {
 }
 #endif // __x86_64__
 
-std::string FileModeParameter::str() const {
-	std::stringstream ss;
-
-	const auto mode = cosmos::FileModeBits{valueAs<mode_t>()};
-
-	auto chk_mode_flag = [&ss, mode](const cosmos::FileModeBit bit, const char *ch) {
-		if (mode[bit])
-			ss << ch;
-		else
-			ss << '-';
-	};
-
-	ss << "0x" << std::hex << valueAs<mode_t>() << " (";
-
-	using cosmos::FileModeBit;
-
-	chk_mode_flag(FileModeBit::SETUID,      "s");
-	chk_mode_flag(FileModeBit::SETGID,      "S");
-	chk_mode_flag(FileModeBit::STICKY,      "t");
-	chk_mode_flag(FileModeBit::OWNER_READ,  "r");
-	chk_mode_flag(FileModeBit::OWNER_WRITE, "w");
-	chk_mode_flag(FileModeBit::OWNER_EXEC,  "x");
-	chk_mode_flag(FileModeBit::GROUP_READ,  "r");
-	chk_mode_flag(FileModeBit::GROUP_WRITE, "w");
-	chk_mode_flag(FileModeBit::GROUP_EXEC,  "x");
-	chk_mode_flag(FileModeBit::OTHER_READ,  "r");
-	chk_mode_flag(FileModeBit::OTHER_WRITE, "w");
-	chk_mode_flag(FileModeBit::OTHER_EXEC,  "x");
-
-	ss << ")";
-
-	return ss.str();
-}
-
-std::string StatParameter::str() const {
-	if (!m_stat) {
-		return "NULL";
-	}
-
-	std::stringstream ss;
-
-	ss << "st_size = " << m_stat->st_size << ", ";
-	ss << "st_dev = " << m_stat->st_dev;
-
-	return ss.str();
-}
-
-void StatParameter::updateData(const Tracee &proc) {
-	if (!m_stat) {
-		m_stat = std::make_optional<struct stat>({});
-	}
-
-	if (!proc.readStruct(m_val, *m_stat)) {
-		m_stat.reset();
-	}
-}
-
 std::string MemoryProtectionParameter::str() const {
 	std::stringstream ss;
 
@@ -142,54 +85,6 @@ std::string MemoryProtectionParameter::str() const {
 	return ret;
 }
 
-std::string DirEntries::str() const {
-	std::stringstream ss;
-	const auto result = m_call->result().valueAs<int>();
-
-	if (result < 0) {
-		ss << "undefined";
-	} else if(result == 0) {
-		ss << "empty";
-	} else {
-		ss << m_entries.size() << " entries: ";
-
-		for (const auto &entry: m_entries) {
-			ss << entry << ", ";
-		}
-	}
-
-	return ss.str();
-}
-
-void DirEntries::updateData(const Tracee &proc) {
-	m_entries.clear();
-
-	// the amount of data stored at the DirEntries location depends on the system call result value.
-	const auto bytes = m_call->result().valueAs<size_t>();
-
-	if (bytes <= 0)
-		// error or empty
-		return;
-
-	/*
-	 * first copy over all the necessary data from the tracee
-	 */
-	std::unique_ptr<char> buffer(new char[bytes]);
-	proc.readBlob(valueAs<long*>(), buffer.get(), bytes);
-
-	struct linux_dirent *cur = nullptr;
-	size_t pos = 0;
-
-	// NOTE: to avoid copying here we could simply store a linux_dirent in
-	// the object and keep only a vector of string_view
-
-	while (pos < bytes) {
-		cur = (struct linux_dirent*)(buffer.get() + pos);
-		const auto namelen = cur->d_reclen - 2 - offsetof(struct linux_dirent, d_name);
-		m_entries.emplace_back(std::string{cur->d_name, namelen});
-		pos += cur->d_reclen;
-	}
-}
 
 #define ENUM_CASE(NAME) case NAME: return #NAME
 

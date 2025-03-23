@@ -58,37 +58,6 @@ public:
 	std::string str() const override;
 };
 
-/// File access mode passed e.g. to open(), chmod().
-class FileModeParameter :
-		public ValueInParameter {
-public:
-
-	FileModeParameter() :
-			ValueInParameter{"mode", "file-mode"} {
-	}
-
-	std::string str() const override;
-};
-
-/// The stat structure used in stat() & friends.
-class CLUES_API StatParameter :
-		public PointerOutValue {
-public: // functions
-	explicit StatParameter() :
-			PointerOutValue{"stat", "struct stat"} {
-	}
-
-	std::string str() const override;
-
-protected: // functions
-
-	void updateData(const Tracee &proc) override;
-
-protected: // data
-
-	std::optional<struct ::stat> m_stat;
-};
-
 /// Memory protection used e.g. in mprotect().
 class MemoryProtectionParameter :
 		public ValueInParameter {
@@ -99,26 +68,6 @@ public: // data
 	}
 
 	std::string str() const override;
-};
-
-/// A range of directory entries from getdents().
-class CLUES_API DirEntries :
-		public PointerOutValue {
-public: // functions
-
-	explicit DirEntries() :
-			PointerOutValue{"dirent", "struct linux_dirent"}
-	{}
-
-	std::string str() const override;
-
-protected: // functions
-
-	void updateData(const Tracee &proc) override;
-
-protected: // data
-
-	std::vector<std::string> m_entries;
 };
 
 /// The operation to performed on a signal set.
