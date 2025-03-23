@@ -16,6 +16,7 @@
 #include <clues/items/files.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
+#include <clues/items/time.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/SystemCallItem.hxx>
 
@@ -71,63 +72,12 @@ public: // data
 	std::string str() const override;
 };
 
-/// The struct timespec used for various timing and timeout operations in system calls.
-class CLUES_API TimespecParameter :
-		public SystemCallItem {
-public: // functions
-	explicit TimespecParameter(
-		const char *short_name,
-		const char *long_name = nullptr,
-		const Type type = Type::PARAM_IN) :
-			SystemCallItem{type, short_name, long_name} {
-	}
-
-	std::string str() const override;
-
-protected: // functions
-
-	void processValue(const Tracee &proc) override {
-		if (!this->isOut())
-			fetch(proc);
-	}
-
-	void updateData(const Tracee &proc) override {
-		fetch(proc);
-	}
-
-	void fetch(const Tracee &proc);
-
-protected: // data
-
-	std::optional<struct timespec> m_timespec;
-};
-
 /// The futex operation to be performed in the context of a futex system call.
 class CLUES_API FutexOperation :
 		public ValueInParameter {
 public: // functions
 	explicit FutexOperation() :
 			ValueInParameter{"op", "futex operation"} {
-	}
-
-	std::string str() const override;
-};
-
-class CLUES_API ClockID :
-		public ValueInParameter {
-public: // functions
-	explicit ClockID() :
-			ValueInParameter{"clockid", "clock identifier"} {
-	}
-
-	std::string str() const override;
-};
-
-class CLUES_API ClockNanoSleepFlags :
-		public ValueInParameter {
-public: // functions
-	explicit ClockNanoSleepFlags() :
-			ValueInParameter{"flags", "clock sleep flags"} {
 	}
 
 	std::string str() const override;
