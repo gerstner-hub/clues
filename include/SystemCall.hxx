@@ -10,7 +10,7 @@
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
-#include <clues/items/items.hxx>
+#include <clues/items/ErrnoResult.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
