@@ -13,7 +13,7 @@
 
 // clues
 #include <clues/items/ErrnoResult.hxx>
-#include <clues/items/FileDescriptor.hxx>
+#include <clues/items/files.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/SystemCallItem.hxx>
@@ -45,28 +45,6 @@ protected: // data
 
 	void processValue(const Tracee &) override {}
 	void updateData(const Tracee &) override {}
-};
-
-/// The flags passed to calls like open().
-class CLUES_API OpenFlagsValue :
-		public SystemCallItem {
-public:
-	explicit OpenFlagsValue(const Type type = Type::PARAM_IN) :
-			SystemCallItem{type, "flags", "open flags"} {
-	}
-
-	std::string str() const override;
-};
-
-/// The mode parameter in access().
-class AccessModeParameter :
-		public ValueInParameter {
-public:
-	explicit AccessModeParameter() :
-			ValueInParameter{"check", "access check"} {
-	}
-
-	std::string str() const override;
 };
 
 /// The code parameter to the arch_prctl system call.

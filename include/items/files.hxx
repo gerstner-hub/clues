@@ -52,4 +52,26 @@ protected: // functions
 	std::string str() const override;
 };
 
+/// The flags passed to calls like open().
+class CLUES_API OpenFlagsValue :
+		public SystemCallItem {
+public:
+	explicit OpenFlagsValue(const Type type = Type::PARAM_IN) :
+			SystemCallItem{type, "flags", "open flags"} {
+	}
+
+	std::string str() const override;
+};
+
+/// The mode parameter in access().
+class AccessModeParameter :
+		public ValueInParameter {
+public:
+	explicit AccessModeParameter() :
+			ValueInParameter{"check", "access check"} {
+	}
+
+	std::string str() const override;
+};
+
 } // end ns
