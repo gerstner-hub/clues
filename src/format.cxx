@@ -2,6 +2,7 @@
 #include <sstream>
 
 // cosmos
+#include <cosmos/string.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -60,6 +61,27 @@ std::string signal(const cosmos::SignalNr signal) {
 	ss << " (" << cosmos::Signal{signal}.name() << ")";
 
 	return ss.str();
+}
+
+std::string signal_set(const sigset_t &set) {
+	std::stringstream ss;
+
+	ss << "{";
+
+	for (int signum = 1; signum < SIGRTMAX; signum++) {
+		if (sigismember(&set, signum)) {
+			ss << format::signal(cosmos::SignalNr{signum}) << ", ";
+		}
+	}
+
+	ss << "}";
+
+	auto ret = ss.str();
+	if (cosmos::is_suffix(ret, ", ")) {
+		ret = ret.substr(0, ret.size() - 2);
+	}
+
+	return ret;
 }
 
 } // end ns

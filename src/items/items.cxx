@@ -33,27 +33,6 @@
 
 namespace {
 
-std::string format_signal_set(const sigset_t &set) {
-	std::stringstream ss;
-
-	ss << "{";
-
-	for (int signum = 1; signum < SIGRTMAX; signum++) {
-		if (sigismember(&set, signum)) {
-			ss << clues::format::signal(cosmos::SignalNr{signum}) << ", ";
-		}
-	}
-
-	ss << "}";
-
-	auto ret = ss.str();
-	if (cosmos::is_suffix(ret, ", ")) {
-		ret = ret.substr(0, ret.size() - 2);
-	}
-
-	return ret;
-}
-
 std::string saflags_label(const int flags) {
 #define chk_sa_flag(FLAG) if (flags & FLAG) { \
 	if (!first) ss << "|";\
@@ -519,7 +498,7 @@ std::string SigactionParameter::str() const {
 	else
 		ss << (void*)m_sigaction->handler;
 
-	ss << "), sa_mask(" << format_signal_set(m_sigaction->mask) << "), sa_flags("
+	ss << "), sa_mask(" << format::signal_set(m_sigaction->mask) << "), sa_flags("
 		<< saflags_label(m_sigaction->flags) << "), sa_restorer("
 		<< (void*)m_sigaction->restorer << ")";
 
@@ -548,7 +527,7 @@ void SigSetParameter::processValue(const Tracee &proc) {
 
 std::string SigSetParameter::str() const {
 	if (m_sigset) {
-		return format_signal_set(*m_sigset);
+		return format::signal_set(*m_sigset);
 	} else {
 		return "NULL";
 	}
