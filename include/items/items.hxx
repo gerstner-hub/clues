@@ -19,7 +19,7 @@
  * Various specializations of SystemCallItem are found in this header
  */
 
-namespace clues {
+namespace clues::item {
 
 /// A file descriptor system call parameter.
 class CLUES_API FileDescriptor :

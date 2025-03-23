@@ -7,6 +7,8 @@
 
 namespace clues {
 
+using namespace item;
+
 const char* SystemCallDB::sysCallLabel(const SystemCallNr nr) {
 	return SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
 }

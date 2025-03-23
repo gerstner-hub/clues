@@ -148,7 +148,7 @@ std::string format_limit(uint64_t lim) {
 } // end namespace
 
 
-namespace clues {
+namespace clues::item {
 
 std::string FileDescriptor::str() const {
 	const auto fd = valueAs<cosmos::FileNum>();
