@@ -15,6 +15,7 @@
 #include <clues/items/ErrnoResult.hxx>
 #include <clues/items/files.hxx>
 #include <clues/items/mmap.hxx>
+#include <clues/items/prctl.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/items/time.hxx>
@@ -48,17 +49,6 @@ protected: // data
 
 	void processValue(const Tracee &) override {}
 	void updateData(const Tracee &) override {}
-};
-
-/// The code parameter to the arch_prctl system call.
-class CLUES_API ArchCodeParameter :
-		public ValueInParameter {
-public:
-	explicit ArchCodeParameter() :
-			ValueInParameter{"subfunction"} {
-	}
-
-	std::string str() const override;
 };
 
 /// The futex operation to be performed in the context of a futex system call.
