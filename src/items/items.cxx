@@ -31,27 +31,6 @@
 #include <cosmos/proc/mman.hxx>
 #include <cosmos/proc/signal.hxx>
 
-namespace {
-
-std::string format_limit(uint64_t lim) {
-	if (lim == RLIM_INFINITY)
-		return "RLIM_INFINITY";
-	// these seem to have the same value on some platforms, triggering
-	// -Wduplicated-cond. So only make the check if the constants actually
-	// differ.
-#if RLIM_INFINITY != RLIM64_INFINITY
-	else if (lim == RLIM64_INFINITY)
-		return "RLIM64_INFINITY";
-#endif
-	else if ((lim % 1024) == 0)
-		return std::to_string(lim / 1024) + " * " + "1024";
-	else
-		return std::to_string(lim);
-}
-
-} // end namespace
-
-
 namespace clues::item {
 
 std::string FileDescriptor::str() const {
@@ -539,8 +518,8 @@ std::string ResourceLimit::str() const {
 	std::stringstream ss;
 
 	ss
-		<< "rlim_cur(" << format_limit(m_limit->rlim_cur) << "), rlim_max("
-		<< format_limit(m_limit->rlim_max) << ")";
+		<< "rlim_cur(" << format::limit(m_limit->rlim_cur) << "), rlim_max("
+		<< format::limit(m_limit->rlim_max) << ")";
 
 	return ss.str();
 }
