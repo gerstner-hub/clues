@@ -20,6 +20,7 @@
 // clues
 #include <clues/format.hxx>
 #include <clues/items/items.hxx>
+#include <clues/macros.h>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
 
@@ -29,7 +30,6 @@
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/fs/types.hxx>
 #include <cosmos/proc/mman.hxx>
-#include <cosmos/proc/signal.hxx>
 
 namespace clues::item {
 
@@ -86,17 +86,6 @@ std::string MemoryProtectionParameter::str() const {
 }
 
 
-#define ENUM_CASE(NAME) case NAME: return #NAME
-
-std::string SigSetOperation::str() const {
-	switch (valueAs<int>()) {
-		ENUM_CASE(SIG_BLOCK);
-		ENUM_CASE(SIG_UNBLOCK);
-		ENUM_CASE(SIG_SETMASK);
-		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
-	}
-}
-
 void TimespecParameter::fetch(const Tracee &proc) {
 	if (!m_timespec) {
 		m_timespec = timespec{};
@@ -128,113 +117,58 @@ std::string FutexOperation::str() const {
 	 * header.
 	 */
 	switch (valueAs<int>() & FUTEX_CMD_MASK) {
-		ENUM_CASE(FUTEX_WAIT);
-		ENUM_CASE(FUTEX_WAIT_BITSET);
-		ENUM_CASE(FUTEX_WAKE);
-		ENUM_CASE(FUTEX_WAKE_BITSET);
-		ENUM_CASE(FUTEX_FD);
-		ENUM_CASE(FUTEX_REQUEUE);
-		ENUM_CASE(FUTEX_CMP_REQUEUE);
+		CASE_ENUM_TO_STR(FUTEX_WAIT);
+		CASE_ENUM_TO_STR(FUTEX_WAIT_BITSET);
+		CASE_ENUM_TO_STR(FUTEX_WAKE);
+		CASE_ENUM_TO_STR(FUTEX_WAKE_BITSET);
+		CASE_ENUM_TO_STR(FUTEX_FD);
+		CASE_ENUM_TO_STR(FUTEX_REQUEUE);
+		CASE_ENUM_TO_STR(FUTEX_CMP_REQUEUE);
 		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
 	}
 }
 
 std::string ClockID::str() const {
 	switch (valueAs<clockid_t>()) {
-		ENUM_CASE(CLOCK_REALTIME);
-		ENUM_CASE(CLOCK_REALTIME_COARSE);
-		ENUM_CASE(CLOCK_TAI);
-		ENUM_CASE(CLOCK_MONOTONIC);
-		ENUM_CASE(CLOCK_MONOTONIC_RAW);
-		ENUM_CASE(CLOCK_MONOTONIC_COARSE);
-		ENUM_CASE(CLOCK_BOOTTIME);
-		ENUM_CASE(CLOCK_PROCESS_CPUTIME_ID);
-		ENUM_CASE(CLOCK_THREAD_CPUTIME_ID);
+		CASE_ENUM_TO_STR(CLOCK_REALTIME);
+		CASE_ENUM_TO_STR(CLOCK_REALTIME_COARSE);
+		CASE_ENUM_TO_STR(CLOCK_TAI);
+		CASE_ENUM_TO_STR(CLOCK_MONOTONIC);
+		CASE_ENUM_TO_STR(CLOCK_MONOTONIC_RAW);
+		CASE_ENUM_TO_STR(CLOCK_MONOTONIC_COARSE);
+		CASE_ENUM_TO_STR(CLOCK_BOOTTIME);
+		CASE_ENUM_TO_STR(CLOCK_PROCESS_CPUTIME_ID);
+		CASE_ENUM_TO_STR(CLOCK_THREAD_CPUTIME_ID);
 		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
 	}
 }
 
 std::string ClockNanoSleepFlags::str() const {
 	switch (valueAs<int>()) {
-		ENUM_CASE(TIMER_ABSTIME);
+		CASE_ENUM_TO_STR(TIMER_ABSTIME);
 		case 0: return "<relative-time>";
 		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
 	}
 }
 
-std::string SignalNumber::str() const {
-	std::string s;
-	return format::signal(valueAs<cosmos::SignalNr>());
-}
-
-std::string SigactionParameter::str() const {
-	if (!m_sigaction)
-		return "NULL";
-
-	std::stringstream ss;
-
-	ss << "handler(";
-
-	if (m_sigaction->handler == SIG_IGN)
-		ss << "SIG_IGN";
-	else if (m_sigaction->handler == SIG_DFL)
-		ss << "SIG_DFL";
-	else
-		ss << (void*)m_sigaction->handler;
-
-	ss << "), sa_mask(" << format::signal_set(m_sigaction->mask) << "), sa_flags("
-		<< format::saflags(m_sigaction->flags) << "), sa_restorer("
-		<< (void*)m_sigaction->restorer << ")";
-
-	return ss.str();
-}
-
-void SigactionParameter::processValue(const Tracee &proc) {
-	if (!m_sigaction) {
-		m_sigaction = kernel_sigaction{};
-	}
-
-	if (!proc.readStruct(m_val, *m_sigaction)) {
-		m_sigaction.reset();
-	}
-}
-
-void SigSetParameter::processValue(const Tracee &proc) {
-	if (!m_sigset) {
-		m_sigset = sigset_t{};
-	}
-
-	if (!proc.readStruct(m_val, *m_sigset)) {
-		m_sigset.reset();
-	}
-}
-
-std::string SigSetParameter::str() const {
-	if (m_sigset) {
-		return format::signal_set(*m_sigset);
-	} else {
-		return "NULL";
-	}
-}
-
 std::string ResourceType::str() const {
 	switch (valueAs<int>()) {
-		ENUM_CASE(RLIMIT_AS);
-		ENUM_CASE(RLIMIT_CORE);
-		ENUM_CASE(RLIMIT_CPU);
-		ENUM_CASE(RLIMIT_DATA);
-		ENUM_CASE(RLIMIT_FSIZE);
-		ENUM_CASE(RLIMIT_LOCKS);
-		ENUM_CASE(RLIMIT_MEMLOCK);
-		ENUM_CASE(RLIMIT_MSGQUEUE);
-		ENUM_CASE(RLIMIT_NICE);
-		ENUM_CASE(RLIMIT_NOFILE);
-		ENUM_CASE(RLIMIT_NPROC);
-		ENUM_CASE(RLIMIT_RSS);
-		ENUM_CASE(RLIMIT_RTPRIO);
-		ENUM_CASE(RLIMIT_RTTIME);
-		ENUM_CASE(RLIMIT_SIGPENDING);
-		ENUM_CASE(RLIMIT_STACK);
+		CASE_ENUM_TO_STR(RLIMIT_AS);
+		CASE_ENUM_TO_STR(RLIMIT_CORE);
+		CASE_ENUM_TO_STR(RLIMIT_CPU);
+		CASE_ENUM_TO_STR(RLIMIT_DATA);
+		CASE_ENUM_TO_STR(RLIMIT_FSIZE);
+		CASE_ENUM_TO_STR(RLIMIT_LOCKS);
+		CASE_ENUM_TO_STR(RLIMIT_MEMLOCK);
+		CASE_ENUM_TO_STR(RLIMIT_MSGQUEUE);
+		CASE_ENUM_TO_STR(RLIMIT_NICE);
+		CASE_ENUM_TO_STR(RLIMIT_NOFILE);
+		CASE_ENUM_TO_STR(RLIMIT_NPROC);
+		CASE_ENUM_TO_STR(RLIMIT_RSS);
+		CASE_ENUM_TO_STR(RLIMIT_RTPRIO);
+		CASE_ENUM_TO_STR(RLIMIT_RTTIME);
+		CASE_ENUM_TO_STR(RLIMIT_SIGPENDING);
+		CASE_ENUM_TO_STR(RLIMIT_STACK);
 		default: return "unknown";
 	}
 }

@@ -14,6 +14,7 @@
 // clues
 #include <clues/items/ErrnoResult.hxx>
 #include <clues/items/files.hxx>
+#include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/SystemCallItem.hxx>
@@ -65,17 +66,6 @@ public: // data
 
 	explicit MemoryProtectionParameter() :
 			ValueInParameter{"prot", "protection"} {
-	}
-
-	std::string str() const override;
-};
-
-/// The operation to performed on a signal set.
-class CLUES_API SigSetOperation :
-		public ValueInParameter {
-public:
-	explicit SigSetOperation() :
-			ValueInParameter{"sigsetop", "signal set operation"} {
 	}
 
 	std::string str() const override;
@@ -141,58 +131,6 @@ public: // functions
 	}
 
 	std::string str() const override;
-};
-
-/// A signal number specification.
-class CLUES_API SignalNumber :
-		public ValueInParameter {
-public: // functions
-	explicit SignalNumber() :
-		ValueInParameter{"signum", "signal number"} {
-	}
-
-	std::string str() const override;
-};
-
-/// The struct sigaction used in various signal related system calls.
-class CLUES_API SigactionParameter :
-		public PointerInValue {
-public: // functions
-	explicit SigactionParameter(
-		const char *short_name = "sigaction",
-		const char *long_name = "struct sigaction") :
-			PointerInValue{short_name, long_name} {
-	}
-
-	std::string str() const override;
-
-protected: // functions
-
-	void processValue(const Tracee &proc) override;
-
-protected: // data
-
-	std::optional<struct kernel_sigaction> m_sigaction;
-};
-
-/// A set of POSIX signals for setting or masking in the context of various system calls.
-class CLUES_API SigSetParameter :
-		public PointerInValue {
-public: // functions
-	explicit SigSetParameter(
-		const char *short_name = "sigset", const char *name = "signal set") :
-			PointerInValue{short_name, name} {
-	}
-
-	std::string str() const override;
-
-protected: // functions
-
-	void processValue(const Tracee &proc) override;
-
-protected: // data
-
-	std::optional<sigset_t> m_sigset;
 };
 
 /// A resource kind specification as used in getrlimit & friends.
