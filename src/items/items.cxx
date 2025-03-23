@@ -18,8 +18,9 @@
 #include <sys/resource.h> // *rlimit()
 
 // clues
-#include <clues/Tracee.hxx>
+#include <clues/format.hxx>
 #include <clues/items/items.hxx>
+#include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
 
 // cosmos
@@ -32,59 +33,6 @@
 
 namespace {
 
-std::string signal_label(const cosmos::SignalNr signal) {
-#	define SIG_CASE(NAME) case NAME: ss << #NAME; break
-
-	std::stringstream ss;
-
-	const auto SIGRTMIN_PRIV = SIGRTMIN - 2;
-
-	if (const auto raw = cosmos::to_integral(signal); raw < SIGRTMIN_PRIV || raw > SIGRTMAX) {
-		switch (raw) {
-			SIG_CASE(SIGINT);
-			SIG_CASE(SIGTERM);
-			SIG_CASE(SIGHUP);
-			SIG_CASE(SIGQUIT);
-			SIG_CASE(SIGILL);
-			SIG_CASE(SIGABRT);
-			SIG_CASE(SIGFPE);
-			SIG_CASE(SIGKILL);
-			SIG_CASE(SIGPIPE);
-			SIG_CASE(SIGSEGV);
-			SIG_CASE(SIGALRM);
-			SIG_CASE(SIGUSR1);
-			SIG_CASE(SIGUSR2);
-			SIG_CASE(SIGCONT);
-			SIG_CASE(SIGSTOP);
-			SIG_CASE(SIGTSTP);
-			SIG_CASE(SIGTTIN);
-			SIG_CASE(SIGTTOU);
-			SIG_CASE(SIGTRAP);
-			SIG_CASE(SIGBUS);
-			SIG_CASE(SIGSTKFLT);
-			SIG_CASE(SIGCHLD);
-			SIG_CASE(SIGIO);
-			SIG_CASE(SIGPROF);
-			SIG_CASE(SIGSYS);
-			SIG_CASE(SIGWINCH);
-			SIG_CASE(SIGPWR);
-			SIG_CASE(SIGURG);
-			SIG_CASE(SIGXCPU);
-			SIG_CASE(SIGVTALRM);
-			SIG_CASE(SIGXFSZ);
-			default: ss << "unknown (" << raw << ")"; break;
-		}
-	} else if (raw >= SIGRTMIN_PRIV && raw < SIGRTMIN) {
-		ss << "glibc internal signal";
-	} else {
-		ss << "SIGRT" << raw - SIGRTMIN;
-	}
-
-	ss << " (" << cosmos::Signal{signal}.name() << ")";
-
-	return ss.str();
-}
-
 std::string format_signal_set(const sigset_t &set) {
 	std::stringstream ss;
 
@@ -92,7 +40,7 @@ std::string format_signal_set(const sigset_t &set) {
 
 	for (int signum = 1; signum < SIGRTMAX; signum++) {
 		if (sigismember(&set, signum)) {
-			ss << signal_label(cosmos::SignalNr{signum}) << ", ";
+			ss << clues::format::signal(cosmos::SignalNr{signum}) << ", ";
 		}
 	}
 
@@ -553,7 +501,7 @@ std::string ClockNanoSleepFlags::str() const {
 
 std::string SignalNumber::str() const {
 	std::string s;
-	return signal_label(valueAs<cosmos::SignalNr>());
+	return format::signal(valueAs<cosmos::SignalNr>());
 }
 
 std::string SigactionParameter::str() const {
