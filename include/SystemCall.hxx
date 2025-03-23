@@ -2,6 +2,7 @@
 
 // C++
 #include <iosfwd>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -22,6 +23,7 @@ std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc);
 namespace clues {
 
 class SystemCallItem;
+using SystemCallPtr = std::shared_ptr<SystemCall>;
 
 /// Base class to represent system call properties.
 /**
@@ -142,5 +144,8 @@ protected: // data
 	/// If this is a close-like system call, then this gives the number of the parameter that contains the open file descriptor.
 	const size_t m_close_fd_par;
 };
+
+/// Creates a dynamically allocated SystemCall instance for the given system call number
+CLUES_API SystemCallPtr create_syscall(const SystemCallNr nr);
 
 } // end ns

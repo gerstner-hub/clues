@@ -2,7 +2,6 @@
 
 // C++
 #include <map>
-#include <memory>
 
 // clues
 #include <clues/SystemCall.hxx>
@@ -29,12 +28,6 @@ public: // functions
 		return const_cast<SystemCallDB&>(*this).get(nr);
 	}
 
-protected: // functions
-
-	std::shared_ptr<SystemCall> createSysCall(const SystemCallNr nr);
-
-	static const char* sysCallLabel(const SystemCallNr nr);
-
 protected: // data
 
 	// TODO: this could also be a std::array of fixed size
@@ -47,7 +40,7 @@ protected: // data
 	// for fixed sized arrays and non-lazy initialization, but runtime
 	// cost should be lower and determinism greater.
 
-	std::map<SystemCallNr, std::shared_ptr<SystemCall>> m_map;
+	std::map<SystemCallNr, SystemCallPtr> m_map;
 };
 
 } // end ns
