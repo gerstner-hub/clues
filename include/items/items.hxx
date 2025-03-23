@@ -1,7 +1,7 @@
 #pragma once
 
 // clues
-#include <clues/items/ErrnoResult.hxx>
+#include <clues/items/error.hxx>
 #include <clues/items/files.hxx>
 #include <clues/items/futex.hxx>
 #include <clues/items/limits.hxx>

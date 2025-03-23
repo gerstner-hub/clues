@@ -2,7 +2,7 @@
 #include <cosmos/formatting.hxx>
 
 // clues
-#include <clues/items/ErrnoResult.hxx>
+#include <clues/items/error.hxx>
 #include <clues/utils.hxx>
 
 namespace clues::item {
