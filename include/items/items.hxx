@@ -1,15 +1,5 @@
 #pragma once
 
-// C++
-#include <optional>
-#include <vector>
-
-// Linux
-#include <sys/stat.h>
-
-// cosmos
-#include <cosmos/error/errno.hxx>
-
 // clues
 #include <clues/items/ErrnoResult.hxx>
 #include <clues/items/files.hxx>
