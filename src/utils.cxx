@@ -1,9 +1,11 @@
 // C++
 #include <iostream>
 
-// Clues
+// clues
 #include <clues/utils.hxx>
-#include <clues/errnodb.h> // generated
+
+// generated
+#include <clues/errnodb.h>
 
 // cosmos
 #include <cosmos/utils.hxx>
