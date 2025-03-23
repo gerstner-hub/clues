@@ -1,26 +1,28 @@
+// cosmos
+#include <cosmos/compiler.hxx>
+
 // Linux
-#ifdef __x86_64__
-#	include <sys/prctl.h> // arch_prctl constants
-#	include <asm/prctl.h> // "	"
+#ifdef COSMOS_X86_64
+#	include <asm/prctl.h> // arch_prctl constants
+#	include <sys/prctl.h>
 #endif
 
 // clues
 #include <clues/items/prctl.hxx>
+#include <clues/macros.h>
 
 namespace clues::item {
 
-#ifdef __x86_64__
-
+#ifdef COSMOS_X86_64
 std::string ArchCodeParameter::str() const {
-#	define chk_arch_case(MODE) case MODE: return #MODE;
 	switch (valueAs<int>()) {
-		chk_arch_case(ARCH_SET_FS)
-		chk_arch_case(ARCH_GET_FS)
-		chk_arch_case(ARCH_SET_GS)
-		chk_arch_case(ARCH_GET_GS)
+		CASE_ENUM_TO_STR(ARCH_SET_FS);
+		CASE_ENUM_TO_STR(ARCH_GET_FS);
+		CASE_ENUM_TO_STR(ARCH_SET_GS);
+		CASE_ENUM_TO_STR(ARCH_GET_GS);
 		default: return "unknown";
 	}
 }
-#endif // __x86_64__
+#endif // COSMOS_X86_64
 
 } // end ns
