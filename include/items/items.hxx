@@ -14,6 +14,7 @@
 // clues
 #include <clues/items/ErrnoResult.hxx>
 #include <clues/items/files.hxx>
+#include <clues/items/mmap.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/items/time.hxx>
@@ -55,18 +56,6 @@ class CLUES_API ArchCodeParameter :
 public:
 	explicit ArchCodeParameter() :
 			ValueInParameter{"subfunction"} {
-	}
-
-	std::string str() const override;
-};
-
-/// Memory protection used e.g. in mprotect().
-class MemoryProtectionParameter :
-		public ValueInParameter {
-public: // data
-
-	explicit MemoryProtectionParameter() :
-			ValueInParameter{"prot", "protection"} {
 	}
 
 	std::string str() const override;
