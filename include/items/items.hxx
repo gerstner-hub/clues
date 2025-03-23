@@ -14,6 +14,7 @@
 // clues
 #include <clues/items/ErrnoResult.hxx>
 #include <clues/items/files.hxx>
+#include <clues/items/futex.hxx>
 #include <clues/items/mmap.hxx>
 #include <clues/items/prctl.hxx>
 #include <clues/items/signal.hxx>
@@ -49,17 +50,6 @@ protected: // data
 
 	void processValue(const Tracee &) override {}
 	void updateData(const Tracee &) override {}
-};
-
-/// The futex operation to be performed in the context of a futex system call.
-class CLUES_API FutexOperation :
-		public ValueInParameter {
-public: // functions
-	explicit FutexOperation() :
-			ValueInParameter{"op", "futex operation"} {
-	}
-
-	std::string str() const override;
 };
 
 /// A resource kind specification as used in getrlimit & friends.
