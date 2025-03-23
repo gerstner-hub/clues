@@ -6,7 +6,6 @@
 
 // Linux
 #include <sys/stat.h>
-#include <sys/resource.h>
 
 // cosmos
 #include <cosmos/error/errno.hxx>
@@ -15,6 +14,7 @@
 #include <clues/items/ErrnoResult.hxx>
 #include <clues/items/files.hxx>
 #include <clues/items/futex.hxx>
+#include <clues/items/limits.hxx>
 #include <clues/items/mmap.hxx>
 #include <clues/items/prctl.hxx>
 #include <clues/items/signal.hxx>
@@ -50,35 +50,6 @@ protected: // data
 
 	void processValue(const Tracee &) override {}
 	void updateData(const Tracee &) override {}
-};
-
-/// A resource kind specification as used in getrlimit & friends.
-class CLUES_API ResourceType :
-		public ValueInParameter {
-public: // functions
-	explicit ResourceType() :
-			ValueInParameter{"resource", "resource type"} {
-	}
-
-	std::string str() const override;
-};
-
-class CLUES_API ResourceLimit :
-		public PointerOutValue {
-public: // functions
-	explicit ResourceLimit() :
-			PointerOutValue{"limit"} {
-	}
-
-	std::string str() const override;
-
-protected: // functions
-
-	void updateData(const Tracee &proc) override;
-
-protected: // data
-
-	std::optional<struct rlimit> m_limit;
 };
 
 } // end ns
