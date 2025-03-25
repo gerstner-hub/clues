@@ -15,7 +15,7 @@ public: // functions
 	explicit TimespecParameter(
 		const char *short_name,
 		const char *long_name = nullptr,
-		const Type type = Type::PARAM_IN) :
+		const ItemType type = ItemType::PARAM_IN) :
 			SystemCallItem{type, short_name, long_name} {
 	}
 

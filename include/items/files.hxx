@@ -28,7 +28,7 @@ public: // functions
 	 * 	*at() type system call i.e. the special file descriptor
 	 * 	AT_FDCWD can occur.
 	 **/
-	explicit FileDescriptor(const Type type = Type::PARAM_IN,
+	explicit FileDescriptor(const ItemType type = ItemType::PARAM_IN,
 				const AtSemantics at_semantics = AtSemantics{false}) :
 			SystemCallItem{type, "fd", "file descriptor"},
 			m_at_semantics{at_semantics} {
@@ -45,7 +45,7 @@ protected: // data
 class CLUES_API OpenFlagsValue :
 		public SystemCallItem {
 public:
-	explicit OpenFlagsValue(const Type type = Type::PARAM_IN) :
+	explicit OpenFlagsValue(const ItemType type = ItemType::PARAM_IN) :
 			SystemCallItem{type, "flags", "open flags"} {
 	}
 

@@ -15,6 +15,14 @@ namespace clues {
 class SystemCall;
 class Tracee;
 
+/// Basic type of a SystemCallItem.
+enum class ItemType {
+	PARAM_IN,     ///< An input parameter to the system call.
+	PARAM_OUT,    ///< An output parameter filled by in by the system call.
+	PARAM_IN_OUT, ///< Both an input and output parameter.
+	RETVAL        ///< A system call return value.
+};
+
 /// Base class for any kind of system call parameter or return value.
 /**
  * Concrete types need to derive from this and override virtual methods as
@@ -22,16 +30,6 @@ class Tracee;
  **/
 class CLUES_API SystemCallItem {
 	friend SystemCall;
-public: // types
-
-	/// Basic type of this item.
-	enum class Type {
-		PARAM_IN,     ///< An input parameter to the system call.
-		PARAM_OUT,    ///< An output parameter filled by in by the system call.
-		PARAM_IN_OUT, ///< Both an input and output parameter.
-		RETVAL        ///< A system call return value.
-	};
-
 public: // functions
 
 	/// Constructs a new SystemCallItem.
@@ -44,7 +42,7 @@ public: // functions
 	 *	A longer name for this item, optional
 	 **/
 	explicit SystemCallItem(
-		const Type &type,
+		const ItemType &type,
 		const char *short_name,
 		const char *long_name = nullptr) :
 			m_type{type},
@@ -56,16 +54,16 @@ public: // functions
 
 	auto type() const { return m_type; }
 
-	bool isIn() const          { return m_type == Type::PARAM_IN; }
-	bool isOut() const         { return m_type == Type::PARAM_OUT; }
-	bool isInOut() const       { return m_type == Type::PARAM_IN_OUT; }
-	bool isReturnValue() const { return m_type == Type::RETVAL; }
+	bool isIn() const          { return m_type == ItemType::PARAM_IN; }
+	bool isOut() const         { return m_type == ItemType::PARAM_OUT; }
+	bool isInOut() const       { return m_type == ItemType::PARAM_IN_OUT; }
+	bool isReturnValue() const { return m_type == ItemType::RETVAL; }
 
 	/// Fills the item from the given register data.
 	void fill(const Tracee &proc, const Word word);
 
 	/// Returns whether the item needs to be updated after the system call is finished.
-	bool needsUpdate() const { return m_type != Type::PARAM_IN; }
+	bool needsUpdate() const { return m_type != ItemType::PARAM_IN; }
 
 	/// Returns the friendly short name for this item.
 	const char* shortName() const { return m_short_name; }
@@ -126,7 +124,7 @@ protected: // data
 	/// The system call context this item part of.
 	const SystemCall *m_call = nullptr;
 	/// The type of item.
-	Type m_type;
+	ItemType m_type;
 	/// A human readable short name for the item, should be one word only.
 	const char *m_short_name = nullptr;
 	/// A human readable longer name for the item.
@@ -140,7 +138,7 @@ class ReturnValue :
 		public SystemCallItem {
 public:
 	explicit ReturnValue(const char *short_name, const char *long_name = nullptr) :
-		SystemCallItem{Type::RETVAL, short_name, long_name}
+		SystemCallItem{ItemType::RETVAL, short_name, long_name}
 	{}
 };
 
@@ -158,7 +156,7 @@ class ValueParameter :
 public: // functions
 
 	explicit ValueParameter(
-		const Type &type,
+		const ItemType &type,
 		const char *short_name,
 		const char *long_name = nullptr) :
 			SystemCallItem{type, short_name, long_name} {
@@ -173,7 +171,7 @@ public: // functions
 	explicit ValueInParameter(
 		const char *short_name,
 		const char *long_name = nullptr) :
-			ValueParameter{Type::PARAM_IN, short_name, long_name} {
+			ValueParameter{ItemType::PARAM_IN, short_name, long_name} {
 	}
 };
 
@@ -185,7 +183,7 @@ public: // functions
 	explicit ValueOutParameter(
 		const char *short_name,
 		const char *long_name) :
-			ValueParameter{Type::PARAM_OUT, short_name, long_name} {
+			ValueParameter{ItemType::PARAM_OUT, short_name, long_name} {
 	}
 };
 
@@ -201,7 +199,7 @@ class PointerValue :
 public: // functions
 
 	explicit PointerValue(
-		const Type &type,
+		const ItemType &type,
 		const char *short_name,
 		const char *long_name) :
 			SystemCallItem{type, short_name, long_name} {
@@ -221,7 +219,7 @@ public: // functions
 	explicit PointerOutValue(
 		const char *short_name,
 		const char *long_name = nullptr,
-		const Type &type = Type::PARAM_OUT) :
+		const ItemType &type = ItemType::PARAM_OUT) :
 			PointerValue{type, short_name, long_name} {
 	}
 };
@@ -239,7 +237,7 @@ public: // functions
 	explicit PointerInValue(
 		const char *short_name,
 		const char *long_name = nullptr) :
-			PointerValue{Type::PARAM_IN, short_name, long_name} {
+			PointerValue{ItemType::PARAM_IN, short_name, long_name} {
 	}
 };
 

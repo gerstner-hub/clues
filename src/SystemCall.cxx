@@ -110,7 +110,6 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 
 SystemCallPtr create_syscall(const SystemCallNr nr) {
 	using namespace item;
-	using ValueType = SystemCallItem::Type;
 
 	auto new_call = [nr](SystemCall::ParameterVector &&pars,
 			SystemCallItem *ret = nullptr, const size_t open_id_par = SIZE_MAX,
@@ -131,7 +130,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::READ:
 		return new_call({
 				new FileDescriptor{},
-				new GenericPointerValue{"buf", "target buffer", ValueType::PARAM_OUT},
+				new GenericPointerValue{"buf", "target buffer", ItemType::PARAM_OUT},
 				new ValueInParameter{"count", "buffer length"}
 			},
 			new ReturnValue{"bytes", "bytes read"}
@@ -140,12 +139,12 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		return new_call({
 				new GenericPointerValue{"addr", "requested data segment end"}
 			},
-			new GenericPointerValue{"addr", "actual data segment end", ValueType::RETVAL}
+			new GenericPointerValue{"addr", "actual data segment end", ItemType::RETVAL}
 		);
 	case SystemCallNr::NANOSLEEP:
 		return new_call({
 				new TimespecParameter{"req", "requested"},
-				new TimespecParameter{"rem", "remaining", ValueType::PARAM_OUT}
+				new TimespecParameter{"rem", "remaining", ItemType::PARAM_OUT}
 			},
 			new SuccessResult{}
 		);
@@ -196,7 +195,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				new FileDescriptor{},
 				new ValueInParameter{"offset"}
 			},
-			new GenericPointerValue{"addr", "mapped memory address", SystemCallItem::Type::PARAM_OUT}
+			new GenericPointerValue{"addr", "mapped memory address", ItemType::PARAM_OUT}
 		);
 	case SystemCallNr::ARCH_PRCTL:
 		return new_call({
@@ -234,17 +233,17 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				new OpenFlagsValue{},
 				new FileModeParameter{}
 			},
-			new FileDescriptor{FileDescriptor::Type::PARAM_OUT},
+			new FileDescriptor{ItemType::PARAM_OUT},
 			0 // number of parameter that is the to-be-opened ID
 		);
 	case SystemCallNr::OPENAT:
 		return new_call({
-				new FileDescriptor{FileDescriptor::Type::PARAM_IN, item::AtSemantics{true}},
+				new FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{true}},
 				new StringData{"filename"},
 				new OpenFlagsValue{},
 				new FileModeParameter{}
 			},
-			new FileDescriptor{FileDescriptor::Type::PARAM_OUT}
+			new FileDescriptor{ItemType::PARAM_OUT}
 		);
 	case SystemCallNr::CLOSE:
 		return new_call({
@@ -279,8 +278,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		return new_call({
 				new ValueInParameter{"flags", "clone flags"},
 				new GenericPointerValue{"stack", "stack address"},
-				new GenericPointerValue{"parent tid", "parent thread id", GenericPointerValue::Type::PARAM_OUT},
-				new GenericPointerValue{"child tid", "child thread id", GenericPointerValue::Type::PARAM_OUT},
+				new GenericPointerValue{"parent tid", "parent thread id", ItemType::PARAM_OUT},
+				new GenericPointerValue{"child tid", "child thread id", ItemType::PARAM_OUT},
 				new GenericPointerValue{"tls", "thread local storage"}
 			},
 			new ValueOutParameter("pid", "child pid")
@@ -381,7 +380,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				new ClockNanoSleepFlags{},
 				new TimespecParameter{"req", "requested"},
 				// TODO: this is only filled in if the call failed with EINTR
-				new TimespecParameter{"rem", "remaining", ValueType::PARAM_OUT}
+				new TimespecParameter{"rem", "remaining", ItemType::PARAM_OUT}
 			},
 			new SuccessResult{}
 		);
