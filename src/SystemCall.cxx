@@ -122,7 +122,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	switch (nr) {
 	case SystemCallNr::WRITE:
 		return new_call({
-				new FileDescriptorParameter{},
+				new FileDescriptor{},
 				new GenericPointerValue{"buf", "source buffer"},
 				new ValueInParameter{"count", "buffer length"}
 			},
@@ -130,7 +130,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		);
 	case SystemCallNr::READ:
 		return new_call({
-				new FileDescriptorParameter{},
+				new FileDescriptor{},
 				new GenericPointerValue{"buf", "target buffer", ValueType::PARAM_OUT},
 				new ValueInParameter{"count", "buffer length"}
 			},
@@ -158,7 +158,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		);
 	case SystemCallNr::FCNTL:
 		return new_call({
-				new FileDescriptorParameter{},
+				new FileDescriptor{},
 				new ValueInParameter{"cmd", "command"}
 				/* TODO: Wolpertinger parameter */
 			},
@@ -167,7 +167,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		);
 	case SystemCallNr::FSTAT:
 		return new_call({
-				new FileDescriptorParameter{},
+				new FileDescriptor{},
 				new StatParameter{}
 			},
 			new SuccessResult()
@@ -193,7 +193,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				new ValueInParameter{"len", "length"},
 				new ValueInParameter{"prot", "protocol"},
 				new ValueInParameter{"flags"},
-				new FileDescriptorParameter{},
+				new FileDescriptor{},
 				new ValueInParameter{"offset"}
 			},
 			new GenericPointerValue{"addr", "mapped memory address", SystemCallItem::Type::PARAM_OUT}
@@ -234,21 +234,21 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				new OpenFlagsValue{},
 				new FileModeParameter{}
 			},
-			new FileDescriptorReturnValue{},
+			new FileDescriptor{FileDescriptor::Type::PARAM_OUT},
 			0 // number of parameter that is the to-be-opened ID
 		);
 	case SystemCallNr::OPENAT:
 		return new_call({
-				new FileDescriptorParameter{true},
+				new FileDescriptor{FileDescriptor::Type::PARAM_IN, item::AtSemantics{true}},
 				new StringData{"filename"},
 				new OpenFlagsValue{},
 				new FileModeParameter{}
 			},
-			new FileDescriptorReturnValue{}
+			new FileDescriptor{FileDescriptor::Type::PARAM_OUT}
 		);
 	case SystemCallNr::CLOSE:
 		return new_call({
-				new FileDescriptorParameter{}
+				new FileDescriptor{}
 			},
 			new SuccessResult{},
 			SIZE_MAX,
@@ -305,7 +305,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		// some well-known commands could be interpreted, but we don't
 		// know of what type a file descriptor is, or do we?
 		return new_call({
-				new FileDescriptorParameter{},
+				new FileDescriptor{},
 				new GenericPointerValue{"request", "ioctl request number"}
 			},
 			/* TODO: some ioctls may return non-zero data here */
@@ -313,7 +313,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		);
 	case SystemCallNr::GETDENTS:
 		return new_call({
-				new FileDescriptorParameter{},
+				new FileDescriptor{},
 				new DirEntries{},
 				new ValueInParameter{"size", "dirent size in bytes"}
 			},

@@ -22,15 +22,6 @@ std::string FileDescriptor::str() const {
 		return std::to_string(cosmos::to_integral(fd));
 }
 
-std::string FileDescriptorReturnValue::str() const {
-	const auto fd = cosmos::to_integral(valueAs<cosmos::FileNum>());
-
-	if (fd >= 0)
-		return std::to_string(fd);
-	else
-		return std::string{"Failed: "} + cosmos::ApiError::msg(cosmos::Errno{fd * -1});
-}
-
 #define chk_open_flag(FLAG) if (flags & FLAG) ss << "|" << #FLAG;
 
 std::string OpenFlagsValue::str() const {
