@@ -31,13 +31,13 @@ SystemCall::SystemCall(
 		const char *name,
 		ParameterVector &&pars,
 		SystemCallItemPtr ret,
-		const size_t open_id_par,
-		const size_t close_fd_par) :
+		std::optional<size_t> open_id_par,
+		std::optional<size_t> close_fd_par) :
 		m_nr{nr}, m_name{name}, m_return{ret}, m_pars{pars},
 		m_open_id_par{open_id_par}, m_close_fd_par{close_fd_par} {
 
-	assert(open_id_par == SIZE_MAX || open_id_par < m_pars.size());
-	assert(close_fd_par == SIZE_MAX || close_fd_par < m_pars.size());
+	assert(!open_id_par || *open_id_par < m_pars.size());
+	assert(!close_fd_par || *close_fd_par < m_pars.size());
 
 	for (auto &par: m_pars)
 		par->setSystemCall(*this);
@@ -69,25 +69,25 @@ void SystemCall::setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallIn
 
 void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 	// TODO: this implementation is not finished / not sane yet.
-	if (m_open_id_par != SIZE_MAX) {
+	if (m_open_id_par) {
 		const int new_fd = (int)m_return->value();
 
 		if (new_fd < 0)
 			return;
 
 		auto res = mapping.insert(
-			std::make_pair(new_fd, m_pars[m_open_id_par]->str())
+			std::make_pair(new_fd, m_pars[*m_open_id_par]->str())
 		);
 
 		if (!res.second) {
 			LOG_DEBUG("WARNING: file descriptor already open?!");
 		}
-	} else if(m_close_fd_par != SIZE_MAX) {
+	} else if (m_close_fd_par) {
 		if (m_return->valueAs<cosmos::Errno>() != cosmos::Errno::NO_ERROR)
 			// unsuccessful system call, so don't update anything
 			return;
 
-		const int closed_fd = (int)m_pars[m_close_fd_par]->value();
+		const int closed_fd = (int)m_pars[*m_close_fd_par]->value();
 
 		if (mapping.erase(closed_fd) == 0) {
 #if 0
@@ -107,8 +107,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	using ItemPtr = SystemCallItemPtr;
 
 	auto new_call = [nr](SystemCall::ParameterVector &&pars,
-			ItemPtr ret = nullptr, const size_t open_id_par = SIZE_MAX,
-			const size_t close_fd_par = SIZE_MAX) {
+			ItemPtr ret = nullptr, const std::optional<size_t> open_id_par = {},
+			const std::optional<size_t> close_fd_par = {}) {
 		const auto LABEL = SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
 		return std::make_shared<SystemCall>(
 				nr, LABEL, std::move(pars), ret, open_id_par, close_fd_par);
@@ -246,7 +246,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				ItemPtr{new FileDescriptor{}}
 			},
 			ItemPtr{new SuccessResult{}},
-			SIZE_MAX,
+			{},
 			0 // number of parameter that is the to-be-closed fd
 		);
 	case SystemCallNr::RT_SIGACTION:
