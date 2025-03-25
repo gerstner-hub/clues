@@ -110,7 +110,7 @@ void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) const {
 
 	const auto last = pars.back();
 
-	for (const auto par: pars) {
+	for (const auto &par: pars) {
 		if (!par->isIn()) {
 			// non-input parameter encountered, stop output
 			break;
@@ -127,7 +127,7 @@ void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
 	const auto last = pars.back();
 	bool seen_non_input = false;
 
-	for (const auto par: pars) {
+	for (const auto &par: pars) {
 		if (!seen_non_input) {
 		       	if (par->isIn()) {
 				// this was already printed during entry

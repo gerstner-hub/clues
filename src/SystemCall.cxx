@@ -30,7 +30,7 @@ SystemCall::SystemCall(
 		const SystemCallNr nr,
 		const char *name,
 		ParameterVector &&pars,
-		SystemCallItem *ret,
+		SystemCallItemPtr ret,
 		const size_t open_id_par,
 		const size_t close_fd_par) :
 		m_nr{nr}, m_name{name}, m_return{ret}, m_pars{pars},
@@ -41,15 +41,6 @@ SystemCall::SystemCall(
 
 	for (auto &par: m_pars)
 		par->setSystemCall(*this);
-}
-
-SystemCall::~SystemCall() {
-	while (!m_pars.empty()) {
-		delete m_pars.back();
-		m_pars.pop_back();
-	}
-
-	delete m_return;
 }
 
 void SystemCall::setEntryInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::EntryInfo &info) {
@@ -113,165 +104,167 @@ void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
 
 SystemCallPtr create_syscall(const SystemCallNr nr) {
 	using namespace item;
+	using ItemPtr = SystemCallItemPtr;
 
 	auto new_call = [nr](SystemCall::ParameterVector &&pars,
-			SystemCallItem *ret = nullptr, const size_t open_id_par = SIZE_MAX,
+			ItemPtr ret = nullptr, const size_t open_id_par = SIZE_MAX,
 			const size_t close_fd_par = SIZE_MAX) {
 		const auto LABEL = SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
-		return std::make_shared<SystemCall>(nr, LABEL, std::move(pars), ret, open_id_par, close_fd_par);
+		return std::make_shared<SystemCall>(
+				nr, LABEL, std::move(pars), ret, open_id_par, close_fd_par);
 	};
 
 	switch (nr) {
 	case SystemCallNr::WRITE:
 		return new_call({
-				new FileDescriptor{},
-				new GenericPointerValue{"buf", "source buffer"},
-				new ValueInParameter{"count", "buffer length"}
+				ItemPtr{new FileDescriptor{}},
+				ItemPtr{new GenericPointerValue{"buf", "source buffer"}},
+				ItemPtr{new ValueInParameter{"count", "buffer length"}}
 			},
-			new ReturnValue{"bytes", "bytes written"}
+			ItemPtr{new ReturnValue{"bytes", "bytes written"}}
 		);
 	case SystemCallNr::READ:
 		return new_call({
-				new FileDescriptor{},
-				new GenericPointerValue{"buf", "target buffer", ItemType::PARAM_OUT},
-				new ValueInParameter{"count", "buffer length"}
+				ItemPtr{new FileDescriptor{}},
+				ItemPtr{new GenericPointerValue{"buf", "target buffer", ItemType::PARAM_OUT}},
+				ItemPtr{new ValueInParameter{"count", "buffer length"}}
 			},
-			new ReturnValue{"bytes", "bytes read"}
+			ItemPtr{new ReturnValue{"bytes", "bytes read"}}
 		);
 	case SystemCallNr::BRK:
 		return new_call({
-				new GenericPointerValue{"addr", "requested data segment end"}
+				ItemPtr{new GenericPointerValue{"addr", "requested data segment end"}}
 			},
-			new GenericPointerValue{"addr", "actual data segment end", ItemType::RETVAL}
+			ItemPtr{new GenericPointerValue{"addr", "actual data segment end", ItemType::RETVAL}}
 		);
 	case SystemCallNr::NANOSLEEP:
 		return new_call({
-				new TimespecParameter{"req", "requested"},
-				new TimespecParameter{"rem", "remaining", ItemType::PARAM_OUT}
+				ItemPtr{new TimespecParameter{"req", "requested"}},
+				ItemPtr{new TimespecParameter{"rem", "remaining", ItemType::PARAM_OUT}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::ACCESS:
 		return new_call({
-				new StringData{"path"},
-				new AccessModeParameter{}
+				ItemPtr{new StringData{"path"}},
+				ItemPtr{new AccessModeParameter{}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::FCNTL:
 		return new_call({
-				new FileDescriptor{},
-				new ValueInParameter{"cmd", "command"}
+				ItemPtr{new FileDescriptor{}},
+				ItemPtr{new ValueInParameter{"cmd", "command"}}
 				/* TODO: Wolpertinger parameter */
 			},
 			/* TODO: needs dedicated type */
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::FSTAT:
 		return new_call({
-				new FileDescriptor{},
-				new StatParameter{}
+				ItemPtr{new FileDescriptor{}},
+				ItemPtr{new StatParameter{}}
 			},
-			new SuccessResult()
+			ItemPtr{new SuccessResult()}
 		);
 	case SystemCallNr::LSTAT:
 	case SystemCallNr::STAT:
 		return new_call({
-				new StringData{"path"},
-				new StatParameter{}
+				ItemPtr{new StringData{"path"}},
+				ItemPtr{new StatParameter{}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 #ifdef __x86_64__
 	case SystemCallNr::ALARM:
 		return new_call({
-				new ValueInParameter{"seconds"}
+				ItemPtr{new ValueInParameter{"seconds"}}
 			},
-			new ValueOutParameter{"old_seconds", "remaining seconds for previous timer"}
+			ItemPtr{new ValueOutParameter{"old_seconds", "remaining seconds for previous timer"}}
 		);
 	case SystemCallNr::MMAP:
 		return new_call({
-				new GenericPointerValue{"hint", "address placement hint"},
-				new ValueInParameter{"len", "length"},
-				new ValueInParameter{"prot", "protocol"},
-				new ValueInParameter{"flags"},
-				new FileDescriptor{},
-				new ValueInParameter{"offset"}
+				ItemPtr{new GenericPointerValue{"hint", "address placement hint"}},
+				ItemPtr{new ValueInParameter{"len", "length"}},
+				ItemPtr{new ValueInParameter{"prot", "protocol"}},
+				ItemPtr{new ValueInParameter{"flags"}},
+				ItemPtr{new FileDescriptor{}},
+				ItemPtr{new ValueInParameter{"offset"}}
 			},
-			new GenericPointerValue{"addr", "mapped memory address", ItemType::PARAM_OUT}
+			ItemPtr{new GenericPointerValue{"addr", "mapped memory address", ItemType::PARAM_OUT}}
 		);
 	case SystemCallNr::ARCH_PRCTL:
 		return new_call({
-				new ArchCodeParameter{},
-				new GenericPointerValue{"addr", "request code ('set') or return pointer ('get')"}
+				ItemPtr{new ArchCodeParameter{}},
+				ItemPtr{new GenericPointerValue{"addr", "request code ('set') or return pointer ('get')"}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::GETRLIMIT:
 		return new_call({
-				new ResourceType{},
-				new ResourceLimit{}
+				ItemPtr{new ResourceType{}},
+				ItemPtr{new ResourceLimit{}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 #endif
 	case SystemCallNr::MUNMAP:
 		return new_call({
-				new GenericPointerValue{"addr", "memory addr to unmap"},
-				new ValueInParameter{"len", "length"}
+				ItemPtr{new GenericPointerValue{"addr", "memory addr to unmap"}},
+				ItemPtr{new ValueInParameter{"len", "length"}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::MPROTECT:
 		return new_call({
-				new GenericPointerValue{"addr"},
-				new ValueInParameter{"length"},
-				new MemoryProtectionParameter{}
+				ItemPtr{new GenericPointerValue{"addr"}},
+				ItemPtr{new ValueInParameter{"length"}},
+				ItemPtr{new MemoryProtectionParameter{}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::OPEN:
 		return new_call({
-				new StringData{"filename"},
-				new OpenFlagsValue{},
-				new FileModeParameter{}
+				ItemPtr{new StringData{"filename"}},
+				ItemPtr{new OpenFlagsValue{}},
+				ItemPtr{new FileModeParameter{}}
 			},
-			new FileDescriptor{ItemType::PARAM_OUT},
+			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}},
 			0 // number of parameter that is the to-be-opened ID
 		);
 	case SystemCallNr::OPENAT:
 		return new_call({
-				new FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{true}},
-				new StringData{"filename"},
-				new OpenFlagsValue{},
-				new FileModeParameter{}
+				ItemPtr{new FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{true}}},
+				ItemPtr{new StringData{"filename"}},
+				ItemPtr{new OpenFlagsValue{}},
+				ItemPtr{new FileModeParameter{}}
 			},
-			new FileDescriptor{ItemType::PARAM_OUT}
+			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}}
 		);
 	case SystemCallNr::CLOSE:
 		return new_call({
-				new FileDescriptor{}
+				ItemPtr{new FileDescriptor{}}
 			},
-			new SuccessResult{},
+			ItemPtr{new SuccessResult{}},
 			SIZE_MAX,
 			0 // number of parameter that is the to-be-closed fd
 		);
 	case SystemCallNr::RT_SIGACTION:
 		return new_call({
-				new SignalNumber{},
-				new SigactionParameter{},
-				new SigactionParameter{"old_action"}
+				ItemPtr{new SignalNumber{}},
+				ItemPtr{new SigactionParameter{}},
+				ItemPtr{new SigactionParameter{"old_action"}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::RT_SIGPROCMASK:
 		return new_call({
-				new SigSetOperation{},
-				new SigSetParameter{"new_mask"},
-				new SigSetParameter{"old_mask"},
-				new ValueInParameter{"size", "size of signal sets in bytes"}
+				ItemPtr{new SigSetOperation{}},
+				ItemPtr{new SigSetParameter{"new_mask"}},
+				ItemPtr{new SigSetParameter{"old_mask"}},
+				ItemPtr{new ValueInParameter{"size", "size of signal sets in bytes"}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::CLONE:
 		/*
@@ -279,26 +272,26 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		 * architectures
 		 */
 		return new_call({
-				new ValueInParameter{"flags", "clone flags"},
-				new GenericPointerValue{"stack", "stack address"},
-				new GenericPointerValue{"parent tid", "parent thread id", ItemType::PARAM_OUT},
-				new GenericPointerValue{"child tid", "child thread id", ItemType::PARAM_OUT},
-				new GenericPointerValue{"tls", "thread local storage"}
+				ItemPtr{new ValueInParameter{"flags", "clone flags"}},
+				ItemPtr{new GenericPointerValue{"stack", "stack address"}},
+				ItemPtr{new GenericPointerValue{"parent tid", "parent thread id", ItemType::PARAM_OUT}},
+				ItemPtr{new GenericPointerValue{"child tid", "child thread id", ItemType::PARAM_OUT}},
+				ItemPtr{new GenericPointerValue{"tls", "thread local storage"}}
 			},
-			new ValueOutParameter("pid", "child pid")
+			ItemPtr{new ValueOutParameter("pid", "child pid")}
 		);
 	case SystemCallNr::FORK:
 		return new_call({
 			},
-			new ValueOutParameter{"pid", "child pid"}
+			ItemPtr{new ValueOutParameter{"pid", "child pid"}}
 		);
 	case SystemCallNr::EXECVE:
 		return new_call({
-				new StringData{"filename"},
-				new StringArrayData{"argv", "argument vector"},
-				new StringArrayData{"envp", "environment block pointer"}
+				ItemPtr{new StringData{"filename"}},
+				ItemPtr{new StringArrayData{"argv", "argument vector"}},
+				ItemPtr{new StringArrayData{"envp", "environment block pointer"}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::IOCTL:
 		// TODO: the number of parameters can vary here.
@@ -307,51 +300,51 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 		// some well-known commands could be interpreted, but we don't
 		// know of what type a file descriptor is, or do we?
 		return new_call({
-				new FileDescriptor{},
-				new GenericPointerValue{"request", "ioctl request number"}
+				ItemPtr{new FileDescriptor{}},
+				ItemPtr{new GenericPointerValue{"request", "ioctl request number"}}
 			},
 			/* TODO: some ioctls may return non-zero data here */
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::GETDENTS:
 		return new_call({
-				new FileDescriptor{},
-				new DirEntries{},
-				new ValueInParameter{"size", "dirent size in bytes"}
+				ItemPtr{new FileDescriptor{}},
+				ItemPtr{new DirEntries{}},
+				ItemPtr{new ValueInParameter{"size", "dirent size in bytes"}}
 			},
-			new ValueOutParameter{"bytes", "size of dirent"}
+			ItemPtr{new ValueOutParameter{"bytes", "size of dirent"}}
 		);
 	case SystemCallNr::GETUID:
 	case SystemCallNr::GETEUID: {
 		const bool is_uid = nr == SystemCallNr{SYS_getuid};
 		return new_call({
 			},
-			new ValueOutParameter{is_uid ? "uid" : "euid",
-				is_uid ? "real user ID" : "effective user ID"}
+			ItemPtr{new ValueOutParameter{is_uid ? "uid" : "euid",
+				is_uid ? "real user ID" : "effective user ID"}}
 		);
 	}
 	case SystemCallNr::SET_TID_ADDRESS:
 		return new_call({
-				new GenericPointerValue{"thread ID location"}
+				ItemPtr{new GenericPointerValue{"thread ID location"}}
 			},
-			new ValueOutParameter{"tid", "caller thread ID"}
+			ItemPtr{new ValueOutParameter{"tid", "caller thread ID"}}
 		);
 	case SystemCallNr::GET_ROBUST_LIST:
 		return new_call({
-				new ValueInParameter{"tid", "thread id"},
-				new GenericPointerValue{"robust_list_head"},
+				ItemPtr{new ValueInParameter{"tid", "thread id"}},
+				ItemPtr{new GenericPointerValue{"robust_list_head"}},
 				// TODO: new parameter type that also prints
 				// the size value at the pointed to address
-				new GenericPointerValue{"len_ptr"}
+				ItemPtr{new GenericPointerValue{"len_ptr"}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::SET_ROBUST_LIST:
 		return new_call({
-				new GenericPointerValue{"robust_list_head"},
-				new ValueInParameter{"len"}
+				ItemPtr{new GenericPointerValue{"robust_list_head"}},
+				ItemPtr{new ValueInParameter{"len"}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::FUTEX:
 		return new_call({
@@ -360,42 +353,42 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 			// necessary context)
 			// TODO: allows for a number of additional operations
 			// that aren't well documented
-				new GenericPointerValue{"futex_int"},
-				new FutexOperation{},
-				new ValueInParameter{"val"},
-				new TimespecParameter{"timeout"},
-				new GenericPointerValue{"requeue_futex"},
-				new ValueInParameter{"requeue_check_val"}
+				ItemPtr{new GenericPointerValue{"futex_int"}},
+				ItemPtr{new FutexOperation{}},
+				ItemPtr{new ValueInParameter{"val"}},
+				ItemPtr{new TimespecParameter{"timeout"}},
+				ItemPtr{new GenericPointerValue{"requeue_futex"}},
+				ItemPtr{new ValueInParameter{"requeue_check_val"}}
 			},
-			new ValueOutParameter{"nwokenup", "processes woken up"}
+			ItemPtr{new ValueOutParameter{"nwokenup", "processes woken up"}}
 		);
 	case SystemCallNr::TGKILL:
 		return new_call({
-				new ValueInParameter("tgid"),
-				new ValueInParameter("tid"),
-				new SignalNumber{},
+				ItemPtr{new ValueInParameter("tgid")},
+				ItemPtr{new ValueInParameter("tid")},
+				ItemPtr{new SignalNumber{}},
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::CLOCK_NANOSLEEP:
 		return new_call({
-				new ClockID{},
-				new ClockNanoSleepFlags{},
-				new TimespecParameter{"req", "requested"},
+				ItemPtr{new ClockID{}},
+				ItemPtr{new ClockNanoSleepFlags{}},
+				ItemPtr{new TimespecParameter{"req", "requested"}},
 				// TODO: this is only filled in if the call failed with EINTR
-				new TimespecParameter{"rem", "remaining", ItemType::PARAM_OUT}
+				ItemPtr{new TimespecParameter{"rem", "remaining", ItemType::PARAM_OUT}}
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::RESTART_SYSCALL:
 		return new_call({
 			},
-			new SuccessResult{}
+			ItemPtr{new SuccessResult{}}
 		);
 	default:
 		return new_call({
 			},
-			new ValueOutParameter{"result", nullptr}
+			ItemPtr{new ValueOutParameter{"result", nullptr}}
 		);
 	}
 }
