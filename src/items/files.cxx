@@ -154,11 +154,11 @@ void StatParameter::updateData(const Tracee &proc) {
 
 std::string DirEntries::str() const {
 	std::stringstream ss;
-	const auto result = m_call->result().valueAs<int>();
+	auto result = m_call->result();
 
-	if (result < 0) {
+	if (!result) {
 		ss << "undefined";
-	} else if(result == 0) {
+	} else if (const auto size = result->valueAs<int>(); size == 0) {
 		ss << "empty";
 	} else {
 		ss << m_entries.size() << " entries: ";
@@ -175,10 +175,14 @@ void DirEntries::updateData(const Tracee &proc) {
 	m_entries.clear();
 
 	// the amount of data stored at the DirEntries location depends on the system call result value.
-	const auto bytes = m_call->result().valueAs<size_t>();
+	auto result = m_call->result();
+	if (!result)
+		// error occurred
+		return;
 
-	if (bytes <= 0)
-		// error or empty
+	const auto bytes = result->valueAs<size_t>();
+	if (bytes == 0)
+		// empty
 		return;
 
 	/*

@@ -211,7 +211,7 @@ void Tracee::handleSystemCallExit() {
 	syscall.setExitInfo(*this, *m_syscall_info->exitInfo());
 	syscall.updateOpenFiles(m_fd_path_map);
 
-	if (syscall.hasErrorCode() && syscall.error().kernelErrcode() != std::nullopt) {
+	if (auto error = syscall.error(); error && error->hasKernelErrorCode()) {
 		// system call was interrupted, remember it for later
 		m_interrupted_syscall = m_current_syscall;
 		state.set(EventConsumer::Status::INTERRUPTED);

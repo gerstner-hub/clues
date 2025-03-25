@@ -10,6 +10,7 @@
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
+#include <clues/ErrnoResult.hxx>
 #include <clues/items/error.hxx>
 #include <clues/types.hxx>
 
@@ -115,9 +116,9 @@ public: // functions
 	/// Access to the parameters associated with this system call.
 	const ParameterVector& parameters() const { return m_pars; }
 	/// Access to the return value parameter associated with this system call.
-	const SystemCallItem& result() const { return *m_return; }
+	const SystemCallItem* result() const { return m_return; }
 	/// Access to the errno result seen for this system call.
-	const item::ErrnoResult& error() const { return *m_error; }
+	std::optional<ErrnoResult> error() const { return m_error; }
 
 	bool hasResultValue() const {
 		return m_error == std::nullopt;
@@ -136,7 +137,7 @@ protected: // data
 	/// The return value of the system call.
 	SystemCallItem *m_return;
 	/// If the system call fails, this is the error code.
-	std::optional<item::ErrnoResult> m_error;
+	std::optional<ErrnoResult> m_error;
 	/// The array of system call parameters, if any.
 	ParameterVector m_pars;
 	/// if this is an open-like system call, then this gives the number of the parameter that contains the open identifier.

@@ -66,12 +66,7 @@ void SystemCall::setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallIn
 	if (info.isValue()) {
 		m_return->fill(proc, Word{static_cast<uint64_t>(*info.retVal())});
 	} else {
-		m_error = item::ErrnoResult{};
-		// TODO: makes no sense to cast the Errno back to a Word just
-		// for ErrnoResult to reverse the effect. We need a dedicated
-		// type for this situation.
-		auto raw_errno = cosmos::to_integral(*info.errVal());
-		m_error->fill(proc, Word{raw_errno >= 0 ? static_cast<elf_greg_t>(-raw_errno) : 0});
+		m_error = ErrnoResult{*info.errVal()};
 	}
 
 	for (auto &par: m_pars) {

@@ -176,12 +176,11 @@ void TermTracer::syscallExit(const SystemCall &sc, const State state) {
 
 	std::cerr << ") = ";
 
-	if (sc.hasResultValue()) {
-		const auto &res = sc.result();
-		std::cerr << res.str() << " (" << (m_verbose.isSet() ? res.longName() : res.shortName()) << ")";
+	if (auto res = sc.result(); res) {
+		std::cerr << res->str() << " (" << (m_verbose.isSet() ? res->longName() : res->shortName()) << ")";
 	} else {
-		const auto &err = sc.error();
-		std::cerr << err.str() << " (" << (m_verbose.isSet() ? err.longName() : err.shortName()) << ")";
+		const auto err = *sc.error();
+		std::cerr << err.str() << " (errno)";
 	}
 
 	if (state[Status::INTERRUPTED]) {
