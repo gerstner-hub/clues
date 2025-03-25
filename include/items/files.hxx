@@ -11,6 +11,7 @@
 
 // clues
 #include <clues/SystemCallItem.hxx>
+#include <clues/items/items.hxx>
 
 namespace clues::item {
 
@@ -54,10 +55,10 @@ public:
 
 /// The mode parameter in access().
 class AccessModeParameter :
-		public ValueInParameter {
+		public item::ValueInParameter {
 public:
 	explicit AccessModeParameter() :
-			ValueInParameter{"check", "access check"} {
+			item::ValueInParameter{"check", "access check"} {
 	}
 
 	std::string str() const override;
@@ -65,11 +66,11 @@ public:
 
 /// File access mode passed e.g. to open(), chmod().
 class FileModeParameter :
-		public ValueInParameter {
+		public item::ValueInParameter {
 public:
 
 	FileModeParameter() :
-			ValueInParameter{"mode", "file-mode"} {
+			item::ValueInParameter{"mode", "file-mode"} {
 	}
 
 	std::string str() const override;

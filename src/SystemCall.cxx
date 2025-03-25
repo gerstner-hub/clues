@@ -7,7 +7,15 @@
 
 // clues
 #include <clues/clues.hxx>
+#include <clues/items/files.hxx>
+#include <clues/items/futex.hxx>
 #include <clues/items/items.hxx>
+#include <clues/items/limits.hxx>
+#include <clues/items/mmap.hxx>
+#include <clues/items/prctl.hxx>
+#include <clues/items/signal.hxx>
+#include <clues/items/strings.hxx>
+#include <clues/items/time.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallItem.hxx>

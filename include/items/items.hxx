@@ -1,16 +1,6 @@
 #pragma once
 
 // clues
-#include <clues/items/error.hxx>
-#include <clues/items/files.hxx>
-#include <clues/items/futex.hxx>
-#include <clues/items/limits.hxx>
-#include <clues/items/mmap.hxx>
-#include <clues/items/prctl.hxx>
-#include <clues/items/signal.hxx>
-#include <clues/items/strings.hxx>
-#include <clues/items/time.hxx>
-#include <clues/kernel_structs.hxx>
 #include <clues/SystemCallItem.hxx>
 
 /*
@@ -18,6 +8,114 @@
  */
 
 namespace clues::item {
+
+/// Base class for a system call return values.
+class ReturnValue :
+		public SystemCallItem {
+public:
+	explicit ReturnValue(const char *short_name, const char *long_name = nullptr) :
+		SystemCallItem{ItemType::RETVAL, short_name, long_name}
+	{}
+};
+
+/// Base class for a pass-by-value parameter of a system call.
+/**
+ * These are typically PARAM_IN types denoting IDs, enums, flags etc. that are
+ * passed to a system call.
+ *
+ * The processValue() and updateValue() functions are implemented as no-ops,
+ * because no additional data needs to be fetched from the tracee for this
+ * kind of parameter.
+ **/
+class ValueParameter :
+		public SystemCallItem {
+public: // functions
+
+	explicit ValueParameter(
+		const ItemType &type,
+		const char *short_name,
+		const char *long_name = nullptr) :
+			SystemCallItem{type, short_name, long_name} {
+	}
+};
+
+/// Specialization of ValueParameter for PARAM_IN parameters.
+class ValueInParameter :
+		public ValueParameter {
+public: // functions
+
+	explicit ValueInParameter(
+		const char *short_name,
+		const char *long_name = nullptr) :
+			ValueParameter{ItemType::PARAM_IN, short_name, long_name} {
+	}
+};
+
+/// Specialization of ValueParameter for PARAM_OUT parameters.
+class ValueOutParameter :
+		public ValueParameter {
+public: // functions
+
+	explicit ValueOutParameter(
+		const char *short_name,
+		const char *long_name) :
+			ValueParameter{ItemType::PARAM_OUT, short_name, long_name} {
+	}
+};
+
+/// A value that consists of a pointer to some data area.
+/**
+ * Unlike ValueParameter, PointerValue is a pointer to some userspace
+ * data structure. Thus the processValue() and updateData() functions need to
+ * perform more complex operations on the tracee to gather the data as
+ * appropriate.
+ **/
+class PointerValue :
+		public SystemCallItem {
+public: // functions
+
+	explicit PointerValue(
+		const ItemType &type,
+		const char *short_name,
+		const char *long_name) :
+			SystemCallItem{type, short_name, long_name} {
+	}
+};
+
+/// Specialization of a PointerValue for out-parameters.
+/**
+ * This specialization has a no-op implementation of the processValue() member
+ * function that serves no purpose for out parameters. Also the value type is
+ * predetermined to PARAM_OUT.
+ **/
+class PointerOutValue :
+		public PointerValue {
+public: // functions
+
+	explicit PointerOutValue(
+		const char *short_name,
+		const char *long_name = nullptr,
+		const ItemType &type = ItemType::PARAM_OUT) :
+			PointerValue{type, short_name, long_name} {
+	}
+};
+
+/// Specialization of a PointerValue for in-parameters.
+/**
+ * This specialization has a no-op implementation of the updateData() member
+ * function that serves no purpose for in parameters. Also the value type is
+ * predetermined to PARAM_IN..
+ **/
+class PointerInValue :
+		public PointerValue {
+public: // functions
+
+	explicit PointerInValue(
+		const char *short_name,
+		const char *long_name = nullptr) :
+			PointerValue{ItemType::PARAM_IN, short_name, long_name} {
+	}
+};
 
 /*
  * TODO: support to get the length of the data area from a context-sensitive

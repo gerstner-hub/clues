@@ -1,6 +1,7 @@
 #pragma once
 
 // clues
+#include <clues/items/items.hxx>
 #include <clues/SystemCallItem.hxx>
 
 namespace clues::item {
