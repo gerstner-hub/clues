@@ -41,4 +41,12 @@ std::optional<KernelErrno> ErrnoResult::kernelErrcode() const {
 	return {};
 }
 
+std::string SuccessResult::str() const {
+	if (valid()) {
+		return "0";
+	} else {
+		return cosmos::sprintf("%d (\?\?\?)", valueAs<int>());
+	}
+}
+
 } // end ns
