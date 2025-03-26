@@ -117,7 +117,7 @@ public: // functions
 	/// Access to the parameters associated with this system call.
 	const ParameterVector& parameters() const { return m_pars; }
 	/// Access to the return value parameter associated with this system call.
-	const SystemCallItemPtr result() const { return m_return; }
+	const SystemCallItemPtr result() const { return hasResultValue() ? m_return : nullptr; }
 	/// Access to the errno result seen for this system call.
 	std::optional<ErrnoResult> error() const { return m_error; }
 
