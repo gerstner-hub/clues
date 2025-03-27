@@ -44,6 +44,8 @@ protected: // event consumer interface
 
 	void signaled(const cosmos::SigInfo &info) override;
 
+	void exited(const cosmos::ExitStatus status) override;
+
 protected: // data
 
 	TCLAP::CmdLine m_cmdline;

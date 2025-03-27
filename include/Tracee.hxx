@@ -67,6 +67,16 @@ public: // types
 
 		/// The tracee resumed due to SIGCONT.
 		virtual void resumed() {}
+
+		/// The tracee exited regularly returning `status`.
+		/**
+		 * This callback is performed in a state when tracee data can
+		 * still be examined. When resuming tracee execution then
+		 * "real exit" happens and tracing is no longer possible.
+		 **/
+		virtual void exited(const cosmos::ExitStatus status) {
+			(void)status;
+		}
 	};
 
 	/// Current tracing state for a single tracee.
@@ -219,6 +229,10 @@ protected: // functions
 	void handleSignal(const cosmos::SigInfo &info);
 
 	void handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal);
+
+	void handleStopEvent(const cosmos::Signal signal);
+
+	void handleExitEvent();
 
 	void handleAttached();
 

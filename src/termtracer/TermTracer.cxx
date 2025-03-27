@@ -194,6 +194,14 @@ void TermTracer::signaled(const cosmos::SigInfo &info) {
 	std::cerr << "-- " << info.sigNr() << " --\n";
 }
 
+void TermTracer::exited(const cosmos::ExitStatus status) {
+	// this should only ever happen after a syscallEntry() for
+	// exit_group() occurred. Thus we finish that first.
+	std::cerr << ") = ?\n";
+
+	std::cerr << "+++ exited with " << status << " +++\n";
+}
+
 cosmos::ExitStatus TermTracer::runTrace(const cosmos::ProcessID pid) {
 	ForeignTracee proc{*this};
 	proc.configure(pid);

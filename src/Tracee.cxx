@@ -119,7 +119,9 @@ void Tracee::setTracee(const cosmos::ProcessID tracee) {
 }
 
 void Tracee::attach() {
-	seize(cosmos::ptrace::Opts{cosmos::ptrace::Opt::TRACESYSGOOD});
+	using Opt = cosmos::ptrace::Opt;
+
+	seize(cosmos::ptrace::Opts{Opt::TRACESYSGOOD, Opt::TRACEEXIT});
 	interrupt();
 	m_flags.set(Flag::WAIT_FOR_ATTACH_STOP);
 }
@@ -232,29 +234,40 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal
 
 	using Event = cosmos::ptrace::Event;
 
-	if (event == Event::STOP) {
-		if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
-			// this is the initial ptrace-stop. now we can start tracing
-			LOG_INFO("initial ptrace-stop");
-			handleAttached();
-		} else if (cosmos::in_container(signal, STOPPING_SIGNALS)) {
-			// must be a group stop, unless we're tracing
-			// automatically-attached children, which is not yet
-			// implemented
-			changeState(State::GROUP_STOP);
-			m_consumer.stopped();
-		} else if (signal == cosmos::signal::TRAP) {
-			// SIGTRAP has quite a blurry meaning in the ptrace()
-			// API. From practical experiments and the original
-			// strace code I could deduce that for some reason
-			// PTRACE_EVENT_STOP combined with SIGTRAP is observed
-			// when a SIGCONT is received by a tracee that is
-			// currently in group-stop.
-			// We then need to restart using system call tracing
-			// to see the actual SIGCONT being delivered.
-			m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
-		}
+	switch(event) {
+	case Event::STOP: return handleStopEvent(signal);
+	case Event::EXIT: return handleExitEvent();
+	default: LOG_WARN("PTRACE_EVENT unhandled");
 	}
+}
+
+void Tracee::handleStopEvent(const cosmos::Signal signal) {
+	if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
+		// this is the initial ptrace-stop. now we can start tracing
+		LOG_INFO("initial ptrace-stop");
+		handleAttached();
+	} else if (cosmos::in_container(signal, STOPPING_SIGNALS)) {
+		// must be a group stop, unless we're tracing
+		// automatically-attached children, which is not yet
+		// implemented
+		changeState(State::GROUP_STOP);
+		m_consumer.stopped();
+	} else if (signal == cosmos::signal::TRAP) {
+		// SIGTRAP has quite a blurry meaning in the ptrace()
+		// API. From practical experiments and the original
+		// strace code I could deduce that for some reason
+		// PTRACE_EVENT_STOP combined with SIGTRAP is observed
+		// when a SIGCONT is received by a tracee that is
+		// currently in group-stop.
+		// We then need to restart using system call tracing
+		// to see the actual SIGCONT being delivered.
+		m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
+	}
+}
+
+void Tracee::handleExitEvent() {
+	const auto status = m_ptrace.getExitEventMsg();
+	m_consumer.exited(status);
 }
 
 void Tracee::handleAttached() {

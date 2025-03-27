@@ -385,6 +385,15 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 			},
 			ItemPtr{new SuccessResult{}}
 		);
+	case SystemCallNr::EXIT_GROUP:
+		return new_call({
+				ItemPtr{new ValueInParameter("status", "exit code")}
+			},
+			// this call never returns, but since some form of
+			// return item is expected simply make it a
+			// SuccessResult.
+			ItemPtr{new SuccessResult{}}
+		);
 	default:
 		return new_call({
 			},
