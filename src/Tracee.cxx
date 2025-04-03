@@ -147,6 +147,9 @@ void Tracee::changeState(const State new_state) {
 		}
 	}
 
+	if (m_state != State::RUNNING)
+		m_prev_state = m_state;
+
 	m_state = new_state;
 }
 
@@ -266,8 +269,30 @@ void Tracee::handleStopEvent(const cosmos::Signal signal) {
 }
 
 void Tracee::handleExitEvent() {
-	const auto status = m_ptrace.getExitEventMsg();
-	m_consumer.exited(status);
+
+	EventConsumer::State state;
+
+	/*
+	 * Detecting "lost to execve" is a bit of a heuristic:
+	 *
+	 * - regular exit happens due to exit_group(2). No SYSCALL_EXIT_STOP
+	 *   will be reported for this.
+	 * - exit due to signal. SIGNAL_DELIVERY_STOP should have been the
+	 *   last state we saw.
+	 * - anything else should be execve in multi-threaded process.
+	 */
+
+	const auto wait_status = m_ptrace.getExitEventMsg();
+
+	if (wait_status.exited() &&
+			(prevState() != State::SYSCALL_ENTER_STOP ||
+			m_current_syscall->callNr() != SystemCallNr::EXIT_GROUP)) {
+		// TODO: check what the exist status is in this case, probably it should be just 0.
+		LOG_INFO("execve() related exit? status = " << *wait_status.status());
+		state.set(EventConsumer::Status::LOST_TO_EXECVE);
+	}
+
+	m_consumer.exited(wait_status, state);
 }
 
 void Tracee::handleAttached() {
@@ -285,7 +310,7 @@ void Tracee::trace() {
 		m_inject_sig = {};
 		wait(data);
 
-		if (data.exited() || data.killed()) {
+		if (data.exited() || data.killed() || data.dumped()) {
 			changeState(State::DEAD);
 			this->gone(data);
 			break;
@@ -300,8 +325,6 @@ void Tracee::trace() {
 				changeState(State::EVENT_STOP);
 				handleEvent(event, cosmos::Signal{signr});
 			} else {
-				// a special signal delivery stop?
-				// this is redundant code to below...
 				changeState(State::SIGNAL_DELIVERY_STOP);
 				cosmos::SigInfo info;
 				m_ptrace.getSigInfo(info);
@@ -309,6 +332,10 @@ void Tracee::trace() {
 				m_inject_sig = *data.signal;
 			}
 		} else if (data.signaled()) {
+			// it seems this branch is never hit, signals are
+			// always handled as a TRAP, never as regular events
+			// when tracing.
+			LOG_WARN("seeing non-trap signal delivery stop");
 			changeState(State::SIGNAL_DELIVERY_STOP);
 			cosmos::SigInfo info;
 			m_ptrace.getSigInfo(info);

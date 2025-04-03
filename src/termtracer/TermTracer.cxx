@@ -194,16 +194,27 @@ void TermTracer::signaled(const cosmos::SigInfo &info) {
 	std::cerr << "-- " << info.sigNr() << " --\n";
 }
 
-void TermTracer::exited(const cosmos::ExitStatus status) {
-	// this should only ever happen after a syscallEntry() for
-	// exit_group() occurred. Thus we finish that first.
-	std::cerr << ") = ?\n";
+void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
+	if (m_tracee->prevState() == Tracee::State::SYSCALL_ENTER_STOP) {
+		// this should only ever happen after a syscallEntry() for
+		// exit_group() occurred. Thus we finish that first.
+		std::cerr << ") = ?\n";
+	}
 
-	std::cerr << "+++ exited with " << status << " +++\n";
+	if (state[Status::LOST_TO_EXECVE]) {
+		std::cerr << "--- <execve in another thread> ---\n";
+	}
+
+	if (status.exited()) {
+		std::cerr << "+++ exited with " << cosmos::to_integral(*status.status()) << " +++\n";
+	} else {
+		std::cerr << "+++ killed by signal " << cosmos::to_integral(status.termSig()->raw()) << " +++\n";
+	}
 }
 
 cosmos::ExitStatus TermTracer::runTrace(const cosmos::ProcessID pid) {
 	ForeignTracee proc{*this};
+	m_tracee = &proc;
 	proc.configure(pid);
 	try {
 		proc.attach();
@@ -218,16 +229,21 @@ cosmos::ExitStatus TermTracer::runTrace(const cosmos::ProcessID pid) {
 	}
 	proc.trace();
 	proc.detach();
+	m_tracee = nullptr;
+	// TODO: foreign tracee could also have exited / been killed
 	return cosmos::ExitStatus::SUCCESS;
 }
 
 cosmos::ExitStatus TermTracer::runTrace(const cosmos::StringVector &cmdline) {
 	ChildTracee proc{*this};
+	m_tracee = &proc;
 	proc.create(cmdline);
 	proc.attach();
 	proc.trace();
 	proc.detach();
-	return proc.exitStatus();
+	auto ret = proc.exitStatus();
+	m_tracee = nullptr;
+	return ret;
 }
 
 cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {

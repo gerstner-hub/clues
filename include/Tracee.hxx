@@ -40,9 +40,11 @@ public: // types
 		/// Different status flags that can appear in callbacks.
 		enum class Status {
 			/// A system call was interrupted (only appears during syscallExit()).
-			INTERRUPTED = 1 << 0,
+			INTERRUPTED    = 1 << 0,
 			/// A previously interrupted system call is resumed (only appears during syscallEntry()).
-			RESUMED     = 1 << 1
+			RESUMED        = 1 << 1,
+			/// An exit occurs because another thread called execve() (only appears in exited()).
+			LOST_TO_EXECVE = 1 << 2,
 		};
 
 		using State = cosmos::BitMask<Status>;
@@ -55,7 +57,7 @@ public: // types
 
 		/// The tracee has received a signal.
 		/**
-		 * This callback notifies about signals being deliered to the
+		 * This callback notifies about signals being delivered to the
 		 * tracee.
 		 **/
 		virtual void signaled(const cosmos::SigInfo &info) {
@@ -68,14 +70,22 @@ public: // types
 		/// The tracee resumed due to SIGCONT.
 		virtual void resumed() {}
 
-		/// The tracee exited regularly returning `status`.
+		/// The tracee is about to end execution.
 		/**
-		 * This callback is performed in a state when tracee data can
-		 * still be examined. When resuming tracee execution then
-		 * "real exit" happens and tracing is no longer possible.
+		 * The tracee is about to either exit regularly, to be killed
+		 * by a signal or to disappear due to an execve() in a
+		 * multi-threaded process.
+		 *
+		 * When this callback occurs the tracee can still be inspected
+		 * using ptrace(). One execution is continued the tracer <->
+		 * tracee relationship is lost.
+		 *
+		 * If the exit happens due to an execve in a multi-threaded
+		 * process then Status::LOST_TO_EXECVE is set in `state`.
 		 **/
-		virtual void exited(const cosmos::ExitStatus status) {
+		virtual void exited(const cosmos::WaitStatus status, const State state) {
 			(void)status;
+			(void)state;
 		}
 	};
 
@@ -109,6 +119,14 @@ public: // functions
 	virtual ~Tracee() {}
 
 	static const char* getStateLabel(const State state);
+
+	State state() const {
+		return m_state;
+	}
+
+	State prevState() const {
+		return m_prev_state;
+	}
 
 	/// Logic to handle attaching to the tracee.
 	virtual void attach();
@@ -246,6 +264,8 @@ protected: // data
 	EventConsumer &m_consumer;
 	/// The current state the tracee is in.
 	State m_state = State::UNKNOWN;
+	/// The previous Tracee state we've seen (except RUNNING).
+	State m_prev_state = State::UNKNOWN;
 	/// These keep track of various state on the tracer side.
 	Flags m_flags;
 	/// PID of the tracee we're dealing with.

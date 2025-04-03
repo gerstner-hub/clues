@@ -44,7 +44,7 @@ protected: // event consumer interface
 
 	void signaled(const cosmos::SigInfo &info) override;
 
-	void exited(const cosmos::ExitStatus status) override;
+	void exited(const cosmos::WaitStatus status, const State state) override;
 
 protected: // data
 
@@ -59,6 +59,8 @@ protected: // data
 	/// cosmos ILogger instance for clues library logging.
 	cosmos::StdLogger m_logger;
 	cosmos::Init m_cosmos;
+
+	Tracee *m_tracee = nullptr;
 
 	bool m_print_values = true;
 	size_t m_value_truncation_len = 64;
