@@ -26,6 +26,10 @@
 
 namespace clues {
 
+const char* SystemCall::name(const SystemCallNr nr) {
+	return SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
+}
+
 SystemCall::SystemCall(
 		const SystemCallNr nr,
 		const char *name,
@@ -109,9 +113,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	auto new_call = [nr](SystemCall::ParameterVector &&pars,
 			ItemPtr ret = nullptr, const std::optional<size_t> open_id_par = {},
 			const std::optional<size_t> close_fd_par = {}) {
-		const auto LABEL = SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
 		return std::make_shared<SystemCall>(
-				nr, LABEL, std::move(pars), ret, open_id_par, close_fd_par);
+				nr, SystemCall::name(nr), std::move(pars), ret, open_id_par, close_fd_par);
 	};
 
 	switch (nr) {

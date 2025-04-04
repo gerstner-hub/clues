@@ -129,6 +129,12 @@ public: // functions
 		return !hasResultValue();
 	}
 
+	/// Returns the name of the given system call or "<unknown>" if unknown.
+	/**
+	 * The returned string has static storage duration.
+	 **/
+	static const char* name(const SystemCallNr nr);
+
 protected: // data
 
 	/// The raw system call number of the system call.

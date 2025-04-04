@@ -126,4 +126,171 @@ std::string limit(const uint64_t lim) {
 		return std::to_string(lim);
 }
 
+std::string si_code(const cosmos::SigInfo::Source src) {
+	const auto raw = cosmos::to_integral(src);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(SI_USER);
+		CASE_ENUM_TO_STR(SI_KERNEL);
+		CASE_ENUM_TO_STR(SI_QUEUE);
+		CASE_ENUM_TO_STR(SI_TIMER);
+		CASE_ENUM_TO_STR(SI_MESGQ);
+		CASE_ENUM_TO_STR(SI_ASYNCIO);
+		CASE_ENUM_TO_STR(SI_SIGIO);
+		CASE_ENUM_TO_STR(SI_TKILL);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string si_reason(const cosmos::SigInfo::SysData::Reason reason) {
+	const auto raw = cosmos::to_integral(reason);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(SYS_SECCOMP);
+		CASE_ENUM_TO_STR(SYS_USER_DISPATCH);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string si_reason(const cosmos::SigInfo::SegfaultData::Reason reason) {
+	const auto raw = cosmos::to_integral(reason);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(SEGV_MAPERR);
+		CASE_ENUM_TO_STR(SEGV_ACCERR);
+		CASE_ENUM_TO_STR(SEGV_BNDERR);
+		CASE_ENUM_TO_STR(SEGV_PKUERR);
+		CASE_ENUM_TO_STR(SEGV_ACCADI);
+		CASE_ENUM_TO_STR(SEGV_ADIDERR);
+		CASE_ENUM_TO_STR(SEGV_ADIPERR);
+		CASE_ENUM_TO_STR(SEGV_MTEAERR);
+		CASE_ENUM_TO_STR(SEGV_MTESERR);
+		CASE_ENUM_TO_STR(SEGV_CPERR);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string si_reason(const cosmos::SigInfo::BusData::Reason reason) {
+	const auto raw = cosmos::to_integral(reason);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(BUS_ADRALN);
+		CASE_ENUM_TO_STR(BUS_ADRERR);
+		CASE_ENUM_TO_STR(BUS_OBJERR);
+		CASE_ENUM_TO_STR(BUS_MCEERR_AR);
+		CASE_ENUM_TO_STR(BUS_MCEERR_AO);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string ptrace_arch(const cosmos::ptrace::Arch arch) {
+	const auto raw = cosmos::to_integral(arch);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(AUDIT_ARCH_X86_64);
+		CASE_ENUM_TO_STR(AUDIT_ARCH_I386);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string child_event(const cosmos::SigInfo::ChildData::Event event) {
+	const auto raw = cosmos::to_integral(event);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(CLD_EXITED);
+		CASE_ENUM_TO_STR(CLD_KILLED);
+		CASE_ENUM_TO_STR(CLD_DUMPED);
+		CASE_ENUM_TO_STR(CLD_TRAPPED);
+		CASE_ENUM_TO_STR(CLD_STOPPED);
+		CASE_ENUM_TO_STR(CLD_CONTINUED);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string si_reason(const cosmos::SigInfo::PollData::Reason reason) {
+	const auto raw = cosmos::to_integral(reason);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(POLL_IN);
+		CASE_ENUM_TO_STR(POLL_OUT);
+		CASE_ENUM_TO_STR(POLL_MSG);
+		CASE_ENUM_TO_STR(POLL_ERR);
+		CASE_ENUM_TO_STR(POLL_PRI);
+		CASE_ENUM_TO_STR(POLL_HUP);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string si_reason(const cosmos::SigInfo::IllData::Reason reason) {
+	const auto raw = cosmos::to_integral(reason);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(ILL_ILLOPC);
+		CASE_ENUM_TO_STR(ILL_ILLOPN);
+		CASE_ENUM_TO_STR(ILL_ILLADR);
+		CASE_ENUM_TO_STR(ILL_ILLTRP);
+		CASE_ENUM_TO_STR(ILL_PRVOPC);
+		CASE_ENUM_TO_STR(ILL_PRVREG);
+		CASE_ENUM_TO_STR(ILL_COPROC);
+		CASE_ENUM_TO_STR(ILL_BADSTK);
+		CASE_ENUM_TO_STR(ILL_BADIADDR);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string si_reason(const cosmos::SigInfo::FPEData::Reason reason) {
+	const auto raw = cosmos::to_integral(reason);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(FPE_INTDIV);
+		CASE_ENUM_TO_STR(FPE_INTOVF);
+		CASE_ENUM_TO_STR(FPE_FLTDIV);
+		CASE_ENUM_TO_STR(FPE_FLTOVF);
+		CASE_ENUM_TO_STR(FPE_FLTUND);
+		CASE_ENUM_TO_STR(FPE_FLTRES);
+		CASE_ENUM_TO_STR(FPE_FLTINV);
+		CASE_ENUM_TO_STR(FPE_FLTSUB);
+		CASE_ENUM_TO_STR(FPE_FLTUNK);
+		CASE_ENUM_TO_STR(FPE_CONDTRAP);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string poll_event(const cosmos::PollEvent event) {
+	const auto raw = cosmos::to_integral(event);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(POLLIN);
+		CASE_ENUM_TO_STR(POLLPRI);
+		CASE_ENUM_TO_STR(POLLOUT);
+		CASE_ENUM_TO_STR(POLLRDHUP);
+		CASE_ENUM_TO_STR(POLLERR);
+		CASE_ENUM_TO_STR(POLLHUP);
+		CASE_ENUM_TO_STR(POLLNVAL);
+		CASE_ENUM_TO_STR(POLLWRBAND);
+		default: return std::to_string(raw);
+	}
+}
+
+std::string poll_events(const cosmos::PollEvents events) {
+	constexpr auto HIGHEST = 1 << (sizeof(cosmos::PollEvent) * 8 - 1);
+	std::string ret;
+
+	size_t bit = 1;
+	do {
+		const auto flag = cosmos::PollEvent{static_cast<cosmos::PollEvents::EnumBaseType>(bit)};
+
+		if (events[flag]) {
+			if (bit != 1) {
+				ret += "|";
+			}
+			ret += poll_event(flag);
+		}
+
+		bit <<= 1;
+	} while (bit != HIGHEST);
+
+	return ret;
+}
+
 } // end ns
