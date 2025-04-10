@@ -308,12 +308,11 @@ void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
 	}
 }
 
-cosmos::ExitStatus TermTracer::runTrace(const cosmos::ProcessID pid) {
-	ForeignTracee proc{*this};
-	m_tracee = &proc;
-	proc.configure(pid);
+bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
+	auto proc = std::make_unique<ForeignTracee>(*this);
+	proc->configure(pid);
 	try {
-		proc.attach();
+		proc->attach();
 	} catch (const cosmos::ApiError &e) {
 		std::cerr << "Failed to attach to PID " << pid << ": " << e.msg() << "\n";
 		if (e.errnum() == cosmos::Errno::PERMISSION) {
@@ -321,28 +320,23 @@ cosmos::ExitStatus TermTracer::runTrace(const cosmos::ProcessID pid) {
 			std::cerr << "The YAMA kernel security extension can prevent attaching your own processes.\n";
 			std::cerr << "This also happens when another process is already tracing this process.\n";
 		}
-		return cosmos::ExitStatus::FAILURE;
+		return false;
 	}
-	proc.trace();
-	proc.detach();
-	m_tracee = nullptr;
-	// TODO: foreign tracee could also have exited / been killed
-	return cosmos::ExitStatus::SUCCESS;
+
+	m_tracee = std::move(proc);
+	return true;
 }
 
-cosmos::ExitStatus TermTracer::runTrace(const cosmos::StringVector &cmdline) {
-	ChildTracee proc{*this};
-	m_tracee = &proc;
-	proc.create(cmdline);
-	proc.attach();
-	proc.trace();
-	proc.detach();
-	auto ret = proc.exitStatus();
-	m_tracee = nullptr;
-	return ret;
+bool TermTracer::configureTrace(const cosmos::StringVector &cmdline) {
+	auto proc = std::make_unique<ChildTracee>(*this);
+	proc->create(cmdline);
+	proc->attach();
+	m_tracee = std::move(proc);
+	return true;
 }
 
 cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
+	constexpr auto FAILURE = cosmos::ExitStatus::FAILURE;
 	m_cmdline.add(m_attach_proc);
 	m_cmdline.parse(argc, argv);
 
@@ -353,27 +347,64 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	cosmos::signal::block(cosmos::SigSet{cosmos::signal::CHILD});
 
 	if (m_attach_proc.isSet()) {
-		return runTrace(cosmos::ProcessID{m_attach_proc.getValue()});
-	}
+		if (!configureTrace(cosmos::ProcessID{m_attach_proc.getValue()})) {
+			return FAILURE;
+		}
+	} else {
+		// extract any additional arguments into a StringVector
+		cosmos::StringVector sv;
+		bool found_sep = false;
 
-	// extract any additional arguments into a StringVector
-	cosmos::StringVector sv;
-	bool found_sep = false;
+		for (auto arg = 1; arg < argc; arg++) {
+			if (found_sep) {
+				sv.push_back(argv[arg]);
+			} else if (std::string(argv[arg]) == "--") {
+				found_sep = true;
+			}
+		}
 
-	for (auto arg = 1; arg < argc; arg++) {
-		if (found_sep) {
-			sv.push_back(argv[arg]);
-		} else if (std::string(argv[arg]) == "--") {
-			found_sep = true;
+		if (sv.empty()) {
+			std::cerr << "Neither -p nor command to execute after '--' was given. Nothing to do.\n";
+			return FAILURE;
+		}
+
+		if (!configureTrace(sv)) {
+			return FAILURE;
 		}
 	}
 
-	if (sv.empty()) {
-		std::cerr << "Neither -p nor command to execute after '--' was given. Nothing to do.\n";
-		return cosmos::ExitStatus::FAILURE;
+	try {
+		m_tracee->trace();
+	} catch (const std::exception &ex) {
+		std::cerr << "internal tracing error: " << ex.what() << std::endl;
 	}
 
-	return runTrace(sv);
+	m_tracee->detach();
+
+	auto status = cosmos::ExitStatus::SUCCESS;
+
+	/*
+	 * Evaluate exit code of the tracee, valid only after detach().
+	 *
+	 * We mimic the behaviour of the tracee by returning the same exit
+	 * status.
+	 */
+	if (const auto exit_data = m_tracee->exitData(); exit_data) {
+		if (exit_data->exited()) {
+			status = *exit_data->status;
+		} else if (exit_data->killed()) {
+			// this is what the shell returns for childs that have been killed.
+			// TODO: strace actually sends the same kill signal to iself
+			// I don't know whether this is very useful. It can
+			// cause core dumps of the tracer, thus we'd need to
+			// change ulimit to prevent that.
+			status = cosmos::ExitStatus{128 + cosmos::to_integral(exit_data->signal->raw())};
+		}
+	}
+
+	m_tracee.reset();
+
+	return status;
 }
 
 } // end ns

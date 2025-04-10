@@ -1,5 +1,8 @@
 #pragma once
 
+// C++
+#include <memory>
+
 // TCLAP
 #include <tclap/CmdLine.h>
 
@@ -26,9 +29,11 @@ protected: // functions
 
 	cosmos::ExitStatus main(const int argc, const char **argv) override;
 
-	cosmos::ExitStatus runTrace(const cosmos::ProcessID pid);
+	bool configureTrace(const cosmos::ProcessID pid);
 
-	cosmos::ExitStatus runTrace(const cosmos::StringVector &cmdline);
+	bool configureTrace(const cosmos::StringVector &cmdline);
+
+	void runTrace();
 
 	void configureLogger();
 
@@ -60,7 +65,7 @@ protected: // data
 	cosmos::StdLogger m_logger;
 	cosmos::Init m_cosmos;
 
-	Tracee *m_tracee = nullptr;
+	std::unique_ptr<Tracee> m_tracee;
 
 	bool m_print_values = true;
 	size_t m_value_truncation_len = 64;

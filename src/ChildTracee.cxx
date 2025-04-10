@@ -12,14 +12,7 @@ ChildTracee::ChildTracee(EventConsumer &consumer) :
 		Tracee{consumer} {
 }
 
-void ChildTracee::reset() {
-	m_exit_status = std::nullopt;
-	m_kill_signal = std::nullopt;
-}
-
 void ChildTracee::create(const cosmos::StringVector &args) {
-	reset();
-
 	cosmos::ChildCloner cloner;
 	cloner.setArgs(args);
 	cloner.setPostForkCB([](const cosmos::ChildCloner &){
@@ -45,21 +38,25 @@ ChildTracee::~ChildTracee() {
 
 		detach();
 	} catch (const cosmos::CosmosError &ce) {
-		LOG_ERROR("Error detaching from child process PID " << cosmos::to_integral(m_child.pid()) << ":\n\n"
+		LOG_ERROR("Error detaching from child process PID "
+				<< cosmos::to_integral(m_child.pid()) << ":\n\n"
 				<< ce.what());
 	}
 }
 
 void ChildTracee::wait(cosmos::ChildData &data) {
-	data = m_child.wait(cosmos::WaitFlags{cosmos::WaitFlag::WAIT_FOR_EXITED, cosmos::WaitFlag::WAIT_FOR_STOPPED});
+	data = m_child.wait(cosmos::WaitFlags{
+		cosmos::WaitFlag::WAIT_FOR_EXITED,
+		cosmos::WaitFlag::WAIT_FOR_STOPPED
+	});
 }
 
 void ChildTracee::detach() {
+	// this should actually only happen if a ChildTracee is detached
+	// explicitly and we're sending a SIGINT or something like that.
 	if (m_child.running()) {
 		cosmos::ChildData data = m_child.wait();
-		if (data.status) {
-			m_exit_status = *data.status;
-		}
+		m_exit_data = data;
 	}
 }
 

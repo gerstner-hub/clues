@@ -128,6 +128,15 @@ public: // functions
 		return m_prev_state;
 	}
 
+	/// Returns possible tracee exit data.
+	/**
+	 * After trace() returns, if tracee exit was observed, this returns
+	 * the tracee exit information (it's exit status or kill signal etc.).
+	 **/
+	std::optional<cosmos::ChildData> exitData() const {
+		return m_exit_data;
+	}
+
 	/// Logic to handle attaching to the tracee.
 	virtual void attach();
 
@@ -202,9 +211,6 @@ protected: // functions
 
 	/// Waits for the next trace event of this tracee.
 	virtual void wait(cosmos::ChildData &data) = 0;
-
-	/// Called when the tracee exits
-	virtual void gone(const cosmos::ChildData &) {}
 
 	/// Forces the traced process to stop.
 	void interrupt() {
@@ -284,6 +290,8 @@ protected: // data
 	cosmos::Tracee::RestartMode m_restart_mode = cosmos::Tracee::RestartMode::CONT;
 	/// signal to inject upon next restart of the tracee.
 	std::optional<cosmos::Signal> m_inject_sig;
+	/// If tracee exit was observed then this contains the final exit data.
+	std::optional<cosmos::ChildData> m_exit_data;
 };
 
 } // end ns
