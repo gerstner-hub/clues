@@ -7,12 +7,13 @@
 #include <tclap/CmdLine.h>
 
 // cosmos
+#include <cosmos/io/StdLogger.hxx>
 #include <cosmos/main.hxx>
+#include <cosmos/proc/process.hxx>
+#include <cosmos/types.hxx>
 
 // clues
 #include <clues/SystemCall.hxx>
-#include <cosmos/io/StdLogger.hxx>
-#include <cosmos/proc/process.hxx>
 
 namespace clues {
 
@@ -37,6 +38,7 @@ protected: // functions
 
 	void configureLogger();
 
+	void printTraceeInvocation(std::ostream &out) const;
 	void printPar(const SystemCallItem &value, const bool is_last) const;
 	void printEntryPars(const SystemCall::ParameterVector &pars) const;
 	void printExitPars(const SystemCall::ParameterVector &pars) const;
@@ -50,6 +52,8 @@ protected: // event consumer interface
 	void signaled(const cosmos::SigInfo &info) override;
 
 	void exited(const cosmos::WaitStatus status, const State state) override;
+
+	void newExecutionContext(const std::optional<cosmos::ProcessID> former_pid) override;
 
 protected: // data
 
@@ -66,6 +70,8 @@ protected: // data
 	cosmos::Init m_cosmos;
 
 	std::unique_ptr<Tracee> m_tracee;
+	/// Messages that that are supposed to be printed after the next syscall-exit event.
+	cosmos::StringVector m_delayed_messages;
 
 	bool m_print_values = true;
 	size_t m_value_truncation_len = 64;

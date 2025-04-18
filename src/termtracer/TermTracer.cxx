@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <sstream>
 #include <string_view>
 
 // cosmos
@@ -144,6 +145,21 @@ void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
 	}
 }
 
+void TermTracer::printTraceeInvocation(std::ostream &out) const {
+	out << m_tracee->executable() << " [";
+	bool first = true;
+	for (const auto &arg: m_tracee->cmdLine()) {
+		if (first) {
+			first = false;
+		} else {
+			out << ", ";
+		}
+		out << "\"" << arg << "\"";
+	}
+
+	out << "]";
+}
+
 void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
 	std::cerr << (m_verbose.isSet() ? par.longName() : par.shortName());
 
@@ -191,6 +207,12 @@ void TermTracer::syscallExit(const SystemCall &sc, const State state) {
 	}
 
 	std::cerr << std::endl;
+
+	for (const auto &msg: m_delayed_messages) {
+		std::cerr << msg;
+	}
+
+	m_delayed_messages.clear();
 }
 
 void TermTracer::signaled(const cosmos::SigInfo &info) {
@@ -308,6 +330,23 @@ void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
 	}
 }
 
+void TermTracer::newExecutionContext(const std::optional<cosmos::ProcessID> former_pid) {
+	std::stringstream ss;
+	if (former_pid) {
+		ss << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(m_tracee->pid()) << " ---\n";
+		m_delayed_messages.push_back(ss.str());
+		ss.str("");
+	}
+
+	ss << "--- now running ";
+	printTraceeInvocation(ss);
+	ss << " ---\n";
+
+	// this callback will happen before system call exit of execve(), thus
+	// don't print it out right away, but only after system call exit.
+	m_delayed_messages.push_back(ss.str());
+}
+
 bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	auto proc = std::make_unique<ForeignTracee>(*this);
 	proc->configure(pid);
@@ -324,6 +363,11 @@ bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	}
 
 	m_tracee = std::move(proc);
+
+	std::cerr << "--- tracing ";
+	printTraceeInvocation(std::cerr);
+	std::cerr << " ---\n";
+
 	return true;
 }
 

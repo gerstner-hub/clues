@@ -87,6 +87,28 @@ public: // types
 			(void)status;
 			(void)state;
 		}
+
+		/// A new program is executed in the tracee.
+		/**
+		 * This call occurs after a successful `execve()` within the
+		 * tracee. If the tracee was multi-threaded, then all but one
+		 * thread will have exited in the process.
+		 *
+		 * Only the main process ID (main thread PID) will remain. The
+		 * thread that caused the execve() can be a different thread.
+		 * In this case `former_pid` contains the former PID that is
+		 * now continuing as the main thread of the new execution
+		 * context.
+		 *
+		 * The new executable path and command line can be retrieved
+		 * via Tracee::executable() and Tracee::cmdLine().
+		 *
+		 * The callee can decide to stop tracing (by detaching) at
+		 * this point to prevent following new tracing contexts.
+		 **/
+		virtual void newExecutionContext(const std::optional<cosmos::ProcessID> former_pid) {
+			(void)former_pid;
+		}
 	};
 
 	/// Current tracing state for a single tracee.
@@ -117,6 +139,18 @@ public: // types
 public: // functions
 
 	virtual ~Tracee() {}
+
+	const std::string& executable() const {
+		return m_executable;
+	}
+
+	const cosmos::StringVector cmdLine() const {
+		return m_cmdline;
+	}
+
+	cosmos::ProcessID pid() const {
+		return m_ptrace.pid();
+	}
 
 	static const char* getStateLabel(const State state);
 
@@ -207,6 +241,15 @@ protected: // functions
 
 	explicit Tracee(EventConsumer &consumer);
 
+	void updateExecutable();
+
+	void updateCmdLine();
+
+	void updateExecInfo() {
+		updateExecutable();
+		updateCmdLine();
+	}
+
 	void changeState(const State new_state);
 
 	/// Waits for the next trace event of this tracee.
@@ -258,6 +301,8 @@ protected: // functions
 
 	void handleExitEvent();
 
+	void handleExecEvent();
+
 	void handleAttached();
 
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
@@ -292,6 +337,10 @@ protected: // data
 	std::optional<cosmos::Signal> m_inject_sig;
 	/// If tracee exit was observed then this contains the final exit data.
 	std::optional<cosmos::ChildData> m_exit_data;
+	/// Path to the executable we're tracing (/proc/<pid>/exe).
+	std::string m_executable;
+	/// Command line used to create the process (/proc/<pid>/cmdline).
+	cosmos::StringVector m_cmdline;
 };
 
 } // end ns

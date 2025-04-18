@@ -1,8 +1,12 @@
 // C++
 #include <cstring>
+#include <fstream>
 
 // cosmos
+#include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/RuntimeError.hxx>
+#include <cosmos/formatting.hxx>
+#include <cosmos/fs/filesystem.hxx>
 #include <cosmos/io/ILogger.hxx>
 
 // clues
@@ -121,9 +125,66 @@ void Tracee::setTracee(const cosmos::ProcessID tracee) {
 void Tracee::attach() {
 	using Opt = cosmos::ptrace::Opt;
 
-	seize(cosmos::ptrace::Opts{Opt::TRACESYSGOOD, Opt::TRACEEXIT});
+	seize(cosmos::ptrace::Opts{Opt::TRACESYSGOOD, Opt::TRACEEXIT, Opt::TRACEEXEC});
+	updateExecutable();
+	updateCmdLine();
 	interrupt();
 	m_flags.set(Flag::WAIT_FOR_ATTACH_STOP);
+}
+
+void Tracee::updateExecutable() {
+	// obtain the executable name from proc.
+	// as long as we're tracing the PID there is no race involved.
+	// this information is more reliable than what we see in execve(),
+	// since symlinks or other magic might be involved.
+	const auto path = cosmos::sprintf("/proc/%d/exe", cosmos::to_integral(m_ptrace.pid()));
+	try {
+		m_executable = cosmos::fs::read_symlink(path);
+	} catch (const cosmos::ApiError &e) {
+		// likely ENOENT, tracee disappeared
+		// but can this even happen while we're tracing it? and even
+		// if it happens, then no more tracing will happen, so the
+		// information is no longer relevant.
+		//
+		// As a fallback we could rely on the less precise information
+		// from evecve-entry. The issue is that the execve-event-stop
+		// happens before system-call-exit-stop and also that in
+		// multi-threaded contexts, the actual execve system call data
+		// might be in a wholly different tracee, or one that we're
+		// not even tracing.
+		//
+		// so let's ignore this for the moment, assuming that this is
+		// not a relevant situation anyway.
+		m_executable.clear();
+	}
+}
+
+void Tracee::updateCmdLine() {
+	// TODO: this needs a link to some kind of shared process attributes
+	// for the multi-threaded scenario.
+
+	// the cmdline file contains null terminator separated strings
+	// the tracee controls this data and could place crafted data here.
+	//
+	// obtain the data from here instead of from execve() has the
+	// following advantages:
+	// - it works the same for newly created tracee's as for tracee's
+	// we're attaching to during runtime.
+	// - we can obtain the information without having to find the correct
+	// syscall-exit stop context that caused a ptrace-exec event stop.
+	const auto path = cosmos::sprintf("/proc/%d/cmdline", cosmos::to_integral(m_ptrace.pid()));
+
+	m_cmdline.clear();
+
+	std::ifstream is{path};
+	if (!is) {
+		// see updateExecutable() for the rationale here
+		return;
+	}
+	std::string arg;
+	while (std::getline(is, arg, '\0').good()) {
+		m_cmdline.push_back(arg);
+	}
 }
 
 void Tracee::changeState(const State new_state) {
@@ -223,6 +284,7 @@ void Tracee::handleSystemCallExit() {
 	} else {
 		m_interrupted_syscall = nullptr;
 	}
+
 	m_consumer.syscallExit(syscall, state);
 }
 
@@ -240,6 +302,7 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal
 	switch(event) {
 	case Event::STOP: return handleStopEvent(signal);
 	case Event::EXIT: return handleExitEvent();
+	case Event::EXEC: return handleExecEvent();
 	default: LOG_WARN("PTRACE_EVENT unhandled");
 	}
 }
@@ -287,12 +350,21 @@ void Tracee::handleExitEvent() {
 	if (wait_status.exited() &&
 			(prevState() != State::SYSCALL_ENTER_STOP ||
 			m_current_syscall->callNr() != SystemCallNr::EXIT_GROUP)) {
-		// TODO: check what the exist status is in this case, probably it should be just 0.
+		// TODO: check what the exit status is in this case, probably it should be just 0.
 		LOG_INFO("execve() related exit? status = " << *wait_status.status());
 		state.set(EventConsumer::Status::LOST_TO_EXECVE);
 	}
 
 	m_consumer.exited(wait_status, state);
+}
+
+void Tracee::handleExecEvent() {
+
+	const auto former_pid = m_ptrace.getPIDEventMsg();
+
+	updateExecInfo();
+
+	m_consumer.newExecutionContext(former_pid != m_ptrace.pid() ? std::make_optional(former_pid) : std::nullopt);
 }
 
 void Tracee::handleAttached() {
