@@ -38,7 +38,9 @@ protected: // functions
 
 	void configureLogger();
 
-	void printTraceeInvocation(std::ostream &out) const;
+	void printTraceeInvocation(std::ostream &out,
+			const std::string &exe,
+			const cosmos::StringVector &cmdline) const;
 	void printPar(const SystemCallItem &value, const bool is_last) const;
 	void printEntryPars(const SystemCall::ParameterVector &pars) const;
 	void printExitPars(const SystemCall::ParameterVector &pars) const;
@@ -53,7 +55,9 @@ protected: // event consumer interface
 
 	void exited(const cosmos::WaitStatus status, const State state) override;
 
-	void newExecutionContext(const std::optional<cosmos::ProcessID> former_pid) override;
+	void newExecutionContext(const std::string &old_exe,
+			const cosmos::StringVector &old_cmdline,
+			const std::optional<cosmos::ProcessID> former_pid) override;
 
 protected: // data
 
@@ -73,6 +77,7 @@ protected: // data
 	/// Messages that that are supposed to be printed after the next syscall-exit event.
 	cosmos::StringVector m_delayed_messages;
 
+	bool m_seen_initial_exec = false;
 	bool m_print_values = true;
 	size_t m_value_truncation_len = 64;
 };

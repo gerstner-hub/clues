@@ -101,13 +101,19 @@ public: // types
 		 * context.
 		 *
 		 * The new executable path and command line can be retrieved
-		 * via Tracee::executable() and Tracee::cmdLine().
+		 * via Tracee::executable() and Tracee::cmdLine(). The
+		 * previous values are provided as input parameters.
 		 *
 		 * The callee can decide to stop tracing (by detaching) at
 		 * this point to prevent following new tracing contexts.
 		 **/
-		virtual void newExecutionContext(const std::optional<cosmos::ProcessID> former_pid) {
+		virtual void newExecutionContext(
+				const std::string &old_executable,
+				const cosmos::StringVector &old_cmdline,
+				const std::optional<cosmos::ProcessID> former_pid) {
 			(void)former_pid;
+			(void)old_cmdline;
+			(void)old_executable;
 		}
 	};
 

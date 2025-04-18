@@ -382,9 +382,12 @@ void Tracee::handleExecEvent() {
 
 	const auto former_pid = m_ptrace.getPIDEventMsg();
 
+	const auto old_exe = m_executable;
+	const auto old_cmdline = m_cmdline;
+
 	updateExecInfo();
 
-	m_consumer.newExecutionContext(former_pid != m_ptrace.pid() ? std::make_optional(former_pid) : std::nullopt);
+	m_consumer.newExecutionContext(old_exe, old_cmdline, former_pid != m_ptrace.pid() ? std::make_optional(former_pid) : std::nullopt);
 }
 
 void Tracee::handleAttached() {

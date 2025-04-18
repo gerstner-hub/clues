@@ -145,10 +145,12 @@ void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
 	}
 }
 
-void TermTracer::printTraceeInvocation(std::ostream &out) const {
-	out << m_tracee->executable() << " [";
+void TermTracer::printTraceeInvocation(std::ostream &out,
+		const std::string &exe,
+		const cosmos::StringVector &cmdline) const {
+	out << exe << " [";
 	bool first = true;
-	for (const auto &arg: m_tracee->cmdLine()) {
+	for (const auto &arg: cmdline) {
 		if (first) {
 			first = false;
 		} else {
@@ -330,7 +332,7 @@ void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
 	}
 }
 
-void TermTracer::newExecutionContext(const std::optional<cosmos::ProcessID> former_pid) {
+void TermTracer::newExecutionContext(const std::string &old_exe, const cosmos::StringVector &old_cmdline, const std::optional<cosmos::ProcessID> former_pid) {
 	std::stringstream ss;
 	if (former_pid) {
 		ss << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(m_tracee->pid()) << " ---\n";
@@ -338,13 +340,21 @@ void TermTracer::newExecutionContext(const std::optional<cosmos::ProcessID> form
 		ss.str("");
 	}
 
+	if (m_seen_initial_exec || m_attach_proc.isSet()) {
+		ss << "--- no longer running " ;
+		printTraceeInvocation(ss, old_exe, old_cmdline);
+		ss << " ---\n";
+		m_delayed_messages.push_back(ss.str());
+		ss.str("");
+	}
 	ss << "--- now running ";
-	printTraceeInvocation(ss);
+	printTraceeInvocation(ss, m_tracee->executable(), m_tracee->cmdLine());
 	ss << " ---\n";
 
 	// this callback will happen before system call exit of execve(), thus
 	// don't print it out right away, but only after system call exit.
 	m_delayed_messages.push_back(ss.str());
+	m_seen_initial_exec = true;
 }
 
 bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
@@ -365,7 +375,7 @@ bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	m_tracee = std::move(proc);
 
 	std::cerr << "--- tracing ";
-	printTraceeInvocation(std::cerr);
+	printTraceeInvocation(std::cerr, m_tracee->executable(), m_tracee->cmdLine());
 	std::cerr << " ---\n";
 
 	return true;
