@@ -261,13 +261,33 @@ void Tracee::handleSystemCallEntry() {
 		if (m_interrupted_syscall) {
 			m_current_syscall = m_interrupted_syscall;
 			state.set(EventConsumer::Status::RESUMED);
-		} else {
+		} else if (m_syscall_ctr != 0) {
 			// explicit restart_syscall done by user space?
 			LOG_WARN("unknown system call is resumed");
+		} else {
+			// this happens when attaching to a non-child process
+			// and a system call like clock_nanosleep is
+			// interrupted as a result.
+			// we cannot know which system call is being resume,
+			// since we have no history. restart_syscall() carries
+			// no additional context information pointing us to
+			// the kind of system call that is being resumed.
+			//
+			// it would be quite a feature, though, to know which
+			// system is being resumed, as it happens quite often
+			// that a process is attached that behaves unusually
+			// e.g. because it blocks.
+			//
+			// TODO: maybe we can find out about the actual system
+			// call by reading internal tracee memory (or even
+			// kernel memory?).
+			// maybe it helps to fetch the tracee's register set
+			// upon the initial event stop?
 		}
 	}
 	m_current_syscall->setEntryInfo(*this, info);
 	m_consumer.syscallEntry(*m_current_syscall, state);
+	m_syscall_ctr++;
 }
 
 void Tracee::handleSystemCallExit() {

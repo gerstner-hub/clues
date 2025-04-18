@@ -341,6 +341,8 @@ protected: // data
 	std::string m_executable;
 	/// Command line used to create the process (/proc/<pid>/cmdline).
 	cosmos::StringVector m_cmdline;
+	/// Number of system calls observed.
+	size_t m_syscall_ctr = 0;
 };
 
 } // end ns
