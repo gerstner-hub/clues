@@ -45,15 +45,15 @@ def buildErrnosHeader(target, source, env):
     errnos.sort()
 
     with open(str(target[0]), 'w') as out_fd:
-        out_fd.write("const char* const ERRNO_NAMES[] = {\n")
+        out_fd.write("#include <array>\n\n")
+        out_fd.write("constexpr size_t ERRNO_NAMES_COUNT = {};\n".format(len(errnos)))
+        out_fd.write("constexpr std::array<const char* const, ERRNO_NAMES_COUNT> ERRNO_NAMES = {\n")
         for nr, name in errnos:
             out_fd.write('\t"{}"'.format(name))
             if nr != len(errnos) - 1:
                 out_fd.write(",")
             out_fd.write("\n")
         out_fd.write("};\n")
-
-        out_fd.write("\nconstexpr auto ERRNO_NAMES_MAX = {};\n".format(len(errnos) - 1))
 
     return 0
 
@@ -93,15 +93,17 @@ def buildSyscallHeader(target, source, env):
     with open(str(target[0]), 'w') as out_fd:
         out_fd.write("#include <stdlib.h>\n")
         out_fd.write("#include <elf.h>\n")
-        out_fd.write("#include <sys/syscall.h>\n\n// C++ class enum for system call numbers found in syscall.h\n")
+        out_fd.write("#include <sys/syscall.h>\n\n")
+        out_fd.write("#include <array>\n")
+        out_fd.write("\n// C++ class enum for system call numbers found in syscall.h\n")
         out_fd.write("namespace clues {\n")
         out_fd.write("enum class SystemCallNr : uint64_t {\n")
         for syscall in syscalls.values():
             _, base = syscall.split('_', 1)
             out_fd.write(f'\t{base.upper()} = {syscall},\n')
         out_fd.write("};\n\n")
-        out_fd.write(f"constexpr size_t SYSTEM_CALL_MAX = {max_number};\n\n")
-        out_fd.write("constexpr const char *SYSTEM_CALL_NAMES[] = {\n")
+        out_fd.write(f"constexpr size_t SYSTEM_CALL_COUNT = {max_number};\n\n")
+        out_fd.write("constexpr std::array<const char* const, SYSTEM_CALL_COUNT> SYSTEM_CALL_NAMES = {\n")
         for nr in range(max_number):
             number_str = numbers.get(nr, None)
             label = syscalls.get(number_str, "").lstrip("SYS_");
@@ -111,13 +113,13 @@ def buildSyscallHeader(target, source, env):
 
     return 0
 
-syscallHeaderBuilder = env.Builder(action=buildSyscallHeader, suffix='.h', src_suffix='.c')
+syscallHeaderBuilder = env.Builder(action=buildSyscallHeader, suffix='.hxx', src_suffix='.cxx')
 env.Append(BUILDERS={'SyscallHeaderBuilder': syscallHeaderBuilder})
 
 # this header is only needed in the implementation and does not need to be
 # installed as a public header
-_ = env.ErrnoHeaderBuilder("clues/errnodb.h", "generated/errnodb.c")
-syscall_header = env.SyscallHeaderBuilder("clues/syscallnrs.h", "generated/syscallnrs.c")
+_ = env.ErrnoHeaderBuilder("clues/errnodb.hxx", "generated/errnodb.cxx")
+syscall_header = env.SyscallHeaderBuilder("clues/syscallnrs.hxx", "generated/syscallnrs.cxx")
 
 env.AddGeneratedHeader(syscall_header)
 

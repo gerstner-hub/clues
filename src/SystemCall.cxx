@@ -22,12 +22,16 @@
 #include <clues/types.hxx>
 
 // generated
-#include <clues/syscallnrs.h>
+#include <clues/syscallnrs.hxx>
 
 namespace clues {
 
 const char* SystemCall::name(const SystemCallNr nr) {
 	return SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
+}
+
+bool SystemCall::validNr(const SystemCallNr nr) {
+	return cosmos::to_integral(nr) < SYSTEM_CALL_NAMES.size();
 }
 
 SystemCall::SystemCall(

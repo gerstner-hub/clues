@@ -21,7 +21,7 @@
 #include <clues/arch.hxx>
 #include <clues/types.hxx>
 // generated
-#include <clues/syscallnrs.h>
+#include <clues/syscallnrs.hxx>
 
 namespace clues {
 

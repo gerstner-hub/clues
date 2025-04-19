@@ -5,7 +5,7 @@
 #include <clues/utils.hxx>
 
 // generated
-#include <clues/errnodb.h>
+#include <clues/errnodb.hxx>
 
 // cosmos
 #include <cosmos/utils.hxx>
@@ -14,7 +14,7 @@ namespace clues {
 
 const char* get_errno_label(const cosmos::Errno err) {
 	const auto num = cosmos::to_integral(err);
-	if (num < 0 || num >= ERRNO_NAMES_MAX)
+	if (num < 0 || static_cast<size_t>(num) >= ERRNO_NAMES.size())
 		return "E<INVALID>";
 
 	return ERRNO_NAMES[num];

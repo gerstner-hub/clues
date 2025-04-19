@@ -135,6 +135,9 @@ public: // functions
 	 **/
 	static const char* name(const SystemCallNr nr);
 
+	/// Returns whether the given system call number is in a valid range.
+	static bool validNr(const SystemCallNr nr);
+
 protected: // data
 
 	/// The raw system call number of the system call.
