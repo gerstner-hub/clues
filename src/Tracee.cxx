@@ -268,21 +268,27 @@ void Tracee::handleSystemCallEntry() {
 			// this happens when attaching to a non-child process
 			// and a system call like clock_nanosleep is
 			// interrupted as a result.
-			// we cannot know which system call is being resume,
+			// we cannot know which system call is being resumed,
 			// since we have no history. restart_syscall() carries
 			// no additional context information pointing us to
 			// the kind of system call that is being resumed.
 			//
 			// it would be quite a feature, though, to know which
-			// system is being resumed, as it happens quite often
-			// that a process is attached that behaves unusually
-			// e.g. because it blocks.
-			//
-			// TODO: maybe we can find out about the actual system
-			// call by reading internal tracee memory (or even
-			// kernel memory?).
-			// maybe it helps to fetch the tracee's register set
-			// upon the initial event stop?
+			// system call is being resumed, as it happens quite
+			// often that a process is attached that behaves
+			// unusually e.g. because it blocks.
+
+			// m_initial_regset is obtained during the initial
+			// ptrace-event-stop. It seems it contains the
+			// currently running system call. This only works if
+			// the system call was not interrupted before already,
+			// though.
+
+			const auto orig_syscall = m_initial_regset.syscall();
+			if (orig_syscall != SystemCallNr::RESTART_SYSCALL && SystemCall::validNr(orig_syscall)) {
+				m_current_syscall = &m_syscall_db.get(orig_syscall);
+				state.set(EventConsumer::Status::RESUMED);
+			}
 		}
 	}
 	m_current_syscall->setEntryInfo(*this, info);
@@ -396,6 +402,8 @@ void Tracee::handleAttached() {
 	if (!m_flags[Flag::INJECTED_SIGSTOP]) {
 		m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
 	}
+
+	getRegisters(m_initial_regset);
 }
 
 void Tracee::trace() {

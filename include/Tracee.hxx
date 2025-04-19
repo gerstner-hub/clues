@@ -16,6 +16,7 @@
 #include <cosmos/string.hxx>
 
 // clues
+#include <clues/RegisterSet.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/types.hxx>
 
@@ -349,6 +350,8 @@ protected: // data
 	cosmos::StringVector m_cmdline;
 	/// Number of system calls observed.
 	size_t m_syscall_ctr = 0;
+	/// Register set observed during initial attach event stop.
+	RegisterSet m_initial_regset;
 };
 
 } // end ns
