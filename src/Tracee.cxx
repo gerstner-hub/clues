@@ -130,6 +130,14 @@ void Tracee::attach() {
 	updateCmdLine();
 	interrupt();
 	m_flags.set(Flag::WAIT_FOR_ATTACH_STOP);
+	if (m_flags[Flag::INJECTED_SIGSTOP]) {
+		// send SIGCONT via kill() instead of via a ptrace injected
+		// signal. For some reason, when injecting the signal via
+		// ptrace, the stopped state will be applied again after
+		// performing a PTRACE_DETACH operation. This could even be a
+		// kernel bug.
+		cosmos::signal::send(m_ptrace.pid(), cosmos::signal::CONT);
+	}
 }
 
 void Tracee::updateExecutable() {
@@ -199,7 +207,6 @@ void Tracee::changeState(const State new_state) {
 			// our own injected group stop
 			// let the tracee continue and we're tracing syscalls now
 			m_flags.reset(Flag::INJECTED_SIGSTOP);
-			m_inject_sig = cosmos::signal::CONT;
 			m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
 		} else {
 			// enter listen state to avoid restarting a stopped
