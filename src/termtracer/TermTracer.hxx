@@ -3,17 +3,16 @@
 // C++
 #include <memory>
 
-// TCLAP
-#include <tclap/CmdLine.h>
-
 // cosmos
 #include <cosmos/io/StdLogger.hxx>
 #include <cosmos/main.hxx>
-#include <cosmos/proc/process.hxx>
 #include <cosmos/types.hxx>
 
 // clues
 #include <clues/SystemCall.hxx>
+
+// termtracer
+#include "Args.hxx"
 
 namespace clues {
 
@@ -23,6 +22,17 @@ class TermTracer :
 public: // functions
 
 	TermTracer();
+
+protected: // types
+
+	/// What to do upon execve
+	enum class FollowExecContext {
+		YES,
+		NO,
+		ASK,
+		CHECK_PATH,
+		CHECK_GLOB
+	};
 
 protected: // functions
 
@@ -45,6 +55,8 @@ protected: // functions
 	void printEntryPars(const SystemCall::ParameterVector &pars) const;
 	void printExitPars(const SystemCall::ParameterVector &pars) const;
 
+	bool followExecutionContext();
+
 protected: // event consumer interface
 
 	void syscallEntry(const SystemCall &sc, const State state) override;
@@ -61,25 +73,22 @@ protected: // event consumer interface
 
 protected: // data
 
-	TCLAP::CmdLine m_cmdline;
-	/// Already running process to attach to.
-	TCLAP::ValueArg<std::underlying_type<cosmos::ProcessID>::type> m_attach_proc;
-	/// Increase verbosity of tracing output.
-	TCLAP::SwitchArg m_verbose;
-	/// Maximum length of parameter values to print.
-	TCLAP::ValueArg<int> m_max_value_len;
+	/// Command line arguments and parser.
+	Args m_args;
 
 	/// cosmos ILogger instance for clues library logging.
 	cosmos::StdLogger m_logger;
 	cosmos::Init m_cosmos;
 
 	std::unique_ptr<Tracee> m_tracee;
-	/// Messages that that are supposed to be printed after the next syscall-exit event.
-	cosmos::StringVector m_delayed_messages;
 
 	bool m_seen_initial_exec = false;
 	bool m_print_values = true;
 	size_t m_value_truncation_len = 64;
+
+	FollowExecContext m_follow_exec = FollowExecContext::YES;
+	/// optional argument to m_follow_exec (e.g. path, glob, script)
+	std::string m_exec_context_arg;
 };
 
 } // end ns

@@ -1,3 +1,6 @@
+// C
+#include <fnmatch.h>
+
 // C++
 #include <cstdlib>
 #include <iostream>
@@ -25,28 +28,11 @@
 
 namespace clues {
 
-TermTracer::TermTracer() :
-		m_cmdline{"Command line process tracer.\nTo use clues as a front-end pass the command line to execute after '--'", ' ', "0.1"},
-		m_attach_proc{
-			"p", "process",
-			"attach to the given already running process for tracing",
-			false,
-			cosmos::to_integral(cosmos::ProcessID::INVALID),
-			"Process ID"},
-		m_verbose{
-			"v", "verbose",
-			"increase verbosity of tracing output",
-			false},
-		m_max_value_len{
-			"s", "max-len",
-			"maximum length of parameter values to print. 0 to to print not at all, -1 to disable truncation",
-			false,
-			64,
-			"number of bytes"} {
+TermTracer::TermTracer() {
 }
 
 void TermTracer::processPars() {
-	auto max_len = m_max_value_len.getValue();
+	auto max_len = m_args.max_value_len.getValue();
 
 	if (max_len == 0)
 		m_print_values = false;
@@ -54,6 +40,26 @@ void TermTracer::processPars() {
 		m_value_truncation_len = SIZE_MAX;
 	else
 		m_value_truncation_len = static_cast<size_t>(max_len);
+
+	if (m_args.follow_execve.isSet()) {
+		const auto &arg = m_args.follow_execve.getValue();
+		constexpr std::string_view PATH_PREFIX{"path:"};
+		constexpr std::string_view GLOB_PREFIX{"glob:"};
+
+		if (arg == "yes") {
+			m_follow_exec = FollowExecContext::YES;
+		} else if (arg == "no") {
+			m_follow_exec = FollowExecContext::NO;
+		} else if (arg == "ask") {
+			m_follow_exec = FollowExecContext::ASK;
+		} else if (cosmos::is_prefix(arg, PATH_PREFIX)) {
+			m_follow_exec = FollowExecContext::CHECK_PATH;
+			m_exec_context_arg = arg.substr(PATH_PREFIX.size());
+		} else if (cosmos::is_prefix(arg, GLOB_PREFIX)) {
+			m_follow_exec = FollowExecContext::CHECK_GLOB;
+			m_exec_context_arg = arg.substr(GLOB_PREFIX.size());
+		}
+	}
 }
 
 void TermTracer::configureLogger() {
@@ -163,7 +169,7 @@ void TermTracer::printTraceeInvocation(std::ostream &out,
 }
 
 void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
-	std::cerr << (m_verbose.isSet() ? par.longName() : par.shortName());
+	std::cerr << (m_args.verbose.isSet() ? par.longName() : par.shortName());
 
 	if (m_print_values) {
 		auto value = par.str();
@@ -193,12 +199,18 @@ void TermTracer::syscallEntry(const SystemCall &sc, const State state) {
 }
 
 void TermTracer::syscallExit(const SystemCall &sc, const State state) {
+
+	if (sc.callNr() == SystemCallNr::EXECVE) {
+		// this is already dealt with in newExecutionContext()
+		return;
+	}
+
 	printExitPars(sc.parameters());
 
 	std::cerr << ") = ";
 
 	if (auto res = sc.result(); res) {
-		std::cerr << res->str() << " (" << (m_verbose.isSet() ? res->longName() : res->shortName()) << ")";
+		std::cerr << res->str() << " (" << (m_args.verbose.isSet() ? res->longName() : res->shortName()) << ")";
 	} else {
 		const auto err = *sc.error();
 		std::cerr << err.str() << " (errno)";
@@ -209,12 +221,6 @@ void TermTracer::syscallExit(const SystemCall &sc, const State state) {
 	}
 
 	std::cerr << std::endl;
-
-	for (const auto &msg: m_delayed_messages) {
-		std::cerr << msg;
-	}
-
-	m_delayed_messages.clear();
 }
 
 void TermTracer::signaled(const cosmos::SigInfo &info) {
@@ -332,32 +338,65 @@ void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
 	}
 }
 
-void TermTracer::newExecutionContext(const std::string &old_exe, const cosmos::StringVector &old_cmdline, const std::optional<cosmos::ProcessID> former_pid) {
-	std::stringstream ss;
+void TermTracer::newExecutionContext(const std::string &old_exe,
+		const cosmos::StringVector &old_cmdline,
+		const std::optional<cosmos::ProcessID> former_pid) {
+
+	// anticipate the sucess system call status to avoid complexities
+	// while outputting status messages and interactive dialogs.
+	std::cerr << ") = 0 (success)\n";
 	if (former_pid) {
-		ss << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(m_tracee->pid()) << " ---\n";
-		m_delayed_messages.push_back(ss.str());
-		ss.str("");
+		std::cerr << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(m_tracee->pid()) << " ---\n";
 	}
 
-	if (m_seen_initial_exec || m_attach_proc.isSet()) {
-		ss << "--- no longer running " ;
-		printTraceeInvocation(ss, old_exe, old_cmdline);
-		ss << " ---\n";
-		m_delayed_messages.push_back(ss.str());
-		ss.str("");
+	if (m_seen_initial_exec) {
+		std::cerr << "--- no longer running " ;
+		printTraceeInvocation(std::cerr, old_exe, old_cmdline);
+		std::cerr << " ---\n";
 	}
-	ss << "--- now running ";
-	printTraceeInvocation(ss, m_tracee->executable(), m_tracee->cmdLine());
-	ss << " ---\n";
+	std::cerr << "--- now running ";
+	printTraceeInvocation(std::cerr, m_tracee->executable(), m_tracee->cmdLine());
+	std::cerr << " ---\n";
 
-	// this callback will happen before system call exit of execve(), thus
-	// don't print it out right away, but only after system call exit.
-	m_delayed_messages.push_back(ss.str());
-	m_seen_initial_exec = true;
+	if (!m_seen_initial_exec) {
+		m_seen_initial_exec = true;
+	} else {
+		if (!followExecutionContext()) {
+			std::cerr << "--- detaching after execve ---\n";
+			m_tracee->detach();
+		}
+	}
+}
+
+bool TermTracer::followExecutionContext() {
+
+	switch (m_follow_exec) {
+		case FollowExecContext::YES: return true;
+		case FollowExecContext::NO: return false;
+		case FollowExecContext::ASK: {
+			std::cout << "Follow into new execution context?\n";
+			std::string yes_no;
+			while (true) {
+				std::cout << "(y/n) > ";
+				std::cin >> yes_no;
+				if (!std::cin.good() || yes_no == "n")
+					return false;
+				else if (yes_no == "y")
+					return true;
+			}
+		} case FollowExecContext::CHECK_PATH: {
+			return m_exec_context_arg == m_tracee->executable();
+		} case FollowExecContext::CHECK_GLOB: {
+			return ::fnmatch(m_exec_context_arg.c_str(), m_tracee->executable().c_str(), 0) == 0;
+		}
+		default:
+			return false;
+	}
 }
 
 bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
+	// this is only for newly created child processes
+	m_seen_initial_exec = true;
 	auto proc = std::make_unique<ForeignTracee>(*this);
 	proc->configure(pid);
 	try {
@@ -391,8 +430,7 @@ bool TermTracer::configureTrace(const cosmos::StringVector &cmdline) {
 
 cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	constexpr auto FAILURE = cosmos::ExitStatus::FAILURE;
-	m_cmdline.add(m_attach_proc);
-	m_cmdline.parse(argc, argv);
+	m_args.cmdline.parse(argc, argv);
 
 	configureLogger();
 
@@ -400,8 +438,8 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 
 	cosmos::signal::block(cosmos::SigSet{cosmos::signal::CHILD});
 
-	if (m_attach_proc.isSet()) {
-		if (!configureTrace(cosmos::ProcessID{m_attach_proc.getValue()})) {
+	if (m_args.attach_proc.isSet()) {
+		if (!configureTrace(cosmos::ProcessID{m_args.attach_proc.getValue()})) {
 			return FAILURE;
 		}
 	} else {
