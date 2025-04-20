@@ -52,6 +52,12 @@ void ChildTracee::wait(cosmos::ChildData &data) {
 }
 
 void ChildTracee::detach() {
+
+	if (m_state != State::DEAD && m_state != State::DETACHED) {
+		m_ptrace.detach();
+		changeState(State::DETACHED);
+	}
+
 	// this should actually only happen if a ChildTracee is detached
 	// explicitly and we're sending a SIGINT or something like that.
 	if (m_child.running()) {

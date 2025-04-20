@@ -27,9 +27,11 @@ void ForeignTracee::wait(cosmos::ChildData &data) {
 }
 
 void ForeignTracee::detach() {
-	if (m_ptrace.valid() && m_state != State::DEAD) {
+	if (m_ptrace.valid() && m_state != State::DEAD && m_state != State::DETACHED) {
 		m_ptrace.detach();
 		m_ptrace = cosmos::Tracee{};
+
+		changeState(State::DETACHED);
 	}
 }
 

@@ -114,6 +114,7 @@ const char* Tracee::getStateLabel(const State state) {
 		case State::GROUP_STOP:           return "GROUP_STOP";
 		case State::EVENT_STOP:           return "EVENT_STOP";
 		case State::DEAD:                 return "DEAD";
+		case State::DETACHED:             return "DETACHED";
 		default:                          return "???";
 	}
 }
@@ -454,6 +455,9 @@ void Tracee::trace() {
 		} else {
 			LOG_WARN("Other Tracee event?");
 		}
+
+		if (m_state == State::DEAD || m_state == State::DETACHED)
+			break;
 
 		restart(m_restart_mode, m_inject_sig);
 

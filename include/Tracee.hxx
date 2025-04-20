@@ -130,7 +130,8 @@ public: // types
 		SIGNAL_DELIVERY_STOP, ///< signal was delivered.
 		GROUP_STOP, ///< SIGSTOP executed, the tracee is stopped.
 		EVENT_STOP, ///< special ptrace event occurred.
-		DEAD ///< the tracee no longer exists.
+		DEAD, ///< the tracee no longer exists.
+		DETACHED, ///< we already detached from the tracee
 	};
 
 	/// Different flags reflecting the tracer status.
