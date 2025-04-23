@@ -20,7 +20,7 @@ namespace {
 
 /// A filler that fills Tracee data into a container supporting push_back() until a terminating zero element is found.
 /**
- * This only works for primitive data types that are small than `long` (the
+ * This only works for primitive data types that are smaller than `long` (the
  * basic I/O size for reading data from a Tracee).
  **/
 template <typename CONTAINER>
@@ -219,6 +219,9 @@ void Tracee::changeState(const State new_state) {
 	if (m_state != State::RUNNING)
 		m_prev_state = m_state;
 
+	if (m_prev_state == State::GROUP_STOP && m_state != State::GROUP_STOP)
+		m_stop_signal = std::nullopt;
+
 	m_state = new_state;
 }
 
@@ -300,8 +303,8 @@ void Tracee::handleSystemCallEntry() {
 		}
 	}
 	m_current_syscall->setEntryInfo(*this, info);
-	m_consumer.syscallEntry(*m_current_syscall, state);
 	m_syscall_ctr++;
+	m_consumer.syscallEntry(*m_current_syscall, state);
 }
 
 void Tracee::handleSystemCallExit() {
@@ -351,6 +354,7 @@ void Tracee::handleStopEvent(const cosmos::Signal signal) {
 		// automatically-attached children, which is not yet
 		// implemented
 		changeState(State::GROUP_STOP);
+		m_stop_signal = signal;
 		m_consumer.stopped();
 	} else if (signal == cosmos::signal::TRAP) {
 		// SIGTRAP has quite a blurry meaning in the ptrace()

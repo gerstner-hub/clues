@@ -160,6 +160,20 @@ public: // functions
 		return m_ptrace.pid();
 	}
 
+	/// Returns the number of system calls observed so far
+	/**
+	 * This counts the number of system call entries observed while
+	 * tracing this PID.
+	 **/
+	size_t syscallCtr() const {
+		return m_syscall_ctr;
+	}
+
+	/// For state() == State::GROUP_STOP this returns the stopping signal that caused it.
+	std::optional<cosmos::Signal> stopSignal() const {
+		return m_stop_signal;
+	}
+
 	static const char* getStateLabel(const State state);
 
 	State state() const {
@@ -353,6 +367,8 @@ protected: // data
 	size_t m_syscall_ctr = 0;
 	/// Register set observed during initial attach event stop.
 	RegisterSet m_initial_regset;
+	/// For GROUP_STOP this contains the signal that caused it.
+	std::optional<cosmos::Signal> m_stop_signal;
 };
 
 } // end ns

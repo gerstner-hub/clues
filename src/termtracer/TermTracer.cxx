@@ -338,6 +338,12 @@ void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
 	}
 }
 
+void TermTracer::stopped() {
+	if (m_tracee->syscallCtr() == 0) {
+		std::cerr << "--- currently in stopped state due to " << *m_tracee->stopSignal() << " ---\n";
+	}
+}
+
 void TermTracer::newExecutionContext(const std::string &old_exe,
 		const cosmos::StringVector &old_cmdline,
 		const std::optional<cosmos::ProcessID> former_pid) {

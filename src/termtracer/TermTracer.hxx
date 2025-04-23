@@ -71,6 +71,8 @@ protected: // event consumer interface
 			const cosmos::StringVector &old_cmdline,
 			const std::optional<cosmos::ProcessID> former_pid) override;
 
+	void stopped() override;
+
 protected: // data
 
 	/// Command line arguments and parser.
