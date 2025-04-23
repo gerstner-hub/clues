@@ -138,6 +138,7 @@ void Tracee::attach() {
 		// performing a PTRACE_DETACH operation. This could even be a
 		// kernel bug.
 		cosmos::signal::send(m_ptrace.pid(), cosmos::signal::CONT);
+		m_flags.set(Flag::INJECTED_SIGCONT);
 	}
 }
 
@@ -327,6 +328,12 @@ void Tracee::handleSystemCallExit() {
 
 void Tracee::handleSignal(const cosmos::SigInfo &info) {
 	LOG_INFO("Signal: " << info.sigNr());
+
+	if (m_flags[Flag::INJECTED_SIGCONT] && info.sigNr() == cosmos::signal::CONT) {
+		// ignore injected SIGCONT
+		m_flags.reset(Flag::INJECTED_SIGCONT);
+		return;
+	}
 
 	m_consumer.signaled(info);
 }

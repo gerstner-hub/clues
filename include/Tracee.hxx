@@ -139,7 +139,8 @@ public: // types
 		WAIT_FOR_ATTACH_STOP = 1 << 1, ///< we're still waiting for the PTRACE_INTERRUPT event stop.
 		WAIT_FOR_DETACH_STOP = 1 << 2, ///< we're still waiting for the SIGSTOP we injected for detaching.
 		INJECTED_SIGSTOP     = 1 << 3, ///< whether we've injected a SIGSTOP that needs to be undone.
-		SYSCALL_ENTERED      = 1 << 4, ///< we've seen a syscall-enter-stop and wait for the corresponding exit-stop.
+		INJECTED_SIGCONT     = 1 << 4, ///< whether we've injected a SIGCONT that needs to be ignored.
+		SYSCALL_ENTERED      = 1 << 5, ///< we've seen a syscall-enter-stop and wait for the corresponding exit-stop.
 	};
 
 	using Flags = cosmos::BitMask<Flag>;
