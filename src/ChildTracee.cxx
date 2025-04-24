@@ -3,8 +3,8 @@
 #include <cosmos/proc/ChildCloner.hxx>
 
 // clues
-#include <clues/clues.hxx>
 #include <clues/ChildTracee.hxx>
+#include <clues/logger.hxx>
 
 namespace clues {
 

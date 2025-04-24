@@ -6,7 +6,6 @@
 #include <cosmos/io/ILogger.hxx>
 
 // clues
-#include <clues/clues.hxx>
 #include <clues/items/files.hxx>
 #include <clues/items/futex.hxx>
 #include <clues/items/items.hxx>
@@ -16,6 +15,7 @@
 #include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/items/time.hxx>
+#include <clues/logger.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallItem.hxx>

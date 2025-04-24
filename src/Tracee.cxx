@@ -10,7 +10,7 @@
 #include <cosmos/io/ILogger.hxx>
 
 // clues
-#include <clues/clues.hxx>
+#include <clues/logger.hxx>
 #include <clues/RegisterSet.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/Tracee.hxx>

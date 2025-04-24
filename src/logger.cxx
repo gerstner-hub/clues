@@ -1,4 +1,4 @@
-#include <clues/clues.hxx>
+#include <clues/logger.hxx>
 
 namespace clues {
 

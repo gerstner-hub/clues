@@ -4,8 +4,8 @@
 #include <cosmos/proc/process.hxx>
 
 // clues
-#include <clues/clues.hxx>
 #include <clues/ForeignTracee.hxx>
+#include <clues/logger.hxx>
 
 namespace clues {
 

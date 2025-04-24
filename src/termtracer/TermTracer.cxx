@@ -18,9 +18,9 @@
 
 // clues
 #include <clues/ChildTracee.hxx>
-#include <clues/clues.hxx>
 #include <clues/ForeignTracee.hxx>
 #include <clues/format.hxx>
+#include <clues/logger.hxx>
 #include <clues/SystemCallItem.hxx>
 
 // termtracer
