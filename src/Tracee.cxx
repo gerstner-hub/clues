@@ -81,21 +81,6 @@ protected: // data
 	char *m_buffer;
 };
 
-std::string_view ptrace_event_str(const cosmos::ptrace::Event event) {
-	using Event = cosmos::ptrace::Event;
-	switch (event) {
-		case Event::VFORK: return "VFORK";
-		case Event::FORK: return "FORK";
-		case Event::CLONE: return "CLONE";
-		case Event::VFORK_DONE: return "VFORK_DONE";
-		case Event::EXEC: return "EXEC";
-		case Event::EXIT: return "EXIT";
-		case Event::STOP: return "STOP";
-		case Event::SECCOMP: return "SECCOMP";
-		default: return "??? unknown ???";
-	}
-}
-
 } // end anon ns
 
 namespace clues {
@@ -339,7 +324,7 @@ void Tracee::handleSignal(const cosmos::SigInfo &info) {
 }
 
 void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal) {
-	LOG_INFO("PTRACE_EVENT_" << ptrace_event_str(event) << " (" << signal << ")");
+	LOG_INFO("PTRACE_EVENT_" << get_ptrace_event_str(event) << " (" << signal << ")");
 
 	using Event = cosmos::ptrace::Event;
 

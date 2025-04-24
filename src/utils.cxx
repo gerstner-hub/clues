@@ -30,4 +30,19 @@ const char* get_kernel_errno_label(const KernelErrno err) {
 	}
 }
 
+const char* get_ptrace_event_str(const cosmos::ptrace::Event event) {
+	using Event = cosmos::ptrace::Event;
+	switch (event) {
+		case Event::VFORK: return "VFORK";
+		case Event::FORK: return "FORK";
+		case Event::CLONE: return "CLONE";
+		case Event::VFORK_DONE: return "VFORK_DONE";
+		case Event::EXEC: return "EXEC";
+		case Event::EXIT: return "EXIT";
+		case Event::STOP: return "STOP";
+		case Event::SECCOMP: return "SECCOMP";
+		default: return "??? unknown ???";
+	}
+}
+
 } // end ns
