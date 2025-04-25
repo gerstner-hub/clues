@@ -9,6 +9,8 @@
 #include <cosmos/types.hxx>
 
 // clues
+#include <clues/Engine.hxx>
+#include <clues/EventConsumer.hxx>
 #include <clues/SystemCall.hxx>
 
 // termtracer
@@ -17,7 +19,7 @@
 namespace clues {
 
 class TermTracer :
-		public Tracee::EventConsumer,
+		public clues::EventConsumer,
        		public cosmos::MainPlainArgs {
 public: // functions
 
@@ -42,8 +44,6 @@ protected: // functions
 
 	bool configureTrace(const cosmos::ProcessID pid);
 
-	bool configureTrace(const cosmos::StringVector &cmdline);
-
 	void runTrace();
 
 	void configureLogger();
@@ -55,23 +55,24 @@ protected: // functions
 	void printEntryPars(const SystemCall::ParameterVector &pars) const;
 	void printExitPars(const SystemCall::ParameterVector &pars) const;
 
-	bool followExecutionContext();
+	bool followExecutionContext(Tracee &tracee);
 
 protected: // event consumer interface
 
-	void syscallEntry(const SystemCall &sc, const State state) override;
+	void syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) override;
 
-	void syscallExit(const SystemCall &sc, const State state) override;
+	void syscallExit(Tracee &tracee, const SystemCall &sc, const State state) override;
 
-	void signaled(const cosmos::SigInfo &info) override;
+	void signaled(Tracee &tracee, const cosmos::SigInfo &info) override;
 
-	void exited(const cosmos::WaitStatus status, const State state) override;
+	void exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) override;
 
-	void newExecutionContext(const std::string &old_exe,
+	void newExecutionContext(Tracee &tracee,
+			const std::string &old_exe,
 			const cosmos::StringVector &old_cmdline,
 			const std::optional<cosmos::ProcessID> former_pid) override;
 
-	void stopped() override;
+	void stopped(Tracee &tracee) override;
 
 protected: // data
 
@@ -82,7 +83,9 @@ protected: // data
 	cosmos::StdLogger m_logger;
 	cosmos::Init m_cosmos;
 
-	std::unique_ptr<Tracee> m_tracee;
+	Engine m_engine;
+	Tracee *m_main_tracee = nullptr;
+	std::optional<cosmos::WaitStatus> m_main_status;
 
 	bool m_seen_initial_exec = false;
 	bool m_print_values = true;

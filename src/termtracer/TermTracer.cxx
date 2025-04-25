@@ -28,7 +28,8 @@
 
 namespace clues {
 
-TermTracer::TermTracer() {
+TermTracer::TermTracer() :
+		m_engine{*this} {
 }
 
 void TermTracer::processPars() {
@@ -187,7 +188,8 @@ void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
 	}
 }
 
-void TermTracer::syscallEntry(const SystemCall &sc, const State state) {
+void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) {
+	(void)tracee;
 	if (state[Status::RESUMED]) {
 		std::cerr << "<resuming previously interrupted " << sc.name() << "...>\n";
 	}
@@ -198,7 +200,8 @@ void TermTracer::syscallEntry(const SystemCall &sc, const State state) {
 	std::cerr << std::flush;
 }
 
-void TermTracer::syscallExit(const SystemCall &sc, const State state) {
+void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc, const State state) {
+	(void)tracee;
 
 	if (sc.callNr() == SystemCallNr::EXECVE) {
 		// this is already dealt with in newExecutionContext()
@@ -223,7 +226,8 @@ void TermTracer::syscallExit(const SystemCall &sc, const State state) {
 	std::cerr << std::endl;
 }
 
-void TermTracer::signaled(const cosmos::SigInfo &info) {
+void TermTracer::signaled(Tracee &tracee, const cosmos::SigInfo &info) {
+	(void)tracee;
 
 	using SigInfo = cosmos::SigInfo;
 
@@ -320,8 +324,8 @@ void TermTracer::signaled(const cosmos::SigInfo &info) {
 	std::cerr << "} --\n";
 }
 
-void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
-	if (m_tracee->prevState() == Tracee::State::SYSCALL_ENTER_STOP) {
+void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) {
+	if (tracee.prevState() == Tracee::State::SYSCALL_ENTER_STOP) {
 		// this should only ever happen after a syscallEntry() for
 		// exit_group() occurred. Thus we finish that first.
 		std::cerr << ") = ?\n";
@@ -336,15 +340,20 @@ void TermTracer::exited(const cosmos::WaitStatus status, const State state) {
 	} else {
 		std::cerr << "+++ killed by signal " << cosmos::to_integral(status.termSig()->raw()) << " +++\n";
 	}
-}
 
-void TermTracer::stopped() {
-	if (m_tracee->syscallCtr() == 0) {
-		std::cerr << "--- currently in stopped state due to " << *m_tracee->stopSignal() << " ---\n";
+	if (&tracee == m_main_tracee) {
+		m_main_status = status;
 	}
 }
 
-void TermTracer::newExecutionContext(const std::string &old_exe,
+void TermTracer::stopped(Tracee &tracee) {
+	if (tracee.syscallCtr() == 0) {
+		std::cerr << "--- currently in stopped state due to " << *tracee.stopSignal() << " ---\n";
+	}
+}
+
+void TermTracer::newExecutionContext(Tracee &tracee,
+		const std::string &old_exe,
 		const cosmos::StringVector &old_cmdline,
 		const std::optional<cosmos::ProcessID> former_pid) {
 
@@ -352,7 +361,7 @@ void TermTracer::newExecutionContext(const std::string &old_exe,
 	// while outputting status messages and interactive dialogs.
 	std::cerr << ") = 0 (success)\n";
 	if (former_pid) {
-		std::cerr << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(m_tracee->pid()) << " ---\n";
+		std::cerr << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
 	}
 
 	if (m_seen_initial_exec) {
@@ -361,20 +370,20 @@ void TermTracer::newExecutionContext(const std::string &old_exe,
 		std::cerr << " ---\n";
 	}
 	std::cerr << "--- now running ";
-	printTraceeInvocation(std::cerr, m_tracee->executable(), m_tracee->cmdLine());
+	printTraceeInvocation(std::cerr, tracee.executable(), tracee.cmdLine());
 	std::cerr << " ---\n";
 
 	if (!m_seen_initial_exec) {
 		m_seen_initial_exec = true;
 	} else {
-		if (!followExecutionContext()) {
+		if (!followExecutionContext(tracee)) {
 			std::cerr << "--- detaching after execve ---\n";
-			m_tracee->detach();
+			tracee.detach();
 		}
 	}
 }
 
-bool TermTracer::followExecutionContext() {
+bool TermTracer::followExecutionContext(Tracee &tracee) {
 
 	switch (m_follow_exec) {
 		case FollowExecContext::YES: return true;
@@ -391,9 +400,9 @@ bool TermTracer::followExecutionContext() {
 					return true;
 			}
 		} case FollowExecContext::CHECK_PATH: {
-			return m_exec_context_arg == m_tracee->executable();
+			return m_exec_context_arg == tracee.executable();
 		} case FollowExecContext::CHECK_GLOB: {
-			return ::fnmatch(m_exec_context_arg.c_str(), m_tracee->executable().c_str(), 0) == 0;
+			return ::fnmatch(m_exec_context_arg.c_str(), tracee.executable().c_str(), 0) == 0;
 		}
 		default:
 			return false;
@@ -403,10 +412,8 @@ bool TermTracer::followExecutionContext() {
 bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	// this is only for newly created child processes
 	m_seen_initial_exec = true;
-	auto proc = std::make_unique<ForeignTracee>(*this);
-	proc->configure(pid);
 	try {
-		proc->attach();
+		m_main_tracee = &m_engine.addTracee(pid);
 	} catch (const cosmos::ApiError &e) {
 		std::cerr << "Failed to attach to PID " << pid << ": " << e.msg() << "\n";
 		if (e.errnum() == cosmos::Errno::PERMISSION) {
@@ -417,20 +424,10 @@ bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 		return false;
 	}
 
-	m_tracee = std::move(proc);
-
 	std::cerr << "--- tracing ";
-	printTraceeInvocation(std::cerr, m_tracee->executable(), m_tracee->cmdLine());
+	printTraceeInvocation(std::cerr, m_main_tracee->executable(), m_main_tracee->cmdLine());
 	std::cerr << " ---\n";
 
-	return true;
-}
-
-bool TermTracer::configureTrace(const cosmos::StringVector &cmdline) {
-	auto proc = std::make_unique<ChildTracee>(*this);
-	proc->create(cmdline);
-	proc->attach();
-	m_tracee = std::move(proc);
 	return true;
 }
 
@@ -466,18 +463,14 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 			return FAILURE;
 		}
 
-		if (!configureTrace(sv)) {
-			return FAILURE;
-		}
+		m_main_tracee = &m_engine.addTracee(sv);
 	}
 
 	try {
-		m_tracee->trace();
+		m_engine.trace();
 	} catch (const std::exception &ex) {
 		std::cerr << "internal tracing error: " << ex.what() << std::endl;
 	}
-
-	m_tracee->detach();
 
 	auto status = cosmos::ExitStatus::SUCCESS;
 
@@ -487,20 +480,18 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	 * We mimic the behaviour of the tracee by returning the same exit
 	 * status.
 	 */
-	if (const auto exit_data = m_tracee->exitData(); exit_data) {
-		if (exit_data->exited()) {
-			status = *exit_data->status;
-		} else if (exit_data->killed()) {
+	if (m_main_status) {
+		if (m_main_status->exited()) {
+			status = *m_main_status->status();
+		} else if (m_main_status->signaled()) {
 			// this is what the shell returns for childs that have been killed.
 			// TODO: strace actually sends the same kill signal to iself
 			// I don't know whether this is very useful. It can
 			// cause core dumps of the tracer, thus we'd need to
 			// change ulimit to prevent that.
-			status = cosmos::ExitStatus{128 + cosmos::to_integral(exit_data->signal->raw())};
+			status = cosmos::ExitStatus{128 + cosmos::to_integral(m_main_status->termSig()->raw())};
 		}
 	}
-
-	m_tracee.reset();
 
 	return status;
 }

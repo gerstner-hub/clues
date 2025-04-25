@@ -24,13 +24,18 @@ public: // functions
 	 * program until attach() is called.
 	 **/
 	void create(const cosmos::StringVector &args);
-	void detach() override;
 
-	void wait(cosmos::ChildData &data) override;
+protected: // Base class interface
+
+	bool isChildProcess() const override {
+		return true;
+	}
+
+	void cleanupChild() override;
 
 protected: // data
 
-	/// sub-process we're tracing
+	/// the sub-process we're tracing
 	cosmos::SubProc m_child;
 };
 

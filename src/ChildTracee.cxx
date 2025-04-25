@@ -1,4 +1,5 @@
 // cosmos
+#include <cosmos/error/ApiError.hxx>
 #include <cosmos/io/ILogger.hxx>
 #include <cosmos/proc/ChildCloner.hxx>
 
@@ -36,7 +37,7 @@ ChildTracee::~ChildTracee() {
 			} catch( ... ) { }
 		}
 
-		detach();
+		cleanupChild();
 	} catch (const cosmos::CosmosError &ce) {
 		LOG_ERROR("Error detaching from child process PID "
 				<< cosmos::to_integral(m_child.pid()) << ":\n\n"
@@ -44,25 +45,27 @@ ChildTracee::~ChildTracee() {
 	}
 }
 
-void ChildTracee::wait(cosmos::ChildData &data) {
-	data = m_child.wait(cosmos::WaitFlags{
-		cosmos::WaitFlag::WAIT_FOR_EXITED,
-		cosmos::WaitFlag::WAIT_FOR_STOPPED
-	});
-}
-
-void ChildTracee::detach() {
-
-	if (m_state != State::DEAD && m_state != State::DETACHED) {
-		m_ptrace.detach();
-		changeState(State::DETACHED);
-	}
+void ChildTracee::cleanupChild() {
 
 	// this should actually only happen if a ChildTracee is detached
 	// explicitly and we're sending a SIGINT or something like that.
 	if (m_child.running()) {
-		cosmos::ChildData data = m_child.wait();
-		m_exit_data = data;
+		try {
+			// the base class already stored the exit data
+			// this is just for keeping the SubProc state in sync.
+			(void)m_child.wait();
+		} catch (const cosmos::ApiError &error) {
+			if (error.errnum() != cosmos::Errno::NO_CHILD) {
+				// if it is ESRCH then just ignore it, the
+				// Engine already collected the result.
+				//
+				// this step is necessary to clean up the
+				// SubProc's internal state. Otherwise we'd
+				// need to use cosmos::proc::fork() to avoid
+				// using SubProc in the first place.
+				throw;
+			}
+		}
 	}
 }
 

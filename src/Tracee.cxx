@@ -10,6 +10,7 @@
 #include <cosmos/io/ILogger.hxx>
 
 // clues
+#include <clues/EventConsumer.hxx>
 #include <clues/logger.hxx>
 #include <clues/RegisterSet.hxx>
 #include <clues/SystemCall.hxx>
@@ -127,6 +128,26 @@ void Tracee::attach() {
 	}
 }
 
+void Tracee::detach() {
+	if (!m_ptrace.valid()) {
+		return;
+	} else if (m_state == State::DEAD || m_state == State::DETACHED) {
+		return;
+	} else if (m_state == State::RUNNING) {
+		m_flags.set(Flag::DETACH_AT_NEXT_STOP);
+
+		if (!m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
+			// interrupt, if not still pending, for being able to detach
+			interrupt();
+		}
+	} else {
+		m_ptrace.detach();
+		m_ptrace = cosmos::Tracee{};
+
+		changeState(State::DETACHED);
+	}
+}
+
 void Tracee::updateExecutable() {
 	// obtain the executable name from proc.
 	// as long as we're tracing the PID there is no race involved.
@@ -199,6 +220,12 @@ void Tracee::changeState(const State new_state) {
 			// enter listen state to avoid restarting a stopped
 			// process as a side-effect.
 			m_restart_mode = cosmos::Tracee::RestartMode::LISTEN;
+		}
+	} else if (new_state == State::DETACHED) {
+		m_flags.reset(Flag::DETACH_AT_NEXT_STOP);
+	} else if (new_state == State::DEAD) {
+		if (isChildProcess()) {
+			cleanupChild();
 		}
 	}
 
@@ -290,7 +317,7 @@ void Tracee::handleSystemCallEntry() {
 	}
 	m_current_syscall->setEntryInfo(*this, info);
 	m_syscall_ctr++;
-	m_consumer.syscallEntry(*m_current_syscall, state);
+	m_consumer.syscallEntry(*this, *m_current_syscall, state);
 }
 
 void Tracee::handleSystemCallExit() {
@@ -308,7 +335,7 @@ void Tracee::handleSystemCallExit() {
 		m_interrupted_syscall = nullptr;
 	}
 
-	m_consumer.syscallExit(syscall, state);
+	m_consumer.syscallExit(*this, syscall, state);
 }
 
 void Tracee::handleSignal(const cosmos::SigInfo &info) {
@@ -320,7 +347,7 @@ void Tracee::handleSignal(const cosmos::SigInfo &info) {
 		return;
 	}
 
-	m_consumer.signaled(info);
+	m_consumer.signaled(*this, info);
 }
 
 void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal) {
@@ -347,7 +374,7 @@ void Tracee::handleStopEvent(const cosmos::Signal signal) {
 		// implemented
 		changeState(State::GROUP_STOP);
 		m_stop_signal = signal;
-		m_consumer.stopped();
+		m_consumer.stopped(*this);
 	} else if (signal == cosmos::signal::TRAP) {
 		// SIGTRAP has quite a blurry meaning in the ptrace()
 		// API. From practical experiments and the original
@@ -385,7 +412,7 @@ void Tracee::handleExitEvent() {
 		state.set(EventConsumer::Status::LOST_TO_EXECVE);
 	}
 
-	m_consumer.exited(wait_status, state);
+	m_consumer.exited(*this, wait_status, state);
 }
 
 void Tracee::handleExecEvent() {
@@ -397,7 +424,7 @@ void Tracee::handleExecEvent() {
 
 	updateExecInfo();
 
-	m_consumer.newExecutionContext(old_exe, old_cmdline, former_pid != m_ptrace.pid() ? std::make_optional(former_pid) : std::nullopt);
+	m_consumer.newExecutionContext(*this, old_exe, old_cmdline, former_pid != m_ptrace.pid() ? std::make_optional(former_pid) : std::nullopt);
 }
 
 void Tracee::handleAttached() {
@@ -410,59 +437,61 @@ void Tracee::handleAttached() {
 	getRegisters(m_initial_regset);
 }
 
-void Tracee::trace() {
-	cosmos::ChildData data;
+void Tracee::processEvent(const cosmos::ChildData &data) {
+	m_inject_sig = {};
 
-	while (true) {
-		m_inject_sig = {};
-		wait(data);
+	if (data.exited() || data.killed() || data.dumped()) {
+		changeState(State::DEAD);
+		m_exit_data = data;
+		return;
+	} else if (data.trapped()) {
+		if (m_flags[Flag::DETACH_AT_NEXT_STOP]) {
+			detach();
+			return;
+		}
 
-		if (data.exited() || data.killed() || data.dumped()) {
-			changeState(State::DEAD);
-			m_exit_data = data;
-			break;
-		} else if (data.trapped()) {
-			if (data.signal == cosmos::signal::SYS_TRAP) {
-				handleSystemCall();
-			} else if (*data.signal > cosmos::signal::MAXIMUM) {
-				// a ptrace event stop
-				const auto raw_sigval = cosmos::to_integral(data.signal->raw());
-				const auto event = cosmos::ptrace::Event{raw_sigval >> 8};
-				const cosmos::SignalNr signr{raw_sigval & 0xff};
-				changeState(State::EVENT_STOP);
-				handleEvent(event, cosmos::Signal{signr});
-			} else {
-				changeState(State::SIGNAL_DELIVERY_STOP);
-				cosmos::SigInfo info;
-				m_ptrace.getSigInfo(info);
-				handleSignal(info);
-				m_inject_sig = *data.signal;
-			}
-		} else if (data.signaled()) {
-			// it seems this branch is never hit, signals are
-			// always handled as a TRAP, never as regular events
-			// when tracing.
-			LOG_WARN("seeing non-trap signal delivery stop");
+		if (data.signal == cosmos::signal::SYS_TRAP) {
+			handleSystemCall();
+		} else if (*data.signal > cosmos::signal::MAXIMUM) {
+			// a ptrace event stop
+			const auto raw_sigval = cosmos::to_integral(data.signal->raw());
+			const auto event = cosmos::ptrace::Event{raw_sigval >> 8};
+			const cosmos::SignalNr signr{raw_sigval & 0xff};
+			changeState(State::EVENT_STOP);
+			handleEvent(event, cosmos::Signal{signr});
+		} else {
 			changeState(State::SIGNAL_DELIVERY_STOP);
 			cosmos::SigInfo info;
 			m_ptrace.getSigInfo(info);
 			handleSignal(info);
 			m_inject_sig = *data.signal;
-		} else {
-			LOG_WARN("Other Tracee event?");
 		}
+	} else if (data.signaled()) {
+		// it seems this branch is never hit, signals are
+		// always handled as a TRAP, never as regular events
+		// when tracing.
+		// TODO: but for direct child processes that we want to stop
+		// tracing this could happen after detaching.
+		LOG_WARN("seeing non-trap signal delivery stop");
+		changeState(State::SIGNAL_DELIVERY_STOP);
+		cosmos::SigInfo info;
+		m_ptrace.getSigInfo(info);
+		handleSignal(info);
+		m_inject_sig = *data.signal;
+	} else {
+		LOG_WARN("Other Tracee event?");
+	}
 
-		if (m_state == State::DEAD || m_state == State::DETACHED)
-			break;
+	if (m_state == State::DEAD || m_state == State::DETACHED)
+		return;
 
-		restart(m_restart_mode, m_inject_sig);
+	restart(m_restart_mode, m_inject_sig);
 
-		if (m_restart_mode != cosmos::Tracee::RestartMode::LISTEN) {
-			const auto resumed = m_state == State::GROUP_STOP;
-			changeState(State::RUNNING);
-			if (resumed) {
-				m_consumer.resumed();
-			}
+	if (m_restart_mode != cosmos::Tracee::RestartMode::LISTEN) {
+		const auto resumed = m_state == State::GROUP_STOP;
+		changeState(State::RUNNING);
+		if (resumed) {
+			m_consumer.resumed(*this);
 		}
 	}
 }

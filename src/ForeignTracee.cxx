@@ -17,24 +17,6 @@ void ForeignTracee::configure(const cosmos::ProcessID tracee) {
 	setTracee(tracee);
 }
 
-void ForeignTracee::wait(cosmos::ChildData &data) {
-	data = *cosmos::proc::wait(
-			m_ptrace.pid(),
-			cosmos::WaitFlags{
-				cosmos::WaitFlag::WAIT_FOR_EXITED,
-				cosmos::WaitFlag::WAIT_FOR_STOPPED
-			});
-}
-
-void ForeignTracee::detach() {
-	if (m_ptrace.valid() && m_state != State::DEAD && m_state != State::DETACHED) {
-		m_ptrace.detach();
-		m_ptrace = cosmos::Tracee{};
-
-		changeState(State::DETACHED);
-	}
-}
-
 ForeignTracee::~ForeignTracee() {
 	try {
 		detach();

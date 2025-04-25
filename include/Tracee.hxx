@@ -24,6 +24,7 @@ namespace clues {
 
 class SystemCall;
 class RegisterSet;
+class EventConsumer;
 
 /// Base class for traced processes.
 /**
@@ -31,92 +32,8 @@ class RegisterSet;
  * traced process is attached to and detached from etc.
  **/
 class CLUES_API Tracee {
+	friend class Engine;
 public: // types
-
-	/// Pure virtual interface for consumers of tracing events.
-	class EventConsumer {
-		friend class Tracee;
-	public: // types
-
-		/// Different status flags that can appear in callbacks.
-		enum class Status {
-			/// A system call was interrupted (only appears during syscallExit()).
-			INTERRUPTED    = 1 << 0,
-			/// A previously interrupted system call is resumed (only appears during syscallEntry()).
-			RESUMED        = 1 << 1,
-			/// An exit occurs because another thread called execve() (only appears in exited()).
-			LOST_TO_EXECVE = 1 << 2,
-		};
-
-		using State = cosmos::BitMask<Status>;
-
-	protected: // functions
-
-		virtual void syscallEntry(const SystemCall &sc, const State state) = 0;
-
-		virtual void syscallExit(const SystemCall &sc, const State state) = 0;
-
-		/// The tracee has received a signal.
-		/**
-		 * This callback notifies about signals being delivered to the
-		 * tracee.
-		 **/
-		virtual void signaled(const cosmos::SigInfo &info) {
-			(void)info;
-		};
-
-		/// The tracee entered group-stop due to a stopping signal.
-		virtual void stopped() {}
-
-		/// The tracee resumed due to SIGCONT.
-		virtual void resumed() {}
-
-		/// The tracee is about to end execution.
-		/**
-		 * The tracee is about to either exit regularly, to be killed
-		 * by a signal or to disappear due to an execve() in a
-		 * multi-threaded process.
-		 *
-		 * When this callback occurs the tracee can still be inspected
-		 * using ptrace(). One execution is continued the tracer <->
-		 * tracee relationship is lost.
-		 *
-		 * If the exit happens due to an execve in a multi-threaded
-		 * process then Status::LOST_TO_EXECVE is set in `state`.
-		 **/
-		virtual void exited(const cosmos::WaitStatus status, const State state) {
-			(void)status;
-			(void)state;
-		}
-
-		/// A new program is executed in the tracee.
-		/**
-		 * This call occurs after a successful `execve()` within the
-		 * tracee. If the tracee was multi-threaded, then all but one
-		 * thread will have exited in the process.
-		 *
-		 * Only the main process ID (main thread PID) will remain. The
-		 * thread that caused the execve() can be a different thread.
-		 * In this case `former_pid` contains the former PID that is
-		 * now continuing as the main thread of the new execution
-		 * context.
-		 *
-		 * The new executable path and command line can be retrieved
-		 * via Tracee::executable() and Tracee::cmdLine(). The
-		 * previous values are provided as input parameters.
-		 *
-		 * The callee can decide to stop tracing (by detaching) at
-		 * this point to prevent following new tracing contexts.
-		 **/
-		virtual void newExecutionContext(
-				const std::string &old_executable,
-				const cosmos::StringVector &old_cmdline,
-				const std::optional<cosmos::ProcessID> former_pid) {
-			(void)former_pid;
-			(void)old_cmdline;
-			(void)old_executable;
-		}
-	};
 
 	/// Current tracing state for a single tracee.
 	/**
@@ -137,10 +54,10 @@ public: // types
 	/// Different flags reflecting the tracer status.
 	enum class Flag {
 		WAIT_FOR_ATTACH_STOP = 1 << 1, ///< we're still waiting for the PTRACE_INTERRUPT event stop.
-		WAIT_FOR_DETACH_STOP = 1 << 2, ///< we're still waiting for the SIGSTOP we injected for detaching.
+		DETACH_AT_NEXT_STOP  = 1 << 2, ///< as soon as the tracee reaches a stop stace, detach from it.
 		INJECTED_SIGSTOP     = 1 << 3, ///< whether we've injected a SIGSTOP that needs to be undone.
 		INJECTED_SIGCONT     = 1 << 4, ///< whether we've injected a SIGCONT that needs to be ignored.
-		SYSCALL_ENTERED      = 1 << 5, ///< we've seen a syscall-enter-stop and wait for the corresponding exit-stop.
+		SYSCALL_ENTERED      = 1 << 5, ///< we've seen a syscall-enter-stop and are waiting for the corresponding exit-stop.
 	};
 
 	using Flags = cosmos::BitMask<Flag>;
@@ -159,6 +76,10 @@ public: // functions
 
 	cosmos::ProcessID pid() const {
 		return m_ptrace.pid();
+	}
+
+	bool alive() const {
+		return pid() != cosmos::ProcessID::INVALID;
 	}
 
 	/// Returns the number of system calls observed so far
@@ -187,8 +108,9 @@ public: // functions
 
 	/// Returns possible tracee exit data.
 	/**
-	 * After trace() returns, if tracee exit was observed, this returns
-	 * the tracee exit information (it's exit status or kill signal etc.).
+	 * After the tracee is detached, if tracee exit was observed, this
+	 * returns the tracee exit information (it's exit status or kill
+	 * signal etc.).
 	 **/
 	std::optional<cosmos::ChildData> exitData() const {
 		return m_exit_data;
@@ -198,13 +120,7 @@ public: // functions
 	virtual void attach();
 
 	/// Logic to handle detaching from the tracee.
-	virtual void detach() = 0;
-
-	/// Actually start processing events from the tracee.
-	/**
-	 * This call will run until the traced process stops executing.
-	 **/
-	void trace();
+	void detach();
 
 	/// Reads a word of data from the tracee's memory.
 	/**
@@ -247,6 +163,18 @@ public: // functions
 	template <typename VECTOR>
 	void readVector(const long *addr, VECTOR &out) const;
 
+	/// Returns whether the tracee is a child process created by us.
+	/**
+	 * If the tracee is a child process then the tracer needs to take care
+	 * of its lifecycle, while non-related tracee's can just be detached
+	 * from.
+	 **/
+	virtual bool isChildProcess() const {
+		return false;
+	}
+
+	virtual void cleanupChild() {}
+
 protected: // constants
 
 	/// Array of signals that cause tracee stop.
@@ -264,6 +192,13 @@ protected: // functions
 
 	explicit Tracee(EventConsumer &consumer);
 
+	/// Process the given ptrace event.
+	/**
+	 * This call will be invoked by the Engine class to drive the tracing
+	 * logic.
+	 **/
+	void processEvent(const cosmos::ChildData &data);
+
 	void updateExecutable();
 
 	void updateCmdLine();
@@ -274,9 +209,6 @@ protected: // functions
 	}
 
 	void changeState(const State new_state);
-
-	/// Waits for the next trace event of this tracee.
-	virtual void wait(cosmos::ChildData &data) = 0;
 
 	/// Forces the traced process to stop.
 	void interrupt() {

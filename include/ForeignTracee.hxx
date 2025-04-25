@@ -17,10 +17,6 @@ public: // functions
 
 	/// Sets the given process ID as the process to be traced.
 	void configure(const cosmos::ProcessID tracee);
-
-	void detach() override;
-
-	void wait(cosmos::ChildData &res) override;
 };
 
 } // end ns
