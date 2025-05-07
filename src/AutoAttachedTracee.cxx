@@ -4,20 +4,23 @@
 #include <cosmos/proc/process.hxx>
 
 // clues
-#include <clues/ForeignTracee.hxx>
+#include <clues/AutoAttachedTracee.hxx>
 #include <clues/logger.hxx>
 
 namespace clues {
 
-ForeignTracee::ForeignTracee(Engine &engine, EventConsumer &consumer) :
+AutoAttachedTracee::AutoAttachedTracee(Engine &engine, EventConsumer &consumer) :
 		Tracee{engine, consumer} {
 }
 
-void ForeignTracee::configure(const cosmos::ProcessID tracee) {
-	setPID(tracee);
+void AutoAttachedTracee::configure(const Tracee &parent, const cosmos::ProcessID pid) {
+	setPID(pid);
+	m_cmdline = parent.cmdLine();
+	m_executable = parent.executable();
+	m_flags.set(Flag::WAIT_FOR_ATTACH_STOP);
 }
 
-ForeignTracee::~ForeignTracee() {
+AutoAttachedTracee::~AutoAttachedTracee() {
 	try {
 		detach();
 	} catch (const cosmos::CosmosError &ce) {

@@ -6,13 +6,24 @@
 // C++
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <string>
+
+// cosmos
+#include <cosmos/utils.hxx>
 
 namespace clues {
 
 /*
  * some general types used across Clues
  */
+
+/// A strong boolean type denoting whether to automatically attach to newly created child processes.
+using FollowChilds = cosmos::NamedBool<struct follow_childs_t, true>;
+
+class Tracee;
+
+using TraceePtr = std::unique_ptr<Tracee>;
 
 /// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.
 using DescriptorPathMapping = std::map<int, std::string>;

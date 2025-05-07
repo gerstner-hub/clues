@@ -6,8 +6,12 @@
 #include <optional>
 
 // cosmos
+#include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/types.hxx>
 #include <cosmos/string.hxx>
+
+// clues
+#include <clues/types.hxx>
 
 namespace clues {
 
@@ -21,6 +25,7 @@ class EventConsumer;
  * delivered to the EventConsumer interface.
  **/
 class CLUES_API Engine {
+	friend class Tracee;
 public: // functions
 
 	/// Creates a new Engine that reports events to `consumer`.
@@ -52,16 +57,22 @@ public: // functions
 	 * current state. Any state can be encountered and the caller needs to
 	 * be prepared for any kind of tracing event (signal, system call,
 	 * process exit, ...) to occur as a result.
+	 *
+	 * `follow_childs` determines whether newly created child processes
+	 * will automatically be attached. \see Tracee::attach().
 	 **/
-	Tracee& addTracee(const cosmos::ProcessID pid);
+	Tracee& addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs);
 
 	/// Create a new child process to be traced.
 	/**
 	 * Use this function to create a new child process which will be
 	 * traced from the very beginning. The first tracing event observed
 	 * will typically be a system call entry.
+	 *
+	 * `follow_childs` determines whether newly created child processes
+	 * will automatically be attached. \see Tracee::attach().
 	 **/
-	Tracee& addTracee(const cosmos::StringVector &cmdline);
+	Tracee& addTracee(const cosmos::StringVector &cmdline, const FollowChilds follow_childs);
 
 	/// Enter the tracing main loop and process tracing events.
 	/**
@@ -99,11 +110,19 @@ public: // functions
 
 protected: // types
 
-	using TraceeMap = std::map<cosmos::ProcessID, std::unique_ptr<Tracee>>;
+	using TraceeMap = std::map<cosmos::ProcessID, TraceePtr>;
 
 protected: // functions
 
 	void checkCleanupTracee(TraceeMap::iterator it);
+
+	/// Invoked by a Tracee once a new child process is auto-attached.
+	/**
+	 * `pid` provides the process ID of the new child process and `event`
+	 * describes the event that triggered the creation of the new child.
+	 **/
+	void handleAutoAttach(Tracee &parent, const cosmos::ProcessID pid,
+			const cosmos::ptrace::Event event);
 
 protected: // data
 

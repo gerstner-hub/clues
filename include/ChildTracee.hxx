@@ -14,7 +14,7 @@ class CLUES_API ChildTracee :
 public: // functions
 
 	/// Create a traced process by creating a new process from `prog_args`
-	ChildTracee(EventConsumer &consumer);
+	ChildTracee(Engine &engine, EventConsumer &consumer);
 
 	~ChildTracee() override;
 

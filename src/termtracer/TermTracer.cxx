@@ -189,7 +189,11 @@ void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
 }
 
 void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) {
-	(void)tracee;
+
+	startNewOutputLine(tracee);
+
+	m_active_syscall = std::make_optional(std::make_tuple(&tracee, &sc));
+
 	if (state[Status::RESUMED]) {
 		std::cerr << "<resuming previously interrupted " << sc.name() << "...>\n";
 	}
@@ -201,12 +205,14 @@ void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State 
 }
 
 void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc, const State state) {
-	(void)tracee;
 
+	// TODO: other ways to execve exist like fexecve()
 	if (sc.callNr() == SystemCallNr::EXECVE && sc.result()) {
 		// this is already dealt with in newExecutionContext()
 		return;
 	}
+
+	checkResumedSyscall(tracee);
 
 	printExitPars(sc.parameters());
 
@@ -224,11 +230,11 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc, const State s
 	}
 
 	std::cerr << std::endl;
+
+	m_active_syscall.reset();
 }
 
 void TermTracer::signaled(Tracee &tracee, const cosmos::SigInfo &info) {
-	(void)tracee;
-
 	using SigInfo = cosmos::SigInfo;
 
 	// TODO: this formatting logic should rather go into libclues
@@ -242,6 +248,8 @@ void TermTracer::signaled(Tracee &tracee, const cosmos::SigInfo &info) {
 		std::cerr << ", si_int=" << data.asInt();
 		std::cerr << ", si_ptr=" << data.asPtr();
 	};
+
+	startNewOutputLine(tracee);
 
 	std::cerr << "-- " << info.sigNr() << " {";
 	if (info.source() != SigInfo::Source::KERNEL || info.raw()->si_code == SI_KERNEL) {
@@ -324,12 +332,48 @@ void TermTracer::signaled(Tracee &tracee, const cosmos::SigInfo &info) {
 	std::cerr << "} --\n";
 }
 
+void TermTracer::attached(Tracee &tracee) {
+	if (m_num_tracees++ == 0) {
+		// the initial process, don't print anything special in this case
+		return;
+	}
+
+	auto it = m_new_tracees.find(&tracee);
+	if (it == m_new_tracees.end()) {
+		std::cerr << "unknown Tracee attached?!";
+		return;
+	}
+
+	auto [parent, event] = it->second;
+
+	startNewOutputLine(*(it->first));
+	std::cerr << "→ automatically attached (created by PID " << cosmos::to_integral(parent) << " via ";
+	using Event = cosmos::ptrace::Event;
+	switch (event) {
+		case Event::VFORK: std::cerr << "vfork()"; break;
+		case Event::FORK: std::cerr << "fork()"; break;
+		case Event::CLONE: std::cerr << "clone()"; break;
+		default: std::cerr << "???"; break;
+	}
+
+	std::cerr << ")\n";
+
+	m_new_tracees.erase(it);
+}
+
 void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) {
 	if (tracee.prevState() == Tracee::State::SYSCALL_ENTER_STOP) {
+		if (hasActiveSyscall(tracee)) {
+			m_active_syscall.reset();
+		} else {
+			checkResumedSyscall(tracee);
+		}
 		// this should only ever happen after a syscallEntry() for
 		// exit_group() occurred. Thus we finish that first.
 		std::cerr << ") = ?\n";
 	}
+
+	startNewOutputLine(tracee);
 
 	if (state[Status::LOST_TO_EXECVE]) {
 		std::cerr << "--- <execve in another thread> ---\n";
@@ -347,10 +391,13 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 	if (&tracee == m_main_tracee) {
 		m_main_status = status;
 	}
+
+	m_num_tracees--;
 }
 
 void TermTracer::stopped(Tracee &tracee) {
 	if (tracee.syscallCtr() == 0) {
+		startNewOutputLine(tracee);
 		std::cerr << "--- currently in stopped state due to " << *tracee.stopSignal() << " ---\n";
 	}
 }
@@ -360,9 +407,13 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 		const cosmos::StringVector &old_cmdline,
 		const std::optional<cosmos::ProcessID> former_pid) {
 
+	checkResumedSyscall(tracee);
 	// anticipate the sucess system call status to avoid complexities
 	// while outputting status messages and interactive dialogs.
 	std::cerr << ") = 0 (success)\n";
+
+	startNewOutputLine(tracee);
+
 	if (former_pid) {
 		std::cerr << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
 	}
@@ -384,6 +435,11 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 			tracee.detach();
 		}
 	}
+}
+
+void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::ptrace::Event event) {
+	// keep this information for later when something actually happens in the new child
+	m_new_tracees.insert({&child, {parent.pid(), event}});
 }
 
 bool TermTracer::followExecutionContext(Tracee &tracee) {
@@ -412,11 +468,50 @@ bool TermTracer::followExecutionContext(Tracee &tracee) {
 	}
 }
 
+void TermTracer::startNewOutputLine(const Tracee &tracee) {
+	if (m_active_syscall) {
+		// a system call in another thread remains unfinished
+		std::cerr << " <...unfinished>\n";
+		storeUnfinishedSyscallCtx();
+	}
+
+	if (m_num_tracees > 1) {
+		std::cerr << "[" << cosmos::to_integral(tracee.pid()) << "] ";
+	}
+}
+
+void TermTracer::storeUnfinishedSyscallCtx() {
+	if (!m_active_syscall)
+		return;
+
+	auto [tracee, syscall] = *m_active_syscall;
+	m_unfinished_syscalls[tracee] = syscall;
+	m_active_syscall.reset();
+}
+
+void TermTracer::checkResumedSyscall(const Tracee &tracee) {
+	if (hasActiveSyscall(tracee))
+		return;
+
+	startNewOutputLine(tracee);
+
+	auto node = m_unfinished_syscalls.extract(&tracee);
+	auto sc = node.mapped();
+
+	std::cerr << "<resuming ...> " << sc->name();
+	if (sc->hasOutParameter()) {
+		std::cerr << "(..., ";
+	} else {
+		std::cerr << "(...";
+	}
+}
+
 bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	// this is only for newly created child processes
 	m_seen_initial_exec = true;
 	try {
-		m_main_tracee = &m_engine.addTracee(pid);
+		// TODO: make FollowChilds configurable
+		m_main_tracee = &m_engine.addTracee(pid, FollowChilds{true});
 	} catch (const cosmos::ApiError &e) {
 		std::cerr << "Failed to attach to PID " << pid << ": " << e.msg() << "\n";
 		if (e.errnum() == cosmos::Errno::PERMISSION) {
@@ -466,7 +561,8 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 			return FAILURE;
 		}
 
-		m_main_tracee = &m_engine.addTracee(sv);
+		// TODO: make FollowChilds configurable
+		m_main_tracee = &m_engine.addTracee(sv, FollowChilds{true});
 	}
 
 	try {

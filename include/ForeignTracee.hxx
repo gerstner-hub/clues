@@ -11,7 +11,7 @@ class CLUES_API ForeignTracee :
 public: // functions
 
 	/// Create a traced process object by attaching to the given process ID.
-	ForeignTracee(EventConsumer &consumer);
+	ForeignTracee(Engine &engine, EventConsumer &consumer);
 
 	~ForeignTracee() override;
 

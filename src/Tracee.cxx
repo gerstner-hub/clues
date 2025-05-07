@@ -10,6 +10,7 @@
 #include <cosmos/io/ILogger.hxx>
 
 // clues
+#include <clues/Engine.hxx>
 #include <clues/EventConsumer.hxx>
 #include <clues/logger.hxx>
 #include <clues/RegisterSet.hxx>
@@ -86,8 +87,15 @@ protected: // data
 
 namespace clues {
 
-Tracee::Tracee(EventConsumer &consumer) :
+Tracee::Tracee(Engine &engine, EventConsumer &consumer) :
+		m_engine{engine},
 		m_consumer{consumer} {
+}
+
+Tracee::~Tracee() {
+	if (m_state != State::DEAD && m_state != State::DETACHED) {
+		LOG_WARN("destroying Tracee in live state");
+	}
 }
 
 const char* Tracee::getStateLabel(const State state) {
@@ -105,14 +113,28 @@ const char* Tracee::getStateLabel(const State state) {
 	}
 }
 
-void Tracee::setTracee(const cosmos::ProcessID tracee) {
+void Tracee::setPID(const cosmos::ProcessID tracee) {
 	m_ptrace = cosmos::Tracee{tracee};
 }
 
-void Tracee::attach() {
+void Tracee::attach(const FollowChilds follow_childs) {
 	using Opt = cosmos::ptrace::Opt;
+	auto opts = cosmos::ptrace::Opts{
+		Opt::TRACESYSGOOD,
+		Opt::TRACEEXIT,
+		Opt::TRACEEXEC,
+	};
 
-	seize(cosmos::ptrace::Opts{Opt::TRACESYSGOOD, Opt::TRACEEXIT, Opt::TRACEEXEC});
+	if (follow_childs) {
+		opts.set({
+			Opt::TRACECLONE,
+			Opt::TRACEFORK,
+			Opt::TRACEVFORK,
+			Opt::TRACEVFORKDONE
+		});
+	}
+
+	seize(opts);
 	updateExecutable();
 	updateCmdLine();
 	interrupt();
@@ -359,6 +381,11 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal
 	case Event::STOP: return handleStopEvent(signal);
 	case Event::EXIT: return handleExitEvent();
 	case Event::EXEC: return handleExecEvent();
+	case Event::CLONE:
+	case Event::VFORK:
+	case Event::VFORK_DONE:
+	case Event::FORK:
+			  return handleNewChildEvent(event);
 	default: LOG_WARN("PTRACE_EVENT unhandled");
 	}
 }
@@ -366,6 +393,7 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal
 void Tracee::handleStopEvent(const cosmos::Signal signal) {
 	if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
 		// this is the initial ptrace-stop. now we can start tracing
+		// TODO: provide pid identifier for tracee-related logging
 		LOG_INFO("initial ptrace-stop");
 		handleAttached();
 	} else if (cosmos::in_container(signal, STOPPING_SIGNALS)) {
@@ -427,6 +455,12 @@ void Tracee::handleExecEvent() {
 	m_consumer.newExecutionContext(*this, old_exe, old_cmdline, former_pid != m_ptrace.pid() ? std::make_optional(former_pid) : std::nullopt);
 }
 
+void Tracee::handleNewChildEvent(const cosmos::ptrace::Event event) {
+	// the engine will perform callbacks at m_consumer, since it is
+	// responsible for creating the new Tracee instance.
+	m_engine.handleAutoAttach(*this, m_ptrace.getPIDEventMsg(), event);
+}
+
 void Tracee::handleAttached() {
 	m_flags.reset(Flag::WAIT_FOR_ATTACH_STOP);
 
@@ -435,6 +469,8 @@ void Tracee::handleAttached() {
 	}
 
 	getRegisters(m_initial_regset);
+
+	m_consumer.attached(*this);
 }
 
 void Tracee::processEvent(const cosmos::ChildData &data) {

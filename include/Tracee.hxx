@@ -25,6 +25,7 @@ namespace clues {
 class SystemCall;
 class RegisterSet;
 class EventConsumer;
+class Engine;
 
 /// Base class for traced processes.
 /**
@@ -64,7 +65,7 @@ public: // types
 
 public: // functions
 
-	virtual ~Tracee() {}
+	virtual ~Tracee();
 
 	const std::string& executable() const {
 		return m_executable;
@@ -117,7 +118,14 @@ public: // functions
 	}
 
 	/// Logic to handle attaching to the tracee.
-	virtual void attach();
+	/**
+	 * \param[in] follow_childs If true then newly created child processes
+	 * will automatically be attached. The EventConsumer interface will
+	 * received a newChildProcess() callback once a new child process has
+	 * been attached. This covers all ways by which new child processes
+	 * can be created (fork, vfork, clone).
+	 **/
+	virtual void attach(const FollowChilds follow_childs);
 
 	/// Logic to handle detaching from the tracee.
 	void detach();
@@ -190,7 +198,7 @@ protected: // constants
 
 protected: // functions
 
-	explicit Tracee(EventConsumer &consumer);
+	explicit Tracee(Engine &engine, EventConsumer &consumer);
 
 	/// Process the given ptrace event.
 	/**
@@ -232,7 +240,7 @@ protected: // functions
 	}
 
 	/// Sets the tracee PID
-	void setTracee(const cosmos::ProcessID tracee);
+	void setPID(const cosmos::ProcessID tracee);
 
 	/// Reads the current register set from the process.
 	/**
@@ -258,6 +266,8 @@ protected: // functions
 
 	void handleExecEvent();
 
+	void handleNewChildEvent(const cosmos::ptrace::Event event);
+
 	void handleAttached();
 
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
@@ -266,6 +276,8 @@ protected: // functions
 
 protected: // data
 
+	/// The engine that manages this tracee.
+	Engine &m_engine;
 	/// Callback interface receiving our information.
 	EventConsumer &m_consumer;
 	/// The current state the tracee is in.
