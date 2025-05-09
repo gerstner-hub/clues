@@ -203,7 +203,7 @@ void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State 
 void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc, const State state) {
 	(void)tracee;
 
-	if (sc.callNr() == SystemCallNr::EXECVE) {
+	if (sc.callNr() == SystemCallNr::EXECVE && sc.result()) {
 		// this is already dealt with in newExecutionContext()
 		return;
 	}
