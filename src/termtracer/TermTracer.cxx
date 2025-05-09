@@ -337,6 +337,9 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 
 	if (status.exited()) {
 		std::cerr << "+++ exited with " << cosmos::to_integral(*status.status()) << " +++\n";
+		if (!m_seen_initial_exec) {
+			std::cerr << "!!! failed to execute the specified program\n";
+		}
 	} else {
 		std::cerr << "+++ killed by signal " << cosmos::to_integral(status.termSig()->raw()) << " +++\n";
 	}
