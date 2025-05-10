@@ -14,6 +14,12 @@ ChildTracee::ChildTracee(EventConsumer &consumer) :
 }
 
 void ChildTracee::create(const cosmos::StringVector &args) {
+	/// TODO: libcosmos's behaviour to output error messages in the forked
+	/// process when the target executable cannot be run is unfortunate
+	/// for our purposes.
+	/// We could think about making the error behaviour configurable, to
+	/// output nothing or to to use fexecve() to move the most common
+	/// kinds of errors into the parent process.
 	cosmos::ChildCloner cloner;
 	cloner.setArgs(args);
 	cloner.setPostForkCB([](const cosmos::ChildCloner &){
