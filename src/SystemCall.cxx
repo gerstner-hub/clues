@@ -61,6 +61,15 @@ void SystemCall::setEntryInfo(const Tracee &proc, const cosmos::ptrace::SyscallI
 	m_error.reset();
 }
 
+bool SystemCall::hasOutParameter() const {
+	for (auto &par: m_pars) {
+		if (par->needsUpdate())
+			return true;
+	}
+
+	return false;
+}
+
 void SystemCall::setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::ExitInfo &info) {
 	if (info.isValue()) {
 		m_return->fill(proc, Word{static_cast<uint64_t>(*info.retVal())});

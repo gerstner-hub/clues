@@ -121,6 +121,8 @@ public: // functions
 	/// Access to the errno result seen for this system call.
 	std::optional<ErrnoResult> error() const { return m_error; }
 
+	bool hasOutParameter() const;
+
 	bool hasResultValue() const {
 		return m_error == std::nullopt;
 	}
