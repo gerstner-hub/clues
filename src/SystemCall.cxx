@@ -410,6 +410,15 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 			// SuccessResult.
 			ItemPtr{new SuccessResult{}}
 		);
+	case SystemCallNr::WAIT4:
+		return new_call({
+				ItemPtr{new ValueInParameter{"pid", "pid to wait for"}},
+				ItemPtr{new GenericPointerValue{"status", "ptr to status"}},
+				ItemPtr{new ValueInParameter{"options", "wait options"}},
+				ItemPtr{new GenericPointerValue{"rusage", "resource usage"}}
+			},
+			ItemPtr{new ValueOutParameter{"pid", "pid of child with status change"}}
+		);
 	default:
 		return new_call({
 			},
