@@ -8,7 +8,11 @@ namespace clues::item {
 
 std::string GenericPointerValue::str() const {
 	std::stringstream ss;
-	ss << valueAs<long*>();
+	if (auto ptr = valueAs<long*>(); ptr) {
+		ss << ptr;
+	} else {
+		ss << "NULL";
+	}
 	return ss.str();
 }
 
