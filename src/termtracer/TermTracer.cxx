@@ -412,17 +412,18 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 	// while outputting status messages and interactive dialogs.
 	std::cerr << ") = 0 (success)\n";
 
-	startNewOutputLine(tracee);
-
 	if (former_pid) {
+		startNewOutputLine(tracee);
 		std::cerr << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
 	}
 
 	if (m_seen_initial_exec) {
+		startNewOutputLine(tracee);
 		std::cerr << "--- no longer running " ;
 		printTraceeInvocation(std::cerr, old_exe, old_cmdline);
 		std::cerr << " ---\n";
 	}
+	startNewOutputLine(tracee);
 	std::cerr << "--- now running ";
 	printTraceeInvocation(std::cerr, tracee.executable(), tracee.cmdLine());
 	std::cerr << " ---\n";
