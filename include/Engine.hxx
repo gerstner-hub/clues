@@ -124,6 +124,9 @@ protected: // functions
 	void handleAutoAttach(Tracee &parent, const cosmos::ProcessID pid,
 			const cosmos::ptrace::Event event);
 
+	/// Invoked by a Tracee when multi-threaded execve() leads to substitution of a PID by another.
+	TraceePtr handleSubstitution(const cosmos::ProcessID old_pid);
+
 protected: // data
 
 	/// Currently active tracees.

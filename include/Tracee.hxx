@@ -59,6 +59,7 @@ public: // types
 		INJECTED_SIGSTOP     = 1 << 3, ///< whether we've injected a SIGSTOP that needs to be undone.
 		INJECTED_SIGCONT     = 1 << 4, ///< whether we've injected a SIGCONT that needs to be ignored.
 		SYSCALL_ENTERED      = 1 << 5, ///< we've seen a syscall-enter-stop and are waiting for the corresponding exit-stop.
+		WAIT_FOR_EXECVE_REPLACEMENT = 1 << 6, ///< execve() in another thread caused this tracee to exit, wait for the personality change of this pid.
 	};
 
 	using Flags = cosmos::BitMask<Flag>;
@@ -181,6 +182,22 @@ public: // functions
 		return false;
 	}
 
+	/// Checks in the proc file system whether the Tracee is a thread group leader.
+	/**
+	 * Calling this function is only safe during a ptrace stop.
+	 *
+	 * This information is relevant for the execve in a multi-threaded
+	 * process situation.
+	 *
+	 * Sadly this bit is not easily accessible via system calls. The only
+	 * way to determine it is from /proc/<pid>/status or implicitly e.g. a
+	 * newly fork()'ed process is a thread-group leader while clone()'ed
+	 * processes _can_ be thread-group leaders (if its not a thread that
+	 * has been created).
+	 **/
+	bool isThreadGroupLeader() const;
+
+
 	virtual void cleanupChild() {}
 
 protected: // constants
@@ -270,10 +287,11 @@ protected: // functions
 
 	void handleAttached();
 
+	void syncState(Tracee &other);
+
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
 	template <typename FILLER>
 	void fillData(const long *addr, FILLER &filler) const;
-
 protected: // data
 
 	/// The engine that manages this tracee.

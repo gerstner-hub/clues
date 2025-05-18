@@ -93,6 +93,10 @@ protected: // functions
 		return std::get<const Tracee*>(*m_active_syscall) == &tracee;
 	}
 
+	void cleanupTracee(const Tracee &tracee);
+
+	void updateTracee(const Tracee &tracee, const Tracee *former_tracee);
+
 protected: // event consumer interface
 
 	void syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) override;
@@ -108,7 +112,7 @@ protected: // event consumer interface
 	void newExecutionContext(Tracee &tracee,
 			const std::string &old_exe,
 			const cosmos::StringVector &old_cmdline,
-			const std::optional<cosmos::ProcessID> former_pid) override;
+			const Tracee *former_tracee) override;
 
 	void newChildProcess(
 			Tracee &parent,
@@ -127,7 +131,7 @@ protected: // data
 	cosmos::Init m_cosmos;
 
 	Engine m_engine;
-	Tracee *m_main_tracee = nullptr;
+	const Tracee *m_main_tracee = nullptr;
 	std::optional<cosmos::WaitStatus> m_main_status;
 
 	bool m_seen_initial_exec = false;
@@ -148,8 +152,10 @@ protected: // data
 
 	/// The number of tracees we're currently dealing with.
 	size_t m_num_tracees = 0;
+	/// Whether we've had multiple tracees but lost all but one again.
+	bool m_dropped_to_single_tracee = false;
 	/// Newly created tracees that haven't seen any ptrace stop yet
-	std::map<Tracee*, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
+	std::map<const Tracee*, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
 };
 
 } // end ns

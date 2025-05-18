@@ -22,6 +22,14 @@ public: // functions
 	SystemCallDB(const SystemCallDB &) = delete;
 	SystemCallDB& operator=(const SystemCallDB &) = delete;
 
+	SystemCallDB(SystemCallDB &&other) {
+		*this = std::move(other);
+	}
+	SystemCallDB& operator=(SystemCallDB &&other) {
+		m_map = std::move(other.m_map);
+		return *this;
+	}
+
 	SystemCall& get(const SystemCallNr nr);
 
 	const SystemCall& get(const SystemCallNr nr) const {

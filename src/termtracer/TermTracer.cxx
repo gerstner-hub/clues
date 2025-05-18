@@ -373,18 +373,23 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 		std::cerr << ") = ?\n";
 	}
 
-	startNewOutputLine(tracee);
-
 	if (state[Status::LOST_TO_EXECVE]) {
-		std::cerr << "--- <execve in another thread> ---\n";
+		startNewOutputLine(tracee);
+		std::cerr << "--- <lost to execve in another thread";
+		if (state[Status::EXECVE_REPLACE_PENDING]) {
+			std::cerr << " [waiting to be replaced by exec'ing thread]";
+		}
+		std::cerr << "> ---\n";
 	}
 
 	if (status.exited()) {
+		startNewOutputLine(tracee);
 		std::cerr << "+++ exited with " << cosmos::to_integral(*status.status()) << " +++\n";
 		if (!m_seen_initial_exec) {
 			std::cerr << "!!! failed to execute the specified program\n";
 		}
 	} else {
+		startNewOutputLine(tracee);
 		std::cerr << "+++ killed by signal " << cosmos::to_integral(status.termSig()->raw()) << " +++\n";
 	}
 
@@ -392,7 +397,7 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 		m_main_status = status;
 	}
 
-	m_num_tracees--;
+	cleanupTracee(tracee);
 }
 
 void TermTracer::stopped(Tracee &tracee) {
@@ -405,16 +410,21 @@ void TermTracer::stopped(Tracee &tracee) {
 void TermTracer::newExecutionContext(Tracee &tracee,
 		const std::string &old_exe,
 		const cosmos::StringVector &old_cmdline,
-		const std::optional<cosmos::ProcessID> former_pid) {
+		const Tracee *former_tracee) {
+
+	if (former_tracee) {
+		// this needs to be done first to avoid any inconsistent state down below.
+		updateTracee(tracee, former_tracee);
+	}
 
 	checkResumedSyscall(tracee);
 	// anticipate the sucess system call status to avoid complexities
 	// while outputting status messages and interactive dialogs.
 	std::cerr << ") = 0 (success)\n";
 
-	if (former_pid) {
+	if (former_tracee) {
 		startNewOutputLine(tracee);
-		std::cerr << "--- PID " << cosmos::to_integral(*former_pid) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
+		std::cerr << "--- PID " << cosmos::to_integral(former_tracee->pid()) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
 	}
 
 	if (m_seen_initial_exec) {
@@ -476,8 +486,13 @@ void TermTracer::startNewOutputLine(const Tracee &tracee) {
 		storeUnfinishedSyscallCtx();
 	}
 
+	const auto pid = cosmos::to_integral(tracee.pid());
+
 	if (m_num_tracees > 1) {
-		std::cerr << "[" << cosmos::to_integral(tracee.pid()) << "] ";
+		std::cerr << "[" << pid << "] ";
+	} else if (m_dropped_to_single_tracee) {
+		std::cerr << "--- only PID " << pid << " is remaining ---\n";
+		m_dropped_to_single_tracee = false;
 	}
 }
 
@@ -504,6 +519,49 @@ void TermTracer::checkResumedSyscall(const Tracee &tracee) {
 		std::cerr << "(..., ";
 	} else {
 		std::cerr << "(...";
+	}
+}
+
+void TermTracer::cleanupTracee(const Tracee &tracee) {
+	/* remove the given tracee from all bookkeeping */
+	if (hasActiveSyscall(tracee)) {
+		m_active_syscall.reset();
+	} else {
+		m_unfinished_syscalls.erase(&tracee);
+	}
+
+	if (m_main_tracee == &tracee) {
+		/* re-assign this during newExecutionContext() when
+		 * `former_pid` is set */
+		m_main_tracee = nullptr;
+	}
+
+	m_new_tracees.erase(&tracee);
+
+	if (--m_num_tracees == 1) {
+		m_dropped_to_single_tracee = true;
+	}
+}
+
+void TermTracer::updateTracee(const Tracee &tracee, const Tracee *former_tracee) {
+	if (m_main_tracee == former_tracee) {
+		m_main_tracee = &tracee;
+	}
+
+	if (hasActiveSyscall(*former_tracee)) {
+		m_active_syscall = std::make_tuple(&tracee, std::get<const SystemCall*>(*m_active_syscall));
+	}
+
+	if (auto it = m_unfinished_syscalls.find(former_tracee); it != m_unfinished_syscalls.end()) {
+		m_unfinished_syscalls[&tracee] = it->second;
+		m_unfinished_syscalls.erase(it);
+	}
+
+	m_new_tracees.erase(&tracee);
+
+	if (auto it = m_new_tracees.find(former_tracee); it != m_new_tracees.end()) {
+		m_new_tracees[&tracee] = it->second;
+		m_new_tracees.erase(it);
 	}
 }
 

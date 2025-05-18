@@ -439,6 +439,14 @@ void Tracee::handleExitEvent() {
 		// TODO: check what the exit status is in this case, probably it should be just 0.
 		LOG_INFO("execve() related exit? status = " << *wait_status.status());
 		state.set(EventConsumer::Status::LOST_TO_EXECVE);
+
+		if (isThreadGroupLeader()) {
+			// this Tracee will be replaced with another thread
+			// from the same process
+			// TODO: do we actually need this flag for anything?
+			m_flags.set(Flag::WAIT_FOR_EXECVE_REPLACEMENT);
+			state.set(EventConsumer::Status::EXECVE_REPLACE_PENDING);
+		}
 	}
 
 	m_consumer.exited(*this, wait_status, state);
@@ -453,7 +461,32 @@ void Tracee::handleExecEvent() {
 
 	updateExecInfo();
 
-	m_consumer.newExecutionContext(*this, old_exe, old_cmdline, former_pid != m_ptrace.pid() ? std::make_optional(former_pid) : std::nullopt);
+	// TODO: update m_fd_path_map based on O_CLOEXEC flag
+
+	TraceePtr old_tracee;
+	// for a regular execve() this returns the same pid as we have, ignore that
+	if (const auto have_former_pid = former_pid != m_ptrace.pid(); have_former_pid) {
+		old_tracee = m_engine.handleSubstitution(former_pid);
+		/*
+		 * we will receive this event already under the new PID i.e.
+		 * if we trace the main thread (which doesn't exec) and the
+		 * exec'ing thread as well then we will receive this in main
+		 * thread context.
+		 *
+		 * The "old" main thread no longer exists and we need to sync
+		 * state with the actually exec()'ing thread.
+		 *
+		 * This is good for us currently, because if we have a
+		 * ChildTracee running then it will be the main thread and
+		 * this thread will stay the main thread in the newly
+		 * executing process no matter what. Otherwise we'd have to
+		 * abandon the ChildTracee, which holds a SubProc that needs
+		 * to be wait()'ed on.
+		 */
+		syncState(*old_tracee);
+	}
+
+	m_consumer.newExecutionContext(*this, old_exe, old_cmdline, old_tracee.get());
 }
 
 void Tracee::handleNewChildEvent(const cosmos::ptrace::Event event) {
@@ -472,6 +505,15 @@ void Tracee::handleAttached() {
 	getRegisters(m_initial_regset);
 
 	m_consumer.attached(*this);
+}
+
+void Tracee::syncState(Tracee &other) {
+	m_syscall_info = other.m_syscall_info;
+	m_syscall_db = std::move(other.m_syscall_db);
+	m_current_syscall = other.m_current_syscall;
+	m_interrupted_syscall = other.m_interrupted_syscall;
+	m_syscall_ctr = other.m_syscall_ctr;
+	other.changeState(State::DEAD);
 }
 
 void Tracee::processEvent(const cosmos::ChildData &data) {
@@ -568,6 +610,33 @@ void Tracee::readVector(const long *addr, VECTOR &out) const {
 
 	ContainerFiller<VECTOR> filler{out};
 	fillData(addr, filler);
+}
+
+bool Tracee::isThreadGroupLeader() const {
+	const auto path = cosmos::sprintf("/proc/%d/status",
+			cosmos::to_integral(m_ptrace.pid()));
+	std::ifstream is{path};
+
+	if (!is) {
+		// Tracee disappeared?!
+		return false;
+	}
+
+	std::string line;
+
+	while (std::getline(is, line).good()) {
+		auto parts = cosmos::split(line, ":",
+				cosmos::SplitFlags{cosmos::SplitFlag::STRIP_PARTS});
+		if (parts[0] == "Tgid") {
+			auto tgid = std::strtol(parts[1].c_str(), nullptr, 10);
+			return cosmos::ProcessID{static_cast<int>(tgid)} == m_ptrace.pid();
+		}
+	}
+
+	cosmos_throw (cosmos::RuntimeError("failed to parse Tgid"));
+
+	// nothing found?!
+	return false;
 }
 
 void Tracee::readBlob(const long *addr, char *buffer, const size_t bytes) const {

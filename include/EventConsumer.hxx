@@ -19,11 +19,13 @@ public: // types
 	/// Different status flags that can appear in callbacks.
 	enum class Status {
 		/// A system call was interrupted (only appears during syscallExit()).
-		INTERRUPTED    = 1 << 0,
+		INTERRUPTED            = 1 << 0,
 		/// A previously interrupted system call is resumed (only appears during syscallEntry()).
-		RESUMED        = 1 << 1,
+		RESUMED                = 1 << 1,
 		/// An exit occurs because another thread called execve() (only appears in exited()).
-		LOST_TO_EXECVE = 1 << 2,
+		LOST_TO_EXECVE         = 1 << 2,
+		/// The tracee is waiting to be replaced by another thread that called execve().
+		EXECVE_REPLACE_PENDING = 1 << 3,
 	};
 
 	using State = cosmos::BitMask<Status>;
@@ -92,9 +94,8 @@ protected: // functions
 	 *
 	 * Only the main process ID (main thread PID) will remain. The
 	 * thread that caused the execve() can be a different thread.
-	 * In this case `former_pid` contains the former PID that is
-	 * now continuing as the main thread of the new execution
-	 * context.
+	 * In this case `former_tracee` contains the former Tracee object that
+	 * is now continuing as the main thread of the new execution context.
 	 *
 	 * The new executable path and command line can be retrieved
 	 * via Tracee::executable() and Tracee::cmdLine(). The
@@ -107,9 +108,9 @@ protected: // functions
 			Tracee &tracee,
 			const std::string &old_executable,
 			const cosmos::StringVector &old_cmdline,
-			const std::optional<cosmos::ProcessID> former_pid) {
+			const Tracee *former_tracee) {
 		(void)tracee;
-		(void)former_pid;
+		(void)former_tracee;
 		(void)old_cmdline;
 		(void)old_executable;
 	}
