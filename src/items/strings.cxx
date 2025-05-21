@@ -22,6 +22,9 @@ void StringArrayData::processValue(const Tracee &proc) {
 	std::vector<long*> string_addrs;
 	m_strs.clear();
 
+	if (!array_start)
+		return;
+
 	// first read in all start adresses of the c-strings for the string array
 	proc.readVector(array_start, string_addrs);
 
@@ -32,6 +35,10 @@ void StringArrayData::processValue(const Tracee &proc) {
 }
 
 std::string StringArrayData::str() const {
+	if (m_strs.empty()) {
+		return "NULL";
+	}
+
 	std::string ret;
 	ret += "[";
 
