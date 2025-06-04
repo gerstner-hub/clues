@@ -18,6 +18,11 @@
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
 
+#define LOG_DEBUG_PID(X) LOG_DEBUG("[" << cosmos::to_integral(m_ptrace.pid()) << "] " << X)
+#define LOG_INFO_PID(X) LOG_INFO("[" << cosmos::to_integral(m_ptrace.pid()) << "] " << X)
+#define LOG_WARN_PID(X) LOG_WARN("[" << cosmos::to_integral(m_ptrace.pid()) << "] " << X)
+#define LOG_ERROR_PID(X) LOG_ERROR("[" << cosmos::to_integral(m_ptrace.pid()) << "] " << X)
+
 namespace {
 
 /// A filler that fills Tracee data into a container supporting push_back() until a terminating zero element is found.
@@ -94,7 +99,7 @@ Tracee::Tracee(Engine &engine, EventConsumer &consumer) :
 
 Tracee::~Tracee() {
 	if (m_state != State::DEAD && m_state != State::DETACHED) {
-		LOG_WARN("destroying Tracee in live state");
+		LOG_WARN_PID("destroying Tracee in live state");
 	}
 }
 
@@ -164,9 +169,8 @@ void Tracee::detach() {
 		}
 	} else {
 		m_ptrace.detach();
-		m_ptrace = cosmos::Tracee{};
-
 		changeState(State::DETACHED);
+		m_ptrace = cosmos::Tracee{};
 	}
 }
 
@@ -226,7 +230,7 @@ void Tracee::updateCmdLine() {
 }
 
 void Tracee::changeState(const State new_state) {
-	LOG_DEBUG("state " << m_state << " → " << new_state);
+	LOG_DEBUG_PID("state " << m_state << " → " << new_state);
 
 	if (new_state == State::SYSCALL_ENTER_STOP) {
 		m_flags.set(Flag::SYSCALL_ENTERED);
@@ -261,7 +265,7 @@ void Tracee::changeState(const State new_state) {
 }
 
 void Tracee::handleStateMismatch() {
-	LOG_ERROR("encountered system call state mismatch: we believe "
+	LOG_ERROR_PID("encountered system call state mismatch: we believe "
 		<< (m_flags[Flag::SYSCALL_ENTERED] ? "we already entered " : "we did not enter ")
 		<< "a system call, but we got a "
 		<< (m_syscall_info->isEntry() ? "SyscallInfo::ENTRY" : "SyscallInfo::EXIT")
@@ -309,7 +313,7 @@ void Tracee::handleSystemCallEntry() {
 			state.set(EventConsumer::Status::RESUMED);
 		} else if (m_syscall_ctr != 0) {
 			// explicit restart_syscall done by user space?
-			LOG_WARN("unknown system call is resumed");
+			LOG_WARN_PID("unknown system call is resumed");
 		} else {
 			// this happens when attaching to a non-child process
 			// and a system call like clock_nanosleep is
@@ -361,7 +365,7 @@ void Tracee::handleSystemCallExit() {
 }
 
 void Tracee::handleSignal(const cosmos::SigInfo &info) {
-	LOG_INFO("Signal: " << info.sigNr());
+	LOG_INFO_PID("Signal: " << info.sigNr());
 
 	if (m_flags[Flag::INJECTED_SIGCONT] && info.sigNr() == cosmos::signal::CONT) {
 		// ignore injected SIGCONT
@@ -373,7 +377,7 @@ void Tracee::handleSignal(const cosmos::SigInfo &info) {
 }
 
 void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal) {
-	LOG_INFO("PTRACE_EVENT_" << get_ptrace_event_str(event) << " (" << signal << ")");
+	LOG_INFO_PID("PTRACE_EVENT_" << get_ptrace_event_str(event) << " (" << signal << ")");
 
 	using Event = cosmos::ptrace::Event;
 
@@ -386,15 +390,14 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal
 	case Event::VFORK_DONE:
 	case Event::FORK:
 			  return handleNewChildEvent(event);
-	default: LOG_WARN("PTRACE_EVENT unhandled");
+	default: LOG_WARN_PID("PTRACE_EVENT unhandled");
 	}
 }
 
 void Tracee::handleStopEvent(const cosmos::Signal signal) {
 	if (m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
 		// this is the initial ptrace-stop. now we can start tracing
-		// TODO: provide pid identifier for tracee-related logging
-		LOG_INFO("initial ptrace-stop");
+		LOG_INFO_PID("initial ptrace-stop");
 		handleAttached();
 	} else if (cosmos::in_container(signal, STOPPING_SIGNALS)) {
 		// must be a group stop, unless we're tracing
@@ -437,7 +440,7 @@ void Tracee::handleExitEvent() {
 			!cosmos::in_list(m_current_syscall->callNr(),
 				{SystemCallNr::EXIT_GROUP, SystemCallNr::EXIT}))) {
 		// TODO: check what the exit status is in this case, probably it should be just 0.
-		LOG_INFO("execve() related exit? status = " << *wait_status.status());
+		LOG_INFO_PID("execve() related exit? status = " << *wait_status.status());
 		state.set(EventConsumer::Status::LOST_TO_EXECVE);
 
 		if (isThreadGroupLeader()) {
@@ -551,14 +554,14 @@ void Tracee::processEvent(const cosmos::ChildData &data) {
 		// when tracing.
 		// TODO: but for direct child processes that we want to stop
 		// tracing this could happen after detaching.
-		LOG_WARN("seeing non-trap signal delivery stop");
+		LOG_WARN_PID("seeing non-trap signal delivery stop");
 		changeState(State::SIGNAL_DELIVERY_STOP);
 		cosmos::SigInfo info;
 		m_ptrace.getSigInfo(info);
 		handleSignal(info);
 		m_inject_sig = *data.signal;
 	} else {
-		LOG_WARN("Other Tracee event?");
+		LOG_WARN_PID("Other Tracee event?");
 	}
 
 	if (m_state == State::DEAD || m_state == State::DETACHED)
