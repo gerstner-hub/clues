@@ -439,8 +439,8 @@ void Tracee::handleExitEvent() {
 			(prevState() != State::SYSCALL_ENTER_STOP ||
 			!cosmos::in_list(m_current_syscall->callNr(),
 				{SystemCallNr::EXIT_GROUP, SystemCallNr::EXIT}))) {
-		// TODO: check what the exit status is in this case, probably it should be just 0.
-		LOG_INFO_PID("execve() related exit? status = " << *wait_status.status());
+		// the exit status in this case is simply 0
+		LOG_INFO_PID("execve() related exit detected");
 		state.set(EventConsumer::Status::LOST_TO_EXECVE);
 
 		if (isThreadGroupLeader()) {
