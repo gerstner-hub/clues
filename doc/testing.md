@@ -1,0 +1,9 @@
+- situations to test
+  - execve in multi-threaded process:
+    - execve in main thread
+    - execve in other thread
+  - child process dies, grand-childs still live
+  - only a single thread of a multi-threaded process is traced
+    - the traced thread execve()'s
+    - another thread execve()'s
+    - another thread calls exit()
