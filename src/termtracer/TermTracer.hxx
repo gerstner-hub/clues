@@ -39,9 +39,15 @@ protected: // types
 		CHECK_GLOB
 	};
 
+	enum class FollowChildMode {
+		YES,
+		NO,
+		ASK
+	};
+
 protected: // functions
 
-	void processPars();
+	bool processPars();
 
 	cosmos::ExitStatus main(const int argc, const char **argv) override;
 
@@ -147,6 +153,7 @@ protected: // data
 	size_t m_value_truncation_len = 64;
 
 	FollowExecContext m_follow_exec = FollowExecContext::YES;
+	FollowChildMode m_follow_childs = FollowChildMode::NO;
 	/// optional argument to m_follow_exec (e.g. path, glob, script)
 	std::string m_exec_context_arg;
 

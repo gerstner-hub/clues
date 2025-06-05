@@ -28,11 +28,37 @@
 
 namespace clues {
 
+namespace {
+
+std::string_view to_label(const cosmos::ptrace::Event event) {
+	using Event = cosmos::ptrace::Event;
+	switch (event) {
+		case Event::VFORK: return "vfork()";
+		case Event::FORK: return "fork()";
+		case Event::CLONE: return "clone()";
+		default: return "???";
+	}
+}
+
+bool ask_yes_no() {
+	std::string yes_no;
+	while (true) {
+		std::cout << "(y/n) > ";
+		std::cin >> yes_no;
+		if (!std::cin.good() || yes_no == "n")
+			return false;
+		else if (yes_no == "y")
+			return true;
+	}
+}
+
+} // anon ns
+
 TermTracer::TermTracer() :
 		m_engine{*this} {
 }
 
-void TermTracer::processPars() {
+bool TermTracer::processPars() {
 	auto max_len = m_args.max_value_len.getValue();
 
 	if (max_len == 0)
@@ -61,6 +87,28 @@ void TermTracer::processPars() {
 			m_exec_context_arg = arg.substr(GLOB_PREFIX.size());
 		}
 	}
+
+	if (m_args.follow_childs.isSet() && m_args.follow_childs_switch.isSet()) {
+		std::cerr << "cannot set both '-f' and '--follow-childs'\n";
+		return false;
+	} else if (m_args.follow_childs_switch.isSet()) {
+		m_follow_childs = FollowChildMode::YES;
+	} else if (m_args.follow_childs.isSet()) {
+		const auto &arg = m_args.follow_childs.getValue();
+
+		if (arg == "yes") {
+			m_follow_childs = FollowChildMode::YES;
+		} else if (arg == "no") {
+			m_follow_childs = FollowChildMode::NO;
+		} else if (arg == "ask") {
+			m_follow_childs = FollowChildMode::ASK;
+		} else {
+			std::cerr << "invalid argument to --follow-childs: " << arg << "\n";
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void TermTracer::configureLogger() {
@@ -347,14 +395,7 @@ void TermTracer::attached(Tracee &tracee) {
 	auto [parent, event] = it->second;
 
 	startNewOutputLine(*(it->first));
-	std::cerr << "→ automatically attached (created by PID " << cosmos::to_integral(parent) << " via ";
-	using Event = cosmos::ptrace::Event;
-	switch (event) {
-		case Event::VFORK: std::cerr << "vfork()"; break;
-		case Event::FORK: std::cerr << "fork()"; break;
-		case Event::CLONE: std::cerr << "clone()"; break;
-		default: std::cerr << "???"; break;
-	}
+	std::cerr << "→ automatically attached (created by PID " << cosmos::to_integral(parent) << " via " << to_label(event);
 
 	std::cerr << ")\n";
 
@@ -449,8 +490,26 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 }
 
 void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::ptrace::Event event) {
-	// keep this information for later when something actually happens in the new child
-	m_new_tracees.insert({&child, {parent.pid(), event}});
+
+	auto follow = m_follow_childs;
+
+	if (follow == FollowChildMode::ASK) {
+		startNewOutputLine(parent);
+		const auto pid  = cosmos::to_integral(parent.pid());
+		std::cout << "Follow into new child process created by PID " << pid << " via " << to_label(event) << "?\n";
+		std::cout << "PID " << pid << " is ";
+		printTraceeInvocation(std::cout, parent.executable(), parent.cmdLine());
+		std::cout << "\n";
+		follow = ask_yes_no() ? FollowChildMode::YES : FollowChildMode::NO;
+	}
+
+	if (follow == FollowChildMode::YES) {
+		// keep this information for later when something actually happens in the new child
+		m_new_tracees.insert({&child, {parent.pid(), event}});
+	} else {
+		// TODO: is this enough or do we need cleanup in Engine?
+		child.detach();
+	}
 }
 
 bool TermTracer::followExecutionContext(Tracee &tracee) {
@@ -460,15 +519,7 @@ bool TermTracer::followExecutionContext(Tracee &tracee) {
 		case FollowExecContext::NO: return false;
 		case FollowExecContext::ASK: {
 			std::cout << "Follow into new execution context?\n";
-			std::string yes_no;
-			while (true) {
-				std::cout << "(y/n) > ";
-				std::cin >> yes_no;
-				if (!std::cin.good() || yes_no == "n")
-					return false;
-				else if (yes_no == "y")
-					return true;
-			}
+			return ask_yes_no();
 		} case FollowExecContext::CHECK_PATH: {
 			return m_exec_context_arg == tracee.executable();
 		} case FollowExecContext::CHECK_GLOB: {
@@ -594,7 +645,9 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 
 	configureLogger();
 
-	processPars();
+	if (!processPars()) {
+		return FAILURE;
+	}
 
 	cosmos::signal::block(cosmos::SigSet{cosmos::signal::CHILD});
 

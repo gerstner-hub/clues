@@ -16,6 +16,10 @@ struct Args {
 	TCLAP::ValueArg<std::underlying_type<cosmos::ProcessID>::type> attach_proc;
 	/// Controls the behaviour upon execve().
 	TCLAP::ValueArg<std::string> follow_execve;
+	/// controls the behaviour upon clone()/fork().
+	TCLAP::ValueArg<std::string> follow_childs;
+	/// Short form of 'follow_childs yes'
+	TCLAP::SwitchArg follow_childs_switch;
 	/// Increase verbosity of tracing output.
 	TCLAP::SwitchArg verbose;
 	/// Maximum length of parameter values to print.
