@@ -16,8 +16,17 @@ namespace clues {
 
 Engine::~Engine() {
 	if (!m_tracees.empty()) {
-		stop(cosmos::signal::KILL);
-		trace();
+		try {
+			stop(cosmos::signal::KILL);
+			trace();
+		} catch (const std::exception &ex) {
+			LOG_WARN("Trying to stop remaining tracess in ~Engine():" << ex.what());
+
+			if (!m_tracees.empty()) {
+				LOG_ERROR("Failed to cleanup Engine");
+				std::abort();
+			}
+		}
 	}
 }
 
@@ -74,9 +83,13 @@ void Engine::trace() {
 void Engine::stop(const std::optional<cosmos::Signal> signal) {
 	for (auto it = m_tracees.begin(); it != m_tracees.end(); it++) {
 		auto &tracee = *it->second;
-		tracee.detach();
 		if (tracee.isChildProcess() && tracee.alive() && signal) {
 			cosmos::signal::send(tracee.pid(), *signal);
+		}
+		tracee.detach();
+
+		if (!tracee.alive()) {
+			m_tracees.erase(it);
 		}
 	}
 }

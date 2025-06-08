@@ -160,18 +160,34 @@ void Tracee::detach() {
 		return;
 	} else if (m_state == State::DEAD || m_state == State::DETACHED) {
 		return;
-	} else if (m_state == State::RUNNING) {
-		m_flags.set(Flag::DETACH_AT_NEXT_STOP);
-
-		if (!m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
-			// interrupt, if not still pending, for being able to detach
-			interrupt();
-		}
-	} else {
-		m_ptrace.detach();
-		changeState(State::DETACHED);
-		m_ptrace = cosmos::Tracee{};
 	}
+
+	try {
+		if (m_state == State::RUNNING) {
+			m_flags.set(Flag::DETACH_AT_NEXT_STOP);
+
+			if (!m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
+				// interrupt, if not still pending, for being able to detach
+				interrupt();
+			}
+		} else {
+			m_ptrace.detach();
+			changeState(State::DETACHED);
+		}
+	} catch (const cosmos::ApiError &error) {
+		if (error.errnum() == cosmos::Errno::SEARCH) {
+			LOG_WARN_PID("tracee found to be already dead upon detach()/interrupt()");
+			// already gone for some reason
+			changeState(State::DEAD);
+		} else {
+			// shouldn't really happen, unless we're not a
+			// tracee for the process at all anyway
+			m_ptrace = cosmos::Tracee{};
+			throw;
+		}
+	}
+
+	m_ptrace = cosmos::Tracee{};
 }
 
 void Tracee::updateExecutable() {
