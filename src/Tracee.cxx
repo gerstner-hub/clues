@@ -535,7 +535,7 @@ void Tracee::syncState(Tracee &other) {
 	other.changeState(State::DEAD);
 }
 
-void Tracee::processEvent(const cosmos::ChildData &data) {
+void Tracee::processEvent(const cosmos::ChildState &data) {
 	m_inject_sig = {};
 
 	if (data.exited() || data.killed() || data.dumped()) {

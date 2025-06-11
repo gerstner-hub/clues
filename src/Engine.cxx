@@ -62,7 +62,7 @@ void Engine::checkCleanupTracee(TraceeMap::iterator it) {
 }
 
 void Engine::trace() {
-	cosmos::ChildData data;
+	cosmos::ChildState data;
 
 	while (!m_tracees.empty()) {
 		data = *cosmos::proc::wait(cosmos::WaitFlags{

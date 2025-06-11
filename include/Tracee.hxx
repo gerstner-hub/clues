@@ -114,7 +114,7 @@ public: // functions
 	 * returns the tracee exit information (it's exit status or kill
 	 * signal etc.).
 	 **/
-	std::optional<cosmos::ChildData> exitData() const {
+	std::optional<cosmos::ChildState> exitData() const {
 		return m_exit_data;
 	}
 
@@ -222,7 +222,7 @@ protected: // functions
 	 * This call will be invoked by the Engine class to drive the tracing
 	 * logic.
 	 **/
-	void processEvent(const cosmos::ChildData &data);
+	void processEvent(const cosmos::ChildState &data);
 
 	void updateExecutable();
 
@@ -321,7 +321,7 @@ protected: // data
 	/// signal to inject upon next restart of the tracee.
 	std::optional<cosmos::Signal> m_inject_sig;
 	/// If tracee exit was observed then this contains the final exit data.
-	std::optional<cosmos::ChildData> m_exit_data;
+	std::optional<cosmos::ChildState> m_exit_data;
 	/// Path to the executable we're tracing (/proc/<pid>/exe).
 	std::string m_executable;
 	/// Command line used to create the process (/proc/<pid>/cmdline).

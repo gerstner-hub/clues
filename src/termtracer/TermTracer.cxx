@@ -287,7 +287,7 @@ void TermTracer::signaled(Tracee &tracee, const cosmos::SigInfo &info) {
 
 	// TODO: this formatting logic should rather go into libclues
 
-	auto add_process_ctx = [](const SigInfo::ProcessCtx ctx) {
+	auto add_process_ctx = [](const cosmos::ProcessCtx ctx) {
 		std::cerr << ", si_pid=" << cosmos::to_integral(ctx.pid);
 		std::cerr << ", si_uid=" << cosmos::to_integral(ctx.uid);
 	};
