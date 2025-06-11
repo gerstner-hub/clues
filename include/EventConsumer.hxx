@@ -88,31 +88,42 @@ protected: // functions
 
 	/// A new program is executed in the tracee.
 	/**
-	 * This call occurs after a successful `execve()` within the
-	 * tracee. If the tracee was multi-threaded, then all but one
-	 * thread will have exited in the process.
+	 * This call occurs after a successful `execve()` by the tracee.
 	 *
-	 * Only the main process ID (main thread PID) will remain. The
-	 * thread that caused the execve() can be a different thread.
-	 * In this case `former_tracee` contains the former Tracee object that
-	 * is now continuing as the main thread of the new execution context.
+	 * The new executable path and command line can be retrieved via
+	 * Tracee::executable() and Tracee::cmdLine(). The previous values are
+	 * provided as input parameters.
 	 *
-	 * The new executable path and command line can be retrieved
-	 * via Tracee::executable() and Tracee::cmdLine(). The
-	 * previous values are provided as input parameters.
+	 * The callee can decide to stop tracing (by detaching) at this point
+	 * to prevent following the new tracing context.
 	 *
-	 * The callee can decide to stop tracing (by detaching) at
-	 * this point to prevent following new tracing contexts.
+	 * If the tracee's process was multi-threaded then there is more
+	 * complexity involved:
+	 *
+	 * - all but one thread will have exited at this point. Only the main
+	 *   process ID (main thread PID) will remain.
+	 * - The thread that caused the execve() can be a different thread. In
+	 *   this case the different thread will receive a new PID personality
+	 *   (it will receive the main thread PID).
+	 * - In case of a personality change, `former_pid` contains the former
+	 *   PID that the exec'ing thread had, which is now continuing as the
+	 *   main thread of the new execution context.
+	 * - the current implementation of libclues will attempt to reuse the
+	 *   main thread's Tracee object even if a personality change
+	 *   happened. If the main thread was not traced at all then the
+	 *   exec()'ing thread's Tracee object will be reused. Due to this it
+	 *   is best to rely on the PIDs only (not Tracee pointers) to
+	 *   identify the new/old context.
 	 **/
 	virtual void newExecutionContext(
 			Tracee &tracee,
 			const std::string &old_executable,
 			const cosmos::StringVector &old_cmdline,
-			const Tracee *former_tracee) {
+			const std::optional<cosmos::ProcessID> old_pid) {
 		(void)tracee;
-		(void)former_tracee;
 		(void)old_cmdline;
 		(void)old_executable;
+		(void)old_pid;
 	}
 
 	/// A new child process has been created.

@@ -240,7 +240,7 @@ void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State 
 
 	startNewOutputLine(tracee);
 
-	m_active_syscall = std::make_optional(std::make_tuple(&tracee, &sc));
+	m_active_syscall = std::make_optional(std::make_tuple(tracee.pid(), &sc));
 
 	if (state[Status::RESUMED]) {
 		std::cerr << "<resuming previously interrupted " << sc.name() << "...>\n";
@@ -386,7 +386,7 @@ void TermTracer::attached(Tracee &tracee) {
 		return;
 	}
 
-	auto it = m_new_tracees.find(&tracee);
+	auto it = m_new_tracees.find(tracee.pid());
 	if (it == m_new_tracees.end()) {
 		std::cerr << "unknown Tracee attached?!";
 		return;
@@ -394,7 +394,7 @@ void TermTracer::attached(Tracee &tracee) {
 
 	auto [parent, event] = it->second;
 
-	startNewOutputLine(*(it->first));
+	startNewOutputLine(tracee);
 	std::cerr << "→ automatically attached (created by PID " << cosmos::to_integral(parent) << " via " << to_label(event);
 
 	std::cerr << ")\n";
@@ -451,21 +451,21 @@ void TermTracer::stopped(Tracee &tracee) {
 void TermTracer::newExecutionContext(Tracee &tracee,
 		const std::string &old_exe,
 		const cosmos::StringVector &old_cmdline,
-		const Tracee *former_tracee) {
-
-	if (former_tracee) {
+		const std::optional<cosmos::ProcessID> old_pid) {
+	if (old_pid) {
 		// this needs to be done first to avoid any inconsistent state down below.
-		updateTracee(tracee, former_tracee);
+		updateTracee(tracee, *old_pid);
 	}
 
 	checkResumedSyscall(tracee);
-	// anticipate the sucess system call status to avoid complexities
+	// anticipate the success system call status to avoid complexities
 	// while outputting status messages and interactive dialogs.
 	std::cerr << ") = 0 (success)\n";
+	m_active_syscall = {};
 
-	if (former_tracee) {
+	if (old_pid) {
 		startNewOutputLine(tracee);
-		std::cerr << "--- PID " << cosmos::to_integral(former_tracee->pid()) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
+		std::cerr << "--- PID " << cosmos::to_integral(*old_pid) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
 	}
 
 	if (m_seen_initial_exec) {
@@ -505,7 +505,7 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 
 	if (follow == FollowChildMode::YES) {
 		// keep this information for later when something actually happens in the new child
-		m_new_tracees.insert({&child, {parent.pid(), event}});
+		m_new_tracees.insert({child.pid(), {parent.pid(), event}});
 	} else {
 		// TODO: is this enough or do we need cleanup in Engine?
 		child.detach();
@@ -551,8 +551,8 @@ void TermTracer::storeUnfinishedSyscallCtx() {
 	if (!m_active_syscall)
 		return;
 
-	auto [tracee, syscall] = *m_active_syscall;
-	m_unfinished_syscalls[tracee] = syscall;
+	auto [pid, syscall] = *m_active_syscall;
+	m_unfinished_syscalls[pid] = syscall;
 	m_active_syscall.reset();
 }
 
@@ -562,7 +562,7 @@ void TermTracer::checkResumedSyscall(const Tracee &tracee) {
 
 	startNewOutputLine(tracee);
 
-	auto node = m_unfinished_syscalls.extract(&tracee);
+	auto node = m_unfinished_syscalls.extract(tracee.pid());
 	auto sc = node.mapped();
 
 	std::cerr << "<resuming ...> " << sc->name();
@@ -578,7 +578,7 @@ void TermTracer::cleanupTracee(const Tracee &tracee) {
 	if (hasActiveSyscall(tracee)) {
 		m_active_syscall.reset();
 	} else {
-		m_unfinished_syscalls.erase(&tracee);
+		m_unfinished_syscalls.erase(tracee.pid());
 	}
 
 	if (m_main_tracee == &tracee) {
@@ -587,31 +587,31 @@ void TermTracer::cleanupTracee(const Tracee &tracee) {
 		m_main_tracee = nullptr;
 	}
 
-	m_new_tracees.erase(&tracee);
+	m_new_tracees.erase(tracee.pid());
 
 	if (--m_num_tracees == 1) {
 		m_dropped_to_single_tracee = true;
 	}
 }
 
-void TermTracer::updateTracee(const Tracee &tracee, const Tracee *former_tracee) {
-	if (m_main_tracee == former_tracee) {
+void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid) {
+	if (m_main_tracee->pid() == old_pid) {
 		m_main_tracee = &tracee;
 	}
 
-	if (hasActiveSyscall(*former_tracee)) {
-		m_active_syscall = std::make_tuple(&tracee, std::get<const SystemCall*>(*m_active_syscall));
+	if (hasActiveSyscall(old_pid)) {
+		m_active_syscall = std::make_tuple(tracee.pid(), std::get<const SystemCall*>(*m_active_syscall));
 	}
 
-	if (auto it = m_unfinished_syscalls.find(former_tracee); it != m_unfinished_syscalls.end()) {
-		m_unfinished_syscalls[&tracee] = it->second;
+	if (auto it = m_unfinished_syscalls.find(old_pid); it != m_unfinished_syscalls.end()) {
+		m_unfinished_syscalls[tracee.pid()] = it->second;
 		m_unfinished_syscalls.erase(it);
 	}
 
-	m_new_tracees.erase(&tracee);
+	m_new_tracees.erase(tracee.pid());
 
-	if (auto it = m_new_tracees.find(former_tracee); it != m_new_tracees.end()) {
-		m_new_tracees[&tracee] = it->second;
+	if (auto it = m_new_tracees.find(old_pid); it != m_new_tracees.end()) {
+		m_new_tracees[tracee.pid()] = it->second;
 		m_new_tracees.erase(it);
 	}
 }

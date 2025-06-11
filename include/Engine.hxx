@@ -13,6 +13,10 @@
 // clues
 #include <clues/types.hxx>
 
+namespace cosmos {
+	struct ChildState;
+}
+
 namespace clues {
 
 class Tracee;
@@ -115,6 +119,17 @@ protected: // types
 protected: // functions
 
 	void checkCleanupTracee(TraceeMap::iterator it);
+
+	/// Check the given trace event if we can make sense of it.
+	/**
+	 * If the function was able to adjust internal state for being able to
+	 * properly handle `data`, then it returns `true` and a retry should
+	 * be performed. Otherwise `false` is returned and the event should be
+	 * discarded.
+	 **/
+	bool checkUnknownTraceeEvent(const cosmos::ChildState &data);
+
+	bool tryUpdateTraceePID(const cosmos::ProcessID old_pid, const cosmos::ProcessID new_pid);
 
 	/// Invoked by a Tracee once a new child process is auto-attached.
 	/**

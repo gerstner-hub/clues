@@ -392,7 +392,9 @@ void Tracee::handleSignal(const cosmos::SigInfo &info) {
 	m_consumer.signaled(*this, info);
 }
 
-void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal) {
+void Tracee::handleEvent(const cosmos::ChildState &data,
+		const cosmos::ptrace::Event event,
+		const cosmos::Signal signal) {
 	LOG_INFO_PID("PTRACE_EVENT_" << get_ptrace_event_str(event) << " (" << signal << ")");
 
 	using Event = cosmos::ptrace::Event;
@@ -400,7 +402,7 @@ void Tracee::handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal
 	switch(event) {
 	case Event::STOP: return handleStopEvent(signal);
 	case Event::EXIT: return handleExitEvent();
-	case Event::EXEC: return handleExecEvent();
+	case Event::EXEC: return handleExecEvent(data.child.pid);
 	case Event::CLONE:
 	case Event::VFORK:
 	case Event::VFORK_DONE:
@@ -471,21 +473,26 @@ void Tracee::handleExitEvent() {
 	m_consumer.exited(*this, wait_status, state);
 }
 
-void Tracee::handleExecEvent() {
-
-	const auto former_pid = m_ptrace.getPIDEventMsg();
-
+void Tracee::handleExecEvent(const cosmos::ProcessID main_pid) {
 	const auto old_exe = m_executable;
 	const auto old_cmdline = m_cmdline;
 
-	updateExecInfo();
+	// in a multi-threaded conext we can receive this event under a
+	// different PID than we currently have. Thus use a dedicated ptrace
+	// wrapper here until we maybe call setPID() below..
+	cosmos::Tracee ptrace{main_pid};
+
+	std::optional<cosmos::ProcessID> old_pid;
+
+	// for a regular execve() this returns the same pid as we have, ignore that
+	if (const auto former_pid = ptrace.getPIDEventMsg(); former_pid != main_pid) {
+		old_pid = former_pid;
+	}
 
 	// TODO: update m_fd_path_map based on O_CLOEXEC flag
 
-	TraceePtr old_tracee;
-	// for a regular execve() this returns the same pid as we have, ignore that
-	if (const auto have_former_pid = former_pid != m_ptrace.pid(); have_former_pid) {
-		old_tracee = m_engine.handleSubstitution(former_pid);
+	if (old_pid) {
+		auto old_tracee = m_engine.handleSubstitution(*old_pid);
 		/*
 		 * we will receive this event already under the new PID i.e.
 		 * if we trace the main thread (which doesn't exec) and the
@@ -502,10 +509,25 @@ void Tracee::handleExecEvent() {
 		 * abandon the ChildTracee, which holds a SubProc that needs
 		 * to be wait()'ed on.
 		 */
-		syncState(*old_tracee);
+		if (old_tracee) {
+			syncState(*old_tracee);
+		} else {
+			/*
+			 * If the old main thread was not traced at all then
+			 * `old_tracee` is not available here and we are
+			 * already the correct Tracee (Engine takes care of
+			 * that).
+			 * We have to actively change our own PID, though.
+			 */
+			setPID(ptrace.pid());
+		}
 	}
 
-	m_consumer.newExecutionContext(*this, old_exe, old_cmdline, old_tracee.get());
+	// only update executable info here, since our PID might have changed
+	// above
+	updateExecInfo();
+
+	m_consumer.newExecutionContext(*this, old_exe, old_cmdline, old_pid);
 }
 
 void Tracee::handleNewChildEvent(const cosmos::ptrace::Event event) {
@@ -550,13 +572,10 @@ void Tracee::processEvent(const cosmos::ChildState &data) {
 
 		if (data.signal == cosmos::signal::SYS_TRAP) {
 			handleSystemCall();
-		} else if (*data.signal > cosmos::signal::MAXIMUM) {
-			// a ptrace event stop
-			const auto raw_sigval = cosmos::to_integral(data.signal->raw());
-			const auto event = cosmos::ptrace::Event{raw_sigval >> 8};
-			const cosmos::SignalNr signr{raw_sigval & 0xff};
+		} else if (data.signal->isPtraceEventStop()) {
 			changeState(State::EVENT_STOP);
-			handleEvent(event, cosmos::Signal{signr});
+			const auto [signr, event] = cosmos::ptrace::decode_event(*data.signal);
+			handleEvent(data, event, cosmos::Signal{signr});
 		} else {
 			changeState(State::SIGNAL_DELIVERY_STOP);
 			cosmos::SigInfo info;

@@ -275,13 +275,15 @@ protected: // functions
 
 	void handleSignal(const cosmos::SigInfo &info);
 
-	void handleEvent(const cosmos::ptrace::Event event, const cosmos::Signal signal);
+	void handleEvent(const cosmos::ChildState &data,
+			const cosmos::ptrace::Event event,
+			const cosmos::Signal signal);
 
 	void handleStopEvent(const cosmos::Signal signal);
 
 	void handleExitEvent();
 
-	void handleExecEvent();
+	void handleExecEvent(const cosmos::ProcessID main_pid);
 
 	void handleNewChildEvent(const cosmos::ptrace::Event event);
 

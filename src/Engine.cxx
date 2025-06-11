@@ -69,15 +69,62 @@ void Engine::trace() {
 				cosmos::WaitFlag::WAIT_FOR_EXITED,
 				cosmos::WaitFlag::WAIT_FOR_STOPPED});
 
-		if (auto it = m_tracees.find(data.child.pid); it != m_tracees.end()) {
-			Tracee &tracee = *it->second;
-			tracee.processEvent(data);
+		while (true) {
+			if (auto it = m_tracees.find(data.child.pid); it != m_tracees.end()) {
+				Tracee &tracee = *it->second;
+				tracee.processEvent(data);
 
-			checkCleanupTracee(it);
-		} else {
-			LOG_WARN("wait() event about unknown child: " << cosmos::to_integral(data.child.pid));
+				checkCleanupTracee(it);
+			} else {
+				if (checkUnknownTraceeEvent(data)) {
+					// retry if we can process the event this time
+					continue;
+				}
+
+				LOG_WARN("received unknown trace event for PID " << cosmos::to_integral(data.child.pid));
+			}
+
+			break;
 		}
 	}
+}
+
+bool Engine::checkUnknownTraceeEvent(const cosmos::ChildState &data) {
+
+	if (data.trapped() && data.signal->isPtraceEventStop()) {
+		const auto [_, event] = cosmos::ptrace::decode_event(*data.signal);
+		if (event == cosmos::ptrace::Event::EXEC) {
+			/*
+			 * This means execve() happened in a multi-threaded
+			 * process, but we're not tracing the main thread,
+			 * only the exec()'ing thread.
+			 *
+			 * The exec()'ing thread now has become the main
+			 * thread, changing PID personality. Try to recover.
+			 */
+			cosmos::Tracee ptrace{data.child.pid};
+			const auto former_pid = ptrace.getPIDEventMsg();
+			LOG_DEBUG("PID " << cosmos::to_integral(former_pid) << " issued execve(), but main thread is not traced. Trying to update records.");
+			return tryUpdateTraceePID(former_pid, data.child.pid);
+		}
+	}
+
+	return false;
+}
+
+bool Engine::tryUpdateTraceePID(const cosmos::ProcessID old_pid, const cosmos::ProcessID new_pid) {
+	auto node = m_tracees.extract(old_pid);
+	if (node.empty())
+		return false;
+	// don't change the Tracee object's PID just yet. This will be done
+	// in Tracee::handleExecEvent()).
+	//
+	// At this stage we just want to be able to lookup the correct Tracee
+	// within Engine for now.
+	node.key() = new_pid;
+
+	m_tracees.insert(std::move(node));
+	return true;
 }
 
 void Engine::stop(const std::optional<cosmos::Signal> signal) {
@@ -123,20 +170,44 @@ void Engine::handleAutoAttach(
 }
 
 TraceePtr Engine::handleSubstitution(const cosmos::ProcessID old_pid) {
+	/*
+	 * The following scenarios exist for multi-threaded processes:
+	 *
+	 * a) we are tracing all threads of the process. Some thread calls
+	 * execve(). We'll see all other threads exiting out of the blue. The
+	 * main thread's Tracee object will set the
+	 * WAIT_FOR_EXECVE_REPLACEMENT flag. Once the PID personality change
+	 * happens we'll recycle the main thread's Tracee object to be used
+	 * for further tracing. The reason for this is that the Tracee object
+	 * may be a ChildTracee with ownership of a SubProc that needs to live
+	 * on.
+	 *
+	 * b) we are only tracing a thread other than the main thread or the
+	 * execve() thread: it will just exit and tracing ends
+	 *
+	 * c) we are only tracing the execve() thread which is not the main
+	 * thread. Upon PID substitution we'll suddenly get a ptrace()
+	 * event for a PID we never attached to. Engine decodes the event in
+	 * `checkUnknownTraceeEvent()` and will update the key in `m_tracees`,
+	 * then feed the event to the Tracee object. In this case the only
+	 * available Tracee object will be kept.
+	 *
+	 * d) we are tracing only the main thread but another thread calls
+	 * execve(): the thread disappears and `wait()` suddenly fails
+	 * with ENOCHILD.
+	 *
+	 * What does strace do in these cases?
+	 *
+	 * - in case c) it sees the ptrace event for the changed PID, then
+	 *   detaches from it stating it is an unknown PID. Then tracing ends.
+	 * - in case d) it fails with ENOCHILD and tracing ends.
+	 */
+
 	auto it = m_tracees.find(old_pid);
+
 	if (it == m_tracees.end()) {
-		// TODO: what happens if we only tracee a single thread of a
-		// multi-threaded process here?
-		// in theory it should currently work like this:
-		// - tracing a thread other than the main thread or the
-		//   execve() thread: it will just exit and tracing ends
-		// - tracing the execve() thread: will "disappear" before
-		//   execve() completes and tracing ends (?)
-		// - tracing the main thread: will see a new exec context out
-		//   of nowhere with no state to sync with.
-		//
-		// what does strace do in these cases?
-		cosmos_throw (cosmos::InternalError("substitution with non-existent tracee"));
+		// this is likely case c), the `old_pid` was not traced by us.
+		return nullptr;
 	}
 
 	auto &old_tracee = *it->second;

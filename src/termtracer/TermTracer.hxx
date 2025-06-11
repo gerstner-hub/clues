@@ -92,16 +92,20 @@ protected: // functions
 	 **/
 	void checkResumedSyscall(const Tracee &tracee);
 
-	bool hasActiveSyscall(const Tracee &tracee) {
+	bool hasActiveSyscall(const Tracee &tracee) const {
+		return hasActiveSyscall(tracee.pid());
+	}
+
+	bool hasActiveSyscall(const cosmos::ProcessID pid) const {
 		if (!m_active_syscall)
 		       return false;
 
-		return std::get<const Tracee*>(*m_active_syscall) == &tracee;
+		return std::get<cosmos::ProcessID>(*m_active_syscall) == pid;
 	}
 
 	void cleanupTracee(const Tracee &tracee);
 
-	void updateTracee(const Tracee &tracee, const Tracee *former_tracee);
+	void updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid);
 
 protected: // event consumer interface
 
@@ -118,7 +122,7 @@ protected: // event consumer interface
 	void newExecutionContext(Tracee &tracee,
 			const std::string &old_exe,
 			const cosmos::StringVector &old_cmdline,
-			const Tracee *former_tracee) override;
+			const std::optional<cosmos::ProcessID> old_pid) override;
 
 	void newChildProcess(
 			Tracee &parent,
@@ -142,14 +146,14 @@ protected: // data
 
 	bool m_seen_initial_exec = false;
 	bool m_print_values = true;
-	std::optional<std::tuple<const Tracee*, const SystemCall*>> m_active_syscall;
+	std::optional<std::tuple<cosmos::ProcessID, const SystemCall*>> m_active_syscall;
 	/// Unfinished / preempted system calls.
 	/**
 	 * Unfinished in this context is purely tracing related, it only means
 	 * that we already started printing system call entry for one tracee,
 	 * while another event came in, preempting this line.
 	 **/
-	std::map<const Tracee*, const SystemCall*> m_unfinished_syscalls;
+	std::map<cosmos::ProcessID, const SystemCall*> m_unfinished_syscalls;
 	size_t m_value_truncation_len = 64;
 
 	FollowExecContext m_follow_exec = FollowExecContext::YES;
@@ -162,7 +166,7 @@ protected: // data
 	/// Whether we've had multiple tracees but lost all but one again.
 	bool m_dropped_to_single_tracee = false;
 	/// Newly created tracees that haven't seen any ptrace stop yet
-	std::map<const Tracee*, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
+	std::map<cosmos::ProcessID, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
 };
 
 } // end ns
