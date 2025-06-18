@@ -27,6 +27,18 @@ class EventConsumer;
  * This is the main class for configuring Tracee's and actually performing
  * tracing. The tracing main loop is implemented here and callbacks are
  * delivered to the EventConsumer interface.
+ *
+ * Note that this class uses the `wait()` family of system calls to keep track
+ * of trace events. This API consumes process-global events, which means that
+ * there will be problems if other components in the same process deal with
+ * child processes, like:
+ *
+ * - extra events will be seen that libclues / the other component is not
+ *   prepared for.
+ * - events that are expected by libclues can be lost to the other component.
+ *
+ * For this reason it is simply not sensibly possible to create regular child
+ * process in parallel to tracing.
  **/
 class CLUES_API Engine {
 	friend class Tracee;
