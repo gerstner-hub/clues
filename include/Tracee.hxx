@@ -197,9 +197,6 @@ public: // functions
 	 **/
 	bool isThreadGroupLeader() const;
 
-
-	virtual void cleanupChild() {}
-
 protected: // constants
 
 	/// Array of signals that cause tracee stop.
@@ -294,6 +291,9 @@ protected: // functions
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
 	template <typename FILLER>
 	void fillData(const long *addr, FILLER &filler) const;
+
+	virtual void cleanupChild() {}
+
 protected: // data
 
 	/// The engine that manages this tracee.
