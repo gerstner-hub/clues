@@ -60,6 +60,7 @@ public: // types
 		INJECTED_SIGCONT     = 1 << 4, ///< whether we've injected a SIGCONT that needs to be ignored.
 		SYSCALL_ENTERED      = 1 << 5, ///< we've seen a syscall-enter-stop and are waiting for the corresponding exit-stop.
 		WAIT_FOR_EXECVE_REPLACEMENT = 1 << 6, ///< execve() in another thread caused this tracee to exit, wait for the personality change of this pid.
+		WAIT_FOR_EXITED      = 1 << 7, ///< we've already seen PTHREAD_EVENT_EXIT but are still waiting for CLD_EXITED.
 	};
 
 	using Flags = cosmos::BitMask<Flag>;
@@ -106,6 +107,10 @@ public: // functions
 
 	State prevState() const {
 		return m_prev_state;
+	}
+
+	Flags flags() const {
+		return m_flags;
 	}
 
 	/// Returns possible tracee exit data.

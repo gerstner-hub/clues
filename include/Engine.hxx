@@ -132,6 +132,8 @@ protected: // functions
 
 	void checkCleanupTracee(TraceeMap::iterator it);
 
+	void handleNoChilds();
+
 	/// Check the given trace event if we can make sense of it.
 	/**
 	 * If the function was able to adjust internal state for being able to

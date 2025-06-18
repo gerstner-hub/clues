@@ -61,13 +61,53 @@ void Engine::checkCleanupTracee(TraceeMap::iterator it) {
 	}
 }
 
+void Engine::handleNoChilds() {
+	for (auto it = m_tracees.begin(); it != m_tracees.end(); it++) {
+		auto &tracee = it->second;
+
+		if (tracee->flags()[Tracee::Flag::WAIT_FOR_EXITED]) {
+			/*
+			 * This can be observed with the main thread when
+			 * another thread (which isn't traced) calls execve().
+			 *
+			 * For this situation no EXITED wait() status is
+			 * reported for the main thread, only PTHREAD_EXIT is
+			 * seen. After that we can ECHLD with wait() and ESRCH
+			 * with ptrace().
+			 */
+			LOG_DEBUG("Tracee "
+					<< cosmos::to_integral(tracee->pid())
+					<< " likely disappeared because of execve() in another thread");
+		} else {
+			LOG_WARN("Tracee " << cosmos::to_integral(tracee->pid())
+					<< " suddenly lost?!");
+		}
+
+		// actually we already seem to be detached, but this function
+		// also takes care of this case and properly resets object
+		// state
+		tracee->detach();
+
+		checkCleanupTracee(it);
+	}
+}
+
 void Engine::trace() {
 	cosmos::ChildState data;
 
 	while (!m_tracees.empty()) {
-		data = *cosmos::proc::wait(cosmos::WaitFlags{
-				cosmos::WaitFlag::WAIT_FOR_EXITED,
-				cosmos::WaitFlag::WAIT_FOR_STOPPED});
+		try {
+			data = *cosmos::proc::wait(cosmos::WaitFlags{
+					cosmos::WaitFlag::WAIT_FOR_EXITED,
+					cosmos::WaitFlag::WAIT_FOR_STOPPED});
+		} catch (const cosmos::ApiError &ex) {
+			if (ex.errnum() == cosmos::Errno::NO_CHILD) {
+				handleNoChilds();
+				return;
+			}
+
+			throw;
+		}
 
 		while (true) {
 			if (auto it = m_tracees.find(data.child.pid); it != m_tracees.end()) {
@@ -201,6 +241,18 @@ TraceePtr Engine::handleSubstitution(const cosmos::ProcessID old_pid) {
 	 * - in case c) it sees the ptrace event for the changed PID, then
 	 *   detaches from it stating it is an unknown PID. Then tracing ends.
 	 * - in case d) it fails with ENOCHILD and tracing ends.
+	 *
+	 * Technically is is possible to deal with case c), which is complex
+	 * but managable. It makes sense to continue tracing in this case.
+	 *
+	 * In case d) it could be argued that is also makes sense to continue
+	 * tracing, since the main thread is traced but continues in another
+	 * context. Technically it is not possible to do this, though, because
+	 * we have no information at all about the execve() that is happening
+	 * until we lose the tracee. Thus in this case we try to detach cleanly.
+	 * Clients of libclues can identify the exit reason via
+	 * Tracee::flags() by looking for Flag::WAIT_FOR_EXECVE_REPLACEMENT,
+	 * which will still be set in this scenario.
 	 */
 
 	auto it = m_tracees.find(old_pid);

@@ -176,7 +176,9 @@ void Tracee::detach() {
 		}
 	} catch (const cosmos::ApiError &error) {
 		if (error.errnum() == cosmos::Errno::SEARCH) {
-			LOG_WARN_PID("tracee found to be already dead upon detach()/interrupt()");
+			if (!m_flags[Flag::WAIT_FOR_EXITED]) {
+				LOG_WARN_PID("tracee found to be already dead upon detach()/interrupt()");
+			}
 			// already gone for some reason
 			changeState(State::DEAD);
 		} else {
@@ -472,6 +474,8 @@ void Tracee::handleExitEvent() {
 	}
 
 	m_consumer.exited(*this, wait_status, state);
+
+	m_flags.set(Flag::WAIT_FOR_EXITED);
 }
 
 void Tracee::handleExecEvent(const cosmos::ProcessID main_pid) {
