@@ -1,0 +1,16 @@
+Import('env')
+
+cases = env.GatherSources(suffixes=['.cxx'])
+
+case_env = env.Clone()
+
+case_env.Program("fork", ["fork.cxx"])
+
+for case in cases:
+    label = '.'.join(case.split('.')[:-1])
+    exe = case.rsplit('.', 1)[0]
+    node = case_env.Program(exe, [case])
+
+    case_prog_key = f'case_{label}'
+    env.Alias(case_prog_key, node)
+    env.Alias("testcases", case_prog_key)
