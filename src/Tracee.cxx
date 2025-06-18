@@ -188,6 +188,7 @@ void Tracee::detach() {
 	}
 
 	m_ptrace = cosmos::Tracee{};
+	m_flags = {};
 }
 
 void Tracee::updateExecutable() {
