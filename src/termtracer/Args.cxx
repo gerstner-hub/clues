@@ -19,11 +19,15 @@ Args::Args() :
 	},
 	follow_childs{
 		"", "follow-childs",
-		"What to do upon new child processes appearing via [v]fork() or clone(): 'yes' (automatically attach), 'no' (ignore; default), 'ask' (interactively ask what to do)",
+		"What to do upon new child processes appearing via [v]fork() or clone(): 'yes' (automatically attach), 'no' (ignore; default), 'ask' (interactively ask what to do), 'threads' (only follow threads of the same process)",
 		false,
 		"",
 		"configuration string"
 	},
+	follow_threads{
+		"", "threads",
+		"follow/attach all threads within the process. Do not follow fork(). synonym for '--follow-childs threads'",
+		false},
 	// TODO: it seems we need a better command line parsing library to
 	// handle this in a more traditional manner
 	follow_childs_switch{
@@ -44,6 +48,7 @@ Args::Args() :
 	cmdline.add(attach_proc);
 	cmdline.add(follow_execve);
 	cmdline.add(follow_childs);
+	cmdline.add(follow_threads);
 	cmdline.add(follow_childs_switch);
 	cmdline.add(verbose);
 	cmdline.add(max_value_len);

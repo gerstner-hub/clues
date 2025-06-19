@@ -102,10 +102,20 @@ bool TermTracer::processPars() {
 			m_follow_childs = FollowChildMode::NO;
 		} else if (arg == "ask") {
 			m_follow_childs = FollowChildMode::ASK;
-		} else {
-			std::cerr << "invalid argument to --follow-childs: " << arg << "\n";
+		} else if (arg == "threads") {
+			m_follow_childs = FollowChildMode::THREADS;
+		} else { std::cerr << "invalid argument to --follow-childs: " << arg << "\n";
 			return false;
 		}
+	}
+
+	if (m_args.follow_threads.isSet()) {
+		if (m_follow_childs != FollowChildMode::NO) {
+			std::cerr << "cannot combine '--threads' with '-f' or '--follow-childs'\n";
+			return false;
+		}
+
+		m_follow_childs = FollowChildMode::THREADS;
 	}
 
 	return true;
@@ -501,6 +511,17 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 		printTraceeInvocation(std::cout, parent.executable(), parent.cmdLine());
 		std::cout << "\n";
 		follow = ask_yes_no() ? FollowChildMode::YES : FollowChildMode::NO;
+	} else if (follow == FollowChildMode::THREADS) {
+		if (event == cosmos::ptrace::Event::CLONE) {
+			// TODO: inspect the clone system that caused this and
+			// check whether the CLONE_THREAD flag was specified.
+			// If it isn't set then the clone() is likely not for
+			// a regular thread but for something else and we
+			// shouldn't follow it.
+			follow = FollowChildMode::YES;
+		} else {
+			follow = FollowChildMode::NO;
+		}
 	}
 
 	if (follow == FollowChildMode::YES) {

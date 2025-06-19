@@ -18,6 +18,8 @@ struct Args {
 	TCLAP::ValueArg<std::string> follow_execve;
 	/// controls the behaviour upon clone()/fork().
 	TCLAP::ValueArg<std::string> follow_childs;
+	/// controls whether threads within the same process are followed.
+	TCLAP::SwitchArg follow_threads;
 	/// Short form of 'follow_childs yes'
 	TCLAP::SwitchArg follow_childs_switch;
 	/// Increase verbosity of tracing output.

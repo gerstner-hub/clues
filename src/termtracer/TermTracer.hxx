@@ -42,7 +42,8 @@ protected: // types
 	enum class FollowChildMode {
 		YES,
 		NO,
-		ASK
+		ASK,
+		THREADS
 	};
 
 protected: // functions
