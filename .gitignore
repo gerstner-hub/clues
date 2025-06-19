@@ -1,6 +1,6 @@
 .sconsign.dblite
 build*
-install
+install*
 *.swp
 tags
 .tags
