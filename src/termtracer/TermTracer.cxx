@@ -507,7 +507,6 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 		// keep this information for later when something actually happens in the new child
 		m_new_tracees.insert({child.pid(), {parent.pid(), event}});
 	} else {
-		// TODO: is this enough or do we need cleanup in Engine?
 		child.detach();
 	}
 }
