@@ -30,10 +30,10 @@ Engine::~Engine() {
 	}
 }
 
-Tracee& Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs) {
+Tracee& Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs, const AttachThreads attach_threads) {
 	auto tracee = std::make_unique<ForeignTracee>(*this, m_consumer);
 	tracee->configure(pid);
-	tracee->attach(follow_childs);
+	tracee->attach(follow_childs, attach_threads);
 	Tracee &ret = *tracee;
 	m_tracees[pid] = std::move(tracee);
 	return ret;

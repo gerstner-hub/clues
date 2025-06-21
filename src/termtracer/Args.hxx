@@ -22,6 +22,8 @@ struct Args {
 	TCLAP::SwitchArg follow_threads;
 	/// Short form of 'follow_childs yes'
 	TCLAP::SwitchArg follow_childs_switch;
+	/// Don't attach all other threads even if `follow_childs_switch` is set.
+	TCLAP::SwitchArg no_initial_threads_attach;
 	/// Increase verbosity of tracing output.
 	TCLAP::SwitchArg verbose;
 	/// Maximum length of parameter values to print.

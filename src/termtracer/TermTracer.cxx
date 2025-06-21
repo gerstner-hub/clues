@@ -394,22 +394,23 @@ void TermTracer::attached(Tracee &tracee) {
 	if (m_num_tracees++ == 0) {
 		// the initial process, don't print anything special in this case
 		return;
+	} else if (tracee.isInitiallyAttachedThread()) {
+		// part of the initial attach procedure when attaching to a
+		// possible multi-threaded existing process.
+		startNewOutputLine(tracee);
+		std::cerr << "→ additionally attached thread\n";
+	} else if (auto it = m_new_tracees.find(tracee.pid()); it != m_new_tracees.end()) {
+		auto [parent, event] = it->second;
+
+		startNewOutputLine(tracee);
+		std::cerr << "→ automatically attached (created by PID " << cosmos::to_integral(parent) << " via " << to_label(event);
+
+		std::cerr << ")\n";
+
+		m_new_tracees.erase(it);
+	} else {
+		std::cerr << "unknown Tracee " << cosmos::to_integral(tracee.pid()) << " attached?!";
 	}
-
-	auto it = m_new_tracees.find(tracee.pid());
-	if (it == m_new_tracees.end()) {
-		std::cerr << "unknown Tracee attached?!";
-		return;
-	}
-
-	auto [parent, event] = it->second;
-
-	startNewOutputLine(tracee);
-	std::cerr << "→ automatically attached (created by PID " << cosmos::to_integral(parent) << " via " << to_label(event);
-
-	std::cerr << ")\n";
-
-	m_new_tracees.erase(it);
 }
 
 void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) {
@@ -640,8 +641,14 @@ bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	// this is only for newly created child processes
 	m_seen_initial_exec = true;
 	try {
-		// TODO: make FollowChilds configurable
-		m_main_tracee = &m_engine.addTracee(pid, FollowChilds{true});
+		/* strace ties the attach threads behaviour to `-f`. There
+		 * can be situations when this is not helpful. Thus we do the
+		 * same but offer a `-1` switch to opt out of this and only
+		 * attach to the single thread specified on the command line.
+		 */
+		m_main_tracee = &m_engine.addTracee(pid,
+				FollowChilds{m_follow_childs == FollowChildMode::NO ? false : true},
+				AttachThreads{m_follow_childs == FollowChildMode::NO || m_args.no_initial_threads_attach.isSet() ? false : true});
 	} catch (const cosmos::ApiError &e) {
 		std::cerr << "Failed to attach to PID " << pid << ": " << e.msg() << "\n";
 		if (e.errnum() == cosmos::Errno::PERMISSION) {
@@ -693,8 +700,8 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 			return FAILURE;
 		}
 
-		// TODO: make FollowChilds configurable
-		m_main_tracee = &m_engine.addTracee(sv, FollowChilds{true});
+		m_main_tracee = &m_engine.addTracee(sv,
+				FollowChilds{m_follow_childs == FollowChildMode::NO ? false : true});
 	}
 
 	try {

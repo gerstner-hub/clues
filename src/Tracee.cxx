@@ -6,6 +6,7 @@
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/formatting.hxx>
+#include <cosmos/fs/DirStream.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/io/ILogger.hxx>
 
@@ -122,16 +123,16 @@ void Tracee::setPID(const cosmos::ProcessID tracee) {
 	m_ptrace = cosmos::Tracee{tracee};
 }
 
-void Tracee::attach(const FollowChilds follow_childs) {
+void Tracee::attach(const FollowChilds follow_childs, const AttachThreads attach_threads) {
 	using Opt = cosmos::ptrace::Opt;
-	auto opts = cosmos::ptrace::Opts{
+	m_ptrace_opts = cosmos::ptrace::Opts{
 		Opt::TRACESYSGOOD,
 		Opt::TRACEEXIT,
 		Opt::TRACEEXEC,
 	};
 
 	if (follow_childs) {
-		opts.set({
+		m_ptrace_opts.set({
 			Opt::TRACECLONE,
 			Opt::TRACEFORK,
 			Opt::TRACEVFORK,
@@ -139,7 +140,7 @@ void Tracee::attach(const FollowChilds follow_childs) {
 		});
 	}
 
-	seize(opts);
+	seize(m_ptrace_opts);
 	updateExecutable();
 	updateCmdLine();
 	interrupt();
@@ -152,6 +153,10 @@ void Tracee::attach(const FollowChilds follow_childs) {
 		// kernel bug.
 		cosmos::signal::send(m_ptrace.pid(), cosmos::signal::CONT);
 		m_flags.set(Flag::INJECTED_SIGCONT);
+	}
+
+	if (attach_threads) {
+		m_flags.set(Flag::ATTACH_THREADS_PENDING);
 	}
 }
 
@@ -191,6 +196,7 @@ void Tracee::detach() {
 
 	m_ptrace = cosmos::Tracee{};
 	m_flags = {};
+	m_initial_attacher.reset();
 }
 
 void Tracee::updateExecutable() {
@@ -551,6 +557,67 @@ void Tracee::handleAttached() {
 	getRegisters(m_initial_regset);
 
 	m_consumer.attached(*this);
+
+	if (m_flags[Flag::ATTACH_THREADS_PENDING]) {
+		try {
+			attachThreads();
+		} catch (const std::exception &e) {
+			LOG_ERROR_PID("failed to attach to other threads: " << e.what());
+		}
+		m_flags.reset(Flag::ATTACH_THREADS_PENDING);
+	}
+}
+
+void Tracee::attachThreads() {
+	const auto path = cosmos::sprintf("/proc/%d/task",
+			cosmos::to_integral(m_ptrace.pid()));
+
+	/*
+	 * TODO: there is a race condition involved here:
+	 *
+	 * We are stopping one of the threads but all the others are still
+	 * running while we're looking into /proc. Two things can happen here:
+	 *
+	 * - threads we're trying to attach might already be lost by the time
+	 *   we're trying to call ptrace() on them. This is not much of an
+	 *   issue.
+	 * - new threads might come into existence that we don't catch in
+	 *   /proc, and we'll never trace them, giving an incomplete picture.
+	 *
+	 * It would be safer to send a SIGSTOP to the whole thread group
+	 * before attaching, but this would make the attach procedure even
+	 * more complicated than it already is.
+	 *
+	 * It seems `strace` does not take any precautions regarding this
+	 * matter neither.
+	 *
+	 * We could look at /proc/<pid>/status, which has a thread count
+	 * field. This is again racy, however. We could do this after the
+	 * fact for verification, or iterate over /proc/<pid>/task until we're
+	 * sure we've attached all threads.
+	 */
+	cosmos::DirStream task_dir{path};
+	const FollowChilds follow_childs{
+		m_ptrace_opts[cosmos::ptrace::Opt::TRACEFORK]};
+
+	for (const auto &entry: task_dir) {
+		if (entry.isDotEntry() ||
+				entry.type() != cosmos::DirEntry::Type::DIRECTORY)
+			continue;
+
+		auto pid = cosmos::ProcessID{static_cast<int>(std::strtol(entry.name(), nullptr, 10))};
+		if (pid == m_ptrace.pid())
+			// ourselves
+			continue;
+
+		try {
+			auto &tracee = m_engine.addTracee(
+					pid, follow_childs, AttachThreads{false});
+			tracee.m_initial_attacher = m_ptrace.pid();
+		} catch (const std::exception &ex) {
+			LOG_WARN_PID("failed to attach to thread " << cosmos::to_integral(pid) << ": " << ex.what());
+		}
+	}
 }
 
 void Tracee::syncState(Tracee &other) {

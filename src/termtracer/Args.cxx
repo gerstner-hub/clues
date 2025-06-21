@@ -34,6 +34,10 @@ Args::Args() :
 		"f", "follow",
 		"synonym for '--follow-childs yes'",
 		false},
+	no_initial_threads_attach{
+		"1", "no-initial-threads-attach",
+		"when attaching to a running process, don't attach all of the process's threads, only the one specified via -p, even if --follow-childs is set.",
+		false},
 	verbose{
 		"v", "verbose",
 		"increase verbosity of tracing output",
@@ -50,6 +54,7 @@ Args::Args() :
 	cmdline.add(follow_childs);
 	cmdline.add(follow_threads);
 	cmdline.add(follow_childs_switch);
+	cmdline.add(no_initial_threads_attach);
 	cmdline.add(verbose);
 	cmdline.add(max_value_len);
 }

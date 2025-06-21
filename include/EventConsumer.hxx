@@ -42,6 +42,18 @@ protected: // functions
 	 * occurs when the ptrace() relationship is established and a defined
 	 * tracing state has been reached. The Tracee will be in
 	 * PTRACE_EVENT_STOP.
+	 *
+	 * The following situations can cause an attached() callback:
+	 *
+	 * - `tracee` was actively registered via Engine::addTracee().
+	 * - an already present tracee created a new thread or child process.
+	 *   This is preceded by newChildProcess().
+	 * - an existing process has been attached to via
+	 *   `Engine::addTracee(const cosmos::ProcessID, ...,
+	 *   AttachThreads{true})`. Any additional threads that exist in the
+	 *   process will then automatically be attached to.
+	 *   `tracee.isInitiallyAttachedThread()` will return `true` in this
+	 *   case.
 	 **/
 	virtual void attached(Tracee &tracee) {
 		(void)tracee;

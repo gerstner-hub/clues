@@ -132,7 +132,8 @@ public: // functions
 	 * been attached. This covers all ways by which new child processes
 	 * can be created (fork, vfork, clone).
 	 **/
-	virtual void attach(const FollowChilds follow_childs);
+	virtual void attach(const FollowChilds follow_childs,
+			const AttachThreads attach_threads = AttachThreads{false});
 
 	/// Logic to handle detaching from the tracee.
 	void detach();
@@ -202,6 +203,15 @@ public: // functions
 	 * has been created).
 	 **/
 	bool isThreadGroupLeader() const;
+
+	/// Indicates whether this Tracee is an automatically attached thread.
+	/**
+	 * If this is `true` then the Tracee was attached to due to the
+	 * AttachThreads{true} setting.
+	 **/
+	bool isInitiallyAttachedThread() const {
+		return m_initial_attacher != std::nullopt;
+	}
 
 protected: // constants
 
@@ -294,6 +304,11 @@ protected: // functions
 
 	void syncState(Tracee &other);
 
+	/**
+	 * Attach to all threads of the current Tracee's process.
+	 **/
+	void attachThreads();
+
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
 	template <typename FILLER>
 	void fillData(const long *addr, FILLER &filler) const;
@@ -314,6 +329,8 @@ protected: // data
 	Flags m_flags;
 	/// PID of the tracee we're dealing with.
 	cosmos::Tracee m_ptrace;
+	/// The options we've set for ptrace().
+	cosmos::ptrace::Opts m_ptrace_opts;
 	/// Here we store our current knowledge about open file descriptions.
 	DescriptorPathMapping m_fd_path_map;
 	/// The current system call information, if any.
@@ -334,6 +351,8 @@ protected: // data
 	std::string m_executable;
 	/// Command line used to create the process (/proc/<pid>/cmdline).
 	cosmos::StringVector m_cmdline;
+	/// If this Tracee was automatically attached due to AttachThreads{true} then this contains the ProcessID of the initial Thread that caused this.
+	std::optional<cosmos::ProcessID> m_initial_attacher;
 	/// Number of system calls observed.
 	size_t m_syscall_ctr = 0;
 	/// Register set observed during initial attach event stop.
