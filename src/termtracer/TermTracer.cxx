@@ -615,7 +615,7 @@ void TermTracer::cleanupTracee(const Tracee &tracee) {
 }
 
 void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid) {
-	if (m_main_tracee->pid() == old_pid) {
+	if (!m_main_tracee || m_main_tracee->pid() == old_pid) {
 		m_main_tracee = &tracee;
 	}
 
