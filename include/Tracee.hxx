@@ -213,6 +213,9 @@ public: // functions
 		return m_initial_attacher != std::nullopt;
 	}
 
+	/// Returns the number of the currently running system call, if any.
+	std::optional<SystemCallNr> currentSystemCallNr() const;
+
 protected: // constants
 
 	/// Array of signals that cause tracee stop.

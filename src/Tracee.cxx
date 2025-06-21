@@ -181,7 +181,10 @@ void Tracee::detach() {
 		}
 	} catch (const cosmos::ApiError &error) {
 		if (error.errnum() == cosmos::Errno::SEARCH) {
-			if (!m_flags[Flag::WAIT_FOR_EXITED]) {
+			// some execve() scenarios end up without a proper
+			// exit notification. ignore them.
+			if (!m_flags[Flag::WAIT_FOR_EXITED] &&
+					currentSystemCallNr() != SystemCallNr::EXECVE) {
 				LOG_WARN_PID("tracee found to be already dead upon detach()/interrupt()");
 			}
 			// already gone for some reason
@@ -464,7 +467,7 @@ void Tracee::handleExitEvent() {
 
 	if (wait_status.exited() &&
 			(prevState() != State::SYSCALL_ENTER_STOP ||
-			!cosmos::in_list(m_current_syscall->callNr(),
+			!cosmos::in_list(*currentSystemCallNr(),
 				{SystemCallNr::EXIT_GROUP, SystemCallNr::EXIT}))) {
 		// the exit status in this case is simply 0
 		LOG_INFO_PID("execve() related exit detected");
@@ -747,6 +750,13 @@ bool Tracee::isThreadGroupLeader() const {
 
 	// nothing found?!
 	return false;
+}
+
+std::optional<SystemCallNr> Tracee::currentSystemCallNr() const {
+	if (!m_current_syscall)
+		return {};
+
+	return m_current_syscall->callNr();
 }
 
 void Tracee::readBlob(const long *addr, char *buffer, const size_t bytes) const {
