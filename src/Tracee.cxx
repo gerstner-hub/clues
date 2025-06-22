@@ -614,9 +614,9 @@ void Tracee::attachThreads() {
 			continue;
 
 		try {
-			auto &tracee = m_engine.addTracee(
+			auto tracee = m_engine.addTracee(
 					pid, follow_childs, AttachThreads{false});
-			tracee.m_initial_attacher = m_ptrace.pid();
+			tracee->m_initial_attacher = m_ptrace.pid();
 		} catch (const std::exception &ex) {
 			LOG_WARN_PID("failed to attach to thread " << cosmos::to_integral(pid) << ": " << ex.what());
 		}

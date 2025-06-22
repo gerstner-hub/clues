@@ -445,7 +445,7 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 		std::cerr << "+++ killed by signal " << cosmos::to_integral(status.termSig()->raw()) << " +++\n";
 	}
 
-	if (&tracee == m_main_tracee) {
+	if (tracee.pid() == m_main_tracee_pid) {
 		m_main_status = status;
 	}
 
@@ -602,12 +602,6 @@ void TermTracer::cleanupTracee(const Tracee &tracee) {
 		m_unfinished_syscalls.erase(tracee.pid());
 	}
 
-	if (m_main_tracee == &tracee) {
-		/* re-assign this during newExecutionContext() when
-		 * `former_pid` is set */
-		m_main_tracee = nullptr;
-	}
-
 	m_new_tracees.erase(tracee.pid());
 
 	if (--m_num_tracees == 1) {
@@ -616,10 +610,6 @@ void TermTracer::cleanupTracee(const Tracee &tracee) {
 }
 
 void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid) {
-	if (!m_main_tracee || m_main_tracee->pid() == old_pid) {
-		m_main_tracee = &tracee;
-	}
-
 	if (hasActiveSyscall(old_pid)) {
 		m_active_syscall = std::make_tuple(tracee.pid(), std::get<const SystemCall*>(*m_active_syscall));
 	}
@@ -640,13 +630,14 @@ void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_
 bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	// this is only for newly created child processes
 	m_seen_initial_exec = true;
+	TraceePtr tracee;
 	try {
 		/* strace ties the attach threads behaviour to `-f`. There
 		 * can be situations when this is not helpful. Thus we do the
 		 * same but offer a `-1` switch to opt out of this and only
 		 * attach to the single thread specified on the command line.
 		 */
-		m_main_tracee = &m_engine.addTracee(pid,
+		tracee = m_engine.addTracee(pid,
 				FollowChilds{m_follow_childs == FollowChildMode::NO ? false : true},
 				AttachThreads{m_follow_childs == FollowChildMode::NO || m_args.no_initial_threads_attach.isSet() ? false : true});
 	} catch (const cosmos::ApiError &e) {
@@ -660,7 +651,7 @@ bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 	}
 
 	std::cerr << "--- tracing ";
-	printTraceeInvocation(std::cerr, m_main_tracee->executable(), m_main_tracee->cmdLine());
+	printTraceeInvocation(std::cerr, tracee->executable(), tracee->cmdLine());
 	std::cerr << " ---\n";
 
 	return true;
@@ -700,8 +691,9 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 			return FAILURE;
 		}
 
-		m_main_tracee = &m_engine.addTracee(sv,
+		auto tracee = m_engine.addTracee(sv,
 				FollowChilds{m_follow_childs == FollowChildMode::NO ? false : true});
+		m_main_tracee_pid = tracee->pid();
 	}
 
 	try {

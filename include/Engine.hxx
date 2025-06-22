@@ -80,7 +80,7 @@ public: // functions
 	 * `attach_threads` determines whether other threads of the target
 	 * process should automatically be attached, too.
 	 **/
-	Tracee& addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs, const AttachThreads attach_threads);
+	TraceePtr addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs, const AttachThreads attach_threads);
 
 	/// Create a new child process to be traced.
 	/**
@@ -91,7 +91,7 @@ public: // functions
 	 * `follow_childs` determines whether newly created child processes
 	 * will automatically be attached. \see Tracee::attach().
 	 **/
-	Tracee& addTracee(const cosmos::StringVector &cmdline, const FollowChilds follow_childs);
+	TraceePtr addTracee(const cosmos::StringVector &cmdline, const FollowChilds follow_childs);
 
 	/// Enter the tracing main loop and process tracing events.
 	/**

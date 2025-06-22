@@ -30,22 +30,20 @@ Engine::~Engine() {
 	}
 }
 
-Tracee& Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs, const AttachThreads attach_threads) {
-	auto tracee = std::make_unique<ForeignTracee>(*this, m_consumer);
+TraceePtr Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs, const AttachThreads attach_threads) {
+	auto tracee = std::make_shared<ForeignTracee>(*this, m_consumer);
 	tracee->configure(pid);
 	tracee->attach(follow_childs, attach_threads);
-	Tracee &ret = *tracee;
-	m_tracees[pid] = std::move(tracee);
-	return ret;
+	m_tracees[pid] = tracee;
+	return tracee;
 }
 
-Tracee& Engine::addTracee(const cosmos::StringVector &cmdline, const FollowChilds follow_childs) {
-	auto tracee = std::make_unique<ChildTracee>(*this, m_consumer);
+TraceePtr Engine::addTracee(const cosmos::StringVector &cmdline, const FollowChilds follow_childs) {
+	auto tracee = std::make_shared<ChildTracee>(*this, m_consumer);
 	tracee->create(cmdline);
 	tracee->attach(follow_childs);
-	Tracee &ret = *tracee;
-	m_tracees[tracee->pid()] = std::move(tracee);
-	return ret;
+	m_tracees[tracee->pid()] = tracee;
+	return tracee;
 }
 
 void Engine::checkCleanupTracee(TraceeMap::iterator it) {
@@ -185,11 +183,11 @@ void Engine::handleAutoAttach(
 		Tracee &parent, const cosmos::ProcessID pid, const cosmos::ptrace::Event event) {
 
 	if (event != cosmos::ptrace::Event::VFORK_DONE) {
-		auto tracee = std::make_unique<AutoAttachedTracee>(*this, m_consumer);
+		auto tracee = std::make_shared<AutoAttachedTracee>(*this, m_consumer);
 
 		tracee->configure(parent, pid);
 
-		auto [it, _] = m_tracees.insert({pid, std::move(tracee)});
+		auto [it, _] = m_tracees.insert({pid, tracee});
 
 		m_consumer.newChildProcess(parent, *it->second, event);
 
@@ -201,7 +199,7 @@ void Engine::handleAutoAttach(
 		// if the pid is no longer found then it either already died
 		// or it was detached from
 		if (auto it = m_tracees.find(pid); it != m_tracees.end()) {
-			m_consumer.vforkComplete(parent, it->second.get());
+			m_consumer.vforkComplete(parent, it->second);
 		} else {
 			m_consumer.vforkComplete(parent, nullptr);
 		}
@@ -273,7 +271,7 @@ TraceePtr Engine::handleSubstitution(const cosmos::ProcessID old_pid) {
 		}
 	}
 
-	auto ret = std::move(it->second);
+	auto ret = it->second;
 
 	m_tracees.erase(it);
 	// TODO: the man page says at this stage we should forget about any

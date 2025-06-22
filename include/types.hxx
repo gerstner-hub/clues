@@ -26,7 +26,7 @@ using AttachThreads = cosmos::NamedBool<struct attach_threads_t, true>;
 
 class Tracee;
 
-using TraceePtr = std::unique_ptr<Tracee>;
+using TraceePtr = std::shared_ptr<Tracee>;
 
 /// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.
 using DescriptorPathMapping = std::map<int, std::string>;

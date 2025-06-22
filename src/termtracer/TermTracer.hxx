@@ -142,7 +142,7 @@ protected: // data
 	cosmos::Init m_cosmos;
 
 	Engine m_engine;
-	const Tracee *m_main_tracee = nullptr;
+	cosmos::ProcessID m_main_tracee_pid;
 	std::optional<cosmos::WaitStatus> m_main_status;
 
 	bool m_seen_initial_exec = false;

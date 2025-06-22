@@ -170,7 +170,7 @@ protected: // functions
 	 *
 	 * If `child` no longer exists then it is `nullptr`.
 	 **/
-	virtual void vforkComplete(Tracee &parent, Tracee *child) {
+	virtual void vforkComplete(Tracee &parent, TraceePtr child) {
 		(void)parent;
 		(void)child;
 	}
