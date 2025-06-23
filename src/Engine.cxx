@@ -30,8 +30,13 @@ Engine::~Engine() {
 	}
 }
 
-TraceePtr Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs, const AttachThreads attach_threads) {
-	auto tracee = std::make_shared<ForeignTracee>(*this, m_consumer);
+TraceePtr Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs,
+		const AttachThreads attach_threads, const cosmos::ProcessID sibling) {
+	TraceePtr sibling_ptr;
+	if (auto it = m_tracees.find(sibling); it != m_tracees.end()) {
+		sibling_ptr = it->second;
+	}
+	auto tracee = std::make_shared<ForeignTracee>(*this, m_consumer, sibling_ptr);
 	tracee->configure(pid);
 	tracee->attach(follow_childs, attach_threads);
 	m_tracees[pid] = tracee;
@@ -183,9 +188,12 @@ void Engine::handleAutoAttach(
 		Tracee &parent, const cosmos::ProcessID pid, const cosmos::ptrace::Event event) {
 
 	if (event != cosmos::ptrace::Event::VFORK_DONE) {
-		auto tracee = std::make_shared<AutoAttachedTracee>(*this, m_consumer);
+		auto tracee = std::make_shared<AutoAttachedTracee>(
+				*this,
+				m_consumer,
+				m_tracees[parent.pid()]);
 
-		tracee->configure(parent, pid);
+		tracee->configure(pid, event);
 
 		auto [it, _] = m_tracees.insert({pid, tracee});
 

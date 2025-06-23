@@ -31,6 +31,10 @@ using TraceePtr = std::shared_ptr<Tracee>;
 /// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.
 using DescriptorPathMapping = std::map<int, std::string>;
 
+class ProcessData;
+
+using ProcessDataPtr = std::shared_ptr<ProcessData>;
+
 /// An integer that is able to hold a word for the current architecture.
 enum class Word : elf_greg_t {
 	ZERO = 0

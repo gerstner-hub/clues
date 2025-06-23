@@ -13,9 +13,9 @@
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/signal.hxx>
 #include <cosmos/proc/Tracee.hxx>
-#include <cosmos/string.hxx>
 
 // clues
+#include <clues/ProcessData.hxx>
 #include <clues/RegisterSet.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/types.hxx>
@@ -71,11 +71,11 @@ public: // functions
 	virtual ~Tracee();
 
 	const std::string& executable() const {
-		return m_executable;
+		return m_process_data->executable;
 	}
 
 	const cosmos::StringVector cmdLine() const {
-		return m_cmdline;
+		return m_process_data->cmdline;
 	}
 
 	cosmos::ProcessID pid() const {
@@ -231,7 +231,8 @@ protected: // constants
 
 protected: // functions
 
-	explicit Tracee(Engine &engine, EventConsumer &consumer);
+	explicit Tracee(Engine &engine, EventConsumer &consumer,
+			TraceePtr sibling = nullptr);
 
 	/// Process the given ptrace event.
 	/**
@@ -334,8 +335,6 @@ protected: // data
 	cosmos::Tracee m_ptrace;
 	/// The options we've set for ptrace().
 	cosmos::ptrace::Opts m_ptrace_opts;
-	/// Here we store our current knowledge about open file descriptions.
-	DescriptorPathMapping m_fd_path_map;
 	/// The current system call information, if any.
 	std::optional<cosmos::ptrace::SyscallInfo> m_syscall_info;
 	/// Reusable database object for tracing system calls.
@@ -350,10 +349,6 @@ protected: // data
 	std::optional<cosmos::Signal> m_inject_sig;
 	/// If tracee exit was observed then this contains the final exit data.
 	std::optional<cosmos::ChildState> m_exit_data;
-	/// Path to the executable we're tracing (/proc/<pid>/exe).
-	std::string m_executable;
-	/// Command line used to create the process (/proc/<pid>/cmdline).
-	cosmos::StringVector m_cmdline;
 	/// If this Tracee was automatically attached due to AttachThreads{true} then this contains the ProcessID of the initial Thread that caused this.
 	std::optional<cosmos::ProcessID> m_initial_attacher;
 	/// Number of system calls observed.
@@ -362,6 +357,8 @@ protected: // data
 	RegisterSet m_initial_regset;
 	/// For GROUP_STOP this contains the signal that caused it.
 	std::optional<cosmos::Signal> m_stop_signal;
+	/// Shared process data.
+	ProcessDataPtr m_process_data;
 };
 
 } // end ns

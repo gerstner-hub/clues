@@ -79,8 +79,13 @@ public: // functions
 	 *
 	 * `attach_threads` determines whether other threads of the target
 	 * process should automatically be attached, too.
+	 *
+	 * `sibling´, if set, refers to an existing Tracee that belongs to the
+	 * same process as `pid`. The tracees will then share the same
+	 * ProcessData.
 	 **/
-	TraceePtr addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs, const AttachThreads attach_threads);
+	TraceePtr addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs,
+			const AttachThreads attach_threads, const cosmos::ProcessID sibling = cosmos::ProcessID::INVALID);
 
 	/// Create a new child process to be traced.
 	/**

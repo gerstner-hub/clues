@@ -9,15 +9,25 @@
 
 namespace clues {
 
-AutoAttachedTracee::AutoAttachedTracee(Engine &engine, EventConsumer &consumer) :
-		Tracee{engine, consumer} {
+AutoAttachedTracee::AutoAttachedTracee(Engine &engine, EventConsumer &consumer, TraceePtr parent) :
+		Tracee{engine, consumer, parent} {
 }
 
-void AutoAttachedTracee::configure(const Tracee &parent, const cosmos::ProcessID pid) {
+void AutoAttachedTracee::configure(const cosmos::ProcessID pid, const cosmos::ptrace::Event event) {
 	setPID(pid);
-	m_cmdline = parent.cmdLine();
-	m_executable = parent.executable();
 	m_flags.set(Flag::WAIT_FOR_ATTACH_STOP);
+
+	/* In case of clone() we need to share process process data with the
+	 * parent.
+	 * In all other cases we need a deep-copy of process data (sharing
+	 * ends).
+	 */
+	// TODO: in custom clone configurations the file descriptor table
+	// might not be shared with `parent`
+
+	if (event != cosmos::ptrace::Event::CLONE) {
+		m_process_data = std::make_shared<ProcessData>(*m_process_data);
+	}
 }
 
 AutoAttachedTracee::~AutoAttachedTracee() {

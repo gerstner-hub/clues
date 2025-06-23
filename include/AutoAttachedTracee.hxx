@@ -15,12 +15,13 @@ class CLUES_API AutoAttachedTracee :
 public: // functions
 
 	/// Create a traced process object by attaching to the given process ID.
-	AutoAttachedTracee(Engine &engine, EventConsumer &consumer);
+	AutoAttachedTracee(Engine &engine, EventConsumer &consumer,
+			TraceePtr parent);
 
 	~AutoAttachedTracee() override;
 
 	/// Sets the given process ID as the process to be traced.
-	void configure(const Tracee &parent, const cosmos::ProcessID pid);
+	void configure(const cosmos::ProcessID pid, const cosmos::ptrace::Event event);
 };
 
 } // end ns

@@ -93,9 +93,12 @@ protected: // data
 
 namespace clues {
 
-Tracee::Tracee(Engine &engine, EventConsumer &consumer) :
+Tracee::Tracee(Engine &engine, EventConsumer &consumer, TraceePtr sibling) :
 		m_engine{engine},
-		m_consumer{consumer} {
+		m_consumer{consumer},
+		m_process_data{sibling ?
+			sibling->m_process_data :
+			std::make_shared<ProcessData>()} {
 }
 
 Tracee::~Tracee() {
@@ -209,7 +212,7 @@ void Tracee::updateExecutable() {
 	// since symlinks or other magic might be involved.
 	const auto path = cosmos::sprintf("/proc/%d/exe", cosmos::to_integral(m_ptrace.pid()));
 	try {
-		m_executable = cosmos::fs::read_symlink(path);
+		m_process_data->executable = cosmos::fs::read_symlink(path);
 	} catch (const cosmos::ApiError &e) {
 		// likely ENOENT, tracee disappeared
 		// but can this even happen while we're tracing it? and even
@@ -225,14 +228,11 @@ void Tracee::updateExecutable() {
 		//
 		// so let's ignore this for the moment, assuming that this is
 		// not a relevant situation anyway.
-		m_executable.clear();
+		m_process_data->executable.clear();
 	}
 }
 
 void Tracee::updateCmdLine() {
-	// TODO: this needs a link to some kind of shared process attributes
-	// for the multi-threaded scenario.
-
 	// the cmdline file contains null terminator separated strings
 	// the tracee controls this data and could place crafted data here.
 	//
@@ -244,7 +244,7 @@ void Tracee::updateCmdLine() {
 	// syscall-exit stop context that caused a ptrace-exec event stop.
 	const auto path = cosmos::sprintf("/proc/%d/cmdline", cosmos::to_integral(m_ptrace.pid()));
 
-	m_cmdline.clear();
+	m_process_data->cmdline.clear();
 
 	std::ifstream is{path};
 	if (!is) {
@@ -253,7 +253,7 @@ void Tracee::updateCmdLine() {
 	}
 	std::string arg;
 	while (std::getline(is, arg, '\0').good()) {
-		m_cmdline.push_back(arg);
+		m_process_data->cmdline.push_back(arg);
 	}
 }
 
@@ -379,7 +379,7 @@ void Tracee::handleSystemCallExit() {
 	auto &syscall = *m_current_syscall;
 
 	syscall.setExitInfo(*this, *m_syscall_info->exitInfo());
-	syscall.updateOpenFiles(m_fd_path_map);
+	syscall.updateOpenFiles(m_process_data->fd_path_map);
 
 	if (auto error = syscall.error(); error && error->hasKernelErrorCode()) {
 		// system call was interrupted, remember it for later
@@ -488,8 +488,8 @@ void Tracee::handleExitEvent() {
 }
 
 void Tracee::handleExecEvent(const cosmos::ProcessID main_pid) {
-	const auto old_exe = m_executable;
-	const auto old_cmdline = m_cmdline;
+	const auto old_exe = m_process_data->executable;
+	const auto old_cmdline = m_process_data->cmdline;
 
 	// in a multi-threaded conext we can receive this event under a
 	// different PID than we currently have. Thus use a dedicated ptrace
@@ -503,7 +503,7 @@ void Tracee::handleExecEvent(const cosmos::ProcessID main_pid) {
 		old_pid = former_pid;
 	}
 
-	// TODO: update m_fd_path_map based on O_CLOEXEC flag
+	// TODO: update m_process_data->fd_path_map based on O_CLOEXEC flag
 
 	if (old_pid) {
 		auto old_tracee = m_engine.handleSubstitution(*old_pid);
@@ -615,7 +615,7 @@ void Tracee::attachThreads() {
 
 		try {
 			auto tracee = m_engine.addTracee(
-					pid, follow_childs, AttachThreads{false});
+					pid, follow_childs, AttachThreads{false}, this->pid());
 			tracee->m_initial_attacher = m_ptrace.pid();
 		} catch (const std::exception &ex) {
 			LOG_WARN_PID("failed to attach to thread " << cosmos::to_integral(pid) << ": " << ex.what());

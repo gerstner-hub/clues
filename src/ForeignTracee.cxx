@@ -9,8 +9,9 @@
 
 namespace clues {
 
-ForeignTracee::ForeignTracee(Engine &engine, EventConsumer &consumer) :
-		Tracee{engine, consumer} {
+ForeignTracee::ForeignTracee(Engine &engine, EventConsumer &consumer,
+		TraceePtr sibling) :
+		Tracee{engine, consumer, sibling} {
 }
 
 void ForeignTracee::configure(const cosmos::ProcessID tracee) {
