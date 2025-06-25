@@ -17,8 +17,8 @@ Args::Args() :
 		"",
 		"configuration string"
 	},
-	follow_childs{
-		"", "follow-childs",
+	follow_children{
+		"", "follow-children",
 		"What to do upon new child processes appearing via [v]fork() or clone(): 'yes' (automatically attach), 'no' (ignore; default), 'ask' (interactively ask what to do), 'threads' (only follow threads of the same process)",
 		false,
 		"",
@@ -26,17 +26,17 @@ Args::Args() :
 	},
 	follow_threads{
 		"", "threads",
-		"follow/attach all threads within the process. Do not follow fork(). synonym for '--follow-childs threads'",
+		"follow/attach all threads within the process. Do not follow fork(). synonym for '--follow-children threads'",
 		false},
 	// TODO: it seems we need a better command line parsing library to
 	// handle this in a more traditional manner
-	follow_childs_switch{
+	follow_children_switch{
 		"f", "follow",
-		"synonym for '--follow-childs yes'",
+		"synonym for '--follow-children yes'",
 		false},
 	no_initial_threads_attach{
 		"1", "no-initial-threads-attach",
-		"when attaching to a running process, don't attach all of the process's threads, only the one specified via -p, even if --follow-childs is set.",
+		"when attaching to a running process, don't attach all of the process's threads, only the one specified via -p, even if --follow-children is set.",
 		false},
 	verbose{
 		"v", "verbose",
@@ -51,9 +51,9 @@ Args::Args() :
 
 	cmdline.add(attach_proc);
 	cmdline.add(follow_execve);
-	cmdline.add(follow_childs);
+	cmdline.add(follow_children);
 	cmdline.add(follow_threads);
-	cmdline.add(follow_childs_switch);
+	cmdline.add(follow_children_switch);
 	cmdline.add(no_initial_threads_attach);
 	cmdline.add(verbose);
 	cmdline.add(max_value_len);

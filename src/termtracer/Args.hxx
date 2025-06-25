@@ -17,12 +17,12 @@ struct Args {
 	/// Controls the behaviour upon execve().
 	TCLAP::ValueArg<std::string> follow_execve;
 	/// controls the behaviour upon clone()/fork().
-	TCLAP::ValueArg<std::string> follow_childs;
+	TCLAP::ValueArg<std::string> follow_children;
 	/// controls whether threads within the same process are followed.
 	TCLAP::SwitchArg follow_threads;
-	/// Short form of 'follow_childs yes'
-	TCLAP::SwitchArg follow_childs_switch;
-	/// Don't attach all other threads even if `follow_childs_switch` is set.
+	/// Short form of 'follow_children yes'
+	TCLAP::SwitchArg follow_children_switch;
+	/// Don't attach all other threads even if `follow_children_switch` is set.
 	TCLAP::SwitchArg no_initial_threads_attach;
 	/// Increase verbosity of tracing output.
 	TCLAP::SwitchArg verbose;

@@ -126,7 +126,7 @@ void Tracee::setPID(const cosmos::ProcessID tracee) {
 	m_ptrace = cosmos::Tracee{tracee};
 }
 
-void Tracee::attach(const FollowChilds follow_childs, const AttachThreads attach_threads) {
+void Tracee::attach(const FollowChildren follow_children, const AttachThreads attach_threads) {
 	using Opt = cosmos::ptrace::Opt;
 	m_ptrace_opts = cosmos::ptrace::Opts{
 		Opt::TRACESYSGOOD,
@@ -134,7 +134,7 @@ void Tracee::attach(const FollowChilds follow_childs, const AttachThreads attach
 		Opt::TRACEEXEC,
 	};
 
-	if (follow_childs) {
+	if (follow_children) {
 		m_ptrace_opts.set({
 			Opt::TRACECLONE,
 			Opt::TRACEFORK,
@@ -600,7 +600,7 @@ void Tracee::attachThreads() {
 	 * sure we've attached all threads.
 	 */
 	cosmos::DirStream task_dir{path};
-	const FollowChilds follow_childs{
+	const FollowChildren follow_children{
 		m_ptrace_opts[cosmos::ptrace::Opt::TRACEFORK]};
 
 	for (const auto &entry: task_dir) {
@@ -615,7 +615,7 @@ void Tracee::attachThreads() {
 
 		try {
 			auto tracee = m_engine.addTracee(
-					pid, follow_childs, AttachThreads{false}, this->pid());
+					pid, follow_children, AttachThreads{false}, this->pid());
 			tracee->m_initial_attacher = m_ptrace.pid();
 		} catch (const std::exception &ex) {
 			LOG_WARN_PID("failed to attach to thread " << cosmos::to_integral(pid) << ": " << ex.what());

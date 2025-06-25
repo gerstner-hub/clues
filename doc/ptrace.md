@@ -164,8 +164,8 @@ Attaching to Processes
 - the tracer can use `PTRACE_ATTACH` or `PTRACE_SEIZE`.
 - `PTRACE_ATTACH` should no longer be used, since it's buggy and has
   restrictions.
-- grand-childs can automatically be attached to via the TRACEFORK, TRACEVFORK,
-  and TRACECLONE options. These grand-childs automatically receive a SIGSTOP
+- grand-children can automatically be attached to via the TRACEFORK, TRACEVFORK,
+  and TRACECLONE options. These grand-children automatically receive a SIGSTOP
   so that the tracer can observe "signal-delivery-stop" on them.
 - detaching via `PTRACE_DETACH` requires the tracee to be in stopped state. If
   the tracee is running then sending SIGSTOP via tgkill(2) is recommended.

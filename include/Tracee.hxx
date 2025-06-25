@@ -126,13 +126,13 @@ public: // functions
 
 	/// Logic to handle attaching to the tracee.
 	/**
-	 * \param[in] follow_childs If true then newly created child processes
+	 * \param[in] follow_children If true then newly created child processes
 	 * will automatically be attached. The EventConsumer interface will
 	 * received a newChildProcess() callback once a new child process has
 	 * been attached. This covers all ways by which new child processes
 	 * can be created (fork, vfork, clone).
 	 **/
-	virtual void attach(const FollowChilds follow_childs,
+	virtual void attach(const FollowChildren follow_children,
 			const AttachThreads attach_threads = AttachThreads{false});
 
 	/// Logic to handle detaching from the tracee.

@@ -19,7 +19,7 @@ namespace clues {
  */
 
 /// A strong boolean type denoting whether to automatically attach to newly created child processes.
-using FollowChilds = cosmos::NamedBool<struct follow_childs_t, true>;
+using FollowChildren = cosmos::NamedBool<struct follow_children_t, true>;
 
 /// A strong boolean type denoting whether to automatically all other threads of a process.
 using AttachThreads = cosmos::NamedBool<struct attach_threads_t, true>;

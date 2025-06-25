@@ -158,7 +158,7 @@ protected: // data
 	size_t m_value_truncation_len = 64;
 
 	FollowExecContext m_follow_exec = FollowExecContext::YES;
-	FollowChildMode m_follow_childs = FollowChildMode::NO;
+	FollowChildMode m_follow_children = FollowChildMode::NO;
 	/// optional argument to m_follow_exec (e.g. path, glob, script)
 	std::string m_exec_context_arg;
 

@@ -30,7 +30,7 @@ Engine::~Engine() {
 	}
 }
 
-TraceePtr Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs,
+TraceePtr Engine::addTracee(const cosmos::ProcessID pid, const FollowChildren follow_children,
 		const AttachThreads attach_threads, const cosmos::ProcessID sibling) {
 	TraceePtr sibling_ptr;
 	if (auto it = m_tracees.find(sibling); it != m_tracees.end()) {
@@ -38,15 +38,15 @@ TraceePtr Engine::addTracee(const cosmos::ProcessID pid, const FollowChilds foll
 	}
 	auto tracee = std::make_shared<ForeignTracee>(*this, m_consumer, sibling_ptr);
 	tracee->configure(pid);
-	tracee->attach(follow_childs, attach_threads);
+	tracee->attach(follow_children, attach_threads);
 	m_tracees[pid] = tracee;
 	return tracee;
 }
 
-TraceePtr Engine::addTracee(const cosmos::StringVector &cmdline, const FollowChilds follow_childs) {
+TraceePtr Engine::addTracee(const cosmos::StringVector &cmdline, const FollowChildren follow_children) {
 	auto tracee = std::make_shared<ChildTracee>(*this, m_consumer);
 	tracee->create(cmdline);
-	tracee->attach(follow_childs);
+	tracee->attach(follow_children);
 	m_tracees[tracee->pid()] = tracee;
 	return tracee;
 }
@@ -64,7 +64,7 @@ void Engine::checkCleanupTracee(TraceeMap::iterator it) {
 	}
 }
 
-void Engine::handleNoChilds() {
+void Engine::handleNoChildren() {
 	for (auto it = m_tracees.begin(); it != m_tracees.end(); it++) {
 		auto &tracee = it->second;
 
@@ -105,7 +105,7 @@ void Engine::trace() {
 					cosmos::WaitFlag::WAIT_FOR_STOPPED});
 		} catch (const cosmos::ApiError &ex) {
 			if (ex.errnum() == cosmos::Errno::NO_CHILD) {
-				handleNoChilds();
+				handleNoChildren();
 				return;
 			}
 

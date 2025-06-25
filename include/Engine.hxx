@@ -74,7 +74,7 @@ public: // functions
 	 * be prepared for any kind of tracing event (signal, system call,
 	 * process exit, ...) to occur as a result.
 	 *
-	 * `follow_childs` determines whether newly created child processes
+	 * `follow_children` determines whether newly created child processes
 	 * will automatically be attached. \see Tracee::attach().
 	 *
 	 * `attach_threads` determines whether other threads of the target
@@ -84,7 +84,7 @@ public: // functions
 	 * same process as `pid`. The tracees will then share the same
 	 * ProcessData.
 	 **/
-	TraceePtr addTracee(const cosmos::ProcessID pid, const FollowChilds follow_childs,
+	TraceePtr addTracee(const cosmos::ProcessID pid, const FollowChildren follow_children,
 			const AttachThreads attach_threads, const cosmos::ProcessID sibling = cosmos::ProcessID::INVALID);
 
 	/// Create a new child process to be traced.
@@ -93,10 +93,10 @@ public: // functions
 	 * traced from the very beginning. The first tracing event observed
 	 * will typically be a system call entry.
 	 *
-	 * `follow_childs` determines whether newly created child processes
+	 * `follow_children` determines whether newly created child processes
 	 * will automatically be attached. \see Tracee::attach().
 	 **/
-	TraceePtr addTracee(const cosmos::StringVector &cmdline, const FollowChilds follow_childs);
+	TraceePtr addTracee(const cosmos::StringVector &cmdline, const FollowChildren follow_children);
 
 	/// Enter the tracing main loop and process tracing events.
 	/**
@@ -140,7 +140,7 @@ protected: // functions
 
 	void checkCleanupTracee(TraceeMap::iterator it);
 
-	void handleNoChilds();
+	void handleNoChildren();
 
 	/// Check the given trace event if we can make sense of it.
 	/**

@@ -88,34 +88,34 @@ bool TermTracer::processPars() {
 		}
 	}
 
-	if (m_args.follow_childs.isSet() && m_args.follow_childs_switch.isSet()) {
-		std::cerr << "cannot set both '-f' and '--follow-childs'\n";
+	if (m_args.follow_children.isSet() && m_args.follow_children_switch.isSet()) {
+		std::cerr << "cannot set both '-f' and '--follow-children'\n";
 		return false;
-	} else if (m_args.follow_childs_switch.isSet()) {
-		m_follow_childs = FollowChildMode::YES;
-	} else if (m_args.follow_childs.isSet()) {
-		const auto &arg = m_args.follow_childs.getValue();
+	} else if (m_args.follow_children_switch.isSet()) {
+		m_follow_children = FollowChildMode::YES;
+	} else if (m_args.follow_children.isSet()) {
+		const auto &arg = m_args.follow_children.getValue();
 
 		if (arg == "yes") {
-			m_follow_childs = FollowChildMode::YES;
+			m_follow_children = FollowChildMode::YES;
 		} else if (arg == "no") {
-			m_follow_childs = FollowChildMode::NO;
+			m_follow_children = FollowChildMode::NO;
 		} else if (arg == "ask") {
-			m_follow_childs = FollowChildMode::ASK;
+			m_follow_children = FollowChildMode::ASK;
 		} else if (arg == "threads") {
-			m_follow_childs = FollowChildMode::THREADS;
-		} else { std::cerr << "invalid argument to --follow-childs: " << arg << "\n";
+			m_follow_children = FollowChildMode::THREADS;
+		} else { std::cerr << "invalid argument to --follow-children: " << arg << "\n";
 			return false;
 		}
 	}
 
 	if (m_args.follow_threads.isSet()) {
-		if (m_follow_childs != FollowChildMode::NO) {
-			std::cerr << "cannot combine '--threads' with '-f' or '--follow-childs'\n";
+		if (m_follow_children != FollowChildMode::NO) {
+			std::cerr << "cannot combine '--threads' with '-f' or '--follow-children'\n";
 			return false;
 		}
 
-		m_follow_childs = FollowChildMode::THREADS;
+		m_follow_children = FollowChildMode::THREADS;
 	}
 
 	return true;
@@ -502,7 +502,7 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 
 void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::ptrace::Event event) {
 
-	auto follow = m_follow_childs;
+	auto follow = m_follow_children;
 
 	if (follow == FollowChildMode::ASK) {
 		startNewOutputLine(parent);
@@ -638,8 +638,8 @@ bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 		 * attach to the single thread specified on the command line.
 		 */
 		tracee = m_engine.addTracee(pid,
-				FollowChilds{m_follow_childs == FollowChildMode::NO ? false : true},
-				AttachThreads{m_follow_childs == FollowChildMode::NO || m_args.no_initial_threads_attach.isSet() ? false : true});
+				FollowChildren{m_follow_children == FollowChildMode::NO ? false : true},
+				AttachThreads{m_follow_children == FollowChildMode::NO || m_args.no_initial_threads_attach.isSet() ? false : true});
 	} catch (const cosmos::ApiError &e) {
 		std::cerr << "Failed to attach to PID " << pid << ": " << e.msg() << "\n";
 		if (e.errnum() == cosmos::Errno::PERMISSION) {
@@ -692,7 +692,7 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 		}
 
 		auto tracee = m_engine.addTracee(sv,
-				FollowChilds{m_follow_childs == FollowChildMode::NO ? false : true});
+				FollowChildren{m_follow_children == FollowChildMode::NO ? false : true});
 		m_main_tracee_pid = tracee->pid();
 	}
 
@@ -714,7 +714,7 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 		if (m_main_status->exited()) {
 			status = *m_main_status->status();
 		} else if (m_main_status->signaled()) {
-			// this is what the shell returns for childs that have been killed.
+			// this is what the shell returns for children that have been killed.
 			// TODO: strace actually sends the same kill signal to iself
 			// I don't know whether this is very useful. It can
 			// cause core dumps of the tracer, thus we'd need to
