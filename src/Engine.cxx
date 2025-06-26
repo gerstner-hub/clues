@@ -282,11 +282,17 @@ TraceePtr Engine::handleSubstitution(const cosmos::ProcessID old_pid) {
 	auto ret = it->second;
 
 	m_tracees.erase(it);
-	// TODO: the man page says at this stage we should forget about any
-	// other treads of the process that still exist.
-	// is this really necessary? it also says that it is guaranteed that
-	// only two threads will still exist: the main and the execve()
-	// thread.
+
+	/* The man page says at this stage we should forget about any other
+	 * treads of the process that still exist.
+	 * Is this really necessary? It also says that it is guaranteed that
+	 * only two threads will still exist now: the main and the execve()
+	 * thread. So forgetting about any other threads would only be
+	 * relevant for the non-execve() thread that still remains. We already
+	 * deal successfully with all the constellations that can occur, so I
+	 * don't think there's any explicit "forgetting" to be implemented
+	 * here.
+	 */
 
 	return ret;
 }
