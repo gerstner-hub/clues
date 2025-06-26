@@ -95,6 +95,15 @@ public: // functions
 	 *
 	 * `follow_children` determines whether newly created child processes
 	 * will automatically be attached. \see Tracee::attach().
+	 *
+	 * The library will perform an initial check whether the executable
+	 * specified in `cmdline` exists and is executable. If this is not the
+	 * case, then a `RuntimeError` is thrown. There can be other errors
+	 * trying to execute the new process that cannot be caught before the
+	 * new process is forked. To catch these situations, it is best to
+	 * observe the tracee's system calls: If it exits before a successful
+	 * initial `execve()` system call occurred, then a pre execution
+	 * error happened.
 	 **/
 	TraceePtr addTracee(const cosmos::StringVector &cmdline, const FollowChildren follow_children);
 

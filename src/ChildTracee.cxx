@@ -1,5 +1,8 @@
 // cosmos
 #include <cosmos/error/ApiError.hxx>
+#include <cosmos/error/RuntimeError.hxx>
+#include <cosmos/formatting.hxx>
+#include <cosmos/fs/filesystem.hxx>
 #include <cosmos/io/ILogger.hxx>
 #include <cosmos/proc/ChildCloner.hxx>
 
@@ -14,12 +17,31 @@ ChildTracee::ChildTracee(Engine &engine, EventConsumer &consumer) :
 }
 
 void ChildTracee::create(const cosmos::StringVector &args) {
-	/// TODO: libcosmos's behaviour to output error messages in the forked
-	/// process when the target executable cannot be run is unfortunate
-	/// for our purposes.
-	/// We could think about making the error behaviour configurable, to
-	/// output nothing or to to use fexecve() to move the most common
-	/// kinds of errors into the parent process.
+	/*
+	 * Here we have an issue with proper error reporting when the desired
+	 * executable cannot be run. The execve() happens in child context and
+	 * it is difficult to forward an error indication into parent context.
+	 *
+	 * ChildCloner offers a feature to forward execve() errors in the
+	 * child synchronously to the parent. This doesn't work for our case,
+	 * however, since we raise SIGSTOP in the child before executing,
+	 * which would cause the `run()` call below to block forever, waiting
+	 * for an execve() result.
+	 *
+	 * Using `fexecve()` would move typical file open errors to an earlier
+	 * stage, but it has issues with scripts thats use the shebang to
+	 * invoke an interpreter.
+	 *
+	 * It seems the only sensible thing to do is to check existence of the
+	 * target path in a racy way beforehand.
+	 */
+	if (args.empty() || !cosmos::fs::which(args[0])) {
+		changeState(State::DEAD);
+		cosmos_throw(cosmos::RuntimeError{
+				cosmos::sprintf("%s: does not exist or is not executable",
+				args.empty() ? "<empty-path>" : args[0].c_str())});
+	}
+
 	cosmos::ChildCloner cloner;
 	cloner.setArgs(args);
 	cloner.setPostForkCB([](const cosmos::ChildCloner &){

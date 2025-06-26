@@ -691,9 +691,14 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 			return FAILURE;
 		}
 
-		auto tracee = m_engine.addTracee(sv,
-				FollowChildren{m_follow_children == FollowChildMode::NO ? false : true});
-		m_main_tracee_pid = tracee->pid();
+		try {
+			auto tracee = m_engine.addTracee(sv,
+					FollowChildren{m_follow_children == FollowChildMode::NO ? false : true});
+			m_main_tracee_pid = tracee->pid();
+		} catch (const cosmos::CosmosError &ex) {
+			std::cerr << ex.shortWhat() << "\n";
+			return FAILURE;
+		}
 	}
 
 	try {
