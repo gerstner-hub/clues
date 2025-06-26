@@ -262,11 +262,10 @@ void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State 
 	std::cerr << std::flush;
 }
 
-void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc, const State state) {
-
-	// TODO: other ways to execve exist like fexecve()
-	if (sc.callNr() == SystemCallNr::EXECVE && sc.result()) {
-		// this is already dealt with in newExecutionContext()
+void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
+		const State state) {
+	if (isExecSyscall(sc) && sc.result()) {
+		// this was already dealt with in newExecutionContext()
 		return;
 	}
 
@@ -575,6 +574,15 @@ void TermTracer::storeUnfinishedSyscallCtx() {
 	auto [pid, syscall] = *m_active_syscall;
 	m_unfinished_syscalls[pid] = syscall;
 	m_active_syscall.reset();
+}
+
+bool TermTracer::isExecSyscall(const SystemCall &sc) const {
+	switch (sc.callNr()) {
+		default: return false;
+		case SystemCallNr::EXECVE:
+		case SystemCallNr::EXECVEAT:
+			 return true;
+	}
 }
 
 void TermTracer::checkResumedSyscall(const Tracee &tracee) {

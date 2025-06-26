@@ -104,6 +104,8 @@ protected: // functions
 		return std::get<cosmos::ProcessID>(*m_active_syscall) == pid;
 	}
 
+	bool isExecSyscall(const SystemCall &sc) const;
+
 	void cleanupTracee(const Tracee &tracee);
 
 	void updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid);
