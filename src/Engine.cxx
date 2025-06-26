@@ -199,9 +199,6 @@ void Engine::handleAutoAttach(
 
 		m_consumer.newChildProcess(parent, *it->second, event);
 
-		/// TODO: not the smartest approach to first allocate and
-		/// insert the new tracee, just to possibly remove and delete
-		/// it again right away.
 		checkCleanupTracee(it);
 	} else {
 		// if the pid is no longer found then it either already died
