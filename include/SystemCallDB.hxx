@@ -38,15 +38,20 @@ public: // functions
 
 protected: // data
 
-	// TODO: this could also be a std::array of fixed size
-	// this would waste a bit of memory but reduce lookup complexity even
-	// more.
-	// SystemCall values could also be stored by-value instead of as
-	// shared_ptr.
-	// On the other hand for tracing more than one thread multiple
-	// SystemCallDBs would need to be maintained. Initial cost is higher
-	// for fixed sized arrays and non-lazy initialization, but runtime
-	// cost should be lower and determinism greater.
+	/* XXX: this could also be a std::array of fixed size.
+	 * This would waste a some memory but reduce lookup complexity even
+	 * more.
+	 * Every Tracee maintains its own SystemCallDB and often a thread only
+	 * uses a rather limited amount of system calls. There are about ~500
+	 * different system calls, so allocating a fixed array would cost
+	 * about 4 KiB per Tracee. For 100 Tracees, which would be a high load
+	 * scenario, the cost would cost be 400 KiB for maintaining all the
+	 * pointers to potential SystemCall instances.
+	 *
+	 * Initial cost is higher for fixed sized arrays and non-lazy
+	 * initialization, but runtime cost should be lower and determinism
+	 * greater.
+	 */
 
 	std::map<SystemCallNr, SystemCallPtr> m_map;
 };
