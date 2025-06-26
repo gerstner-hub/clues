@@ -514,11 +514,11 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 		follow = ask_yes_no() ? FollowChildMode::YES : FollowChildMode::NO;
 	} else if (follow == FollowChildMode::THREADS) {
 		if (event == cosmos::ptrace::Event::CLONE) {
-			// TODO: inspect the clone system that caused this and
+			// TODO: inspect the clone system call that caused this and
 			// check whether the CLONE_THREAD flag was specified.
-			// If it isn't set then the clone() is likely not for
+			// If it isn't set, then the clone() is likely not for
 			// a regular thread but for something else and we
-			// shouldn't follow it.
+			// shouldn't follow it (?).
 			follow = FollowChildMode::YES;
 		} else {
 			follow = FollowChildMode::NO;
