@@ -143,7 +143,14 @@ void Tracee::attach(const FollowChildren follow_children, const AttachThreads at
 		});
 	}
 
-	seize(m_ptrace_opts);
+	try {
+		seize(m_ptrace_opts);
+	} catch (...) {
+		if (!isChildProcess()) {
+			changeState(State::DEAD);
+		}
+		throw;
+	}
 	updateExecutable();
 	updateCmdLine();
 	interrupt();
