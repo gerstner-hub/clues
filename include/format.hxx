@@ -7,9 +7,14 @@
 #include <cosmos/io/types.hxx>
 #include <cosmos/proc/SigInfo.hxx>
 #include <cosmos/proc/types.hxx>
+#include <cosmos/fwd.hxx>
 
 // clues
 #include <clues/dso_export.h>
+
+namespace cosmos {
+	class SigInfo;
+}
 
 namespace clues::format {
 
@@ -57,5 +62,8 @@ CLUES_API std::string poll_event(const cosmos::PollEvent event);
 
 /// Returns a string like POLLIN|POLLPRI|...
 CLUES_API std::string poll_events(const cosmos::PollEvents events);
+
+/// Returns a string like "10 (SIGINT) {si_code=<code> si_timerid=<id> ...}"
+CLUES_API std::string sig_info(const cosmos::SigInfo &info);
 
 } // end ns

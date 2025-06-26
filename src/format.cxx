@@ -9,6 +9,7 @@
 #include <cosmos/utils.hxx>
 
 // clues
+#include <clues/SystemCall.hxx>
 #include <clues/format.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
@@ -291,6 +292,104 @@ std::string poll_events(const cosmos::PollEvents events) {
 	} while (bit != HIGHEST);
 
 	return ret;
+}
+
+std::string sig_info(const cosmos::SigInfo &info) {
+	using SigInfo = cosmos::SigInfo;
+	std::stringstream ss;
+
+	auto add_process_ctx = [&ss](const cosmos::ProcessCtx ctx) {
+		ss << ", si_pid=" << cosmos::to_integral(ctx.pid);
+		ss << ", si_uid=" << cosmos::to_integral(ctx.uid);
+	};
+
+	auto add_custom_data = [&ss](const SigInfo::CustomData data) {
+		ss << ", si_int=" << data.asInt();
+		ss << ", si_ptr=" << data.asPtr();
+	};
+
+	ss << info.sigNr() << " {";
+	if (info.source() != SigInfo::Source::KERNEL ||
+			info.raw()->si_code == SI_KERNEL) {
+		ss << "si_code=" << format::si_code(info.source());
+	} else {
+		// we have to use the raw number instead
+		ss << "si_code=" << info.raw()->si_code;
+	}
+
+	if (auto user_data = info.userSigData(); user_data) {
+		add_process_ctx(user_data->sender);
+	} else if (auto queue_data = info.queueSigData(); queue_data) {
+		add_process_ctx(queue_data->sender);
+		add_custom_data(queue_data->data);
+	} else if (auto msg_queue_data = info.msgQueueData(); msg_queue_data) {
+		add_process_ctx(msg_queue_data->msg_sender);
+		add_custom_data(msg_queue_data->data);
+	} else if (auto timer_data = info.timerData(); timer_data) {
+		ss << ", si_timerid=" << cosmos::to_integral(timer_data->id);
+		ss << ", si_overrun=" << timer_data->overrun;
+	} else if (auto sys_data = info.sysData(); sys_data) {
+		ss << ", reason=" << format::si_reason(sys_data->reason);
+		ss << ", si_addr=" << sys_data->call_addr;
+		ss << ", si_syscall=" << sys_data->call_nr
+			<< "(" << SystemCall::name(SystemCallNr{static_cast<uint64_t>(sys_data->call_nr)})
+			<< ")";
+		ss << ", si_arch=" << format::ptrace_arch(sys_data->arch);
+		ss << ", si_errno=" << sys_data->error;
+	} else if (auto child_data = info.childData(); child_data) {
+		// translated si_code
+		ss << " (" << format::child_event(child_data->event) << ")";
+		add_process_ctx(child_data->child);
+		ss << ", si_status=" << info.raw()->si_status;
+		if (child_data->signal) {
+			ss << " (" << *child_data->signal << ")";
+		} else {
+			ss << " (exit code)";
+		}
+		if (child_data->user_time) {
+			ss << ", si_utime=" << cosmos::to_integral(*child_data->user_time);
+		}
+		if (child_data->system_time) {
+			ss << ", si_stime=" << cosmos::to_integral(*child_data->system_time);
+		}
+	} else if (auto poll_data = info.pollData(); poll_data) {
+		// translated si_code
+		ss << " (" << format::si_reason(poll_data->reason) << ")";
+		ss << ", si_fd=" << cosmos::to_integral(poll_data->fd);
+		ss << ", si_band=" << format::poll_events(poll_data->events);
+	} else if (auto ill_data = info.illData(); ill_data) {
+		// TODO: In C++20 we can use a templated lambda to output the
+		// common fault data for SIGILL, SIGFPE etc.
+		// translated si_code
+		ss << " (" << format::si_reason(ill_data->reason) << ")";
+		ss << ", si_addr=" << ill_data->addr;
+	} else if (auto fpe_data = info.fpeData(); fpe_data) {
+		// translated si_code
+		ss << " (" << format::si_reason(fpe_data->reason) << ")";
+		ss << ", si_addr=" << fpe_data->addr;
+	} else if (auto segv_data = info.segfaultData(); segv_data) {
+		// translated si_code
+		ss << " (" << format::si_reason(segv_data->reason) << ")";
+		ss << ", si_addr=" << segv_data->addr;
+		if (auto bound = segv_data->bound; bound) {
+			ss << ", si_lower=" << bound->lower;
+			ss << ", si_upper=" << bound->upper;
+		}
+		if (auto key = segv_data->key; key) {
+			ss << ", si_pkey=" << cosmos::to_integral(*key);
+		}
+	} else if (auto bus_data = info.busData(); bus_data) {
+		// translated si_code
+		ss << " (" << format::si_reason(bus_data->reason) << ")";
+		ss << ", si_addr=" << bus_data->addr;
+		if (auto lsb = bus_data->addr_lsb; lsb) {
+			ss << ", si_addr_lsb=" << *lsb;
+		}
+	}
+
+	ss << "}";
+
+	return ss.str();
 }
 
 } // end ns
