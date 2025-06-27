@@ -7,10 +7,12 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 
 // cosmos
 #include <cosmos/utils.hxx>
+#include <cosmos/fs/types.hxx>
 
 namespace clues {
 
@@ -27,9 +29,6 @@ using AttachThreads = cosmos::NamedBool<struct attach_threads_t, true>;
 class Tracee;
 
 using TraceePtr = std::shared_ptr<Tracee>;
-
-/// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.
-using DescriptorPathMapping = std::map<int, std::string>;
 
 class ProcessData;
 
@@ -56,5 +55,46 @@ enum class KernelErrno : int {
 	RESTART_NOHAND       = 514, /* restart if no handler.. */
 	RESTART_RESTARTBLOCK = 516, /* restart by calling sys_restart_syscall */
 };
+
+/// Contextual information about a file descriptor in a Tracee.
+struct FDInfo {
+public: // types
+
+	/// Different types of file descriptors.
+	/**
+	 * This distinguishes file types found in /proc/<pid>/fd. These are
+	 * types more from a kernel point of view, i.e. the different kernel
+	 * facilities that offer file descriptors, not the types from a
+	 * stat(2) point of view. Directories, regular files and device files
+	 * are all of Type::FS_PATH, for example.
+	 **/
+	enum class Type {
+		INVALID,
+		FS_PATH, ///< a path opened on the file system (this can still be a device special file, named pipe, directory etc.)
+		EVENT_FD,
+		TIMER_FD,
+		SIGNAL_FD,
+		SOCKET,
+		EPOLL, ///< an epoll() file descriptor
+		PIPE,
+		INOTIFY,
+		PID_FD,
+		BPF,
+		PERF_EVENT,
+		UNKNOWN
+	};
+
+public: // data
+
+	cosmos::FileNum fd = cosmos::FileNum::INVALID; ///< the actual file descriptor number.
+	Type type = Type::INVALID;
+	std::string path; ///< path to the file, if applicable
+	cosmos::OpenMode mode;
+	cosmos::OpenFlags flags;
+	std::optional<cosmos::Inode> inode;
+};
+
+/// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.
+using FDInfoMap = std::map<cosmos::FileNum, FDInfo>;
 
 } // end ns

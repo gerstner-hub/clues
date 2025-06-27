@@ -18,8 +18,8 @@ public: // data
 	std::string executable;
 	/// Command line used to create the process (/proc/<pid>/cmdline).
 	cosmos::StringVector cmdline;
-	/// Here we store our current knowledge about open file descriptions.
-	DescriptorPathMapping fd_path_map;
+	/// Here we store our current knowledge about open file descriptors.
+	FDInfoMap fd_info_map;
 };
 
 } // end ns

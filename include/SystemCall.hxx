@@ -105,7 +105,7 @@ public: // functions
 	void setExitInfo(const Tracee &proc,
 			const cosmos::ptrace::SyscallInfo::ExitInfo &info);
 
-	void updateOpenFiles(DescriptorPathMapping &mapping);
+	void updateOpenFiles(FDInfoMap &map);
 
 	/// Returns the system call's human readable name.
 	const char* name() const { return m_name; }

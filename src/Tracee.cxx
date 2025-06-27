@@ -386,7 +386,7 @@ void Tracee::handleSystemCallExit() {
 	auto &syscall = *m_current_syscall;
 
 	syscall.setExitInfo(*this, *m_syscall_info->exitInfo());
-	syscall.updateOpenFiles(m_process_data->fd_path_map);
+	syscall.updateOpenFiles(m_process_data->fd_info_map);
 
 	if (auto error = syscall.error(); error && error->hasKernelErrorCode()) {
 		// system call was interrupted, remember it for later

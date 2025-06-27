@@ -84,39 +84,52 @@ void SystemCall::setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallIn
 	}
 }
 
-void SystemCall::updateOpenFiles(DescriptorPathMapping &mapping) {
+void SystemCall::updateOpenFiles(FDInfoMap &mapping) {
+	using FileNum = cosmos::FileNum;
 	// TODO: this implementation is not finished / not sane yet.
-	if (m_open_id_par) {
-		const int new_fd = (int)m_return->value();
 
-		if (new_fd < 0)
+	if (hasErrorCode()) {
+		return;
+	} else if (m_open_id_par) {
+		const auto new_fd = static_cast<FileNum>(m_return->value());
+
+		if (new_fd <= FileNum::INVALID)
 			return;
 
 		auto res = mapping.insert(
-			std::make_pair(new_fd, m_pars[*m_open_id_par]->str())
+			std::make_pair(new_fd, FDInfo{})
 		);
 
 		if (!res.second) {
-			LOG_DEBUG("WARNING: file descriptor already open?!");
+			LOG_WARN("file descriptor was already open?!");
+			// bail out
+			return;
 		}
+
+		auto &fdinfo = mapping[new_fd];
+		fdinfo.fd = new_fd;
+		// TODO: we need to differentiate the various types
+		// this generally needs a different approach, for system call
+		// specific, likely, since we also need to store the mode and
+		// flags and so on.
+		fdinfo.type = FDInfo::Type::FS_PATH;
+		fdinfo.path = m_pars[*m_open_id_par]->str();
+
+		LOG_DEBUG("new path mapping for fd " << cosmos::to_integral(new_fd) << " with open_id " << fdinfo.path);
 	} else if (m_close_fd_par) {
 		if (m_return->valueAs<cosmos::Errno>() != cosmos::Errno::NO_ERROR)
 			// unsuccessful system call, so don't update anything
 			return;
 
-		const int closed_fd = (int)m_pars[*m_close_fd_par]->value();
+		const auto closed_fd = static_cast<FileNum>(
+				m_pars[*m_close_fd_par]->value());
 
 		if (mapping.erase(closed_fd) == 0) {
-#if 0
-			// this is stdout, stderr & friends
-			LOG_WARN("closed file that wasn't open?!");
-#endif
+			LOG_WARN("closed fd wasn't open before?!");
 		}
-	} else {
-		return;
-	}
 
-	//std::cout << "New path mapping:\n" << mapping << std::endl;
+		LOG_DEBUG("removed fd " << cosmos::to_integral(closed_fd) << " from registered mappings");
+	}
 }
 
 SystemCallPtr create_syscall(const SystemCallNr nr) {
@@ -255,7 +268,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				ItemPtr{new OpenFlagsValue{}},
 				ItemPtr{new FileModeParameter{}}
 			},
-			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}}
+			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}},
+			1 // number of the parameter that is the to-be-opened ID
 		);
 	case SystemCallNr::CLOSE:
 		return new_call({
