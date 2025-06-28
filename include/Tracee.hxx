@@ -250,6 +250,8 @@ protected: // functions
 		updateCmdLine();
 	}
 
+	void syncFDsAfterExec();
+
 	void changeState(const State new_state);
 
 	/// Forces the traced process to stop.

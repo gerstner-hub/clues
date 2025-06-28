@@ -1,7 +1,11 @@
 #pragma once
 
+// C++
+#include <set>
+
 // cosmos
 #include <cosmos/error/errno.hxx>
+#include <cosmos/fs/types.hxx>
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
@@ -15,5 +19,12 @@ const char* get_errno_label(const cosmos::Errno err);
 const char* get_kernel_errno_label(const KernelErrno err);
 /// Returns a string label for the given event
 const char* get_ptrace_event_str(const cosmos::ptrace::Event event);
+
+/// Returns the currently open file descriptors according to /proc/<pid>/fd
+/**
+ * This function can throw a cosmos::ApiError in case the process is no longer
+ * accessible in /proc.
+ **/
+std::set<cosmos::FileNum> get_currently_open_fds(const cosmos::ProcessID pid);
 
 } // end ns

@@ -6,8 +6,13 @@
 
 // generated
 #include <clues/errnodb.hxx>
+#include <clues/logger.hxx>
 
 // cosmos
+#include <cosmos/error/ApiError.hxx>
+#include <cosmos/formatting.hxx>
+#include <cosmos/fs/DirStream.hxx>
+#include <cosmos/io/ILogger.hxx>
 #include <cosmos/utils.hxx>
 
 namespace clues {
@@ -43,6 +48,32 @@ const char* get_ptrace_event_str(const cosmos::ptrace::Event event) {
 		case Event::SECCOMP: return "SECCOMP";
 		default: return "??? unknown ???";
 	}
+}
+
+std::set<cosmos::FileNum> get_currently_open_fds(const cosmos::ProcessID pid) {
+	std::set<cosmos::FileNum> ret;
+
+	try {
+		cosmos::DirStream dir{
+			cosmos::sprintf("/proc/%d/fd", cosmos::to_integral(pid))};
+
+		for (const auto &entry: dir) {
+			if (entry.isDotEntry())
+				continue;
+
+			try {
+				auto fd = std::stoi(entry.name());
+				ret.insert(cosmos::FileNum{fd});
+			} catch (...) {
+				// not a number? shouldn't happen.
+			}
+		}
+	} catch (const cosmos::ApiError &ex) {
+		// process disappeared? let the caller handle that.
+		throw;
+	}
+
+	return ret;
 }
 
 } // end ns

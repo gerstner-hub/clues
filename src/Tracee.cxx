@@ -264,6 +264,33 @@ void Tracee::updateCmdLine() {
 	}
 }
 
+void Tracee::syncFDsAfterExec() {
+	/*
+	 * We could mimic what the kernel does by inspecting the file
+	 * descriptor flags. To prevent any inconsistencies and because it
+	 * shouldn't bee too expensive to do this for each execve(),
+	 * synchronize the state with what is found in /proc/<pid>/fd.
+	 */
+	try {
+		auto left_fds = clues::get_currently_open_fds(m_ptrace.pid());
+
+		auto &fd_info_map = m_process_data->fd_info_map;
+
+		for (auto it = fd_info_map.begin(); it != fd_info_map.end(); it++) {
+			if (left_fds.count(it->first) == 0) {
+				it = fd_info_map.erase(it);
+			}
+		}
+	} catch (const cosmos::ApiError &ex) {
+		/* It seems the process died.
+		 * The Tracee will be cleaned up soon anyway, so let's keep
+		 * the file descriptors we've seen last time to avoid further
+		 * confusion.
+		 */
+		LOG_WARN_PID("unable to get currently open fds: " << ex.what());
+	}
+}
+
 void Tracee::changeState(const State new_state) {
 	LOG_DEBUG_PID("state " << m_state << " → " << new_state);
 
@@ -510,8 +537,6 @@ void Tracee::handleExecEvent(const cosmos::ProcessID main_pid) {
 		old_pid = former_pid;
 	}
 
-	// TODO: update m_process_data->fd_path_map based on O_CLOEXEC flag
-
 	if (old_pid) {
 		auto old_tracee = m_engine.handleSubstitution(*old_pid);
 		/*
@@ -547,6 +572,11 @@ void Tracee::handleExecEvent(const cosmos::ProcessID main_pid) {
 	// only update executable info here, since our PID might have changed
 	// above
 	updateExecInfo();
+
+	/*
+	 * Check which file descriptors have been closed due to execve.
+	 */
+	syncFDsAfterExec();
 
 	m_consumer.newExecutionContext(*this, old_exe, old_cmdline, old_pid);
 }
