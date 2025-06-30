@@ -596,6 +596,21 @@ void Tracee::handleAttached() {
 
 	getRegisters(m_initial_regset);
 
+	if (m_process_data->fd_info_map.empty()) {
+		auto &map = m_process_data->fd_info_map;
+		/*
+		 * this is a root tracee, either a direct child process or an
+		 * initially attached foreign process
+		 */
+		try {
+			for (auto &info: get_fd_infos(pid())) {
+				map.insert({info.fd, std::move(info)});
+			}
+		} catch (const cosmos::CosmosError &error) {
+			LOG_WARN_PID("failed to get initial FD infos: " << error.what());
+		}
+	}
+
 	m_consumer.attached(*this);
 
 	if (m_flags[Flag::ATTACH_THREADS_PENDING]) {

@@ -2,6 +2,7 @@
 
 // C++
 #include <set>
+#include <vector>
 
 // cosmos
 #include <cosmos/error/errno.hxx>
@@ -26,5 +27,12 @@ const char* get_ptrace_event_str(const cosmos::ptrace::Event event);
  * accessible in /proc.
  **/
 std::set<cosmos::FileNum> get_currently_open_fds(const cosmos::ProcessID pid);
+
+/// Obtain detailed information about currently open file descriptors according to /proc/<pid>/fd.
+/**
+ * This function can throw a cosmos::ApiError in case the process is no longer
+ * accessible in /proc.
+ **/
+std::vector<FDInfo> get_fd_infos(const cosmos::ProcessID pid);
 
 } // end ns

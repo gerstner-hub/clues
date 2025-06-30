@@ -74,8 +74,13 @@ public: // functions
 		return m_process_data->executable;
 	}
 
-	const cosmos::StringVector cmdLine() const {
+	const cosmos::StringVector& cmdLine() const {
 		return m_process_data->cmdline;
+	}
+
+	/// Provides access to the current knowledge about file descriptors in the tracee.
+	const FDInfoMap& fdInfoMap() const {
+		return m_process_data->fd_info_map;
 	}
 
 	cosmos::ProcessID pid() const {
