@@ -67,7 +67,7 @@ const char* get_register_name(const size_t number) {
 	}
 #endif
 
-	cosmos_throw (cosmos::UsageError("Invalid register number encountered")); return "";
+	throw cosmos::UsageError{"Invalid register number encountered"}; return "";
 }
 
 } // end ns

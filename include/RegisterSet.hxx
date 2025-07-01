@@ -51,7 +51,7 @@ public: // functions
 	/// Verify data received from a ptrace system call TraceRequest::GETREGSET.
 	void iovFilled(const cosmos::InputMemoryRegion &iov) {
 		if (iov.getLength() < sizeof(m_regs)) {
-			cosmos_throw(cosmos::RuntimeError("received incomplete register set"));
+			throw cosmos::RuntimeError{"received incomplete register set"};
 		}
 	}
 
@@ -74,7 +74,7 @@ public: // functions
 	 **/
 	Word syscallParameter(const size_t number) const {
 		if (number >= SYSCALL_MAX_PARS) {
-			cosmos_throw (cosmos::UsageError("invalid system call parameter nr."));
+			throw cosmos::UsageError{"invalid system call parameter nr."};
 		}
 
 		return Word{m_regs[SYSCALL_PAR_REGISTER[number]]};
@@ -91,7 +91,7 @@ public: // functions
 	 **/
 	Word registerValue(const size_t number) const {
 		if (number >= numRegisters()) {
-			cosmos_throw(cosmos::UsageError("invalid register nr."));
+			throw cosmos::UsageError{"invalid register nr."};
 		}
 
 		return Word{m_regs[number]};

@@ -37,9 +37,9 @@ void ChildTracee::create(const cosmos::StringVector &args) {
 	 */
 	if (args.empty() || !cosmos::fs::which(args[0])) {
 		changeState(State::DEAD);
-		cosmos_throw(cosmos::RuntimeError{
+		throw cosmos::RuntimeError{
 				cosmos::sprintf("%s: does not exist or is not executable",
-				args.empty() ? "<empty-path>" : args[0].c_str())});
+				args.empty() ? "<empty-path>" : args[0].c_str())};
 	}
 
 	cosmos::ChildCloner cloner;

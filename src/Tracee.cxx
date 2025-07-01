@@ -333,7 +333,7 @@ void Tracee::handleStateMismatch() {
 		<< (m_syscall_info->isEntry() ? "SyscallInfo::ENTRY" : "SyscallInfo::EXIT")
 		<< " event.");
 
-	cosmos_throw (cosmos::RuntimeError("system call state mismatch"));
+	throw cosmos::RuntimeError{"system call state mismatch"};
 }
 
 void Tracee::handleSystemCall() {
@@ -798,7 +798,7 @@ bool Tracee::isThreadGroupLeader() const {
 		}
 	}
 
-	cosmos_throw (cosmos::RuntimeError("failed to parse Tgid"));
+	throw cosmos::RuntimeError{"failed to parse Tgid"};
 
 	// nothing found?!
 	return false;

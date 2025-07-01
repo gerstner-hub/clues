@@ -197,7 +197,7 @@ void parse_fd_info(const cosmos::ProcessID pid, FDInfo &info) {
 		return;
 	}
 
-	cosmos_throw(cosmos::RuntimeError("no flags found"));
+	throw cosmos::RuntimeError{"no flags found"};
 }
 
 } // end anon ns
