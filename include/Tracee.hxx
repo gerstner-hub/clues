@@ -174,7 +174,7 @@ public: // functions
 			// null address specification
 			return false;
 
-		static_assert(std::is_pod_v<T> == true);
+		static_assert(std::is_trivial_v<T> == true);
 
 		readBlob(addr, reinterpret_cast<char*>(&out), sizeof(T));
 		return true;

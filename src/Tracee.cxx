@@ -41,7 +41,7 @@ public: // functions
 	}
 
 	bool operator()(long word) {
-		static_assert(std::is_pod_v<typename CONTAINER::value_type> == true);
+		static_assert(std::is_trivial_v<typename CONTAINER::value_type> == true);
 		static_assert(sizeof(ITEM_SIZE) <= sizeof(long), "Unexpected ITEM_SIZE (must be <= sizeof(long))");
 		ptr_type word_ptr = reinterpret_cast<ptr_type>(&word);
 		typename CONTAINER::value_type item;
