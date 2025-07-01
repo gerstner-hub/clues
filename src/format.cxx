@@ -308,6 +308,12 @@ std::string sig_info(const cosmos::SigInfo &info) {
 		ss << ", si_ptr=" << data.asPtr();
 	};
 
+	auto add_fault_data = [&ss](auto data) {
+		// translated si_code
+		ss << " (" << format::si_reason(data.reason) << ")";
+		ss << ", si_addr=" << data.addr;
+	};
+
 	ss << info.sigNr() << " {";
 	if (info.source() != SigInfo::Source::KERNEL ||
 			info.raw()->si_code == SI_KERNEL) {
@@ -358,19 +364,11 @@ std::string sig_info(const cosmos::SigInfo &info) {
 		ss << ", si_fd=" << cosmos::to_integral(poll_data->fd);
 		ss << ", si_band=" << format::poll_events(poll_data->events);
 	} else if (auto ill_data = info.illData(); ill_data) {
-		// TODO: In C++20 we can use a templated lambda to output the
-		// common fault data for SIGILL, SIGFPE etc.
-		// translated si_code
-		ss << " (" << format::si_reason(ill_data->reason) << ")";
-		ss << ", si_addr=" << ill_data->addr;
+		add_fault_data(*ill_data);
 	} else if (auto fpe_data = info.fpeData(); fpe_data) {
-		// translated si_code
-		ss << " (" << format::si_reason(fpe_data->reason) << ")";
-		ss << ", si_addr=" << fpe_data->addr;
+		add_fault_data(*fpe_data);
 	} else if (auto segv_data = info.segfaultData(); segv_data) {
-		// translated si_code
-		ss << " (" << format::si_reason(segv_data->reason) << ")";
-		ss << ", si_addr=" << segv_data->addr;
+		add_fault_data(*segv_data);
 		if (auto bound = segv_data->bound; bound) {
 			ss << ", si_lower=" << bound->lower;
 			ss << ", si_upper=" << bound->upper;
@@ -379,9 +377,7 @@ std::string sig_info(const cosmos::SigInfo &info) {
 			ss << ", si_pkey=" << cosmos::to_integral(*key);
 		}
 	} else if (auto bus_data = info.busData(); bus_data) {
-		// translated si_code
-		ss << " (" << format::si_reason(bus_data->reason) << ")";
-		ss << ", si_addr=" << bus_data->addr;
+		add_fault_data(*bus_data);
 		if (auto lsb = bus_data->addr_lsb; lsb) {
 			ss << ", si_addr_lsb=" << *lsb;
 		}
