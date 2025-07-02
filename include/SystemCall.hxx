@@ -4,6 +4,7 @@
 #include <iosfwd>
 #include <memory>
 #include <optional>
+#include <string_view>
 #include <vector>
 
 // cosmos
@@ -74,7 +75,6 @@ public: // functions
 	 **/
 	SystemCall(
 		const SystemCallNr nr,
-		const char *name,
 		ParameterVector &&pars,
 		SystemCallItemPtr ret,
 		std::optional<size_t> open_id_par = {},
@@ -108,7 +108,7 @@ public: // functions
 	void updateOpenFiles(FDInfoMap &map);
 
 	/// Returns the system call's human readable name.
-	const char* name() const { return m_name; }
+	std::string_view name() const { return m_name; }
 	/// Returns the number of parameters for this system call.
 	size_t numPars() const { return m_pars.size(); }
 	/// Returns the system call table number for this system call.
@@ -145,7 +145,7 @@ protected: // data
 	/// The raw system call number of the system call.
 	SystemCallNr m_nr;
 	/// The basic name of the system call.
-	const char *m_name = nullptr;
+	const std::string_view m_name;;
 	/// The return value of the system call.
 	SystemCallItemPtr m_return;
 	/// If the system call fails, this is the error code.

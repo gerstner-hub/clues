@@ -36,13 +36,14 @@ bool SystemCall::validNr(const SystemCallNr nr) {
 
 SystemCall::SystemCall(
 		const SystemCallNr nr,
-		const char *name,
 		ParameterVector &&pars,
 		SystemCallItemPtr ret,
 		std::optional<size_t> open_id_par,
 		std::optional<size_t> close_fd_par) :
-		m_nr{nr}, m_name{name}, m_return{ret}, m_pars{pars},
-		m_open_id_par{open_id_par}, m_close_fd_par{close_fd_par} {
+		m_nr{nr}, m_name{SystemCall::name(nr)},
+		m_return{ret}, m_pars{pars},
+		m_open_id_par{open_id_par},
+		m_close_fd_par{close_fd_par} {
 
 	assert(!open_id_par || *open_id_par < m_pars.size());
 	assert(!close_fd_par || *close_fd_par < m_pars.size());
@@ -140,7 +141,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 			ItemPtr ret = nullptr, const std::optional<size_t> open_id_par = {},
 			const std::optional<size_t> close_fd_par = {}) {
 		return std::make_shared<SystemCall>(
-				nr, SystemCall::name(nr), std::move(pars), ret, open_id_par, close_fd_par);
+				nr, std::move(pars), ret, open_id_par, close_fd_par);
 	};
 
 	switch (nr) {
