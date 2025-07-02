@@ -85,7 +85,7 @@ public: // functions
 	 * The exact order of registers is platform and architecture
 	 * dependent. See sys/regs.h for the index offsets for the various
 	 * registers.
-	 * 
+	 *
 	 * You can also use getRegisterName() to get a friendly name for a
 	 * register number.
 	 **/
@@ -110,10 +110,10 @@ protected: // data
 	 * a register. It doesn't necessarily match the hardware register
 	 * order but is a data structure used in the kernel when system calls
 	 * are performed.
-	 * 
+	 *
 	 * The offsets of what register is where, are found in reg.h. The data
 	 * type is in elf.h (?).
-	 * 
+	 *
 	 * Regarding the ABI for system calls on different architectures
 	 * man(2) syscall is helpful.
 	 **/
