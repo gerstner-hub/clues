@@ -28,6 +28,8 @@ struct Args {
 	TCLAP::SwitchArg verbose;
 	/// Maximum length of parameter values to print.
 	TCLAP::ValueArg<int> max_value_len;
+	/// List system call names and their numbers.
+	TCLAP::SwitchArg list_syscalls;
 };
 
 } // end ns

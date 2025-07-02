@@ -22,6 +22,7 @@
 #include <clues/format.hxx>
 #include <clues/logger.hxx>
 #include <clues/SystemCallItem.hxx>
+#include <clues/syscallnrs.hxx>
 
 // termtracer
 #include "TermTracer.hxx"
@@ -67,6 +68,11 @@ bool TermTracer::processPars() {
 		m_value_truncation_len = SIZE_MAX;
 	else
 		m_value_truncation_len = static_cast<size_t>(max_len);
+
+	if (m_args.list_syscalls.isSet()) {
+		printSyscalls();
+		throw cosmos::ExitStatus::SUCCESS;
+	}
 
 	if (m_args.follow_execve.isSet()) {
 		const auto &arg = m_args.follow_execve.getValue();
@@ -119,6 +125,15 @@ bool TermTracer::processPars() {
 	}
 
 	return true;
+}
+
+void TermTracer::printSyscalls() {
+	for (size_t nr = 0; nr < SYSTEM_CALL_NAMES.size(); nr++) {
+		auto NAME = SYSTEM_CALL_NAMES[nr];
+		if (!NAME[0])
+			continue;
+		std::cout << NAME << " (" << nr << ")\n";
+	}
 }
 
 void TermTracer::configureLogger() {

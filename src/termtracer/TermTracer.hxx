@@ -50,6 +50,8 @@ protected: // functions
 
 	bool processPars();
 
+	void printSyscalls();
+
 	cosmos::ExitStatus main(const int argc, const char **argv) override;
 
 	bool configureTrace(const cosmos::ProcessID pid);
