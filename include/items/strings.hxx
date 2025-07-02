@@ -11,8 +11,8 @@ class CLUES_API StringData :
 		public SystemCallItem {
 public: // functions
 	explicit StringData(
-		const char *short_name = "string",
-		const char *long_name = nullptr,
+		const std::string_view short_name = "string",
+		const std::string_view long_name = {},
 		const ItemType type = ItemType::PARAM_IN) :
 			SystemCallItem{type, short_name, long_name} {
 	}
@@ -48,8 +48,8 @@ class CLUES_API StringArrayData :
 public: // functions
 
 	explicit StringArrayData(
-		const char *short_name = "string-array",
-		const char *long_name = nullptr) :
+		const std::string_view short_name = "string-array",
+		const std::string_view long_name = {}) :
 			PointerInValue{short_name, long_name} {
 	}
 

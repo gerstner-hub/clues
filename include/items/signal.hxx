@@ -36,8 +36,8 @@ class CLUES_API SigactionParameter :
 		public PointerInValue {
 public: // functions
 	explicit SigactionParameter(
-		const char *short_name = "sigaction",
-		const char *long_name = "struct sigaction") :
+		const std::string_view short_name = "sigaction",
+		const std::string_view long_name = "struct sigaction") :
 			PointerInValue{short_name, long_name} {
 	}
 
@@ -57,7 +57,7 @@ class CLUES_API SigSetParameter :
 		public PointerInValue {
 public: // functions
 	explicit SigSetParameter(
-		const char *short_name = "sigset", const char *name = "signal set") :
+		const std::string_view short_name = "sigset", const std::string_view name = "signal set") :
 			PointerInValue{short_name, name} {
 	}
 

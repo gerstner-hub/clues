@@ -14,8 +14,8 @@ class CLUES_API TimespecParameter :
 		public SystemCallItem {
 public: // functions
 	explicit TimespecParameter(
-		const char *short_name,
-		const char *long_name = nullptr,
+		const std::string_view short_name,
+		const std::string_view long_name = {},
 		const ItemType type = ItemType::PARAM_IN) :
 			SystemCallItem{type, short_name, long_name} {
 	}

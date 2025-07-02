@@ -2,6 +2,7 @@
 
 // C++
 #include <iosfwd>
+#include <string_view>
 #include <type_traits>
 
 // cosmos
@@ -42,9 +43,9 @@ public: // functions
 	 *	A longer name for this item, optional
 	 **/
 	explicit SystemCallItem(
-		const ItemType &type,
-		const char *short_name,
-		const char *long_name = nullptr) :
+		const ItemType type,
+		const std::string_view short_name = {},
+		const std::string_view long_name = {}) :
 			m_type{type},
 			m_short_name{short_name},
 			m_long_name{long_name}
@@ -66,11 +67,12 @@ public: // functions
 	bool needsUpdate() const { return m_type != ItemType::PARAM_IN; }
 
 	/// Returns the friendly short name for this item.
-	const char* shortName() const { return m_short_name; }
+	std::string_view shortName() const { return m_short_name; }
 	/// Returns the friendly long name for this item, if available, else the short name.
-	const char* longName() const { return m_long_name ? m_long_name : shortName(); }
+	std::string_view longName() const {
+		return m_long_name.empty() ? shortName() : m_long_name; }
 
-	auto hasLongName() const { return m_long_name != nullptr; }
+	auto hasLongName() const { return !m_long_name.empty(); }
 
 	/// Returns a human readable string representation of the item.
 	/**
@@ -124,11 +126,11 @@ protected: // data
 	/// The system call context this item part of.
 	const SystemCall *m_call = nullptr;
 	/// The type of item.
-	ItemType m_type;
+	const ItemType m_type;
 	/// A human readable short name for the item, should be one word only.
-	const char *m_short_name = nullptr;
+	const std::string_view m_short_name;
 	/// A human readable longer name for the item.
-	const char *m_long_name = nullptr;
+	const std::string_view m_long_name;
 	/// The raw register value for the item.
 	Word m_val;
 };

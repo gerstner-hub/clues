@@ -13,7 +13,7 @@ namespace clues::item {
 class ReturnValue :
 		public SystemCallItem {
 public:
-	explicit ReturnValue(const char *short_name, const char *long_name = nullptr) :
+	explicit ReturnValue(const std::string_view short_name, const std::string_view long_name = {}) :
 		SystemCallItem{ItemType::RETVAL, short_name, long_name}
 	{}
 };
@@ -33,8 +33,8 @@ public: // functions
 
 	explicit ValueParameter(
 		const ItemType &type,
-		const char *short_name,
-		const char *long_name = nullptr) :
+		const std::string_view short_name,
+		const std::string_view long_name = {}) :
 			SystemCallItem{type, short_name, long_name} {
 	}
 };
@@ -45,8 +45,8 @@ class ValueInParameter :
 public: // functions
 
 	explicit ValueInParameter(
-		const char *short_name,
-		const char *long_name = nullptr) :
+		const std::string_view short_name,
+		const std::string_view long_name = {}) :
 			ValueParameter{ItemType::PARAM_IN, short_name, long_name} {
 	}
 };
@@ -57,8 +57,8 @@ class ValueOutParameter :
 public: // functions
 
 	explicit ValueOutParameter(
-		const char *short_name,
-		const char *long_name) :
+		const std::string_view short_name,
+		const std::string_view long_name) :
 			ValueParameter{ItemType::PARAM_OUT, short_name, long_name} {
 	}
 };
@@ -76,8 +76,8 @@ public: // functions
 
 	explicit PointerValue(
 		const ItemType &type,
-		const char *short_name,
-		const char *long_name) :
+		const std::string_view short_name,
+		const std::string_view long_name) :
 			SystemCallItem{type, short_name, long_name} {
 	}
 };
@@ -93,8 +93,8 @@ class PointerOutValue :
 public: // functions
 
 	explicit PointerOutValue(
-		const char *short_name,
-		const char *long_name = nullptr,
+		const std::string_view short_name,
+		const std::string_view long_name = {},
 		const ItemType &type = ItemType::PARAM_OUT) :
 			PointerValue{type, short_name, long_name} {
 	}
@@ -111,8 +111,8 @@ class PointerInValue :
 public: // functions
 
 	explicit PointerInValue(
-		const char *short_name,
-		const char *long_name = nullptr) :
+		const std::string_view short_name,
+		const std::string_view long_name = {}) :
 			PointerValue{ItemType::PARAM_IN, short_name, long_name} {
 	}
 };
@@ -126,8 +126,8 @@ class CLUES_API GenericPointerValue :
 public: // functions
 
 	explicit GenericPointerValue(
-		const char *short_name,
-		const char *long_name = nullptr,
+		const std::string_view short_name,
+		const std::string_view long_name = {},
 		const ItemType type = ItemType::PARAM_IN) :
 			PointerValue{type, short_name, long_name} {
 	}

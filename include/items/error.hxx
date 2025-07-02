@@ -15,8 +15,8 @@ class SuccessResult :
 		public ReturnValue {
 public:
 	SuccessResult(
-		const char *short_label = "success",
-		const char *long_label = nullptr) :
+		const std::string_view short_label = "success",
+		const std::string_view long_label = {}) :
 			ReturnValue{short_label, long_label} {
 	}
 

@@ -443,7 +443,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	default:
 		return new_call({
 			},
-			ItemPtr{new ValueOutParameter{"result", nullptr}}
+			ItemPtr{new ValueOutParameter{"result", {}}}
 		);
 	}
 }
