@@ -52,8 +52,9 @@ SystemCall::SystemCall(
 		par->setSystemCall(*this);
 }
 
-void SystemCall::setEntryInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::EntryInfo &info) {
-	auto args = info.args();
+void SystemCall::setEntryInfo(const Tracee &proc,
+		const cosmos::ptrace::SyscallInfo::EntryInfo &info) {
+	const uint64_t *args = info.args();
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
 		par.fill(proc, Word{args[numpar]});
@@ -71,7 +72,8 @@ bool SystemCall::hasOutParameter() const {
 	return false;
 }
 
-void SystemCall::setExitInfo(const Tracee &proc, const cosmos::ptrace::SyscallInfo::ExitInfo &info) {
+void SystemCall::setExitInfo(const Tracee &proc,
+		const cosmos::ptrace::SyscallInfo::ExitInfo &info) {
 	if (info.isValue()) {
 		m_return->fill(proc, Word{static_cast<uint64_t>(*info.retVal())});
 	} else {
@@ -129,7 +131,8 @@ void SystemCall::updateOpenFiles(FDInfoMap &mapping) {
 			LOG_WARN("closed fd wasn't open before?!");
 		}
 
-		LOG_DEBUG("removed fd " << cosmos::to_integral(closed_fd) << " from registered mappings");
+		LOG_DEBUG("removed fd " << cosmos::to_integral(closed_fd)
+				<< " from registered mappings");
 	}
 }
 
@@ -137,11 +140,14 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	using namespace item;
 	using ItemPtr = SystemCallItemPtr;
 
-	auto new_call = [nr](SystemCall::ParameterVector &&pars,
-			ItemPtr ret = nullptr, const std::optional<size_t> open_id_par = {},
+	auto new_call = [nr](
+			SystemCall::ParameterVector &&pars,
+			ItemPtr ret = nullptr,
+			const std::optional<size_t> open_id_par = {},
 			const std::optional<size_t> close_fd_par = {}) {
 		return std::make_shared<SystemCall>(
-				nr, std::move(pars), ret, open_id_par, close_fd_par);
+				nr, std::move(pars),
+				ret, open_id_par, close_fd_par);
 	};
 
 	switch (nr) {
