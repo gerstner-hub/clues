@@ -4,10 +4,11 @@
 
 // clues
 #include <clues/utils.hxx>
+#include <clues/logger.hxx>
 
 // generated
 #include <clues/errnodb.hxx>
-#include <clues/logger.hxx>
+#include <clues/syscallnrs.hxx>
 
 // cosmos
 #include <cosmos/error/ApiError.hxx>
@@ -261,6 +262,15 @@ std::vector<FDInfo> get_fd_infos(const cosmos::ProcessID pid) {
 	}
 
 	return ret;
+}
+
+std::optional<SystemCallNr> lookup_system_call(const std::string_view name) {
+	auto it = SYSTEM_CALL_NAME_MAP.find(name);
+
+	if (it == SYSTEM_CALL_NAME_MAP.end())
+		return {};
+
+	return it->second;
 }
 
 } // end ns

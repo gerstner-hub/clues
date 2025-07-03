@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -34,5 +35,10 @@ std::set<cosmos::FileNum> get_currently_open_fds(const cosmos::ProcessID pid);
  * accessible in /proc.
  **/
 std::vector<FDInfo> get_fd_infos(const cosmos::ProcessID pid);
+
+/// Returns the SystemCallNr for the given system call name, if it exists.
+CLUES_API std::optional<SystemCallNr> lookup_system_call(
+		const std::string_view name);
+
 
 } // end ns

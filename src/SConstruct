@@ -97,6 +97,8 @@ def buildSyscallHeader(target, source, env):
         out_fd.write("#include <elf.h>\n")
         out_fd.write("#include <sys/syscall.h>\n\n")
         out_fd.write("#include <array>\n")
+        out_fd.write("#include <map>\n")
+        out_fd.write("#include <string_view>\n")
         out_fd.write("\n// C++ class enum for system call numbers found in syscall.h\n")
         out_fd.write("namespace clues {\n")
         out_fd.write("enum class SystemCallNr : uint64_t {\n")
@@ -110,6 +112,13 @@ def buildSyscallHeader(target, source, env):
             number_str = numbers.get(nr, None)
             label = syscalls.get(number_str, "").lstrip("SYS_");
             out_fd.write(f'\t"{label}",\n')
+        out_fd.write("};\n")
+        out_fd.write("const std::map<std::string_view, SystemCallNr> SYSTEM_CALL_NAME_MAP = {\n")
+        for nr, name in syscalls.items():
+            # strip the leading SYS_
+            name = name.split('_', 1)[1]
+            enum = name.upper()
+            out_fd.write("\t{" + f"std::string_view{{\"{name}\"}}" + ", " + f"SystemCallNr::{enum}" + "},\n")
         out_fd.write("};")
         out_fd.write("\n\n} // end ns\n")
 
