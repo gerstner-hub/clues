@@ -30,6 +30,8 @@ struct Args {
 	TCLAP::ValueArg<int> max_value_len;
 	/// List system call names and their numbers.
 	TCLAP::SwitchArg list_syscalls;
+	/// Configure system calls which to trace.
+	TCLAP::ValueArg<std::string> syscall_filter;
 };
 
 } // end ns

@@ -52,6 +52,12 @@ Args::Args() :
 		"", "list-syscalls",
 		"list all known system calls and their numbers, then exit.",
 		false},
+	syscall_filter{
+		"e", "filter",
+		"configuration of system call filters. comma separated list of system call names, optionally prefixed with '!' to negate the meaning.",
+		false,
+		"",
+		"comma separated list of system call names"}
 	{
 
 	cmdline.add(attach_proc);
@@ -63,6 +69,7 @@ Args::Args() :
 	cmdline.add(verbose);
 	cmdline.add(max_value_len);
 	cmdline.add(list_syscalls);
+	cmdline.add(syscall_filter);
 }
 
 } // end ns

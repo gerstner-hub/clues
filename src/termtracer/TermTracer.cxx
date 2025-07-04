@@ -7,6 +7,7 @@
 #include <map>
 #include <sstream>
 #include <string_view>
+#include <vector>
 
 // cosmos
 #include <cosmos/cosmos.hxx>
@@ -15,14 +16,16 @@
 #include <cosmos/formatting.hxx>
 #include <cosmos/proc/signal.hxx>
 #include <cosmos/string.hxx>
+#include <cosmos/utils.hxx>
 
 // clues
 #include <clues/ChildTracee.hxx>
 #include <clues/ForeignTracee.hxx>
 #include <clues/format.hxx>
 #include <clues/logger.hxx>
-#include <clues/SystemCallItem.hxx>
 #include <clues/syscallnrs.hxx>
+#include <clues/SystemCallItem.hxx>
+#include <clues/utils.hxx>
 
 // termtracer
 #include "TermTracer.hxx"
@@ -122,6 +125,44 @@ bool TermTracer::processPars() {
 		}
 
 		m_follow_children = FollowChildMode::THREADS;
+	}
+
+	if (m_args.syscall_filter.isSet()) {
+		auto parts = cosmos::split(m_args.syscall_filter.getValue(),
+				",");
+
+		auto translate_name = [](const std::string_view name) {
+			if (auto nr = lookup_system_call(name); nr) {
+				return *nr;
+			}
+
+			std::cerr << "invalid system call name: "
+				<< name << "\n";
+			throw cosmos::ExitStatus::FAILURE;
+		};
+
+		std::vector<SystemCallNr> to_add;
+		std::vector<SystemCallNr> to_remove;
+
+		for (auto &part: parts) {
+			if (part.starts_with("!")) {
+				part = part.substr(1);
+				to_remove.push_back(translate_name(part));
+			} else {
+				to_add.push_back(translate_name(part));
+			}
+		}
+
+		for (const auto nr: to_add) {
+			m_syscall_filter.insert(nr);
+		}
+
+		// NOTE: this removal logic can make sense in the future when
+		// we support system call groups (→ add a group, remove a few
+		// again)
+		for (const auto nr: to_remove) {
+			m_syscall_filter.erase(nr);
+		}
 	}
 
 	return true;
@@ -261,11 +302,22 @@ void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
 	}
 }
 
-void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) {
+void TermTracer::syscallEntry(Tracee &tracee,
+		const SystemCall &sc,
+		const State state) {
+
+	// this needs to be assigned before returning from this function but
+	// after startNewOutputLine() is called, if at all.
+	auto defer_assign_syscall = cosmos::defer([this, &tracee, &sc]() {
+		m_active_syscall = std::make_optional(
+				std::make_tuple(tracee.pid(), &sc));
+	});
+
+	if (!isEnabled(&sc)) {
+		return;
+	}
 
 	startNewOutputLine(tracee);
-
-	m_active_syscall = std::make_optional(std::make_tuple(tracee.pid(), &sc));
 
 	if (state[Status::RESUMED]) {
 		std::cerr << "<resuming previously interrupted " << sc.name() << "...>\n";
@@ -279,8 +331,17 @@ void TermTracer::syscallEntry(Tracee &tracee, const SystemCall &sc, const State 
 
 void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 		const State state) {
+
+	/// This needs to be reset before returning from this function but
+	/// after `checkResumedSyscall()` is called, if at all.
+	auto defer_reset_syscall = cosmos::defer([this, &tracee, &sc]() {
+		m_active_syscall.reset();
+	});
+
 	if (isExecSyscall(sc) && sc.result()) {
 		// this was already dealt with in newExecutionContext()
+		return;
+	} else if (!isEnabled(&sc)) {
 		return;
 	}
 
@@ -302,8 +363,6 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 	}
 
 	std::cerr << std::endl;
-
-	m_active_syscall.reset();
 }
 
 void TermTracer::signaled(Tracee &tracee, const cosmos::SigInfo &info) {
@@ -337,14 +396,21 @@ void TermTracer::attached(Tracee &tracee) {
 
 void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) {
 	if (tracee.prevState() == Tracee::State::SYSCALL_ENTER_STOP) {
+		// obtain this information before the active syscall is reset below
+		const auto is_enabled = isEnabled(currentSyscall(tracee));
+
 		if (hasActiveSyscall(tracee)) {
 			m_active_syscall.reset();
-		} else {
+		} else if (is_enabled) {
 			checkResumedSyscall(tracee);
 		}
-		// this should only ever happen after a syscallEntry() for
-		// exit_group() occurred. Thus we finish that first.
-		std::cerr << ") = ?\n";
+
+		if (is_enabled) {
+			/* this should only ever happen after a syscallEntry()
+			 * for exit() or exit_group() occurred. Thus we finish
+			 * that first. */
+			std::cerr << ") = ?\n";
+		}
 	}
 
 	if (state[Status::LOST_TO_EXECVE]) {
@@ -390,10 +456,18 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 		updateTracee(tracee, *old_pid);
 	}
 
+
+	// cache this state here, because checkResumedSyscall() might alter the info
+	const auto is_enabled = isEnabled(currentSyscall(tracee));
 	checkResumedSyscall(tracee);
-	// anticipate the success system call status to avoid complexities
-	// while outputting status messages and interactive dialogs.
-	std::cerr << ") = 0 (success)\n";
+
+	if (is_enabled) {
+		/* anticipate the success system call status to avoid
+		 * complexities while outputting status messages and
+		 * interactive dialogs. */
+		std::cerr << ") = 0 (success)\n";
+	}
+
 	m_active_syscall = {};
 
 	if (old_pid) {
@@ -474,9 +548,14 @@ bool TermTracer::followExecutionContext(Tracee &tracee) {
 }
 
 void TermTracer::startNewOutputLine(const Tracee &tracee) {
+	// TODO: this call to storeUnfinishedSyscallCtx() is not well placed
+	// here. output handling should not alterate tracing state. This
+	// proves problematic when system call filtering is active.
 	if (m_active_syscall) {
-		// a system call in another thread remains unfinished
-		std::cerr << " <...unfinished>\n";
+		if (isEnabled(activeSyscall())) {
+			// a system call in another thread remains unfinished
+			std::cerr << " <...unfinished>\n";
+		}
 		storeUnfinishedSyscallCtx();
 	}
 
@@ -491,8 +570,9 @@ void TermTracer::startNewOutputLine(const Tracee &tracee) {
 }
 
 void TermTracer::storeUnfinishedSyscallCtx() {
-	if (!m_active_syscall)
+	if (!m_active_syscall) {
 		return;
+	}
 
 	auto [pid, syscall] = *m_active_syscall;
 	m_unfinished_syscalls[pid] = syscall;
@@ -508,14 +588,43 @@ bool TermTracer::isExecSyscall(const SystemCall &sc) const {
 	}
 }
 
+const SystemCall* TermTracer::currentSyscall(const Tracee &tracee) const {
+	if (m_active_syscall) {
+		auto &[pid, syscall] = *m_active_syscall;
+
+		if (pid == tracee.pid()) {
+			return syscall;
+		}
+	}
+
+	auto it = m_unfinished_syscalls.find(tracee.pid());
+	if (it != m_unfinished_syscalls.end()) {
+		return it->second;
+	}
+
+	return nullptr;
+}
+
+bool TermTracer::isEnabled(const SystemCall *sc) const {
+	if (!sc)
+		return false;
+	else if (m_syscall_filter.empty())
+		return true;
+
+	return m_syscall_filter.count(sc->callNr()) != 0;
+}
+
 void TermTracer::checkResumedSyscall(const Tracee &tracee) {
 	if (hasActiveSyscall(tracee))
 		return;
 
-	startNewOutputLine(tracee);
-
 	auto node = m_unfinished_syscalls.extract(tracee.pid());
 	auto sc = node.mapped();
+
+	if (!isEnabled(sc))
+		return;
+
+	startNewOutputLine(tracee);
 
 	std::cerr << "<resuming ...> " << sc->name();
 	if (sc->hasOutParameter()) {

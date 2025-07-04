@@ -28,6 +28,9 @@ public: // functions
 
 	TermTracer();
 
+	TermTracer(const TermTracer&) = delete;
+	TermTracer& operator=(const TermTracer&) = delete;
+
 protected: // types
 
 	/// What to do upon execve
@@ -106,7 +109,20 @@ protected: // functions
 		return std::get<cosmos::ProcessID>(*m_active_syscall) == pid;
 	}
 
+	const SystemCall* activeSyscall() const {
+		if (!m_active_syscall)
+			return nullptr;
+
+		return std::get<const SystemCall*>(*m_active_syscall);
+	}
+
 	bool isExecSyscall(const SystemCall &sc) const;
+
+	/// Returns `true` if `sc` is supposed to the printed.
+	bool isEnabled(const SystemCall *sc) const;
+
+	/// Returns the system call last seen for `tracee`.
+	const SystemCall* currentSyscall(const Tracee &tracee) const;
 
 	void cleanupTracee(const Tracee &tracee);
 
@@ -172,6 +188,8 @@ protected: // data
 	bool m_dropped_to_single_tracee = false;
 	/// Newly created tracees that haven't seen any ptrace stop yet
 	std::map<cosmos::ProcessID, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
+	/// Whitelist of systm calls to trace, if any.
+	std::set<SystemCallNr> m_syscall_filter;
 };
 
 } // end ns
