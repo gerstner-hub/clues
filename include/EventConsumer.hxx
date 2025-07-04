@@ -5,6 +5,9 @@
 #include <cosmos/proc/process.hxx>
 #include <cosmos/string.hxx>
 
+// clues
+#include <clues/types.hxx>
+
 namespace clues {
 
 class Tracee;
