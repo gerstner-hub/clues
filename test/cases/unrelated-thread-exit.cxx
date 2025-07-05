@@ -2,8 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-void* thread_entry(void *par) {
-	(void)par;
+void* thread_entry(void *) {
 	std::cout << "other thread PID is " << gettid() << std::endl;
 	std::cout << "press ENTER to exit thread\n";
 	bool ready;

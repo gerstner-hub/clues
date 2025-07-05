@@ -3,8 +3,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-void* thread_entry(void *par) {
-	(void)par;
+void* thread_entry(void *) {
 	std::cout << "other thread PID is " << gettid() << std::endl;
 
 	if (fork() == 0) {

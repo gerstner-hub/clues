@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-void* thread_entry(void *par) {
+void* thread_entry(void *) {
 	std::cout << "other thread pid is " << gettid() << std::endl;
 	sleep(1000);
 	return nullptr;

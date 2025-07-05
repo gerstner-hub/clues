@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-void* thread_entry(void *par) {
+void* thread_entry(void *) {
 	std::cout << "other thread PID is " << gettid() << std::endl;
 	const char *const argv[] = {"/bin/true", nullptr};
 	std::cerr << "press enter to execve()\n";
