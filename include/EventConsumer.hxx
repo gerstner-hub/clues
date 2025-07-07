@@ -35,9 +35,17 @@ public: // types
 
 protected: // functions
 
-	virtual void syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) = 0;
+	virtual void syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) {
+		(void)tracee;
+		(void)sc;
+		(void)state;
+	}
 
-	virtual void syscallExit(Tracee &tracee, const SystemCall &sc, const State state) = 0;
+	virtual void syscallExit(Tracee &tracee, const SystemCall &sc, const State state) {
+		(void)tracee;
+		(void)sc;
+		(void)state;
+	}
 
 	/// The tracee is now properly attached to.
 	/**
