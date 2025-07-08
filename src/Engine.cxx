@@ -116,7 +116,29 @@ void Engine::trace() {
 		while (true) {
 			if (auto it = m_tracees.find(data.child.pid); it != m_tracees.end()) {
 				Tracee &tracee = *it->second;
-				tracee.processEvent(data);
+				try {
+					tracee.processEvent(data);
+				} catch (const cosmos::ApiError &ex) {
+					auto pid = cosmos::to_integral(tracee.pid());
+					if (ex.errnum() == cosmos::Errno::SEARCH) {
+						/*
+						 * this can happen when the process was killed in the
+						 * meantime, or in a multi-threaded process when
+						 * another thread called execve() in parallel.
+						 *
+						 * we _should_ still receive an exit notification
+						 * about the tracee, and the consumer can then detect
+						 * that the system call was interrupted (actually if
+						 * this is a system call exit event, then it wasn't
+						 * interrupted, but we couldn't finish tracing it.
+						 * Kind of a small loophole).
+						 */
+						LOG_INFO("tracee " << pid << " disappeared");
+					} else {
+						// something more severe
+						LOG_ERROR("tracee " << pid << " handling process event failed: " << ex.what());
+					}
+				}
 
 				checkCleanupTracee(it);
 			} else {

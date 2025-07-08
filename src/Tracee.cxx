@@ -341,6 +341,7 @@ void Tracee::handleSystemCall() {
 	m_syscall_info = cosmos::ptrace::SyscallInfo{};
 	auto &info = *m_syscall_info;
 
+	// NOTE: this call can fail if the tracee was killed meanwhile
 	m_ptrace.getSyscallInfo(info);
 
 	if (m_flags[Flag::SYSCALL_ENTERED]) {
@@ -729,6 +730,7 @@ void Tracee::processEvent(const cosmos::ChildState &data) {
 	if (m_state == State::DEAD || m_state == State::DETACHED)
 		return;
 
+	// NOTE: this can fail with ESRCH if the tracee got killed meanwhile
 	restart(m_restart_mode, m_inject_sig);
 
 	if (m_restart_mode != cosmos::Tracee::RestartMode::LISTEN) {
