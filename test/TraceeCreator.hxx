@@ -22,13 +22,13 @@ public:
 		clues::set_logger(m_logger);
 	}
 
-	void run() {
+	void run(const clues::FollowChildren follow_children = clues::FollowChildren{false}) {
 		cosmos::EventFile event;
 		if (auto pid = cosmos::proc::fork(); pid) {
 			// parent context
 			m_engine.addTracee(*pid,
-					clues::FollowChildren{false},
-					clues::AttachThreads{false});
+					follow_children,
+					clues::AttachThreads{true});
 			event.signal();
 			m_engine.trace();
 		} else {

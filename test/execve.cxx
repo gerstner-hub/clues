@@ -2,8 +2,11 @@
 #include <iostream>
 
 // Cosmos
+#include <cosmos/fs/File.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/proc/process.hxx>
+#include <cosmos/thread/Condition.hxx>
+#include <cosmos/thread/PosixThread.hxx>
 
 // Clues
 #include <clues/SystemCall.hxx>
@@ -25,9 +28,9 @@
  * personality change (if any) occurs and that no crashes happen.
  */
 
-class RegularExecveTracer : public clues::EventConsumer {
+class ExecveTracer : public clues::EventConsumer {
 public:
-	explicit RegularExecveTracer(const clues::SystemCallNr exec_nr) :
+	explicit ExecveTracer(const clues::SystemCallNr exec_nr) :
 		m_exec_nr{exec_nr} {}
 
 	auto numExecEntrySeen() const {
@@ -44,6 +47,14 @@ public:
 
 	auto numSeenAttached() const {
 		return m_seen_attached;
+	}
+
+	auto numSeenExits() const {
+		return m_seen_exits;
+	}
+
+	auto numSeenLostToExecve() const {
+		return m_seen_lost_to_execve;
 	}
 
 	auto waitStatus() const {
@@ -85,11 +96,15 @@ protected:
 		}
 	}
 
-	void attached(clues::Tracee &) override {
+	void attached(clues::Tracee&) override {
 		m_seen_attached++;
 	}
 
-	void exited(clues::Tracee &, const cosmos::WaitStatus status, const State) override {
+	void exited(clues::Tracee &, const cosmos::WaitStatus status, const State state) override {
+		m_seen_exits++;
+		if (state[Status::LOST_TO_EXECVE]) {
+			m_seen_lost_to_execve++;
+		}
 		m_status = status;
 	}
 
@@ -107,6 +122,8 @@ protected:
 	size_t m_seen_exec_exit = 0;
 	size_t m_seen_successful_exec = 0;
 	size_t m_seen_attached = 0;
+	size_t m_seen_lost_to_execve = 0;
+	size_t m_seen_exits = 0;
 	const clues::SystemCallNr m_exec_nr;
 	std::optional<cosmos::WaitStatus> m_status;
 	std::string m_old_executable;
@@ -115,15 +132,30 @@ protected:
 	std::string m_new_executable;
 };
 
+cosmos::ConditionMutex condition;
+bool thread_running = false;
+
+cosmos::pthread::ExitValue thread_entry_blocking(cosmos::pthread::ThreadArg) {
+	condition.lock();
+	thread_running = true;
+	condition.unlock();
+	condition.signal();
+	// wait for nothing, just so that we can block on something
+	condition.lock();
+	condition.wait();
+	return cosmos::pthread::ExitValue{0};
+}
+
 class ExecveTest : public cosmos::TestBase {
 	void runTests() override {
 		testRegularExecve();
+		testMainThreadExecve();
 	}
 
 	void testRegularExecve() {
 		START_TEST("regular execve");
 
-		RegularExecveTracer tracer{clues::SystemCallNr::EXECVE};
+		ExecveTracer tracer{clues::SystemCallNr::EXECVE};
 
 		// lookup the exact path beforehand to avoid additional
 		// execve() attempts when only using the basename
@@ -143,11 +175,62 @@ class ExecveTest : public cosmos::TestBase {
 		RUN_STEP("seen-successful-execve", tracer.numSuccessfulExecSeen() == 1);
 		RUN_STEP("seen-attached-once", tracer.numSeenAttached() == 1);
 		RUN_STEP("seen-exited", tracer.waitStatus() != std::nullopt);
+		RUN_STEP("num-exited-is-one", tracer.numSeenExits() == 1);
 		RUN_STEP("wait-status-is-zero",
 				tracer.waitStatus()->exited() &&
 				tracer.waitStatus()->status() == cosmos::ExitStatus::SUCCESS);
 		RUN_STEP("execve-old-pid-is-not-there", tracer.oldPID() == std::nullopt);
 		RUN_STEP("new-executable-matches-true", tracer.newExecutable() == true_exe);
+		if (!onValgrind()) {
+			// when running on valgrind then there's a valgrind frontend instead, confusing things
+			RUN_STEP("old-executable-is-us", tracer.oldExecutable().find("execve") != std::string::npos);
+			RUN_STEP("old-cmdline-is-ours", tracer.oldCmdline() == m_argv);
+		}
+	}
+
+	void testMainThreadExecve() {
+		START_TEST("main thread execve (multithreaded)");
+
+		// test this time with fexecve() (EXECVEAT system call)
+		ExecveTracer tracer{clues::SystemCallNr::EXECVEAT};
+
+		auto false_exe = cosmos::fs::which("false");
+
+		RUN_STEP("find-false-executable", false_exe != std::nullopt);
+
+		cosmos::File false_exe_fd{*false_exe, cosmos::OpenMode::READ_ONLY};
+
+		TraceeCreator creator{[&false_exe_fd]() {
+				// create a random thread that just sits there
+				cosmos::PosixThread thread{
+					thread_entry_blocking, cosmos::pthread::ThreadArg{0}};
+				condition.lock();
+				while (!thread_running) {
+					condition.wait();
+				}
+				condition.unlock();
+				cosmos::proc::fexec(false_exe_fd.fd(), cosmos::CStringVector{"false", nullptr});
+				thread.join();
+			}, tracer};
+		creator.run(clues::FollowChildren{true});
+		// NOTE: Valgrind heavily changes the system call sequences
+		// here and somehow turns the execveat() into a regular
+		// execve(). Doesn't make sense to catch up with this fat
+		// emulation layer here.
+		RUN_STEP("seen-execve-entry", tracer.numExecEntrySeen() == 1);
+		RUN_STEP("seen-execve-exit", tracer.numExecExitSeen() == 1);
+		RUN_STEP("num-entry-matches-num-exit",
+				tracer.numExecEntrySeen() == tracer.numExecExitSeen());
+		RUN_STEP("seen-successful-execve", tracer.numSuccessfulExecSeen() == 1);
+		RUN_STEP("seen-attached-twice", tracer.numSeenAttached() == 2);
+		RUN_STEP("seen-exited", tracer.waitStatus() != std::nullopt);
+		RUN_STEP("num-exited-is-two", tracer.numSeenExits() == 2);
+		RUN_STEP("seen-lost-to-execve", tracer.numSeenLostToExecve() == 1);
+		RUN_STEP("wait-status-is-one",
+				tracer.waitStatus()->exited() &&
+				tracer.waitStatus()->status() == cosmos::ExitStatus::FAILURE);
+		RUN_STEP("execve-old-pid-is-not-there", tracer.oldPID() == std::nullopt);
+		RUN_STEP("new-executable-matches-false", tracer.newExecutable() == false_exe);
 		if (!onValgrind()) {
 			// when running on valgrind then there's a valgrind frontend instead, confusing things
 			RUN_STEP("old-executable-is-us", tracer.oldExecutable().find("execve") != std::string::npos);
