@@ -178,31 +178,9 @@ void TermTracer::printSyscalls() {
 }
 
 void TermTracer::configureLogger() {
-	std::map<std::string_view, bool> settings = {
-		{"error", true},
-		{"warn", true},
-		{"info", false},
-		{"debug", false}
-	};
-
-	if (auto config = cosmos::proc::get_env_var("CLUES_LOGGING"); config != std::nullopt) {
-		for (auto &stream: cosmos::split(
-					config->view(), ",", cosmos::SplitFlags{cosmos::SplitFlag::STRIP_PARTS})) {
-			stream = cosmos::to_lower(stream);
-			bool enabled = true;
-
-			if (stream[0] == '!') {
-				enabled = false;
-				stream = stream.substr(1);
-			}
-
-			if (auto it = settings.find(stream); it != settings.end()) {
-				it->second = enabled;
-			}
-		}
-	}
-
-	m_logger.setChannels(settings["error"], settings["warn"], settings["info"], settings["debug"]);
+	// enable errors and warnings by default
+	m_logger.setChannels(true, true, false, false);
+	m_logger.configFromEnvVar("CLUES_LOGGING");
 	clues::set_logger(m_logger);
 }
 
