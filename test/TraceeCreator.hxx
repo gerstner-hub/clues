@@ -3,18 +3,23 @@
 // Cosmos
 #include <cosmos/proc/process.hxx>
 #include <cosmos/io/EventFile.hxx>
+#include <cosmos/io/StdLogger.hxx>
 
 // Clues
 #include <clues/Engine.hxx>
 #include <clues/EventConsumer.hxx>
+#include <clues/logger.hxx>
 
 /// This class helps creating child processes for testing tracing with libclues.
 template <typename FUNC>
 class TraceeCreator {
 public:
 	TraceeCreator(const FUNC &&func, clues::EventConsumer &consumer) :
-		m_func{std::move(func)},
-       		m_engine{consumer} {
+			m_func{std::move(func)},
+			m_engine{consumer} {
+		m_logger.setChannels(true, true, false, false);
+		m_logger.configFromEnvVar("CLUES_LOGGING");
+		clues::set_logger(m_logger);
 	}
 
 	void run() {
@@ -39,4 +44,5 @@ public:
 protected:
 	const FUNC m_func;
 	clues::Engine m_engine;
+	cosmos::StdLogger m_logger;
 };
