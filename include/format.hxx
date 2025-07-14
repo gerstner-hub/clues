@@ -66,4 +66,7 @@ CLUES_API std::string poll_events(const cosmos::PollEvents events);
 /// Returns a string like "10 (SIGINT) {si_code=<code> si_timerid=<id> ...}"
 CLUES_API std::string sig_info(const cosmos::SigInfo &info);
 
+/// Returns a debug string showing basic info about the given ptrace event.
+std::string event(const cosmos::ChildState &state);
+
 } // end ns

@@ -4,6 +4,7 @@
 #include <clues/Engine.hxx>
 #include <clues/EventConsumer.hxx>
 #include <clues/ForeignTracee.hxx>
+#include <clues/format.hxx>
 #include <clues/logger.hxx>
 
 // cosmos
@@ -124,7 +125,7 @@ void Engine::trace() {
 					continue;
 				}
 
-				LOG_WARN("received unknown trace event for PID " << cosmos::to_integral(data.child.pid));
+				LOG_WARN("received unknown trace event " << format::event(data));
 			}
 
 			break;

@@ -5,14 +5,16 @@
 #include <sys/resource.h> // *rlimit()
 
 // cosmos
+#include <cosmos/proc/ptrace.hxx>
 #include <cosmos/string.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
-#include <clues/SystemCall.hxx>
 #include <clues/format.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
+#include <clues/SystemCall.hxx>
+#include <clues/utils.hxx>
 
 namespace clues::format {
 
@@ -384,6 +386,34 @@ std::string sig_info(const cosmos::SigInfo &info) {
 	}
 
 	ss << "}";
+
+	return ss.str();
+}
+
+std::string event(const cosmos::ChildState &state) {
+	std::stringstream ss;
+
+	ss << "PID " << cosmos::to_integral(state.child.pid) << " ";
+
+	if (state.exited()) {
+		ss << "EXITED with " << cosmos::to_integral(*state.status);
+	} else if (state.trapped()) {
+		ss << "TRAPPED";
+		if (state.signal->isPtraceEventStop()) {
+			const auto [_, event] = cosmos::ptrace::decode_event(*state.signal);
+			ss << " (PTRACE_EVENT_" << get_ptrace_event_str(event) << ")";
+		}
+	} else {
+		if (state.killed())
+			ss << "KILLED ";
+		else if (state.dumped())
+			ss << "DUMPED ";
+		else if (state.continued())
+			ss << "CONTINUED ";
+		else if (state.stopped())
+			ss << "STOPPED ";
+		ss << "(" << state.signal->name() << ")";
+	}
 
 	return ss.str();
 }
