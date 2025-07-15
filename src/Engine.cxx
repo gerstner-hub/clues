@@ -29,6 +29,10 @@ Engine::~Engine() {
 			}
 		}
 	}
+
+	for (auto &pair: m_unknown_events) {
+		LOG_WARN("Unknown event for PID " << cosmos::to_integral(pair.first) << " left unprocessed");
+	}
 }
 
 TraceePtr Engine::addTracee(const cosmos::ProcessID pid, const FollowChildren follow_children,
@@ -62,6 +66,22 @@ void Engine::checkCleanupTracee(TraceeMap::iterator it) {
 	} else if (tracee.state() == Tracee::State::DEAD) {
 		tracee.detach();
 		m_tracees.erase(it);
+	}
+}
+
+void Engine::checkUnknownEvents() {
+	if (m_newly_attached_pid == cosmos::ProcessID::INVALID)
+		return;
+
+	const auto new_pid = m_newly_attached_pid;
+	m_newly_attached_pid = cosmos::ProcessID::INVALID;
+
+	if (auto it = m_unknown_events.find(new_pid); it != m_unknown_events.end()) {
+		if (handleEvent(it->second) != Decision::DONE) {
+			// this should not cause any special outcomes anymore
+			LOG_WARN("delayed handling of unknown event yielded unexpected decision");
+		}
+		m_unknown_events.erase(it);
 	}
 }
 
@@ -114,39 +134,18 @@ void Engine::trace() {
 		}
 
 		while (true) {
-			if (auto it = m_tracees.find(data.child.pid); it != m_tracees.end()) {
-				Tracee &tracee = *it->second;
-				try {
-					tracee.processEvent(data);
-				} catch (const cosmos::ApiError &ex) {
-					auto pid = cosmos::to_integral(tracee.pid());
-					if (ex.errnum() == cosmos::Errno::SEARCH) {
-						/*
-						 * this can happen when the process was killed in the
-						 * meantime, or in a multi-threaded process when
-						 * another thread called execve() in parallel.
-						 *
-						 * we _should_ still receive an exit notification
-						 * about the tracee, and the consumer can then detect
-						 * that the system call was interrupted (actually if
-						 * this is a system call exit event, then it wasn't
-						 * interrupted, but we couldn't finish tracing it.
-						 * Kind of a small loophole).
-						 */
-						LOG_INFO("tracee " << pid << " disappeared");
-					} else {
-						// something more severe
-						LOG_ERROR("tracee " << pid << " handling process event failed: " << ex.what());
-					}
+			if (const auto decision = handleEvent(data); decision == Decision::RETRY) {
+				// retry if we can process the event the next time.
+				continue;
+			} else if (decision == Decision::STORE) {
+				const auto res = m_unknown_events.insert(
+						std::make_pair(data.child.pid, std::move(data)));
+				if (!res.second) {
+					// we only expect one unknown event to appear per PID (PTRACE_EVENT_STOP)
+					LOG_WARN("additional unknown trace event for PID " <<
+							cosmos::to_integral(data.child.pid));
 				}
-
-				checkCleanupTracee(it);
-			} else {
-				if (checkUnknownTraceeEvent(data)) {
-					// retry if we can process the event this time
-					continue;
-				}
-
+			} else if (decision == Decision::DROP) {
 				LOG_WARN("received unknown trace event " << format::event(data));
 			}
 
@@ -155,7 +154,42 @@ void Engine::trace() {
 	}
 }
 
-bool Engine::checkUnknownTraceeEvent(const cosmos::ChildState &data) {
+Engine::Decision Engine::handleEvent(const cosmos::ChildState &data) {
+	if (auto it = m_tracees.find(data.child.pid); it != m_tracees.end()) {
+		Tracee &tracee = *it->second;
+		try {
+			tracee.processEvent(data);
+		} catch (const cosmos::ApiError &ex) {
+			auto pid = cosmos::to_integral(tracee.pid());
+			if (ex.errnum() == cosmos::Errno::SEARCH) {
+				/*
+				 * this can happen when the process was killed in the
+				 * meantime, or in a multi-threaded process when
+				 * another thread called execve() in parallel.
+				 *
+				 * we _should_ still receive an exit notification
+				 * about the tracee, and the consumer can then detect
+				 * that the system call was interrupted (actually if
+				 * this is a system call exit event, then it wasn't
+				 * interrupted, but we couldn't finish tracing it.
+				 * Kind of a small loophole).
+				 */
+				LOG_INFO("tracee " << pid << " disappeared");
+			} else {
+				// something more severe
+				LOG_ERROR("tracee " << pid << " handling process event failed: " << ex.what());
+			}
+		}
+
+		checkCleanupTracee(it);
+		checkUnknownEvents();
+		return Decision::DONE;
+	} else {
+		return checkUnknownTraceeEvent(data);
+	}
+}
+
+Engine::Decision Engine::checkUnknownTraceeEvent(const cosmos::ChildState &data) {
 
 	if (data.trapped() && data.signal->isPtraceEventStop()) {
 		const auto [_, event] = cosmos::ptrace::decode_event(*data.signal);
@@ -171,11 +205,30 @@ bool Engine::checkUnknownTraceeEvent(const cosmos::ChildState &data) {
 			cosmos::Tracee ptrace{data.child.pid};
 			const auto former_pid = ptrace.getPIDEventMsg();
 			LOG_DEBUG("PID " << cosmos::to_integral(former_pid) << " issued execve(), but main thread is not traced. Trying to update records.");
-			return tryUpdateTraceePID(former_pid, data.child.pid);
+			if (tryUpdateTraceePID(former_pid, data.child.pid)) {
+				return Decision::RETRY;
+			}
+
+			return Decision::DROP;
+		} else if (event == cosmos::ptrace::Event::STOP) {
+			/*
+			 * this can actually happen when an auto-attached
+			 * child tracee is created and scheduled before the
+			 * creating parent has had a chance to reports its
+			 * PTRACE_EVENT_CLONE & friend event.
+			 *
+			 * Without knowing the relation of parent/child it's
+			 * plain confusing to forwarding this to clients of
+			 * Engine. Store the event and forward it once we see
+			 * the creation event.
+			 */
+			LOG_DEBUG("PID " << cosmos::to_integral(data.child.pid)
+					<< " likely auto-attached tracee for which we didn't see the CLONE/[V]FORK event yet, storing event for later.");
+			return Decision::STORE;
 		}
 	}
 
-	return false;
+	return Decision::DROP;
 }
 
 bool Engine::tryUpdateTraceePID(const cosmos::ProcessID old_pid, const cosmos::ProcessID new_pid) {
@@ -210,6 +263,8 @@ void Engine::stop(const std::optional<cosmos::Signal> signal) {
 void Engine::handleAutoAttach(
 		Tracee &parent, const cosmos::ProcessID pid, const cosmos::ptrace::Event event) {
 
+	LOG_DEBUG("auto-attach for " << cosmos::to_integral(pid));
+
 	if (event != cosmos::ptrace::Event::VFORK_DONE) {
 		auto tracee = std::make_shared<AutoAttachedTracee>(
 				*this,
@@ -233,6 +288,13 @@ void Engine::handleAutoAttach(
 		}
 	}
 
+	/*
+	 * If we have any unknown events stored, we can now check whether they
+	 * have a matching object by now. Don't do this right away, because
+	 * `parent` is still busy processing its event. Only do this after
+	 * that is finished. This is the purpose of this flag.
+	 */
+	m_newly_attached_pid = pid;
 }
 
 TraceePtr Engine::handleSubstitution(const cosmos::ProcessID old_pid) {

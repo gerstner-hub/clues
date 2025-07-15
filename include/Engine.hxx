@@ -145,9 +145,23 @@ protected: // types
 
 	using TraceeMap = std::map<cosmos::ProcessID, TraceePtr>;
 
+	using EventMap = std::map<cosmos::ProcessID, cosmos::ChildState>;
+
+	/// Different decisions what to do with ptrace events.
+	enum class Decision {
+		RETRY, ///< retry processing the event.
+		DROP, ///< ignore/drop the event.
+		STORE, ///< store the event for later.
+		DONE, ///< the event has been successfully processed.
+	};
+
 protected: // functions
 
 	void checkCleanupTracee(TraceeMap::iterator it);
+
+	void checkUnknownEvents();
+
+	Decision handleEvent(const cosmos::ChildState &data);
 
 	void handleNoChildren();
 
@@ -158,7 +172,7 @@ protected: // functions
 	 * be performed. Otherwise `false` is returned and the event should be
 	 * discarded.
 	 **/
-	bool checkUnknownTraceeEvent(const cosmos::ChildState &data);
+	Decision checkUnknownTraceeEvent(const cosmos::ChildState &data);
 
 	bool tryUpdateTraceePID(const cosmos::ProcessID old_pid, const cosmos::ProcessID new_pid);
 
@@ -177,6 +191,10 @@ protected: // data
 
 	/// Currently active tracees.
 	TraceeMap m_tracees;
+	/// Unknown ptrace events stored for later processing.
+	EventMap m_unknown_events;
+	/// The PID of a newly auto-attached Tracee, if any.
+	cosmos::ProcessID m_newly_attached_pid = cosmos::ProcessID::INVALID;
 	EventConsumer &m_consumer;
 };
 
