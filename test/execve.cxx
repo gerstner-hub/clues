@@ -117,7 +117,7 @@ protected:
 	void newExecutionContext(clues::Tracee &tracee,
 			const std::string &old_executable,
 			const cosmos::StringVector &old_cmdline,
-			const std::optional<cosmos::ProcessID> old_pid) {
+			const std::optional<cosmos::ProcessID> old_pid) override {
 		m_old_executable = old_executable;
 		m_old_cmdline = old_cmdline;
 		m_old_pid = old_pid;

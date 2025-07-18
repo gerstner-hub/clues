@@ -312,7 +312,7 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 
 	/// This needs to be reset before returning from this function but
 	/// after `checkResumedSyscall()` is called, if at all.
-	auto defer_reset_syscall = cosmos::defer([this, &tracee, &sc]() {
+	auto defer_reset_syscall = cosmos::defer([this]() {
 		m_active_syscall.reset();
 	});
 
