@@ -43,7 +43,7 @@ std::string ClockID::str() const {
 		CASE_ENUM_TO_STR(CLOCK_BOOTTIME);
 		CASE_ENUM_TO_STR(CLOCK_PROCESS_CPUTIME_ID);
 		CASE_ENUM_TO_STR(CLOCK_THREAD_CPUTIME_ID);
-		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
+		default: return cosmos::sprintf("unknown (%d)", valueAs<clockid_t>());
 	}
 }
 
@@ -51,7 +51,7 @@ std::string ClockNanoSleepFlags::str() const {
 	switch (valueAs<int>()) {
 		CASE_ENUM_TO_STR(TIMER_ABSTIME);
 		case 0: return "<relative-time>";
-		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
+		default: return cosmos::sprintf("unknown (%d)", valueAs<clockid_t>());
 	}
 }
 

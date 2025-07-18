@@ -15,7 +15,7 @@ std::string SigSetOperation::str() const {
 		CASE_ENUM_TO_STR(SIG_BLOCK);
 		CASE_ENUM_TO_STR(SIG_UNBLOCK);
 		CASE_ENUM_TO_STR(SIG_SETMASK);
-		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
+		default: return cosmos::sprintf("unknown (%d)", valueAs<int>());
 	}
 }
 

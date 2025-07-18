@@ -57,7 +57,7 @@ void SystemCall::setEntryInfo(const Tracee &proc,
 	const uint64_t *args = info.args();
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
-		par.fill(proc, Word{args[numpar]});
+		par.fill(proc, Word{static_cast<Word>(args[numpar])});
 	}
 
 	m_error.reset();
@@ -75,7 +75,7 @@ bool SystemCall::hasOutParameter() const {
 void SystemCall::setExitInfo(const Tracee &proc,
 		const cosmos::ptrace::SyscallInfo::ExitInfo &info) {
 	if (info.isValue()) {
-		m_return->fill(proc, Word{static_cast<uint64_t>(*info.retVal())});
+		m_return->fill(proc, Word{static_cast<Word>(*info.retVal())});
 	} else {
 		m_error = ErrnoResult{*info.errVal()};
 	}

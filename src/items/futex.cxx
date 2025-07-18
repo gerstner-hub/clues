@@ -27,7 +27,7 @@ std::string FutexOperation::str() const {
 		CASE_ENUM_TO_STR(FUTEX_FD);
 		CASE_ENUM_TO_STR(FUTEX_REQUEUE);
 		CASE_ENUM_TO_STR(FUTEX_CMP_REQUEUE);
-		default: return cosmos::sprintf("unknown (%lld)", cosmos::to_integral(m_val));
+		default: return cosmos::sprintf("unknown (%d)", valueAs<int>());
 	}
 }
 
