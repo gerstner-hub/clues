@@ -65,7 +65,9 @@ env.Append(BUILDERS={'ErrnoHeaderBuilder': errnoHeaderBuilder})
 
 def buildSyscallHeader(target, source, env):
     import subprocess
-    cmdline = [env["CC"], "-E", "-dD", str(source[0])]
+    cflags = str(env.get("CCFLAGS"))
+    cflags = cflags.split() if cflags else []
+    cmdline = [env["CC"]] + cflags + ["-E", "-dD", str(source[0])]
     output = subprocess.check_output(cmdline)
     output = output.decode('utf8')
 
