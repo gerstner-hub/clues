@@ -282,7 +282,7 @@ void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
 
 void TermTracer::syscallEntry(Tracee &tracee,
 		const SystemCall &sc,
-		const State state) {
+		const StatusFlags flags) {
 
 	// this needs to be assigned before returning from this function but
 	// after startNewOutputLine() is called, if at all.
@@ -297,7 +297,7 @@ void TermTracer::syscallEntry(Tracee &tracee,
 
 	startNewOutputLine(tracee);
 
-	if (state[Status::RESUMED]) {
+	if (flags[StatusFlag::RESUMED]) {
 		std::cerr << "<resuming previously interrupted " << sc.name() << "...>\n";
 	}
 	std::cerr << sc.name() << "(";
@@ -308,7 +308,7 @@ void TermTracer::syscallEntry(Tracee &tracee,
 }
 
 void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
-		const State state) {
+		const StatusFlags flags) {
 
 	/// This needs to be reset before returning from this function but
 	/// after `checkResumedSyscall()` is called, if at all.
@@ -336,7 +336,7 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 		std::cerr << err.str() << " (errno)";
 	}
 
-	if (state[Status::INTERRUPTED]) {
+	if (flags[StatusFlag::INTERRUPTED]) {
 		std::cerr << " (interrupted)";
 	}
 
@@ -372,7 +372,7 @@ void TermTracer::attached(Tracee &tracee) {
 	}
 }
 
-void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) {
+void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const StatusFlags flags ) {
 	if (tracee.prevState() == Tracee::State::SYSCALL_ENTER_STOP) {
 		// obtain this information before the active syscall is reset below
 		const auto is_enabled = isEnabled(currentSyscall(tracee));
@@ -391,10 +391,10 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 		}
 	}
 
-	if (state[Status::LOST_TO_EXECVE]) {
+	if (flags[StatusFlag::LOST_TO_EXECVE]) {
 		startNewOutputLine(tracee);
 		std::cerr << "--- <lost to execve in another thread";
-		if (state[Status::EXECVE_REPLACE_PENDING]) {
+		if (flags[StatusFlag::EXECVE_REPLACE_PENDING]) {
 			std::cerr << " [waiting to be replaced by exec'ing thread]";
 		}
 		std::cerr << "> ---\n";

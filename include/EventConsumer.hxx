@@ -13,14 +13,28 @@ namespace clues {
 class Tracee;
 class SystemCall;
 
-/// Pure virtual interface for consumers of tracing events.
+/// Callback interface for consumers of tracing events.
+/**
+ * This is the main point of interaction between the Engine class and its
+ * users. Tracing events for all active tracees will be delivered via this
+ * interface.
+ *
+ * libclues currently operates in a single-threaded mode only. This means
+ * there will only one callback every be active at any given time. You should
+ * not block in the context of callbacks to prevent tracing to get stuck.
+ *
+ * Clients only need to override those methods that they are interested in. If
+ * FollowChildren is active, then the `attached()` callback offers the
+ * possibility to detach from automatically attached child processes.
+ * Otherwise they will be fully traced as well.
+ **/
 class EventConsumer {
 	friend class Tracee;
 	friend class Engine;
 public: // types
 
 	/// Different status flags that can appear in callbacks.
-	enum class Status {
+	enum class StatusFlag {
 		/// A system call was interrupted (only appears during syscallExit()).
 		INTERRUPTED            = 1 << 0,
 		/// A previously interrupted system call is resumed (only appears during syscallEntry()).
@@ -31,20 +45,20 @@ public: // types
 		EXECVE_REPLACE_PENDING = 1 << 3,
 	};
 
-	using State = cosmos::BitMask<Status>;
+	using StatusFlags = cosmos::BitMask<StatusFlag>;
 
 protected: // functions
 
-	virtual void syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) {
+	virtual void syscallEntry(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) {
 		(void)tracee;
 		(void)sc;
-		(void)state;
+		(void)flags;
 	}
 
-	virtual void syscallExit(Tracee &tracee, const SystemCall &sc, const State state) {
+	virtual void syscallExit(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) {
 		(void)tracee;
 		(void)sc;
-		(void)state;
+		(void)flags;
 	}
 
 	/// The tracee is now properly attached to.
@@ -103,10 +117,10 @@ protected: // functions
 	 * If the exit happens due to an execve in a multi-threaded
 	 * process then Status::LOST_TO_EXECVE is set in `state`.
 	 **/
-	virtual void exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) {
+	virtual void exited(Tracee &tracee, const cosmos::WaitStatus status, const StatusFlags flags) {
 		(void)tracee;
 		(void)status;
-		(void)state;
+		(void)flags;
 	}
 
 	/// A new program is executed in the tracee.

@@ -364,7 +364,7 @@ void Tracee::handleSystemCall() {
 }
 
 void Tracee::handleSystemCallEntry() {
-	EventConsumer::State state;
+	EventConsumer::StatusFlags flags;
 	auto &info = *m_syscall_info->entryInfo();
 
 	const SystemCallNr nr{info.syscallNr()};
@@ -373,7 +373,7 @@ void Tracee::handleSystemCallEntry() {
 	if (nr == SystemCallNr::RESTART_SYSCALL) {
 		if (m_interrupted_syscall) {
 			m_current_syscall = m_interrupted_syscall;
-			state.set(EventConsumer::Status::RESUMED);
+			flags.set(EventConsumer::StatusFlag::RESUMED);
 		} else if (m_syscall_ctr != 0) {
 			// explicit restart_syscall done by user space?
 			LOG_WARN_PID("unknown system call is resumed");
@@ -400,17 +400,17 @@ void Tracee::handleSystemCallEntry() {
 			const auto orig_syscall = m_initial_regset.syscall();
 			if (orig_syscall != SystemCallNr::RESTART_SYSCALL && SystemCall::validNr(orig_syscall)) {
 				m_current_syscall = &m_syscall_db.get(orig_syscall);
-				state.set(EventConsumer::Status::RESUMED);
+				flags.set(EventConsumer::StatusFlag::RESUMED);
 			}
 		}
 	}
 	m_current_syscall->setEntryInfo(*this, info);
 	m_syscall_ctr++;
-	m_consumer.syscallEntry(*this, *m_current_syscall, state);
+	m_consumer.syscallEntry(*this, *m_current_syscall, flags);
 }
 
 void Tracee::handleSystemCallExit() {
-	EventConsumer::State state;
+	EventConsumer::StatusFlags flags;
 	auto &syscall = *m_current_syscall;
 
 	syscall.setExitInfo(*this, *m_syscall_info->exitInfo());
@@ -419,12 +419,12 @@ void Tracee::handleSystemCallExit() {
 	if (auto error = syscall.error(); error && error->hasKernelErrorCode()) {
 		// system call was interrupted, remember it for later
 		m_interrupted_syscall = m_current_syscall;
-		state.set(EventConsumer::Status::INTERRUPTED);
+		flags.set(EventConsumer::StatusFlag::INTERRUPTED);
 	} else {
 		m_interrupted_syscall = nullptr;
 	}
 
-	m_consumer.syscallExit(*this, syscall, state);
+	m_consumer.syscallExit(*this, syscall, flags);
 }
 
 void Tracee::handleSignal(const cosmos::SigInfo &info) {
@@ -486,7 +486,7 @@ void Tracee::handleStopEvent(const cosmos::Signal signal) {
 
 void Tracee::handleExitEvent() {
 
-	EventConsumer::State state;
+	EventConsumer::StatusFlags flags;
 
 	/*
 	 * Detecting "lost to execve" is a bit of a heuristic:
@@ -506,18 +506,18 @@ void Tracee::handleExitEvent() {
 				{SystemCallNr::EXIT_GROUP, SystemCallNr::EXIT}))) {
 		// the exit status in this case is simply 0
 		LOG_INFO_PID("execve() related exit detected");
-		state.set(EventConsumer::Status::LOST_TO_EXECVE);
+		flags.set(EventConsumer::StatusFlag::LOST_TO_EXECVE);
 
 		if (isThreadGroupLeader()) {
 			// this Tracee will be replaced with another thread
 			// from the same process
 			// TODO: do we actually need this flag for anything?
 			m_flags.set(Flag::WAIT_FOR_EXECVE_REPLACEMENT);
-			state.set(EventConsumer::Status::EXECVE_REPLACE_PENDING);
+			flags.set(EventConsumer::StatusFlag::EXECVE_REPLACE_PENDING);
 		}
 	}
 
-	m_consumer.exited(*this, wait_status, state);
+	m_consumer.exited(*this, wait_status, flags);
 
 	m_flags.set(Flag::WAIT_FOR_EXITED);
 }

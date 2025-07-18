@@ -130,15 +130,15 @@ protected: // functions
 
 protected: // event consumer interface
 
-	void syscallEntry(Tracee &tracee, const SystemCall &sc, const State state) override;
+	void syscallEntry(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) override;
 
-	void syscallExit(Tracee &tracee, const SystemCall &sc, const State state) override;
+	void syscallExit(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) override;
 
 	void signaled(Tracee &tracee, const cosmos::SigInfo &info) override;
 
 	void attached(Tracee &tracee) override;
 
-	void exited(Tracee &tracee, const cosmos::WaitStatus status, const State state) override;
+	void exited(Tracee &tracee, const cosmos::WaitStatus status, const StatusFlags flags) override;
 
 	void newExecutionContext(Tracee &tracee,
 			const std::string &old_exe,

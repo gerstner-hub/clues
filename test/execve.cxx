@@ -84,7 +84,7 @@ public:
 protected:
 	void syscallEntry(clues::Tracee &,
 			const clues::SystemCall &call,
-			const State) override {
+			const StatusFlags) override {
 		if (call.callNr() == m_exec_nr) {
 			m_seen_exec_entry++;
 		}
@@ -92,7 +92,7 @@ protected:
 
 	void syscallExit(clues::Tracee &,
 			const clues::SystemCall &call,
-			const State) override {
+			const StatusFlags) override {
 		if (call.callNr() == m_exec_nr) {
 			m_seen_exec_exit++;
 			if (call.hasResultValue()) {
@@ -106,9 +106,9 @@ protected:
 		m_attached_pids.push_back(tracee.pid());
 	}
 
-	void exited(clues::Tracee &, const cosmos::WaitStatus status, const State state) override {
+	void exited(clues::Tracee &, const cosmos::WaitStatus status, const StatusFlags state) override {
 		m_seen_exits++;
-		if (state[Status::LOST_TO_EXECVE]) {
+		if (state[StatusFlag::LOST_TO_EXECVE]) {
 			m_seen_lost_to_execve++;
 		}
 		m_status = status;
