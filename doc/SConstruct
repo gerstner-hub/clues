@@ -10,4 +10,3 @@ states_cmd = doc_env.Command(
     'states.gv',
     action='dot -Tpdf $SOURCE -o $TARGET')
 env.Alias('states_graph', states_cmd)
-

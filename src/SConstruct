@@ -110,7 +110,7 @@ def buildSyscallHeader(target, source, env):
         out_fd.write("constexpr std::array<const char* const, SYSTEM_CALL_COUNT> SYSTEM_CALL_NAMES = {\n")
         for nr in range(max_number):
             number_str = numbers.get(nr, None)
-            label = syscalls.get(number_str, "").lstrip("SYS_");
+            label = syscalls.get(number_str, "").lstrip("SYS_")
             out_fd.write(f'\t"{label}",\n')
         out_fd.write("};\n")
         out_fd.write("const std::map<std::string_view, SystemCallNr> SYSTEM_CALL_NAME_MAP = {\n")
@@ -123,6 +123,7 @@ def buildSyscallHeader(target, source, env):
         out_fd.write("\n\n} // end ns\n")
 
     return 0
+
 
 syscallHeaderBuilder = env.Builder(action=buildSyscallHeader, suffix='.hxx', src_suffix='.cxx')
 env.Append(BUILDERS={'SyscallHeaderBuilder': syscallHeaderBuilder})

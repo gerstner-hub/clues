@@ -37,6 +37,7 @@ for test in tests:
 env.Alias("tests", "clues_tests")
 env.Alias('run_tests', 'run_clues_tests')
 
+
 def inc_test_builder(env, target, source):
     inc = str(source[0]).split('include/')[1]
     with open(str(target[0]), 'w') as fd:
