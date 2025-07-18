@@ -8,8 +8,8 @@ tests = env.GatherSources(suffixes=['.cxx'], recursive=False)
 
 test_env = env.Clone()
 static_lib_sources = []
-test_env.ConfigureForLibOrPackage('libcosmos', static_lib_sources)
 test_env.ConfigureForLibOrPackage('libclues', static_lib_sources)
+test_env.ConfigureForLibOrPackage('libcosmos', static_lib_sources)
 
 run_env = test_env.Clone()
 if not env['use_system_pkgs']:
