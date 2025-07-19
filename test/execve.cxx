@@ -5,6 +5,7 @@
 // Cosmos
 #include <cosmos/fs/File.hxx>
 #include <cosmos/fs/filesystem.hxx>
+#include <cosmos/fs/path.hxx>
 #include <cosmos/proc/process.hxx>
 #include <cosmos/thread/Condition.hxx>
 #include <cosmos/thread/PosixThread.hxx>
@@ -154,17 +155,37 @@ cosmos::pthread::ExitValue thread_entry_blocking(cosmos::pthread::ThreadArg) {
 	return cosmos::pthread::ExitValue{0};
 }
 
-cosmos::pthread::ExitValue thread_entry_exec(cosmos::pthread::ThreadArg) {
-	auto true_exe = cosmos::fs::which("true");
-	cosmos::proc::exec(*true_exe);
-	return cosmos::pthread::ExitValue{0};
+cosmos::pthread::ExitValue thread_entry_exec(cosmos::pthread::ThreadArg exiter_ptr) {
+	const char *exiter = reinterpret_cast<const char*>(exiter_ptr);
+	cosmos::proc::exec(exiter);
+	return cosmos::pthread::ExitValue{1};
 }
 
 class ExecveTest : public cosmos::TestBase {
 	void runTests() override {
+		findExiter();
 		testRegularExecve();
 		testMainThreadExecve();
 		testOtherThreadExecve();
+	}
+
+	void findExiter() {
+		/*
+		 * we need our own custom helper tool to execute while tracing
+		 * e.g. for the '-m32' build use case, because a 32-bit tracer
+		 * cannot (sensibly) trace a 64-bit program.
+		 * the exiter replaces the true/false binaries and exits with
+		 * the parameter passed to it.
+		 */
+		std::string dir{m_argv.at(0)};
+		dir = dir.substr(0, dir.rfind('/'));
+		auto exiter = dir + "/exiter";
+		exiter = cosmos::fs::canonicalize_path(exiter);
+		if (!cosmos::fs::exists_file(exiter)) {
+			throw cosmos::RuntimeError{"couldn't find exiter"};
+		}
+
+		m_exiter = exiter;
 	}
 
 	void testRegularExecve() {
@@ -172,14 +193,9 @@ class ExecveTest : public cosmos::TestBase {
 
 		ExecveTracer tracer{clues::SystemCallNr::EXECVE};
 
-		// lookup the exact path beforehand to avoid additional
-		// execve() attempts when only using the basename
-		auto true_exe = cosmos::fs::which("true");
-
-		RUN_STEP("find-true-executable", true_exe != std::nullopt);
-
-		TraceeCreator creator{[&true_exe]() {
-				cosmos::proc::exec(*true_exe);
+		TraceeCreator creator{[this]() {
+				// without parameters, it returns a 0 exit status
+				cosmos::proc::exec(m_exiter);
 			}, tracer};
 		creator.run();
 
@@ -195,7 +211,7 @@ class ExecveTest : public cosmos::TestBase {
 				tracer.waitStatus()->exited() &&
 				tracer.waitStatus()->status() == cosmos::ExitStatus::SUCCESS);
 		RUN_STEP("execve-old-pid-is-not-there", tracer.oldPID() == std::nullopt);
-		RUN_STEP("new-executable-matches-true", tracer.newExecutable() == true_exe);
+		RUN_STEP("new-executable-matches-true", tracer.newExecutable() == m_exiter);
 		if (!onValgrind()) {
 			// when running on valgrind then there's a valgrind frontend instead, confusing things
 			RUN_STEP("old-executable-is-us", tracer.oldExecutable().find("execve") != std::string::npos);
@@ -209,13 +225,9 @@ class ExecveTest : public cosmos::TestBase {
 		// test this time with fexecve() (EXECVEAT system call)
 		ExecveTracer tracer{clues::SystemCallNr::EXECVEAT};
 
-		auto false_exe = cosmos::fs::which("false");
+		cosmos::File exiter_fd{m_exiter, cosmos::OpenMode::READ_ONLY};
 
-		RUN_STEP("find-false-executable", false_exe != std::nullopt);
-
-		cosmos::File false_exe_fd{*false_exe, cosmos::OpenMode::READ_ONLY};
-
-		TraceeCreator creator{[&false_exe_fd]() {
+		TraceeCreator creator{[&exiter_fd]() {
 				// create a random thread that just sits there
 				cosmos::PosixThread thread{
 					thread_entry_blocking, cosmos::pthread::ThreadArg{0}};
@@ -224,7 +236,7 @@ class ExecveTest : public cosmos::TestBase {
 					condition.wait();
 				}
 				condition.unlock();
-				cosmos::proc::fexec(false_exe_fd.fd(), cosmos::CStringVector{"false", nullptr});
+				cosmos::proc::fexec(exiter_fd.fd(), cosmos::CStringVector{"exiter", "1", nullptr});
 				thread.join();
 			}, tracer};
 		creator.run(clues::FollowChildren{true});
@@ -245,7 +257,7 @@ class ExecveTest : public cosmos::TestBase {
 				tracer.waitStatus()->exited() &&
 				tracer.waitStatus()->status() == cosmos::ExitStatus::FAILURE);
 		RUN_STEP("execve-old-pid-is-not-there", tracer.oldPID() == std::nullopt);
-		RUN_STEP("new-executable-matches-false", tracer.newExecutable() == false_exe);
+		RUN_STEP("new-executable-matches-exiter", tracer.newExecutable() == m_exiter);
 		if (!onValgrind()) {
 			// when running on valgrind then there's a valgrind frontend instead, confusing things
 			RUN_STEP("old-executable-is-us", tracer.oldExecutable().find("execve") != std::string::npos);
@@ -258,10 +270,10 @@ class ExecveTest : public cosmos::TestBase {
 
 		ExecveTracer tracer{clues::SystemCallNr::EXECVE};
 
-		TraceeCreator creator{[]() {
+		TraceeCreator creator{[this]() {
 				// create a random thread that runs execve
 				cosmos::PosixThread thread{
-					thread_entry_exec, cosmos::pthread::ThreadArg{0}};
+					thread_entry_exec, cosmos::pthread::ThreadArg{(intptr_t)m_exiter.c_str()}};
 				// just block to avoid an exit of the main thread.
 				thread.join();
 			}, tracer};
@@ -279,13 +291,16 @@ class ExecveTest : public cosmos::TestBase {
 				tracer.waitStatus()->exited() &&
 				tracer.waitStatus()->status() == cosmos::ExitStatus::SUCCESS);
 		RUN_STEP("execve-old-pid-matches-other-thread", tracer.oldPID() == tracer.attachedPIDs().back());
-		RUN_STEP("new-executable-matches-true", tracer.newExecutable().find("true") != std::string::npos);
+		RUN_STEP("new-executable-matches-exiter", tracer.newExecutable().find("exiter") != std::string::npos);
 		if (!onValgrind()) {
 			// when running on valgrind then there's a valgrind frontend instead, confusing things
 			RUN_STEP("old-executable-is-us", tracer.oldExecutable().find("execve") != std::string::npos);
 			RUN_STEP("old-cmdline-is-ours", tracer.oldCmdline() == m_argv);
 		}
 	}
+protected:
+	/// path to the exiter helper
+	std::string m_exiter;
 };
 
 int main(const int argc, const char **argv) {
