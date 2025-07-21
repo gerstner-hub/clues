@@ -63,37 +63,43 @@ TermTracer::TermTracer() :
 }
 
 bool TermTracer::processPars() {
-	auto max_len = m_args.max_value_len.getValue();
 
-	if (max_len == 0)
-		m_print_values = false;
-	else if (max_len < 0)
-		m_value_truncation_len = SIZE_MAX;
-	else
-		m_value_truncation_len = static_cast<size_t>(max_len);
+	auto handle_bad_arg = [](auto &arg) {
+		std::cerr << "bad argument to --" << arg.getName() << ": '" << arg.getValue() << "'\n";
+		return false;
+	};
 
 	if (m_args.list_syscalls.isSet()) {
 		printSyscalls();
 		throw cosmos::ExitStatus::SUCCESS;
 	}
 
+	if (const auto max_len = m_args.max_value_len.getValue(); max_len == 0)
+		m_print_values = false;
+	else if (max_len < 0)
+		m_value_truncation_len = SIZE_MAX;
+	else
+		m_value_truncation_len = static_cast<size_t>(max_len);
+
 	if (m_args.follow_execve.isSet()) {
-		const auto &arg = m_args.follow_execve.getValue();
+		const auto &follow = m_args.follow_execve.getValue();
 		constexpr std::string_view PATH_PREFIX{"path:"};
 		constexpr std::string_view GLOB_PREFIX{"glob:"};
 
-		if (arg == "yes") {
+		if (follow == "yes") {
 			m_follow_exec = FollowExecContext::YES;
-		} else if (arg == "no") {
+		} else if (follow == "no") {
 			m_follow_exec = FollowExecContext::NO;
-		} else if (arg == "ask") {
+		} else if (follow == "ask") {
 			m_follow_exec = FollowExecContext::ASK;
-		} else if (cosmos::is_prefix(arg, PATH_PREFIX)) {
+		} else if (cosmos::is_prefix(follow, PATH_PREFIX)) {
 			m_follow_exec = FollowExecContext::CHECK_PATH;
-			m_exec_context_arg = arg.substr(PATH_PREFIX.size());
-		} else if (cosmos::is_prefix(arg, GLOB_PREFIX)) {
+			m_exec_context_arg = follow.substr(PATH_PREFIX.size());
+		} else if (cosmos::is_prefix(follow, GLOB_PREFIX)) {
 			m_follow_exec = FollowExecContext::CHECK_GLOB;
-			m_exec_context_arg = arg.substr(GLOB_PREFIX.size());
+			m_exec_context_arg = follow.substr(GLOB_PREFIX.size());
+		} else {
+			return handle_bad_arg(m_args.follow_execve);
 		}
 	}
 
@@ -103,18 +109,18 @@ bool TermTracer::processPars() {
 	} else if (m_args.follow_children_switch.isSet()) {
 		m_follow_children = FollowChildMode::YES;
 	} else if (m_args.follow_children.isSet()) {
-		const auto &arg = m_args.follow_children.getValue();
+		const auto &follow = m_args.follow_children.getValue();
 
-		if (arg == "yes") {
+		if (follow == "yes") {
 			m_follow_children = FollowChildMode::YES;
-		} else if (arg == "no") {
+		} else if (follow == "no") {
 			m_follow_children = FollowChildMode::NO;
-		} else if (arg == "ask") {
+		} else if (follow == "ask") {
 			m_follow_children = FollowChildMode::ASK;
-		} else if (arg == "threads") {
+		} else if (follow == "threads") {
 			m_follow_children = FollowChildMode::THREADS;
-		} else { std::cerr << "invalid argument to --follow-children: " << arg << "\n";
-			return false;
+		} else {
+			return handle_bad_arg(m_args.follow_children);
 		}
 	}
 
@@ -128,8 +134,7 @@ bool TermTracer::processPars() {
 	}
 
 	if (m_args.syscall_filter.isSet()) {
-		auto parts = cosmos::split(m_args.syscall_filter.getValue(),
-				",");
+		auto parts = cosmos::split(m_args.syscall_filter.getValue(), ",");
 
 		auto translate_name = [](const std::string_view name) {
 			if (auto nr = lookup_system_call(name); nr) {
