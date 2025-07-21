@@ -728,6 +728,9 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 		m_engine.trace();
 	} catch (const std::exception &ex) {
 		std::cerr << "internal tracing error: " << ex.what() << std::endl;
+		// try to do a hard exit to avoid blocking in the Engine's
+		// destructor, should the state be messed up
+		cosmos::proc::exit(FAILURE);
 	}
 
 	auto status = cosmos::ExitStatus::SUCCESS;
