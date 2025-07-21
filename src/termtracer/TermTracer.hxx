@@ -82,7 +82,7 @@ protected: // functions
 	 * It also cares about managing the system call state to make sure
 	 * unfinished system calls are kept track of.
 	 **/
-	void startNewOutputLine(const Tracee &tracee);
+	void startNewLine(const Tracee &tracee);
 
 	/// Store an active system call in m_unfinished_syscalls.
 	/**
@@ -119,7 +119,7 @@ protected: // functions
 
 	bool isExecSyscall(const SystemCall &sc) const;
 
-	/// Returns `true` if `sc` is supposed to the printed.
+	/// Returns `true` if `sc` is set and supposed to the printed.
 	bool isEnabled(const SystemCall *sc) const;
 
 	/// Returns the system call last seen for `tracee`.
