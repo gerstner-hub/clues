@@ -190,7 +190,7 @@ void TermTracer::configureLogger() {
 	clues::set_logger(m_logger);
 }
 
-void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) const {
+void TermTracer::printParsOnEntry(const SystemCall::ParameterVector &pars) const {
 	/*
 	 * This logic covers printing of parameters during system-call entry.
 	 *
@@ -217,7 +217,7 @@ void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) const {
 	if (pars.empty())
 		return;
 
-	const auto last = pars.back();
+	const auto &last = pars.back();
 
 	for (const auto &par: pars) {
 		if (!par->isIn()) {
@@ -225,15 +225,19 @@ void TermTracer::printEntryPars(const SystemCall::ParameterVector &pars) const {
 			break;
 		}
 
-		printPar(*par, par == last);
+		printPar(*par);
+
+		if (const auto is_last = &par == &last; !is_last) {
+			std::cerr << ", ";
+		}
 	}
 }
 
-void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
+void TermTracer::printParsOnExit(const SystemCall::ParameterVector &pars) const {
 	if (pars.empty())
 		return;
 
-	const auto last = pars.back();
+	const auto &last = pars.back();
 	bool seen_non_input = false;
 
 	for (const auto &par: pars) {
@@ -246,7 +250,11 @@ void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
 			}
 		}
 
-		printPar(*par, par == last);
+		printPar(*par);
+
+		if (const auto is_last = &par == &last; !is_last) {
+			std::cerr << ", ";
+		}
 	}
 }
 
@@ -271,7 +279,7 @@ void TermTracer::printTraceeInvocation(std::ostream &out,
 	out << "]";
 }
 
-void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
+void TermTracer::printPar(const SystemCallItem &par) const {
 	std::cerr << (m_args.verbose.isSet() ? par.longName() : par.shortName());
 
 	if (m_print_values) {
@@ -283,10 +291,6 @@ void TermTracer::printPar(const SystemCallItem &par, const bool is_last) const {
 		}
 
 		std::cerr << "=" << value;
-	}
-
-	if (!is_last) {
-		std::cerr << ", ";
 	}
 }
 
@@ -312,7 +316,7 @@ void TermTracer::syscallEntry(Tracee &tracee,
 	}
 	std::cerr << sc.name() << "(";
 
-	printEntryPars(sc.parameters());
+	printParsOnEntry(sc.parameters());
 
 	std::cerr << std::flush;
 }
@@ -335,7 +339,7 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 
 	checkResumedSyscall(tracee);
 
-	printExitPars(sc.parameters());
+	printParsOnExit(sc.parameters());
 
 	std::cerr << ") = ";
 

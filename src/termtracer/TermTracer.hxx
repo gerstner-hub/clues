@@ -67,9 +67,9 @@ protected: // functions
 	void printTraceeInvocation(std::ostream &out,
 			const std::string &exe,
 			const cosmos::StringVector &cmdline) const;
-	void printPar(const SystemCallItem &value, const bool is_last) const;
-	void printEntryPars(const SystemCall::ParameterVector &pars) const;
-	void printExitPars(const SystemCall::ParameterVector &pars) const;
+	void printPar(const SystemCallItem &value) const;
+	void printParsOnEntry(const SystemCall::ParameterVector &pars) const;
+	void printParsOnExit(const SystemCall::ParameterVector &pars) const;
 
 	bool followExecutionContext(Tracee &tracee);
 
