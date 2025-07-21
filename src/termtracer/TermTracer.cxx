@@ -14,6 +14,7 @@
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/CosmosError.hxx>
 #include <cosmos/formatting.hxx>
+#include <cosmos/proc/process.hxx>
 #include <cosmos/proc/signal.hxx>
 #include <cosmos/string.hxx>
 #include <cosmos/utils.hxx>
@@ -249,6 +250,10 @@ void TermTracer::printExitPars(const SystemCall::ParameterVector &pars) const {
 	}
 }
 
+void TermTracer::printTraceeInvocation(std::ostream &out, const Tracee &tracee) {
+	printTraceeInvocation(out, tracee.executable(), tracee.cmdLine());
+}
+
 void TermTracer::printTraceeInvocation(std::ostream &out,
 		const std::string &exe,
 		const cosmos::StringVector &cmdline) const {
@@ -466,7 +471,7 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 	}
 	startNewOutputLine(tracee);
 	std::cerr << "--- now running ";
-	printTraceeInvocation(std::cerr, tracee.executable(), tracee.cmdLine());
+	printTraceeInvocation(std::cerr, tracee);
 	std::cerr << " ---\n";
 
 	if (!m_seen_initial_exec) {
@@ -488,7 +493,7 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 		const auto pid  = cosmos::to_integral(parent.pid());
 		std::cout << "Follow into new child process created by PID " << pid << " via " << to_label(event) << "?\n";
 		std::cout << "PID " << pid << " is ";
-		printTraceeInvocation(std::cout, parent.executable(), parent.cmdLine());
+		printTraceeInvocation(std::cout, parent);
 		std::cout << "\n";
 		follow = ask_yes_no() ? FollowChildMode::YES : FollowChildMode::NO;
 	} else if (follow == FollowChildMode::THREADS) {
@@ -650,7 +655,7 @@ void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_
 	}
 }
 
-bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
+bool TermTracer::configureTracee(const cosmos::ProcessID pid) {
 	// this is only for newly created child processes
 	m_seen_initial_exec = true;
 	TraceePtr tracee;
@@ -667,14 +672,14 @@ bool TermTracer::configureTrace(const cosmos::ProcessID pid) {
 		std::cerr << "Failed to attach to PID " << pid << ": " << e.msg() << "\n";
 		if (e.errnum() == cosmos::Errno::PERMISSION) {
 			std::cerr << "You need to be root to attach to processes not owned by you\n";
-			std::cerr << "The YAMA kernel security extension can prevent attaching your own processes.\n";
+			std::cerr << "The YAMA kernel security extension can also prevent attaching your own processes.\n";
 			std::cerr << "This also happens when another process is already tracing this process.\n";
 		}
 		return false;
 	}
 
 	std::cerr << "--- tracing ";
-	printTraceeInvocation(std::cerr, tracee->executable(), tracee->cmdLine());
+	printTraceeInvocation(std::cerr, *tracee);
 	std::cerr << " ---\n";
 
 	return true;
@@ -693,7 +698,7 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 	cosmos::signal::block(cosmos::SigSet{cosmos::signal::CHILD});
 
 	if (m_args.attach_proc.isSet()) {
-		if (!configureTrace(cosmos::ProcessID{m_args.attach_proc.getValue()})) {
+		if (!configureTracee(cosmos::ProcessID{m_args.attach_proc.getValue()})) {
 			return FAILURE;
 		}
 	} else {
@@ -704,7 +709,7 @@ cosmos::ExitStatus TermTracer::main(const int argc, const char **argv) {
 		for (auto arg = 1; arg < argc; arg++) {
 			if (found_sep) {
 				sv.push_back(argv[arg]);
-			} else if (std::string(argv[arg]) == "--") {
+			} else if (std::string{argv[arg]} == "--") {
 				found_sep = true;
 			}
 		}

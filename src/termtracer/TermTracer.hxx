@@ -57,12 +57,13 @@ protected: // functions
 
 	cosmos::ExitStatus main(const int argc, const char **argv) override;
 
-	bool configureTrace(const cosmos::ProcessID pid);
+	bool configureTracee(const cosmos::ProcessID pid);
 
 	void runTrace();
 
 	void configureLogger();
 
+	void printTraceeInvocation(std::ostream &out, const Tracee &tracee);
 	void printTraceeInvocation(std::ostream &out,
 			const std::string &exe,
 			const cosmos::StringVector &cmdline) const;
