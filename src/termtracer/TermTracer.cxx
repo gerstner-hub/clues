@@ -682,6 +682,8 @@ bool TermTracer::configureTracee(const cosmos::ProcessID pid) {
 	printTraceeInvocation(std::cerr, *tracee);
 	std::cerr << " ---\n";
 
+	m_main_tracee_pid = tracee->pid();
+
 	return true;
 }
 
