@@ -185,16 +185,21 @@ protected: // data
 	std::string m_exec_context_arg;
 	/// Whitelist of system calls to trace, if any.
 	std::set<SystemCallNr> m_syscall_filter;
+	/// Behaviour upon newExecutionContext()
+	FollowExecContext m_follow_exec = FollowExecContext::YES;
+	/// Behaviour upon newChildProcess()
+	FollowChildMode m_follow_children = FollowChildMode::NO;
 
+	/// The number of tracees we're currently dealing with.
+	size_t m_num_tracees = 0;
+	/// State flags with global context or carried between different callbacks.
 	Flags m_flags;
 	/// The PID of the main process we're tracing (the one we created or attached to).
 	cosmos::ProcessID m_main_tracee_pid;
 	/// The WaitStatus of the main process we've seen upon it exiting.
 	std::optional<cosmos::WaitStatus> m_main_status;
 
-	/// The number of tracees we're currently dealing with.
-	size_t m_num_tracees = 0;
-
+	/// A currently active system call, if any.
 	std::optional<std::tuple<cosmos::ProcessID, const SystemCall*>> m_active_syscall;
 	/// Unfinished / preempted system calls.
 	/**
@@ -203,10 +208,6 @@ protected: // data
 	 * while another event came in, preempting this line.
 	 **/
 	std::map<cosmos::ProcessID, const SystemCall*> m_unfinished_syscalls;
-
-	FollowExecContext m_follow_exec = FollowExecContext::YES;
-	FollowChildMode m_follow_children = FollowChildMode::NO;
-
 	/// Newly created tracees that haven't seen any ptrace stop yet
 	std::map<cosmos::ProcessID, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
 };
