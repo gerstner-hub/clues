@@ -76,11 +76,11 @@ bool TermTracer::processPars() {
 	}
 
 	if (const auto max_len = m_args.max_value_len.getValue(); max_len == 0)
-		m_print_values = false;
+		m_print_pars = false;
 	else if (max_len < 0)
-		m_value_truncation_len = SIZE_MAX;
+		m_par_truncation_len = SIZE_MAX;
 	else
-		m_value_truncation_len = static_cast<size_t>(max_len);
+		m_par_truncation_len = static_cast<size_t>(max_len);
 
 	if (m_args.follow_execve.isSet()) {
 		const auto &follow = m_args.follow_execve.getValue();
@@ -282,11 +282,11 @@ void TermTracer::printTraceeInvocation(std::ostream &out,
 void TermTracer::printPar(const SystemCallItem &par) const {
 	std::cerr << (m_args.verbose.isSet() ? par.longName() : par.shortName());
 
-	if (m_print_values) {
+	if (m_print_pars) {
 		auto value = par.str();
 
-		if (value.size() > m_value_truncation_len) {
-			value.resize(m_value_truncation_len);
+		if (value.size() > m_par_truncation_len) {
+			value.resize(m_par_truncation_len);
 			value += "...";
 		}
 

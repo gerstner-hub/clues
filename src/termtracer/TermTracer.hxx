@@ -162,12 +162,30 @@ protected: // data
 	cosmos::StdLogger m_logger;
 	cosmos::Init m_cosmos;
 
+	/// libclues main object.
 	Engine m_engine;
+
+	/// Whether to print system call parameters at all (-s 0 disables it).
+	bool m_print_pars = true;
+	/// Maximum length of of system call parameter values to print before truncating the output.
+	size_t m_par_truncation_len = 64;
+	/// optional argument to m_follow_exec (e.g. path, glob, script)
+	std::string m_exec_context_arg;
+	/// Whitelist of system calls to trace, if any.
+	std::set<SystemCallNr> m_syscall_filter;
+
+	/// The PID of the main process we're tracing (the one we created or attached to).
 	cosmos::ProcessID m_main_tracee_pid;
+	/// The WaitStatus of the main process we've seen upon it exiting.
 	std::optional<cosmos::WaitStatus> m_main_status;
 
+	/// The number of tracees we're currently dealing with.
+	size_t m_num_tracees = 0;
+	/// Whether we've seen the initial newExecutionContext() of a ChildTracee already.
 	bool m_seen_initial_exec = false;
-	bool m_print_values = true;
+	/// Whether we've had multiple tracees but lost all but one again.
+	bool m_dropped_to_single_tracee = false;
+
 	std::optional<std::tuple<cosmos::ProcessID, const SystemCall*>> m_active_syscall;
 	/// Unfinished / preempted system calls.
 	/**
@@ -176,21 +194,12 @@ protected: // data
 	 * while another event came in, preempting this line.
 	 **/
 	std::map<cosmos::ProcessID, const SystemCall*> m_unfinished_syscalls;
-	size_t m_value_truncation_len = 64;
 
 	FollowExecContext m_follow_exec = FollowExecContext::YES;
 	FollowChildMode m_follow_children = FollowChildMode::NO;
-	/// optional argument to m_follow_exec (e.g. path, glob, script)
-	std::string m_exec_context_arg;
 
-	/// The number of tracees we're currently dealing with.
-	size_t m_num_tracees = 0;
-	/// Whether we've had multiple tracees but lost all but one again.
-	bool m_dropped_to_single_tracee = false;
 	/// Newly created tracees that haven't seen any ptrace stop yet
 	std::map<cosmos::ProcessID, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
-	/// Whitelist of systm calls to trace, if any.
-	std::set<SystemCallNr> m_syscall_filter;
 };
 
 } // end ns
