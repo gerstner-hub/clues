@@ -417,7 +417,7 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 	if (status.exited()) {
 		startNewLine(tracee);
 		std::cerr << "+++ exited with " << cosmos::to_integral(*status.status()) << " +++\n";
-		if (!m_seen_initial_exec) {
+		if (!seenInitialExec()) {
 			std::cerr << "!!! failed to execute the specified program\n";
 		}
 	} else {
@@ -467,7 +467,7 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 		std::cerr << "--- PID " << cosmos::to_integral(*old_pid) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
 	}
 
-	if (m_seen_initial_exec) {
+	if (seenInitialExec()) {
 		startNewLine(tracee);
 		std::cerr << "--- no longer running " ;
 		printTraceeInvocation(std::cerr, old_exe, old_cmdline);
@@ -478,8 +478,8 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 	printTraceeInvocation(std::cerr, tracee);
 	std::cerr << " ---\n";
 
-	if (!m_seen_initial_exec) {
-		m_seen_initial_exec = true;
+	if (!seenInitialExec()) {
+		m_flags.set(Flag::SEEN_INITIAL_EXEC);
 	} else {
 		if (!followExecutionContext(tracee)) {
 			std::cerr << "--- detaching after execve ---\n";
@@ -555,9 +555,8 @@ void TermTracer::startNewLine(const Tracee &tracee) {
 
 	if (m_num_tracees > 1) {
 		std::cerr << "[" << pid << "] ";
-	} else if (m_dropped_to_single_tracee) {
+	} else if (m_flags.steal(Flag::DROPPED_TO_LAST_TRACEE)) {
 		std::cerr << "--- only PID " << pid << " is remaining ---\n";
-		m_dropped_to_single_tracee = false;
 	}
 }
 
@@ -637,7 +636,7 @@ void TermTracer::cleanupTracee(const Tracee &tracee) {
 	m_new_tracees.erase(tracee.pid());
 
 	if (--m_num_tracees == 1) {
-		m_dropped_to_single_tracee = true;
+		m_flags.set(Flag::DROPPED_TO_LAST_TRACEE);
 	}
 }
 
@@ -660,8 +659,8 @@ void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_
 }
 
 bool TermTracer::configureTracee(const cosmos::ProcessID pid) {
-	// this is only for newly created child processes
-	m_seen_initial_exec = true;
+	// this is only for newly created child processes, so set it right away
+	m_flags.set(Flag::SEEN_INITIAL_EXEC);
 	TraceePtr tracee;
 	try {
 		/* strace ties the attach threads behaviour to `-f`. There

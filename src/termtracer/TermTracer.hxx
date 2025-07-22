@@ -7,6 +7,7 @@
 #include <tuple>
 
 // cosmos
+#include <cosmos/BitMask.hxx>
 #include <cosmos/io/StdLogger.hxx>
 #include <cosmos/main.hxx>
 #include <cosmos/types.hxx>
@@ -48,6 +49,13 @@ protected: // types
 		ASK,
 		THREADS
 	};
+
+	enum class Flag {
+		SEEN_INITIAL_EXEC      = 1 << 0, ///< whether we've seen a ChildTracee's initial newExecutionContext().
+		DROPPED_TO_LAST_TRACEE = 1 << 1, ///< whether we've returned to tracing only a single PID anymore.
+	};
+
+	using Flags = cosmos::BitMask<Flag>;
 
 protected: // functions
 
@@ -129,6 +137,10 @@ protected: // functions
 
 	void updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid);
 
+	bool seenInitialExec() const {
+		return m_flags[Flag::SEEN_INITIAL_EXEC];
+	}
+
 protected: // event consumer interface
 
 	void syscallEntry(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) override;
@@ -174,6 +186,7 @@ protected: // data
 	/// Whitelist of system calls to trace, if any.
 	std::set<SystemCallNr> m_syscall_filter;
 
+	Flags m_flags;
 	/// The PID of the main process we're tracing (the one we created or attached to).
 	cosmos::ProcessID m_main_tracee_pid;
 	/// The WaitStatus of the main process we've seen upon it exiting.
@@ -181,10 +194,6 @@ protected: // data
 
 	/// The number of tracees we're currently dealing with.
 	size_t m_num_tracees = 0;
-	/// Whether we've seen the initial newExecutionContext() of a ChildTracee already.
-	bool m_seen_initial_exec = false;
-	/// Whether we've had multiple tracees but lost all but one again.
-	bool m_dropped_to_single_tracee = false;
 
 	std::optional<std::tuple<cosmos::ProcessID, const SystemCall*>> m_active_syscall;
 	/// Unfinished / preempted system calls.
