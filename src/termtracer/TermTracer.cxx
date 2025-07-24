@@ -258,25 +258,27 @@ void TermTracer::printParsOnExit(const SystemCall::ParameterVector &pars) const 
 	}
 }
 
-void TermTracer::printTraceeInvocation(std::ostream &out, const Tracee &tracee) {
-	printTraceeInvocation(out, tracee.executable(), tracee.cmdLine());
+std::string TermTracer::formatTraceeInvocation(const Tracee &tracee) {
+	return formatTraceeInvocation(tracee.executable(), tracee.cmdLine());
 }
 
-void TermTracer::printTraceeInvocation(std::ostream &out,
-		const std::string &exe,
+std::string TermTracer::formatTraceeInvocation(const std::string &exe,
 		const cosmos::StringVector &cmdline) const {
-	out << exe << " [";
+	std::stringstream ss;
+	ss << exe << " [";
 	bool first = true;
 	for (const auto &arg: cmdline) {
 		if (first) {
 			first = false;
 		} else {
-			out << ", ";
+			ss << ", ";
 		}
-		out << "\"" << arg << "\"";
+		ss << "\"" << arg << "\"";
 	}
 
-	out << "]";
+	ss << "]";
+
+	return ss.str();
 }
 
 void TermTracer::printPar(const SystemCallItem &par) const {
@@ -369,17 +371,14 @@ void TermTracer::attached(Tracee &tracee) {
 		return;
 	} else if (tracee.isInitiallyAttachedThread()) {
 		// part of the initial attach procedure when attaching to a
-		// possible multi-threaded existing process.
+		// possibly multi-threaded existing process.
 		startNewLine(tracee);
 		std::cerr << "→ additionally attached thread\n";
 	} else if (auto it = m_new_tracees.find(tracee.pid()); it != m_new_tracees.end()) {
 		auto [parent, event] = it->second;
 
 		startNewLine(tracee);
-		std::cerr << "→ automatically attached (created by PID " << cosmos::to_integral(parent) << " via " << to_label(event);
-
-		std::cerr << ")\n";
-
+		std::cerr << "→ automatically attached (created by PID " << parent << " via " << to_label(event) << "\n";
 		m_new_tracees.erase(it);
 	} else {
 		std::cerr << "unknown Tracee " << cosmos::to_integral(tracee.pid()) << " attached?!";
@@ -448,7 +447,6 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 		updateTracee(tracee, *old_pid);
 	}
 
-
 	// cache this state here, because checkResumedSyscall() might alter the info
 	const auto is_enabled = isEnabled(currentSyscall(tracee));
 	checkResumedSyscall(tracee);
@@ -464,19 +462,17 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 
 	if (old_pid) {
 		startNewLine(tracee);
-		std::cerr << "--- PID " << cosmos::to_integral(*old_pid) << " is now known as " << cosmos::to_integral(tracee.pid()) << " ---\n";
+		std::cerr << "--- PID " << *old_pid << " is now known as PID " << tracee.pid() << " ---\n";
 	}
 
+	// skip the output for the initial exec of a new child process,
+	// because there's no interesting information in that
 	if (seenInitialExec()) {
 		startNewLine(tracee);
-		std::cerr << "--- no longer running " ;
-		printTraceeInvocation(std::cerr, old_exe, old_cmdline);
-		std::cerr << " ---\n";
+		std::cerr << "--- no longer running " << formatTraceeInvocation(old_exe, old_cmdline) << " ---\n";
 	}
 	startNewLine(tracee);
-	std::cerr << "--- now running ";
-	printTraceeInvocation(std::cerr, tracee);
-	std::cerr << " ---\n";
+	std::cerr << "--- now running " << formatTraceeInvocation(tracee) << " ---\n";
 
 	if (!seenInitialExec()) {
 		m_flags.set(Flag::SEEN_INITIAL_EXEC);
@@ -489,16 +485,12 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 }
 
 void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::ptrace::Event event) {
-
 	auto follow = m_follow_children;
 
 	if (follow == FollowChildMode::ASK) {
 		startNewLine(parent);
-		const auto pid  = cosmos::to_integral(parent.pid());
-		std::cout << "Follow into new child process created by PID " << pid << " via " << to_label(event) << "?\n";
-		std::cout << "PID " << pid << " is ";
-		printTraceeInvocation(std::cout, parent);
-		std::cout << "\n";
+		std::cout << "Follow into new child process created by PID " << parent.pid() << " via " << to_label(event) << "?\n";
+		std::cout << "PID " << parent.pid() << " is " << formatTraceeInvocation(parent) << "\n";
 		follow = ask_yes_no() ? FollowChildMode::YES : FollowChildMode::NO;
 	} else if (follow == FollowChildMode::THREADS) {
 		if (event == cosmos::ptrace::Event::CLONE) {
@@ -522,7 +514,6 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 }
 
 bool TermTracer::followExecutionContext(Tracee &tracee) {
-
 	switch (m_follow_exec) {
 		case FollowExecContext::YES: return true;
 		case FollowExecContext::NO: return false;
@@ -540,34 +531,30 @@ bool TermTracer::followExecutionContext(Tracee &tracee) {
 }
 
 void TermTracer::startNewLine(const Tracee &tracee) {
-	// TODO: this call to storeUnfinishedSyscallCtx() is not well placed
-	// here. output handling should not alterate tracing state. This
-	// proves problematic when system call filtering is active.
-	if (m_active_syscall) {
-		if (isEnabled(activeSyscall())) {
-			// a system call in another thread remains unfinished
-			std::cerr << " <...unfinished>\n";
-		}
-		storeUnfinishedSyscallCtx();
+	// make sure to terminate a possibly pending system call line
+	if (storeUnfinishedSyscallCtx()) {
+		// a system call in another thread remains unfinished
+		std::cerr << " <...unfinished>\n";
 	}
 
-	const auto pid = cosmos::to_integral(tracee.pid());
-
 	if (m_num_tracees > 1) {
-		std::cerr << "[" << pid << "] ";
+		std::cerr << "[" << tracee.pid() << "] ";
 	} else if (m_flags.steal(Flag::DROPPED_TO_LAST_TRACEE)) {
-		std::cerr << "--- only PID " << pid << " is remaining ---\n";
+		std::cerr << "--- only PID " << tracee.pid() << " is remaining ---\n";
 	}
 }
 
-void TermTracer::storeUnfinishedSyscallCtx() {
+bool TermTracer::storeUnfinishedSyscallCtx() {
 	if (!m_active_syscall) {
-		return;
+		return false;
 	}
 
 	auto [pid, syscall] = *m_active_syscall;
+	const bool ret = isEnabled(syscall);
+
 	m_unfinished_syscalls[pid] = syscall;
 	m_active_syscall.reset();
+	return ret;
 }
 
 bool TermTracer::isExecSyscall(const SystemCall &sc) const {
@@ -613,6 +600,7 @@ void TermTracer::checkResumedSyscall(const Tracee &tracee) {
 	auto sc = node.mapped();
 
 	if (!isEnabled(sc))
+		// we cleaned up the data, nothing else to do
 		return;
 
 	startNewLine(tracee);
@@ -642,14 +630,14 @@ void TermTracer::cleanupTracee(const Tracee &tracee) {
 
 void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid) {
 	if (hasActiveSyscall(old_pid)) {
-		m_active_syscall = std::make_tuple(tracee.pid(), std::get<const SystemCall*>(*m_active_syscall));
-	}
-
-	if (auto it = m_unfinished_syscalls.find(old_pid); it != m_unfinished_syscalls.end()) {
+		m_active_syscall = std::make_tuple(tracee.pid(), activeSyscall());
+	} else if (auto it = m_unfinished_syscalls.find(old_pid); it != m_unfinished_syscalls.end()) {
 		m_unfinished_syscalls[tracee.pid()] = it->second;
 		m_unfinished_syscalls.erase(it);
 	}
 
+	// if there should be an entry for the new PID already, then it's from
+	// an already dead sibbling tracee. get rid of that.
 	m_new_tracees.erase(tracee.pid());
 
 	if (auto it = m_new_tracees.find(old_pid); it != m_new_tracees.end()) {
@@ -681,9 +669,7 @@ bool TermTracer::configureTracee(const cosmos::ProcessID pid) {
 		return false;
 	}
 
-	std::cerr << "--- tracing ";
-	printTraceeInvocation(std::cerr, *tracee);
-	std::cerr << " ---\n";
+	std::cerr << "--- tracing " << formatTraceeInvocation(*tracee) << " ---\n";
 
 	m_main_tracee_pid = tracee->pid();
 

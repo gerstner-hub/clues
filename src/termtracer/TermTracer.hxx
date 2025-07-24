@@ -71,10 +71,8 @@ protected: // functions
 
 	void configureLogger();
 
-	void printTraceeInvocation(std::ostream &out, const Tracee &tracee);
-	void printTraceeInvocation(std::ostream &out,
-			const std::string &exe,
-			const cosmos::StringVector &cmdline) const;
+	std::string formatTraceeInvocation(const Tracee &tracee);
+	std::string formatTraceeInvocation(const std::string &exe, const cosmos::StringVector &cmdline) const;
 	void printPar(const SystemCallItem &value) const;
 	void printParsOnEntry(const SystemCall::ParameterVector &pars) const;
 	void printParsOnExit(const SystemCall::ParameterVector &pars) const;
@@ -96,8 +94,12 @@ protected: // functions
 	/**
 	 * If there's an active system call then store if in
 	 * m_unfinished_syscalls and reset it.
+	 *
+	 * The return value indicates whether a traced system call has been
+	 * interrupted by this operation. Interrupted but filtered-out system
+	 * calls are not counted here.
 	 **/
-	void storeUnfinishedSyscallCtx();
+	bool storeUnfinishedSyscallCtx();
 
 	/// Check whether `tracee` has an unfinished system call pending.
 	/**
@@ -130,11 +132,16 @@ protected: // functions
 	/// Returns `true` if `sc` is set and supposed to the printed.
 	bool isEnabled(const SystemCall *sc) const;
 
-	/// Returns the system call last seen for `tracee`.
+	/// Returns the system call last seen for `tracee`, or `nullptr` if there's none.
+	/**
+	 * This checks both the currently active as well as any unfinished
+	 * system calls for `tracee`.
+	 **/
 	const SystemCall* currentSyscall(const Tracee &tracee) const;
 
 	void cleanupTracee(const Tracee &tracee);
 
+	/// Update internal data structures in case a tracee changed PID.
 	void updateTracee(const Tracee &tracee, const cosmos::ProcessID old_pid);
 
 	bool seenInitialExec() const {
@@ -199,7 +206,7 @@ protected: // data
 	/// The WaitStatus of the main process we've seen upon it exiting.
 	std::optional<cosmos::WaitStatus> m_main_status;
 
-	/// A currently active system call, if any.
+	/// The currently active system call, if any.
 	std::optional<std::tuple<cosmos::ProcessID, const SystemCall*>> m_active_syscall;
 	/// Unfinished / preempted system calls.
 	/**
@@ -209,6 +216,10 @@ protected: // data
 	 **/
 	std::map<cosmos::ProcessID, const SystemCall*> m_unfinished_syscalls;
 	/// Newly created tracees that haven't seen any ptrace stop yet
+	/**
+	 * The values contain the PID that created the tracee and the type of
+	 * event that led to the creation.
+	 **/
 	std::map<cosmos::ProcessID, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
 };
 
