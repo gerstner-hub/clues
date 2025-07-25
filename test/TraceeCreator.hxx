@@ -20,6 +20,21 @@ public:
 		m_logger.setChannels(true, true, false, false);
 		m_logger.configFromEnvVar("CLUES_LOGGING");
 		clues::set_logger(m_logger);
+		// when building with sanitizers, the test helper programs
+		// will be linked against sanitized libcosmos and libclues.
+		//
+		// sanitized programs cannot be run under ptrace(), though,
+		// which is why SCons filters out the sanitizer flags.
+		//
+		// the libs are still sanitized, and complain about missing
+		// sanitizer support in the executable. Suppress this by
+		// setting the following environment variables.
+		//
+		// it would be cleaner to link the helper programs against
+		// non-sanitized libraries in this case, but this would make
+		// things even more complex ... let's see how far we get this
+		// way.
+		cosmos::proc::set_env_var("ASAN_OPTIONS", "verify_asan_link_order=false:detect_leaks=0", cosmos::proc::OverwriteEnv{true});
 	}
 
 	void run(const clues::FollowChildren follow_children = clues::FollowChildren{false}) {
