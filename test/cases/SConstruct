@@ -4,8 +4,6 @@ cases = env.GatherSources(suffixes=['.cxx'])
 
 case_env = env.Clone()
 
-case_env.Program("fork", ["fork.cxx"])
-
 for case in cases:
     label = '.'.join(case.split('.')[:-1])
     exe = case.rsplit('.', 1)[0]

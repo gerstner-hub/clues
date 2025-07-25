@@ -179,7 +179,7 @@ class ExecveTest : public cosmos::TestBase {
 		 */
 		std::string dir{m_argv.at(0)};
 		dir = dir.substr(0, dir.rfind('/'));
-		auto exiter = dir + "/exiter";
+		auto exiter = dir + "/helpers/exiter";
 		exiter = cosmos::fs::canonicalize_path(exiter);
 		if (!cosmos::fs::exists_file(exiter)) {
 			throw cosmos::RuntimeError{"couldn't find exiter"};
