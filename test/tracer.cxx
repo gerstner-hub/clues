@@ -25,11 +25,13 @@ protected:
 	using EventFlags = cosmos::BitMask<EventFlag>;
 
 	struct EventInfo {
+		std::string pattern_str;
 		std::regex pattern;
 		EventFlags flags;
 
-		EventInfo(const std::regex &&_pattern, const EventFlags &_flags = {}) :
-				pattern{std::move(_pattern)},
+		EventInfo(const std::string &&_pattern, const EventFlags &_flags = {}) :
+				pattern_str{std::move(_pattern)},
+				pattern{pattern_str},
 				flags{_flags} {
 		}
 
@@ -43,6 +45,8 @@ protected:
 		testExitCode();
 		testForkWithoutFollow();
 		testForkWithFollow();
+		testForkInThread();
+
 		// explicitly shut down to prevent a bogus file descriptor
 		// leak alarm in TestBase
 		m_invoker.shutdown();
@@ -56,9 +60,9 @@ protected:
 		 * correctly detected as a change of execution context
 		 */
 		m_expected_events = {
-			EventInfo{std::regex{R"(^execveat\(.*= 0)"}},
-			EventInfo{std::regex{"no longer running.*helpers"}},
-			EventInfo{std::regex{"now running.*true"}},
+			EventInfo{R"(^execveat\(.*= 0)"},
+			EventInfo{"no longer running.*helpers"},
+			EventInfo{"now running.*true"},
 		};
 
 		auto status = m_invoker.run({"--", findHelper("fexec")}, m_parser_cb);
@@ -75,7 +79,7 @@ protected:
 		 */
 
 		m_expected_events = {
-			EventInfo{std::regex{"exited with 77"}},
+			EventInfo{"exited with 77"},
 		};
 
 		auto status = m_invoker.run({"--", findHelper("exiter"), "77"}, m_parser_cb);
@@ -92,7 +96,7 @@ protected:
 		 */
 
 		m_expected_events = {
-			EventInfo{std::regex{R"(^clone\(.*\) = [0-9]+)"}},
+			EventInfo{R"(^clone\(.*\) = [0-9]+)"},
 		};
 
 		m_forbidden_events = {
@@ -114,13 +118,45 @@ protected:
 		 */
 
 		m_expected_events = {
-			EventInfo{std::regex{R"(clone\(.*\) = [0-9]+)"}, EventFlag::ALLOW_OUT_OF_ORDER},
-			EventInfo{std::regex{"automatically attached.*created by PID.*via fork"}, EventFlag::ALLOW_OUT_OF_ORDER}
+			EventInfo{R"(clone\(.*\) = [0-9]+)", EventFlag::ALLOW_OUT_OF_ORDER},
+			EventInfo{"automatically attached.*created by PID.*via fork", EventFlag::ALLOW_OUT_OF_ORDER}
 		};
 
 		const auto forker = findHelper("forker");
 
 		auto status = m_invoker.run({"-f", "--", forker}, m_parser_cb);
+		RUN_STEP("tracer-exited-successfully", status == cosmos::ExitStatus::SUCCESS);
+		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
+	}
+
+	void testForkInThread() {
+		START_TEST("test fork & exec in thread");
+
+		/*
+		 * we expect a clone(), change in execution context in the
+		 * thread, the parent should continue running and exit
+		 * normally.
+		 *
+		 * the helper executes the sleep program in its forked child.
+		 */
+
+		auto OUT_OF_ORDER = EventFlag::ALLOW_OUT_OF_ORDER;
+
+		m_expected_events = {
+			EventInfo{R"(clone3\(.*\) = [0-9]+)", OUT_OF_ORDER},
+			EventInfo{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
+			EventInfo{R"(clone\(.*\) = [0-9]+)", OUT_OF_ORDER},
+			EventInfo{"automatically attached.*created by PID [0-9]+ via fork", OUT_OF_ORDER},
+			EventInfo{R"(^\[[0-9]+\] execve\(.*sleep.*\) = )", OUT_OF_ORDER},
+			EventInfo{"no longer running.*fork-in-thread", OUT_OF_ORDER},
+			EventInfo{"now running.*sleep", OUT_OF_ORDER},
+			EventInfo{"exited with 0"},
+			EventInfo{"exited with 0"},
+		};
+
+		const auto fork_in_thread = findHelper("fork-in-thread");
+
+		auto status = m_invoker.run({"-f", "--", fork_in_thread}, m_parser_cb);
 		RUN_STEP("tracer-exited-successfully", status == cosmos::ExitStatus::SUCCESS);
 		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
 	}
@@ -172,6 +208,12 @@ protected: // utils
 				std::cerr << "\n\t → last matching event was " << m_seen_events.back() << "\n";
 			} else {
 				std::cerr << "\n\t → no matching events seen\n";
+			}
+
+			std::cerr << "still looking for:\n";
+
+			for (const auto &event: m_expected_events) {
+				std::cerr << "\t → " << event.pattern_str << "\n";
 			}
 		}
 
