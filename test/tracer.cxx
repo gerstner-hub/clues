@@ -46,6 +46,7 @@ protected:
 		testForkWithoutFollow();
 		testForkWithFollow();
 		testForkInThread();
+		testExecInThread();
 
 		// explicitly shut down to prevent a bogus file descriptor
 		// leak alarm in TestBase
@@ -61,8 +62,8 @@ protected:
 		 */
 		m_expected_events = {
 			EventInfo{R"(^execveat\(.*= 0)"},
-			EventInfo{"no longer running.*helpers"},
-			EventInfo{"now running.*true"},
+			{"no longer running.*helpers"},
+			{"now running.*true"},
 		};
 
 		auto status = m_invoker.run({"--", findHelper("fexec")}, m_parser_cb);
@@ -119,7 +120,7 @@ protected:
 
 		m_expected_events = {
 			EventInfo{R"(clone\(.*\) = [0-9]+)", EventFlag::ALLOW_OUT_OF_ORDER},
-			EventInfo{"automatically attached.*created by PID.*via fork", EventFlag::ALLOW_OUT_OF_ORDER}
+			{"automatically attached.*created by PID.*via fork", EventFlag::ALLOW_OUT_OF_ORDER}
 		};
 
 		const auto forker = findHelper("forker");
@@ -144,19 +145,43 @@ protected:
 
 		m_expected_events = {
 			EventInfo{R"(clone3\(.*\) = [0-9]+)", OUT_OF_ORDER},
-			EventInfo{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
-			EventInfo{R"(clone\(.*\) = [0-9]+)", OUT_OF_ORDER},
-			EventInfo{"automatically attached.*created by PID [0-9]+ via fork", OUT_OF_ORDER},
-			EventInfo{R"(^\[[0-9]+\] execve\(.*sleep.*\) = )", OUT_OF_ORDER},
-			EventInfo{"no longer running.*fork-in-thread", OUT_OF_ORDER},
-			EventInfo{"now running.*sleep", OUT_OF_ORDER},
-			EventInfo{"exited with 0"},
-			EventInfo{"exited with 0"},
+			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
+			{R"(clone\(.*\) = [0-9]+)", OUT_OF_ORDER},
+			{"automatically attached.*created by PID [0-9]+ via fork", OUT_OF_ORDER},
+			{R"(^\[[0-9]+\] execve\(.*sleep.*\) = )", OUT_OF_ORDER},
+			{"no longer running.*fork-in-thread", OUT_OF_ORDER},
+			{"now running.*sleep", OUT_OF_ORDER},
+			{"exited with 0"},
+			{"exited with 0"},
 		};
 
 		const auto fork_in_thread = findHelper("fork-in-thread");
 
 		auto status = m_invoker.run({"-f", "--", fork_in_thread}, m_parser_cb);
+		RUN_STEP("tracer-exited-successfully", status == cosmos::ExitStatus::SUCCESS);
+		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
+	}
+
+	void testExecInThread() {
+		START_TEST("test exec in thread");
+
+		auto OUT_OF_ORDER = EventFlag::ALLOW_OUT_OF_ORDER;
+
+		m_expected_events = {
+			EventInfo{R"(clone3\(.*\) = [0-9]+)", OUT_OF_ORDER},
+			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
+			{R"(execve\(.*\) = 0)", OUT_OF_ORDER},
+			{"lost to execve in another thread", OUT_OF_ORDER},
+			{R"(\[[0-9]+\] .*exited with 0)", OUT_OF_ORDER},
+			{"only PID [0-9]+ is remaining"},
+			{"PID [0-9]+ is now known as PID [0-9]+"},
+			{"no longer running .*exec-in-thread"},
+			{"now running.*true"},
+		};
+
+		const auto exec_in_thread = findHelper("exec-in-thread");
+
+		auto status = m_invoker.run({"-f", "--", exec_in_thread}, m_parser_cb);
 		RUN_STEP("tracer-exited-successfully", status == cosmos::ExitStatus::SUCCESS);
 		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
 	}
