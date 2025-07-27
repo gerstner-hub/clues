@@ -47,6 +47,7 @@ protected:
 		testForkWithFollow();
 		testForkInThread();
 		testExecInThread();
+		testExecInMainThread();
 
 		// explicitly shut down to prevent a bogus file descriptor
 		// leak alarm in TestBase
@@ -182,6 +183,34 @@ protected:
 		const auto exec_in_thread = findHelper("exec-in-thread");
 
 		auto status = m_invoker.run({"-f", "--", exec_in_thread}, m_parser_cb);
+		RUN_STEP("tracer-exited-successfully", status == cosmos::ExitStatus::SUCCESS);
+		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
+	}
+
+	void testExecInMainThread() {
+		START_TEST("test exec in main thread");
+
+		auto OUT_OF_ORDER = EventFlag::ALLOW_OUT_OF_ORDER;
+
+		m_expected_events = {
+			EventInfo{R"(clone3\(.*\) = [0-9]+)", OUT_OF_ORDER},
+			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
+			{R"(execve\(.*\) = 0)", OUT_OF_ORDER},
+			{"lost to execve in another thread", OUT_OF_ORDER},
+			{R"(\[[0-9]+\] .*exited with 0)", OUT_OF_ORDER},
+			{"only PID [0-9]+ is remaining"},
+			{"no longer running .*main-thread-exec"},
+			{"now running.*true"},
+		};
+
+		// there's no PID repurposing in this scenario
+		m_forbidden_events = {
+			std::regex{"PID [0-9]+ is now known as PID [0-9]+"},
+		};
+
+		const auto main_thread_exec = findHelper("main-thread-exec");
+
+		auto status = m_invoker.run({"-f", "--", main_thread_exec}, m_parser_cb);
 		RUN_STEP("tracer-exited-successfully", status == cosmos::ExitStatus::SUCCESS);
 		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
 	}
