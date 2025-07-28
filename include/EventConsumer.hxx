@@ -111,11 +111,11 @@ protected: // functions
 	 * multi-threaded process.
 	 *
 	 * When this callback occurs the tracee can still be inspected
-	 * using ptrace(). One execution is continued the tracer <->
+	 * using ptrace(). Once execution is continued the tracer <->
 	 * tracee relationship is lost.
 	 *
 	 * If the exit happens due to an execve in a multi-threaded
-	 * process then Status::LOST_TO_EXECVE is set in `state`.
+	 * process then Status::LOST_TO_EXECVE is set in `flags`.
 	 **/
 	virtual void exited(Tracee &tracee, const cosmos::WaitStatus status, const StatusFlags flags) {
 		(void)tracee;
