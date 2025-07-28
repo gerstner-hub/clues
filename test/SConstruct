@@ -36,7 +36,7 @@ for test in tests:
 
 test_env['static_lib_sources'] = static_lib_sources
 helpers_env = test_env.SConscript(test_env['buildroot'] + 'test/helpers/SConstruct', exports='test_env')
-run_env.Requires('test_execve', helpers_env['helpers']['exiter'])
+run_env.Requires('tests', 'helpers')
 
 env.Alias("tests", "clues_tests")
 env.Alias('run_tests', 'run_clues_tests')
