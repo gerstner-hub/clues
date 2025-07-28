@@ -148,7 +148,15 @@ protected: // functions
 		return m_flags[Flag::SEEN_INITIAL_EXEC];
 	}
 
-protected: // event consumer interface
+	/// Abort syscall if one was active for `tracee`.
+	/**
+	 * A condition in `tracee` occurred which requires to abort a possible
+	 * already started system call trace. This function performs the
+	 * necessary steps to do so.
+	 **/
+	void abortSyscall(const Tracee &tracee);
+
+protected: // EventConsumer interface
 
 	void syscallEntry(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) override;
 
@@ -171,6 +179,8 @@ protected: // event consumer interface
 			const cosmos::ptrace::Event event) override;
 
 	void stopped(Tracee &tracee) override;
+
+	void disappeared(Tracee &tracee, const cosmos::ChildState &data) override;
 
 protected: // data
 

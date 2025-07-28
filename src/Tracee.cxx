@@ -690,6 +690,9 @@ void Tracee::processEvent(const cosmos::ChildState &data) {
 
 	if (data.exited() || data.killed() || data.dumped()) {
 		changeState(State::DEAD);
+		if (!m_flags[Flag::WAIT_FOR_EXITED]) {
+			m_consumer.disappeared(*this, data);
+		}
 		m_exit_data = data;
 		return;
 	} else if (data.trapped()) {

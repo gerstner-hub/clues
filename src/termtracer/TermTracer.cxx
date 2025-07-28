@@ -385,23 +385,9 @@ void TermTracer::attached(Tracee &tracee) {
 	}
 }
 
-void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const StatusFlags flags ) {
+void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const StatusFlags flags) {
 	if (tracee.prevState() == Tracee::State::SYSCALL_ENTER_STOP) {
-		// obtain this information before the active syscall is reset below
-		const auto is_enabled = isEnabled(currentSyscall(tracee));
-
-		if (hasActiveSyscall(tracee)) {
-			m_active_syscall.reset();
-		} else if (is_enabled) {
-			checkResumedSyscall(tracee);
-		}
-
-		if (is_enabled) {
-			/* this should only ever happen after a syscallEntry()
-			 * for exit() or exit_group() occurred. Thus we finish
-			 * that first. */
-			std::cerr << ") = ?\n";
-		}
+		abortSyscall(tracee);
 	}
 
 	if (flags[StatusFlag::LOST_TO_EXECVE]) {
@@ -436,6 +422,42 @@ void TermTracer::stopped(Tracee &tracee) {
 		startNewLine(tracee);
 		std::cerr << "--- currently in stopped state due to " << *tracee.stopSignal() << " ---\n";
 	}
+}
+
+void TermTracer::disappeared(Tracee &tracee, const cosmos::ChildState &data) {
+	abortSyscall(tracee);
+
+	startNewLine(tracee);
+	std::cerr << "!!! disappeared (e.g. exit() or execve() in another thread)\n";
+
+	if (data.exited()) {
+		startNewLine(tracee);
+		std::cerr << "+++ exited with " << cosmos::to_integral(*data.status) << " +++\n";
+	} else {
+		startNewLine(tracee);
+		std::cerr << "+++ killed by signal " << cosmos::to_integral(data.signal->raw()) << " +++\n";
+	}
+
+	if (tracee.pid() == m_main_tracee_pid) {
+		/*
+		 * Here we get a more complex cosmos::ChildState instead of
+		 * WaitStatus as in the other callbacks. This is unfortunate,
+		 * we can build a WaitStatus from ChildState, however.
+		 *
+		 * TODO: add a helper to libcosmos, pass homogenous types from
+		 * libclues into EventConsumer to avoid this on the
+		 * application's end.
+		 */
+		int raw_status = 0;
+		if (data.exited()) {
+			raw_status = cosmos::to_integral(*data.status) << 8;
+		} else {
+			raw_status = cosmos::to_integral(data.signal->raw());
+		}
+		m_main_status = cosmos::WaitStatus{raw_status};
+	}
+
+	cleanupTracee(tracee);
 }
 
 void TermTracer::newExecutionContext(Tracee &tracee,
@@ -643,6 +665,25 @@ void TermTracer::updateTracee(const Tracee &tracee, const cosmos::ProcessID old_
 	if (auto it = m_new_tracees.find(old_pid); it != m_new_tracees.end()) {
 		m_new_tracees[tracee.pid()] = it->second;
 		m_new_tracees.erase(it);
+	}
+}
+
+void TermTracer::abortSyscall(const Tracee &tracee) {
+	// obtain this information before the active syscall is reset below
+	const auto is_enabled = isEnabled(currentSyscall(tracee));
+
+	if (hasActiveSyscall(tracee)) {
+		m_active_syscall.reset();
+	} else if (is_enabled) {
+		checkResumedSyscall(tracee);
+	}
+
+	if (is_enabled) {
+		/*
+		 * finish any possibly pending system call to make clear it
+		 * never visibly returned.
+		 */
+		std::cerr << ") = ?\n";
 	}
 }
 

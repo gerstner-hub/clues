@@ -123,6 +123,29 @@ protected: // functions
 		(void)flags;
 	}
 
+	/// The tracee disappeared for unclear reasons.
+	/**
+	 * This callback can occur in a number of special situations like:
+	 *
+	 * - another thread of the same process called exit(). This is not
+	 *   always caught as an exit event, which would lead to a call to
+	 *   exited(). This is especially the case when the other thread which
+	 *   calls exit() is not also traced.
+	 * - generally the ptrace() documentation says that a tracee can
+	 *   disappear at any time without warning, which is unlucky. libclues
+	 *   attempts to provide as much contextual information as possible.
+	 *   In the case of disappeared(), the cause remains uncertain,
+	 *   however.
+	 *
+	 * When this call occurs then the tracee can no longer be accessed via
+	 * the tracing API. `data` still tells whether the tracee exited
+	 * regularly or due to a signal.
+	 **/
+	virtual void disappeared(Tracee &tracee, const cosmos::ChildState &data) {
+		(void)tracee;
+		(void)data;
+	}
+
 	/// A new program is executed in the tracee.
 	/**
 	 * This call occurs after a successful `execve()` by the tracee.
