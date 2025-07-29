@@ -73,11 +73,14 @@ protected: // functions
 
 	std::string formatTraceeInvocation(const Tracee &tracee);
 	std::string formatTraceeInvocation(const std::string &exe, const cosmos::StringVector &cmdline) const;
-	void printPar(const SystemCallItem &value) const;
-	void printParsOnEntry(const SystemCall::ParameterVector &pars) const;
-	void printParsOnExit(const SystemCall::ParameterVector &pars) const;
+	void printPar(std::ostream &trace, const SystemCallItem &value) const;
+	void printParsOnEntry(std::ostream &trace, const SystemCall::ParameterVector &pars) const;
+	void printParsOnExit(std::ostream &trace, const SystemCall::ParameterVector &pars) const;
 
 	bool followExecutionContext(Tracee &tracee);
+
+	/// Returns the currently active trace output stream, starting a new output line.
+	std::ostream& traceStream(const Tracee &tracee, const bool new_line = true);
 
 	/// Start a new output line concerning `tracee.
 	/**
@@ -88,7 +91,7 @@ protected: // functions
 	 * It also cares about managing the system call state to make sure
 	 * unfinished system calls are kept track of.
 	 **/
-	void startNewLine(const Tracee &tracee);
+	void startNewLine(std::ostream &trace, const Tracee &tracee);
 
 	/// Store an active system call in m_unfinished_syscalls.
 	/**
