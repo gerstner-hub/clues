@@ -56,7 +56,7 @@ public:
 	}
 
 	auto numSeenLostToExecve() const {
-		return m_seen_lost_to_execve;
+		return m_seen_lost_to_mt_exit;
 	}
 
 	auto waitStatus() const {
@@ -109,8 +109,8 @@ protected:
 
 	void exited(clues::Tracee &, const cosmos::WaitStatus status, const StatusFlags state) override {
 		m_seen_exits++;
-		if (state[StatusFlag::LOST_TO_EXECVE]) {
-			m_seen_lost_to_execve++;
+		if (state[StatusFlag::LOST_TO_MT_EXIT]) {
+			m_seen_lost_to_mt_exit++;
 		}
 		m_status = status;
 	}
@@ -129,7 +129,7 @@ protected:
 	size_t m_seen_exec_exit = 0;
 	size_t m_seen_successful_exec = 0;
 	size_t m_seen_attached = 0;
-	size_t m_seen_lost_to_execve = 0;
+	size_t m_seen_lost_to_mt_exit = 0;
 	size_t m_seen_exits = 0;
 	const clues::SystemCallNr m_exec_nr;
 	std::optional<cosmos::WaitStatus> m_status;

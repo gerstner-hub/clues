@@ -425,6 +425,7 @@ void Tracee::handleSystemCallExit() {
 	}
 
 	m_consumer.syscallExit(*this, syscall, flags);
+	m_current_syscall = nullptr;
 }
 
 void Tracee::handleSignal(const cosmos::SigInfo &info) {
@@ -504,17 +505,18 @@ void Tracee::handleExitEvent() {
 			(prevState() != State::SYSCALL_ENTER_STOP ||
 			!cosmos::in_list(*currentSystemCallNr(),
 				{SystemCallNr::EXIT_GROUP, SystemCallNr::EXIT}))) {
-		// the exit status in this case is simply 0
-		LOG_INFO_PID("execve() related exit detected");
-		flags.set(EventConsumer::StatusFlag::LOST_TO_EXECVE);
-
-		if (isThreadGroupLeader()) {
-			// this Tracee will be replaced with another thread
-			// from the same process
-			// TODO: do we actually need this flag for anything?
-			m_flags.set(Flag::WAIT_FOR_EXECVE_REPLACEMENT);
-			flags.set(EventConsumer::StatusFlag::EXECVE_REPLACE_PENDING);
-		}
+		// the exit status in case of an execve() by another thread is simply 0;
+		// otherwise the exit status specified by the other thread
+		//
+		// it seems we cannot really differentiate the exact reason for
+		// the exit here, see also "death under ptrace" in ptrace(2).
+		//
+		// in theory, provided we're tracing all threads of a process,
+		// we could inspect all other threads if any has an exit or
+		// execve() system call running, but this would still be racy
+		// in a lot of ways.
+		LOG_INFO_PID("multi-threading related EVENT_EXIT detected");
+		flags.set(EventConsumer::StatusFlag::LOST_TO_MT_EXIT);
 	}
 
 	m_consumer.exited(*this, wait_status, flags);

@@ -387,13 +387,9 @@ void TermTracer::exited(Tracee &tracee, const cosmos::WaitStatus status, const S
 		abortSyscall(tracee);
 	}
 
-	if (flags[StatusFlag::LOST_TO_EXECVE]) {
+	if (flags[StatusFlag::LOST_TO_MT_EXIT]) {
 		auto &trace = traceStream(tracee);
-		trace << "--- <lost to execve in another thread";
-		if (flags[StatusFlag::EXECVE_REPLACE_PENDING]) {
-			trace << " [waiting to be replaced by exec'ing thread]";
-		}
-		trace << "> ---\n";
+		trace << "--- <lost to exit or execve in another thread> ---\n";
 	}
 
 	if (status.exited()) {

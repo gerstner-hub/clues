@@ -39,10 +39,8 @@ public: // types
 		INTERRUPTED            = 1 << 0,
 		/// A previously interrupted system call is resumed (only appears during syscallEntry()).
 		RESUMED                = 1 << 1,
-		/// An exit occurs because another thread called execve() (only appears in exited()).
-		LOST_TO_EXECVE         = 1 << 2,
-		/// The tracee is waiting to be replaced by another thread that called execve().
-		EXECVE_REPLACE_PENDING = 1 << 3,
+		/// An exit occurs because another thread called execve() or exit() (only appears in exited()).
+		LOST_TO_MT_EXIT        = 1 << 2,
 	};
 
 	using StatusFlags = cosmos::BitMask<StatusFlag>;

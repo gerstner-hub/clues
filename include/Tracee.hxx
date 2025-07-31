@@ -59,9 +59,8 @@ public: // types
 		INJECTED_SIGSTOP     = 1 << 2, ///< whether we've injected a SIGSTOP that needs to be undone.
 		INJECTED_SIGCONT     = 1 << 3, ///< whether we've injected a SIGCONT that needs to be ignored.
 		SYSCALL_ENTERED      = 1 << 4, ///< we've seen a syscall-enter-stop and are waiting for the corresponding exit-stop.
-		WAIT_FOR_EXECVE_REPLACEMENT = 1 << 5, ///< execve() in another thread caused this tracee to exit, wait for the personality change of this pid.
-		WAIT_FOR_EXITED      = 1 << 6, ///< we've already seen PTHREAD_EVENT_EXIT but are still waiting for CLD_EXITED.
-		ATTACH_THREADS_PENDING = 1 << 7, ///< attach all threads of the process as soon as the initial event stop happens.
+		WAIT_FOR_EXITED      = 1 << 5, ///< we've already seen PTHREAD_EVENT_EXIT but are still waiting for CLD_EXITED.
+		ATTACH_THREADS_PENDING = 1 << 6, ///< attach all threads of the process as soon as the initial event stop happens.
 	};
 
 	using Flags = cosmos::BitMask<Flag>;
