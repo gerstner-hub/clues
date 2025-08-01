@@ -325,6 +325,9 @@ protected: // functions
 
 	virtual void cleanupChild() {}
 
+	/// Verifies the tracee's architecture according to m_syscall_info, throws on mismatch.
+	void verifyArch();
+
 protected: // data
 
 	/// The engine that manages this tracee.

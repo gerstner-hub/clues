@@ -3,6 +3,7 @@
 #include <fstream>
 
 // cosmos
+#include <cosmos/compiler.hxx>
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/formatting.hxx>
@@ -370,6 +371,8 @@ void Tracee::handleSystemCallEntry() {
 	const SystemCallNr nr{info.syscallNr()};
 	m_current_syscall = &m_syscall_db.get(nr);
 
+	verifyArch();
+
 	if (nr == SystemCallNr::RESTART_SYSCALL) {
 		if (m_interrupted_syscall) {
 			m_current_syscall = m_interrupted_syscall;
@@ -675,6 +678,59 @@ void Tracee::attachThreads() {
 		} catch (const std::exception &ex) {
 			LOG_WARN_PID("failed to attach to thread " << cosmos::to_integral(pid) << ": " << ex.what());
 		}
+	}
+}
+
+void Tracee::verifyArch() {
+	/*
+	 * TODO: to support tracing 32-bit processes on a 64-bit tracer, we
+	 * would need to cover the following aspects:
+	 *
+	 * - dynamically switch between different instances of SystemCallDB,
+	 *   which would also need to be generated during compile time
+	 *   accordingly.
+	 * - deal with differences in word size that affect the system call
+	 *   ABI (actually that might just work transparently, when the upper
+	 *   32-bits of registers are just zeroes).
+	 * - dealing with the different SystemCallNr specifications between
+	 *   different architectures.
+	 *
+	 * It is questionable whether the additional complexity is worth the
+	 * gain. It might be easier to just compile a separate 32-bit binary.
+	 * Tracing mixed invocations of 64-bit and 32-bit processes won't be
+	 * possible with a separate binary, however.
+	 *
+	 * A Tracee can change "personality" during its lifetime, thus every
+	 * system call has to be observed for changes. In theory the same
+	 * binary could even employ multiple calling conventions at the same
+	 * time.
+	 *
+	 * The usual situation is that 32-bit programs can also be executed on
+	 * 64-bit operating systems. This is the case not only on x86_64 but
+	 * also on powerpc64, arm64 etc. On x86 we even have three different
+	 * archiectures: i386, x86_64 and x32. The latter is using the amd64
+	 * instruction set but only 32-bit data types.
+	 *
+	 * To support more than just x86_64 at all, we need to come up with an
+	 * abstract SystemCallID or something like it, that is able to cover
+	 * all system calls on all architectures. Otherwise users of libclues
+	 * won't be able to easily inspect the type of system call that is
+	 * occurring.
+	 */
+	using Arch = cosmos::ptrace::Arch;
+	switch (m_syscall_info->arch()) {
+		case Arch::I386:
+			if (cosmos::arch::X86_64) {
+				throw cosmos::RuntimeError{"tracing 32-bit emulation binaries is not supported currently"};
+			}
+			return;
+		case Arch::X86_64:
+			if (!cosmos::arch::X86_64) {
+				throw cosmos::RuntimeError{"tracing 64-bit binaries with a 32-bit tracer is not supported"};
+			}
+			return;
+		default:
+			throw cosmos::RuntimeError{"tracing anything other than x86 / x86_64 binaries is not supported currently"};
 	}
 }
 
