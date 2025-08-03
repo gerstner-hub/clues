@@ -48,6 +48,7 @@ protected:
 		testForkInThread();
 		testExecInThread();
 		testExecInMainThread();
+		testExitInThread();
 
 		// explicitly shut down to prevent a bogus file descriptor
 		// leak alarm in TestBase
@@ -215,6 +216,30 @@ protected:
 		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
 	}
 
+	void testExitInThread() {
+		START_TEST("test exit in thread");
+
+		const auto exit_in_thread = findHelper("exit-in-thread");
+
+		m_expected_events = {
+			EventInfo{"!!! disappeared", EventFlag::ALLOW_OUT_OF_ORDER},
+			{"lost to exit or execve", EventFlag::ALLOW_OUT_OF_ORDER},
+			{"exited with 5", EventFlag::ALLOW_OUT_OF_ORDER},
+		};
+
+		auto status = m_invoker.run({"--", exit_in_thread}, m_parser_cb);
+
+		// the thread exits with status 5, so we should see this reflected
+		RUN_STEP("tracer-exited-with-5", status == cosmos::ExitStatus{5});
+		/*
+		 * we expect to see either the "lost to exit" or the
+		 * "disappeared" case.
+		 */
+		RUN_STEP("seen-expected-trace-events", m_seen_events.size() >= 2);
+
+		clearParseContext();
+	}
+
 protected: // utils
 	   //
 	void parseEvents(const std::string &line) {
@@ -276,12 +301,16 @@ protected: // utils
 			ret = false;
 		}
 
+		clearParseContext();
+
+		return ret;
+	}
+
+	void clearParseContext() {
 		m_seen_events.clear();
 		m_violated_events.clear();
 		m_forbidden_events.clear();
 		m_expected_events.clear();
-
-		return ret;
 	}
 
 	std::string findHelper(const std::string& base) {
