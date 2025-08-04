@@ -6,6 +6,7 @@
 #include <cosmos/io/Pipe.hxx>
 #include <cosmos/io/StreamAdaptor.hxx>
 #include <cosmos/proc/ChildCloner.hxx>
+#include <cosmos/proc/process.hxx>
 #include <cosmos/formatting.hxx>
 
 class TracerInvoker {
@@ -20,6 +21,11 @@ public:
 		if (!m_null.isOpen()) {
 			m_null.open("/dev/null", cosmos::OpenMode::WRITE_ONLY);
 		}
+
+		/*
+		 * see TraceeCreator for the reason for this.
+		 */
+		cosmos::proc::set_env_var("ASAN_OPTIONS", "verify_asan_link_order=false:detect_leaks=0:detect_odr_violation=0", cosmos::proc::OverwriteEnv{true});
 	}
 
 	void shutdown() {

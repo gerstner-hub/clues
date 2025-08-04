@@ -21,7 +21,7 @@ public:
 		m_logger.configFromEnvVar("CLUES_LOGGING");
 		clues::set_logger(m_logger);
 		// when building with sanitizers, the test helper programs
-		// will be linked against sanitized libcosmos and libclues.
+		// will be linked against sanitized libcosmos.
 		//
 		// sanitized programs cannot be run under ptrace(), though,
 		// which is why SCons filters out the sanitizer flags.

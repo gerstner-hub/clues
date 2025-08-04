@@ -6,24 +6,9 @@ env = test_env
 # support e.g. builds with '-m32', which gets us a 32-bit tracer on a 64-bit
 # system. A 32-bit tracer cannot (sensibly) trace a 64-bit program.
 #
-# we also need to filter out any sanitizer settings from the environment,
+# We also need to filter out any sanitizer settings from the environment,
 # because the sanitizer code is incompatible with being traced.
-# TODO: place this logic into a common function like
-# env.CloneNonSanitizerEnv()
-helper_env = env.Clone()
-
-for var in ('CXXFLAGS', 'LINKFLAGS'):
-    new_flags = []
-    for flag in str(helper_env[var]).split():
-        if flag.startswith('-fsanitize'):
-            continue
-        new_flags.append(flag)
-    helper_env[var] = ' '.join(new_flags)
-try:
-    helper_env['LIBS'].remove('asan')
-    helper_env['LIBS'].remove('ubsan')
-except (ValueError, KeyError):
-    pass
+helper_env = env.CloneNoSanitizer()
 
 static_lib_sources = env['static_lib_sources']
 env['helpers'] = {}
