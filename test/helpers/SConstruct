@@ -1,6 +1,4 @@
-Import('test_env')
-
-env = test_env
+Import('env')
 
 # for the execve test we need a binary built using our toolchain flags to
 # support e.g. builds with '-m32', which gets us a 32-bit tracer on a 64-bit
@@ -8,19 +6,20 @@ env = test_env
 #
 # We also need to filter out any sanitizer settings from the environment,
 # because the sanitizer code is incompatible with being traced.
-helper_env = env.CloneNoSanitizer()
+env = env.CloneNoSanitizer()
 
-static_lib_sources = env['static_lib_sources']
 env['helpers'] = {}
+static_sources = []
+env.ConfigureForLibOrPackage('libcosmos', static_sources)
 
 for helper in env.GatherSources(suffixes=['.cxx']):
     label = '.'.join(helper.split('.')[:-1])
     exe = helper.rsplit('.', 1)[0]
-    node = helper_env.Program(exe, [helper] + static_lib_sources)
+    node = env.Program(exe, [helper] + static_sources)
 
     env['helpers'][label] = node
     key = f'helper_{label}'
-    helper_env.Alias(key, node)
-    helper_env.Alias("test_helpers", node)
+    env.Alias(key, node)
+    env.Alias("test_helpers", node)
 
 Return('env')

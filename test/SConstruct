@@ -1,4 +1,5 @@
 import os
+
 Import('env')
 
 libcosmos = env['libs']['libcosmos']
@@ -34,8 +35,7 @@ for test in tests:
     env.Alias(run_test_key, run_cmd)
     env.Alias('run_clues_tests', run_test_key)
 
-test_env['static_lib_sources'] = static_lib_sources
-helpers_env = test_env.SConscript(test_env['buildroot'] + 'test/helpers/SConstruct', exports='test_env')
+env.SConscript(test_env['buildroot'] + 'test/helpers/SConstruct')
 run_env.Requires('tests', 'helpers')
 
 env.Alias("tests", "clues_tests")
