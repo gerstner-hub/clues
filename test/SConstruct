@@ -17,6 +17,8 @@ if not env['use_system_pkgs']:
     run_env.ConfigureRunForLib('libcosmos')
 run_env.ConfigureRunForLib('libclues')
 
+need_helpers = ["execve.cxx", "tracer.cxx"]
+
 for test in tests:
 
     label = '.'.join(test.split('.')[:-1])
@@ -32,11 +34,13 @@ for test in tests:
     test_action = run_env.Action(f'{binary} >{logfile} 2>&1 || (cat {logfile} && exit 1)')
     run_cmd = run_env.Command(f'{run_test_key}.command', test_bin, test_action)
 
+    if test in need_helpers:
+        run_env.Requires(run_cmd, 'helpers')
+
     env.Alias(run_test_key, run_cmd)
     env.Alias('run_clues_tests', run_test_key)
 
 env.SConscript(test_env['buildroot'] + 'test/helpers/SConstruct')
-run_env.Requires('tests', 'helpers')
 
 env.Alias("tests", "clues_tests")
 env.Alias('run_tests', 'run_clues_tests')
