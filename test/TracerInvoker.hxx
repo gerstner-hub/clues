@@ -39,6 +39,10 @@ public:
 
 		cloner.setExe(m_tracer_path);
 
+		// disable truncation of output, since we want to parse it
+		// programmatically
+		cloner << "-s" << "-1";
+
 		for (const auto &arg: args) {
 			cloner << arg;
 		}
