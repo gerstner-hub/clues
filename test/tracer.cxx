@@ -65,7 +65,7 @@ protected:
 		m_expected_events = {
 			EventInfo{R"(^execveat\(.*= 0)"},
 			{"no longer running.*helpers"},
-			{"now running.*true"},
+			{"now running.*exiter"},
 		};
 
 		auto status = m_invoker.run({"--", findHelper("fexec")}, m_parser_cb);
@@ -140,7 +140,7 @@ protected:
 		 * thread, the parent should continue running and exit
 		 * normally.
 		 *
-		 * the helper executes the sleep program in its forked child.
+		 * the helper executes the exiter program in its forked child.
 		 */
 
 		auto OUT_OF_ORDER = EventFlag::ALLOW_OUT_OF_ORDER;
@@ -150,9 +150,9 @@ protected:
 			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
 			{R"(clone\(.*\) = [0-9]+)", OUT_OF_ORDER},
 			{"automatically attached.*created by PID [0-9]+ via fork", OUT_OF_ORDER},
-			{R"(^\[[0-9]+\] execve\(.*sleep.*\) = )", OUT_OF_ORDER},
+			{R"(^\[[0-9]+\] execve\(.*exiter.*\) = )", OUT_OF_ORDER},
 			{"no longer running.*fork-in-thread", OUT_OF_ORDER},
-			{"now running.*sleep", OUT_OF_ORDER},
+			{"now running.*exiter", OUT_OF_ORDER},
 			{"exited with 0"},
 			{"exited with 0"},
 		};
@@ -178,7 +178,7 @@ protected:
 			{"only PID [0-9]+ is remaining"},
 			{"PID [0-9]+ is now known as PID [0-9]+"},
 			{"no longer running .*exec-in-thread"},
-			{"now running.*true"},
+			{"now running.*exiter"},
 		};
 
 		const auto exec_in_thread = findHelper("exec-in-thread");
@@ -201,7 +201,7 @@ protected:
 			{R"(\[[0-9]+\] .*exited with 0)", OUT_OF_ORDER},
 			{"only PID [0-9]+ is remaining"},
 			{"no longer running .*main-thread-exec"},
-			{"now running.*true"},
+			{"now running.*exiter"},
 		};
 
 		// there's no PID repurposing in this scenario
@@ -243,6 +243,7 @@ protected:
 protected: // utils
 	   //
 	void parseEvents(const std::string &line) {
+		std::cerr << line << "\n";
 		/*
 		 * normally we expect events to appear in the order they're
 		 * found in m_expected_events.

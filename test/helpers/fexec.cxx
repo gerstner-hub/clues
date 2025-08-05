@@ -14,18 +14,20 @@ public:
 	cosmos::ExitStatus main(const std::string_view argv0, const cosmos::StringViewVector &args) override;
 };
 
-cosmos::ExitStatus FileExec::main(const std::string_view,
+cosmos::ExitStatus FileExec::main(const std::string_view exe,
 		const cosmos::StringViewVector &args) {
 
-	const char *path = "/bin/true";
+	auto prog = std::string{exe}.substr(0, exe.rfind("/"));
+	prog += "/exiter";
+
 	if (!args.empty()) {
-		path = args[0].data();
+		prog = args[0].data();
 	}
 
 	try {
-		auto file = cosmos::File{path, cosmos::OpenMode::READ_ONLY};
+		auto file = cosmos::File{prog, cosmos::OpenMode::READ_ONLY};
 
-		cosmos::proc::fexec(file.fd(),cosmos::CStringVector{path, nullptr});
+		cosmos::proc::fexec(file.fd(),cosmos::CStringVector{prog.c_str(), nullptr});
 	} catch (const std::exception &ex) {
 		std::cerr << ex.what() << "\n";
 		return cosmos::ExitStatus::FAILURE;

@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+
 #include <cosmos/main.hxx>
 #include <cosmos/formatting.hxx>
 #include <cosmos/proc/process.hxx>
@@ -22,7 +24,7 @@ cosmos::pthread::ExitValue thread_entry(cosmos::pthread::ThreadArg) {
 	return cosmos::pthread::ExitValue{0};
 }
 
-cosmos::ExitStatus MainThreadExec::main(const std::string_view,
+cosmos::ExitStatus MainThreadExec::main(const std::string_view exe,
 		const cosmos::StringViewVector &args) {
 	std::cout << "main thread pid is " << cosmos::proc::get_own_pid() << std::endl;
 	cosmos::PosixThread thread{&thread_entry, cosmos::pthread::ThreadArg{0}};
@@ -36,14 +38,10 @@ cosmos::ExitStatus MainThreadExec::main(const std::string_view,
 		cosmos::time::sleep(std::chrono::milliseconds(200));
 	}
 
-	auto true_exe = cosmos::fs::which("true");
+	std::string exiter = std::string{exe.substr(0, exe.rfind("/"))};
+	exiter += "/exiter";
 
-	if (!true_exe) {
-		std::cerr << "couldn't find true program?!\n";
-		cosmos::proc::exit(cosmos::ExitStatus{2});
-	}
-
-	cosmos::proc::exec(*true_exe, cosmos::CStringVector{true_exe->c_str(), nullptr});
+	cosmos::proc::exec(exiter, cosmos::CStringVector{exiter.c_str(), nullptr});
 	std::cerr << "a life post-exec?!\n";
 	return cosmos::ExitStatus::FAILURE;
 }

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include <cosmos/thread/PosixThread.hxx>
 #include <cosmos/fs/filesystem.hxx>
@@ -10,7 +11,8 @@
  * this program performs a fork() & execve() in a thread
  */
 
-const char *sleep_time = "0";
+std::string exiter;
+std::string exit_status;
 
 cosmos::pthread::ExitValue thread_entry(cosmos::pthread::ThreadArg) {
 	std::cout << "other thread PID is " << gettid() << std::endl;
@@ -19,13 +21,7 @@ cosmos::pthread::ExitValue thread_entry(cosmos::pthread::ThreadArg) {
 		(void)cosmos::proc::wait(*child_pid);
 		std::cout << "child finished\n";
 	} else {
-		auto sleep_exe = cosmos::fs::which("sleep");
-		if (!sleep_exe) {
-			std::cerr << "failed to find sleep program?!\n";
-			cosmos::proc::exit(cosmos::ExitStatus::FAILURE);
-		}
-
-		cosmos::proc::exec(*sleep_exe, cosmos::CStringVector{sleep_exe->c_str(), sleep_time, nullptr});
+		cosmos::proc::exec(exiter, cosmos::CStringVector{exiter.c_str(), exit_status.c_str(), nullptr});
 		std::cerr << " a life post-exec?!\n";
 		cosmos::proc::exit(cosmos::ExitStatus::FAILURE);
 	}
@@ -39,12 +35,17 @@ public:
 	cosmos::ExitStatus main(const std::string_view argv0, const cosmos::StringViewVector &args) override;
 };
 
-cosmos::ExitStatus ForkInThread::main(const std::string_view,
+cosmos::ExitStatus ForkInThread::main(const std::string_view exe,
 		const cosmos::StringViewVector &args) {
 	std::cout << "main thread PID is " << cosmos::proc::get_own_pid() << std::endl;
 
+	exiter = std::string{exe.substr(0, exe.rfind("/"))};
+	exiter += "/exiter";
+
 	if (!args.empty()) {
-		sleep_time = args[0].data();
+		exit_status = args[0].data();
+	} else {
+		exit_status = "0";
 	}
 
 	cosmos::PosixThread thread{&thread_entry, cosmos::pthread::ThreadArg{0}};
