@@ -312,6 +312,10 @@ class TableParser:
         with open(os.path.join(outdir, "syscallnrs.hxx"), 'w') as generic_header_fd:
             self.writeGenericHeader(generic_header_fd)
 
+        for abi, table in self.abis.items():
+            with open(os.path.join(outdir, f"syscallnrs_{abi}.hxx"), 'w') as abi_header_fd:
+                self.writeABIHeader(abi_header_fd, abi, table)
+
     def normalizedSyscalls(self):
         """Returns a normalized version of self.syscall_names which merges ABI
         specific variants of system calls.
@@ -406,28 +410,23 @@ class TableParser:
         fd.write("\n")
         fd.write("namespace clues {\n\n")
         fd.write("""
-/// Abstract system call number usable across architectures and ABIs
-/*
+/// Abstract system call number usable across architectures and ABIs.
+/**
  * This enum contains all known system calls across supported Linux
  * architectures and ABIs. These are abstract in the sense that their
  * numerical values don't correspond to the actual system call numbers
  * used by the kernel.
- */\n""")
+ **/\n""")
         fd.write("enum class SystemCallNr {\n")
 
         syscalls = self.syscall_names
         max_label = max([len(ident) for ident in syscalls.keys()])
 
-        fd.write(f"\t{' '.ljust(max_label+1)} // present in ...\n")
-
-        first = True
+        fd.write(f"\t{'UNKNOWN = 0,'.ljust(max_label+1)} // present in ...\n")
 
         for syscall in sorted(syscalls.keys()):
             abis = syscalls[syscall]
             ident = syscall.upper()
-            if first:
-                ident = ident + " = 0"
-                first = False
             ident += ","
             fd.write(f"\t{ident.ljust(max_label+1)} // {' '.join(abis)}\n")
         fd.write("};\n\n")
@@ -445,6 +444,79 @@ class TableParser:
         fd.write("};\n\n")
 
         fd.write("} // end ns\n")
+
+    def writeABIHeader(self, fd, abi, table):
+        fd.write("#pragma once\n\n")
+        fd.write("#include <stdint.h>\n")
+        fd.write("#include \"syscallnrs.hxx\"\n")
+        fd.write("\n")
+        abi_comment = self.getABIComment(abi).strip()
+        abi_comment = '\n'.join([' * ' + line for line in abi_comment.splitlines()])
+        fd.write(f"/**\n{abi_comment}\n **/\n\n")
+        fd.write("namespace clues {\n")
+        fd.write(f"""
+/// Native system call numbers as used by Linux on the {abi} ABI.
+/**
+ * This strong enum type represents a system call number on the {abi} ABI.
+ * The literal values correspond exactly to the numbers used by the operating
+ * system and reported by the ptrace() API for this ABI.
+ *
+ * The underlying data type corresponds to the type used in the
+ * `PTRACE_GET_SYSCALL_INFO` API and is the same for all ABIs.
+ **/
+""")
+        enum_ident = f"SystemCallNr{abi.upper()}"
+        fd.write(f"enum class {enum_ident} : uint64_t {{\n")
+        max_ident = max([len(entry.name) for entry in table])
+
+        for entry in sorted(table, key=lambda el: el.nr):
+            ident = entry.name.upper()
+            comment = self.getABIEntryComment(abi, entry)
+            if comment:
+                comment = f" // {comment}"
+            fd.write(f"\t{ident.ljust(max_ident+1)} = {entry.nr},{comment}\n")
+        fd.write("};\n\n")
+
+        fd.write(f"constexpr inline clues::SystemCallNr toGeneric(const {enum_ident} nr) {{\n")
+        fd.write("\tswitch (nr) {\n")
+        fd.write("\t\tdefault: return SystemCallNr::UNKNOWN;\n")
+        for entry in sorted(table, key=lambda el: el.nr):
+            ident = entry.name.upper()
+            fd.write(f"\t\tcase {enum_ident}::{ident}: return clues::SystemCallNr::{ident};\n")
+        fd.write("\t}\n")
+        fd.write("}\n")
+
+        fd.write("\n} // end ns\n")
+
+    def getABIEntryComment(self, abi, entry):
+        """Returns a comment to place after the given system call nr. enum."""
+        if abi in ("x64", "x32"):
+            if entry.abi == "common":
+                return "common between x64 and x32"
+            else:
+                return f"specific to {abi}"
+
+        return ""
+
+    def getABIComment(self, abi):
+        """Returns a global comment for the given API to place at the top of
+        the header"""
+        if abi == "i386":
+            return """
+This ABI is used for real 32-bit x86 kernels as well as for the 32-bit
+emulation when running on x64 kernels.
+"""
+        elif abi == "x32":
+            return """
+This ABI is based on the AMD64 instruction set but uses only 32-bit pointers
+and integers to reduce memory footprint.
+"""
+        elif abi == "x64":
+            return """
+This is the standard AMD64 ABI for 64-bit x86 kernels.
+"""
+
+        return ""
 
 
 parser = TableParser()
