@@ -507,9 +507,16 @@ This ABI is used for real 32-bit x86 kernels as well as for the 32-bit
 emulation when running on x64 kernels.
 """
         elif abi == "x32":
+            # TODO: need to verify during runtime if everything adds up here.
+            # it might make more sense to actually add the X32 syscall bit in
+            # the enum already to avoid extra complications.
             return """
 This ABI is based on the AMD64 instruction set but uses only 32-bit pointers
 and integers to reduce memory footprint.
+
+The system call numbers have a high bit set to indicate the X32 ABI, which
+means that the system call numbers reported by ptrace() don't directly
+correspond to the values seen here.
 """
         elif abi == "x64":
             return """
