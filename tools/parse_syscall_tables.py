@@ -118,17 +118,11 @@ class TableParser:
 
         if self.args.list_abis:
             self.printABIs()
-            return
-
-        if self.args.list_all_syscalls:
+        elif self.args.list_all_syscalls:
             self.printAllSyscalls()
-            return
-
-        if self.args.list_unique:
+        elif self.args.list_unique:
             self.printUniqueSyscalls()
-            return
-
-        if self.args.show_diff:
+        elif self.args.show_diff:
             abis = self.args.show_diff.split(':')
             if len(abis) != 2:
                 printe("--show-diff: expected ABI1:ABI2 format", fail=True)
@@ -136,13 +130,10 @@ class TableParser:
                 if abi not in self.abis:
                     printe(f"--show-diff: unknown ABI '{abi}'", fail=True)
             self.showDiff(*abis)
-            return
-
-        if self.args.generate_headers:
-            self.generateHeaders(self.args.generate_headers)
-            return
-
-        self.printSummary()
+        elif self.args.generate_headers:
+            self.generateHeaders()
+        else:
+            self.printSummary()
 
     def parse(self):
         kernel_root = self.args.kernel_root
