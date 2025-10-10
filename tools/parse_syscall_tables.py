@@ -80,6 +80,7 @@ class TableParser:
         self.parser.add_argument("--generate-headers", metavar="DIR",
                                  help="Generate C++ headers for the selected architectures in the given directory",
                                  default=None)
+        self.parser.add_argument("--name-template", default="syscalls_{abi}.hxx", help="template for generated header filenames. {abi} will be replaced by the respective ABI the header is for.")
 
         # all parsed systems calls as they appear in the table file for an
         # arch in the following structure:
@@ -304,14 +305,21 @@ class TableParser:
         for abi, entries in self.abis.items():
             print(f"ABI '{abi}': found {len(entries)} system calls")
 
-    def generateHeaders(self, outdir):
-        print("Generating headers into", outdir)
-        with open(os.path.join(outdir, "syscallnrs.hxx"), 'w') as generic_header_fd:
+    def getOutputPath(self, abi):
+        outdir = self.args.generate_headers
+        base = self.args.name_template.format(abi=abi)
+        return os.path.join(outdir, base)
+
+    def generateHeaders(self):
+        print("Generating headers into", self.args.generate_headers)
+        generic_header = self.getOutputPath("generic")
+        with open(generic_header, 'w') as generic_header_fd:
             self.writeGenericHeader(generic_header_fd)
 
         for abi, table in self.abis.items():
-            with open(os.path.join(outdir, f"syscallnrs_{abi}.hxx"), 'w') as abi_header_fd:
-                self.writeABIHeader(abi_header_fd, abi, table)
+            with open(self.getOutputPath(abi), 'w') as abi_header_fd:
+                gen_inc = os.path.basename(generic_header)
+                self.writeABIHeader(abi_header_fd, gen_inc, abi, table)
 
     def normalizedSyscalls(self):
         """Returns a normalized version of self.syscall_names which merges ABI
@@ -442,10 +450,10 @@ class TableParser:
 
         fd.write("} // end ns\n")
 
-    def writeABIHeader(self, fd, abi, table):
+    def writeABIHeader(self, fd, gen_inc, abi, table):
         fd.write("#pragma once\n\n")
         fd.write("#include <stdint.h>\n")
-        fd.write("#include \"syscallnrs.hxx\"\n")
+        fd.write(f"#include \"{gen_inc}\"\n")
         fd.write("\n")
         self.writePreamble(fd)
         abi_comment = self.getABIComment(abi).strip()
