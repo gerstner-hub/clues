@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # This script parses .tbl files from the Linux kernel source tree and can
-# generated C++ headers providing enums for the various architectures and ABIs
+# generate C++ headers providing enums for the various architectures and ABIs
 # we might encounter while tracing.
 #
 # For the start this will concentrate on the three PC ABIs: i386, x86_64 and
@@ -88,7 +88,7 @@ class TableParser:
         # transformed data in a dictionary of the following structure:
         # "abi" → [list of TableEntry]
         # where all system calls for an ABI are resolved, so that there
-        # will be a complete list of all system call nrs. for x86-64 in the
+        # will be a complete list of all system call nrs. For x86-64 in the
         # x86-64 ABI entry, for example.
         self.abis = {}
         # a dict of all system call names encountered mapped to a list of ABIs
@@ -221,7 +221,7 @@ class TableParser:
             self.abis["x64"].extend(abi_dict["64"])
             self.abis["x32"].extend(abi_dict["x32"])
 
-            # skeep both ABIs sorted by system call nr.
+            # keep both ABIs sorted by system call nr.
             self.abis["x64"].sort(key=lambda e: e.nr)
             self.abis["x32"].sort(key=lambda e: e.nr)
 
@@ -342,10 +342,10 @@ class TableParser:
         POV it can be good to be able to express something like "tell me if
         this is any of the getuid() system calls". Other contexts might want
         the more specific information, is this really a 64-bit getuid()
-        systemm call?
+        system call?
         For system call filtering this is similarly problematic. strace
         supports specification of things like `-e fadvise64_64`. Implementing
-        ABI specific filter while merging common system calls will be
+        ABI specific filters while merging common system calls will be
         difficult.
 
         Update:
@@ -354,7 +354,7 @@ class TableParser:
 
         - "global" SysCallNrs which contain all known system call names across
           all ABIs, leaving variants as they are.
-        - native ABI SysCallNrs whic correspond to the exact system call
+        - native ABI SysCallNrs which correspond to the exact system call
           number the kernel users for the ABI.
         - normalized SysCallNrs which contain the normalize system calls,
           hiding differences between ABIs.
