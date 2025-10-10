@@ -484,6 +484,13 @@ class TableParser:
         fd.write("};\n\n")
 
         fd.write(f"constexpr inline clues::SystemCallNr toGeneric(const {enum_ident} nr) {{\n")
+        # TODO: this is a very big switch statement which will need to be
+        # invoked for every new system call entry.
+        # for now we trust the compiler to generate efficient code here, but
+        # it could hurt tracing performance if this is not as good as we hope
+        # it to be. Using an alternative data structure like std::map could
+        # help here in this case.
+        # This needs a closer investigation at a later time.
         fd.write("\tswitch (nr) {\n")
         fd.write("\t\tdefault: return SystemCallNr::UNKNOWN;\n")
         for entry in sorted(table, key=lambda el: el.nr):
