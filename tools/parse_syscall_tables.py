@@ -77,10 +77,11 @@ class TableParser:
                                  help="list system calls that are unique for each ABI")
         self.parser.add_argument("--show-diff", metavar="ABI1:ABI2",
                                  help="Show differences between the given ABIs")
-        self.parser.add_argument("--generate-headers", metavar="DIR",
-                                 help="Generate C++ headers for the selected architectures in the given directory",
+        self.parser.add_argument("--generate-sources", metavar="DIR",
+                                 help="Generate C++ sources for the selected architectures in the given directory",
                                  default=None)
-        self.parser.add_argument("--name-template", default="syscalls_{abi}.hxx", help="template for generated header filenames. {abi} will be replaced by the respective ABI the header is for.")
+        self.parser.add_argument("--name-template", default="{abi}.{suffix}", help="template for generated header filenames. {abi} will be replaced by the respective ABI the header is for, {suffix} by .hxx or .cxx.")
+        self.parser.add_argument("--include-prefix", default="clues/syscalls", help="prefix to add for #include directives of generated headers")
 
         # all parsed systems calls as they appear in the table file for an
         # arch in the following structure:
@@ -131,7 +132,7 @@ class TableParser:
                 if abi not in self.abis:
                     printe(f"--show-diff: unknown ABI '{abi}'", fail=True)
             self.showDiff(*abis)
-        elif self.args.generate_headers:
+        elif self.args.generate_sources:
             self.generateHeaders()
         else:
             self.printSummary()
@@ -305,27 +306,41 @@ class TableParser:
         for abi, entries in self.abis.items():
             print(f"ABI '{abi}': found {len(entries)} system calls")
 
-    def getOutputPath(self, abi):
-        outdir = self.args.generate_headers
-        base = self.args.name_template.format(abi=abi)
+    def getOutputPath(self, abi, suffix):
+        outdir = self.args.generate_sources
+        base = self.args.name_template.format(abi=abi, suffix=suffix)
         return os.path.join(outdir, base)
 
+    def getHeaderOutputPath(self, abi):
+        return self.getOutputPath(abi, "hxx")
+
+    def getUnitOutputPath(self, abi):
+        return self.getOutputPath(abi, "cxx")
+
     def generateHeaders(self):
-        print("Generating headers into", self.args.generate_headers)
-        generic_header = self.getOutputPath("generic")
+        print("Generating headers into", self.args.generate_sources)
+        generic_header = self.getHeaderOutputPath("generic")
         gen_inc = os.path.basename(generic_header)
         with open(generic_header, 'w') as generic_header_fd:
             self.writeGenericHeader(generic_header_fd)
 
+        generic_src = self.getUnitOutputPath("generic")
+        with open(generic_src, 'w') as generic_src_fd:
+            self.writeGenericUnit(generic_src_fd)
+
         abi_headers = []
 
         for abi, table in self.abis.items():
-            abi_header = self.getOutputPath(abi)
+            abi_header = self.getHeaderOutputPath(abi)
             abi_headers.append(os.path.basename(abi_header))
             with open(abi_header, 'w') as abi_header_fd:
                 self.writeABIHeader(abi_header_fd, gen_inc, abi, table)
 
-        with open(self.getOutputPath("types"), 'w') as types_fd:
+            abi_source = self.getUnitOutputPath(abi)
+            with open(abi_source, 'w') as abi_src_fd:
+                self.writeABIUnit(abi_src_fd, abi_header, abi, table)
+
+        with open(self.getHeaderOutputPath("types"), 'w') as types_fd:
             self.writeTypesHeader(types_fd, gen_inc, abi_headers)
 
     def normalizedSyscalls(self):
@@ -419,6 +434,7 @@ class TableParser:
         fd.write("#include <cstddef>\n")
         fd.write("#include <map>\n")
         fd.write("#include <string_view>\n")
+        fd.write("#include <clues/dso_export.h>\n")
         self.writePreamble(fd)
         fd.write("namespace clues {\n\n")
         fd.write("""
@@ -445,7 +461,21 @@ class TableParser:
 
         fd.write(f"constexpr size_t SYSTEM_CALL_COUNT = {len(syscalls)};\n\n")
 
-        fd.write("constexpr std::array<std::string_view, SYSTEM_CALL_COUNT> SYSTEM_CALL_NAMES = {\n")
+        fd.write("CLUES_API const extern std::array<std::string_view, SYSTEM_CALL_COUNT> SYSTEM_CALL_NAMES;\n\n")
+
+        fd.write("CLUES_API const extern std::map<std::string_view, SystemCallNr> SYSTEM_CALL_NAME_MAP;\n\n")
+
+        fd.write("} // end ns\n")
+
+    def writeGenericUnit(self, fd):
+        fd.write(f"#include <{self.args.include_prefix}/generic.hxx>\n")
+        fd.write("\n")
+        self.writePreamble(fd)
+        fd.write("namespace clues {\n\n")
+
+        syscalls = self.syscall_names
+
+        fd.write("const std::array<std::string_view, SYSTEM_CALL_COUNT> SYSTEM_CALL_NAMES = {\n")
         for syscall in sorted(syscalls.keys()):
             fd.write(f"\t\"{syscall}\",\n")
         fd.write("};\n\n")
@@ -455,11 +485,12 @@ class TableParser:
             fd.write(f"\t{{std::string_view{{\"{syscall}\"}}, SystemCallNr::{syscall.upper()}}},\n")
         fd.write("};\n\n")
 
-        fd.write("} // end ns\n")
+        fd.write("\n} // end ns\n")
 
     def writeABIHeader(self, fd, gen_inc, abi, table):
         fd.write("#pragma once\n\n")
         fd.write("#include <stdint.h>\n")
+        fd.write("#include <clues/dso_export.h>\n")
         fd.write(f"#include \"{gen_inc}\"\n")
         fd.write("\n")
         self.writePreamble(fd)
@@ -490,23 +521,35 @@ class TableParser:
             fd.write(f"\t{ident.ljust(max_ident+1)} = {entry.nr},{comment}\n")
         fd.write("};\n\n")
 
-        fd.write(f"constexpr inline clues::SystemCallNr toGeneric(const {enum_ident} nr) {{\n")
-        # TODO: this is a very big switch statement which will need to be
-        # invoked for every new system call entry.
-        # for now we trust the compiler to generate efficient code here, but
-        # it could hurt tracing performance if this is not as good as we hope
-        # it to be. Using an alternative data structure like std::map could
-        # help here in this case.
-        # This needs a closer investigation at a later time.
+        fd.write(f"CLUES_API constexpr clues::SystemCallNr to_generic(const {enum_ident} nr);\n")
+
+        fd.write("\n} // end ns\n")
+
+    def writeABIUnit(self, fd, abi_inc, abi, table):
+        fd.write(f"#include <{self.args.include_prefix}/{abi}.hxx>\n")
+        fd.write("\n")
+        self.writePreamble(fd)
+        fd.write("namespace clues {\n\n")
+        fd.write("""/*
+ * TODO: this is a very big switch statement which will need to be
+ * invoked for every new system call entry.
+ * for now we trust the compiler to generate efficient code here, but
+ * it could hurt tracing performance if this is not as good as we hope
+ * it to be. Using an alternative data structure like std::map could
+ * help here in this case.
+ * This needs a closer investigation at a later time.
+ */\n""")
+        enum_ident = f"SystemCallNr{abi.upper()}"
+        fd.write(f"constexpr clues::SystemCallNr to_generic(const {enum_ident} nr) {{\n")
+        fd.write("\n")
         fd.write("\tswitch (nr) {\n")
         fd.write("\t\tdefault: return SystemCallNr::UNKNOWN;\n")
         for entry in sorted(table, key=lambda el: el.nr):
             ident = entry.name.upper()
             fd.write(f"\t\tcase {enum_ident}::{ident}: return clues::SystemCallNr::{ident};\n")
         fd.write("\t}\n")
-        fd.write("}\n")
-
-        fd.write("\n} // end ns\n")
+        fd.write("}\n\n")
+        fd.write("} // end ns\n")
 
     def writeTypesHeader(self, fd, gen_inc, abi_incs):
         fd.write("#pragma once\n\n")
@@ -535,10 +578,11 @@ class TableParser:
 
     def writePreamble(self, fd):
         script = os.path.basename(__file__)
-        fd.write("\n/****************************************************\n")
-        fd.write(f" * this header was generated by {script}\n")
+        BANNER_LEN = 80
+        fd.write("\n/" + "*" * BANNER_LEN + "\n")
+        fd.write(f" * this file was generated by {script}\n")
         fd.write(f" * based on Linux kernel sources {self.kernel_release}\n")
-        fd.write(" ******************************************************/\n\n")
+        fd.write(" " + "*" * BANNER_LEN + "/\n\n")
 
     def getABIEntryComment(self, abi, entry):
         """Returns a comment to place after the given system call nr. enum."""
