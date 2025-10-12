@@ -313,13 +313,20 @@ class TableParser:
     def generateHeaders(self):
         print("Generating headers into", self.args.generate_headers)
         generic_header = self.getOutputPath("generic")
+        gen_inc = os.path.basename(generic_header)
         with open(generic_header, 'w') as generic_header_fd:
             self.writeGenericHeader(generic_header_fd)
 
+        abi_headers = []
+
         for abi, table in self.abis.items():
-            with open(self.getOutputPath(abi), 'w') as abi_header_fd:
-                gen_inc = os.path.basename(generic_header)
+            abi_header = self.getOutputPath(abi)
+            abi_headers.append(os.path.basename(abi_header))
+            with open(abi_header, 'w') as abi_header_fd:
                 self.writeABIHeader(abi_header_fd, gen_inc, abi, table)
+
+        with open(self.getOutputPath("types"), 'w') as types_fd:
+            self.writeTypesHeader(types_fd, gen_inc, abi_headers)
 
     def normalizedSyscalls(self):
         """Returns a normalized version of self.syscall_names which merges ABI
@@ -498,6 +505,31 @@ class TableParser:
             fd.write(f"\t\tcase {enum_ident}::{ident}: return clues::SystemCallNr::{ident};\n")
         fd.write("\t}\n")
         fd.write("}\n")
+
+        fd.write("\n} // end ns\n")
+
+    def writeTypesHeader(self, fd, gen_inc, abi_incs):
+        fd.write("#pragma once\n\n")
+        fd.write("#include <variant>\n")
+        fd.write(f"#include \"{gen_inc}\"\n")
+        for inc in abi_incs:
+            fd.write(f"#include \"{inc}\"\n")
+        fd.write("\n")
+        self.writePreamble(fd)
+
+        fd.write("namespace clues {\n\n")
+
+        abi_enums = []
+        for abi in self.abis:
+            ident = f"SystemCallNr{abi.upper()}"
+            abi_enums.append(ident)
+
+        fd.write("using SystemCallNrVariant = std::variant<")
+        for nr, enum in enumerate(abi_enums):
+            fd.write(f"{enum}")
+            if nr != len(abi_enums) - 1:
+                fd.write(", ")
+        fd.write(">;\n")
 
         fd.write("\n} // end ns\n")
 
