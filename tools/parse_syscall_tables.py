@@ -17,9 +17,9 @@ from dataclasses import dataclass
 
 
 def printe(*args, **kwargs):
-    kwargs['file'] = sys.stderr
+    kwargs["file"] = sys.stderr
     try:
-        fail = kwargs.pop('fail')
+        fail = kwargs.pop("fail")
     except KeyError:
         fail = False
 
@@ -39,6 +39,11 @@ class TableEntry:
 
 
 class TableParser:
+    """Parse *.tbl files as found in the kernel source tree.
+
+    After parsing you can access the parsed data in the `parsed`, `abis` and
+    `syscall_names` members.
+    """
 
     # keeping architecture and ABI apart is quite difficult here due to the
     # naming scheme and different approaches used between architectures.
@@ -47,6 +52,9 @@ class TableParser:
     # sub-directory and syscall .tbl suffix, if any.
     #
     # each syscall .tbl might contain multiple ABIs, depending on the arch.
+    #
+    # the keys here are currently composed of the arch sub-directory plus the
+    # <suffix> of the *.tbl file, if present.
     ARCH_TABLE_PATHS = {
         #"arm":      "arch/arm/tools/syscall.tbl",
         #"powerpc":  "arch/powerpc/kernel/syscalls/syscall.tbl",
@@ -58,30 +66,10 @@ class TableParser:
         "x86-64":   "arch/x86/entry/syscalls/syscall_64.tbl",
     }
 
-    def __init__(self):
-        self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("--kernel-root",
-                                 default="/usr/src/linux", help="where to look for .tbl files to parse")
-        self.parser.add_argument("--archs", nargs="*",
-                                 help="Architectures which should be processed",
-                                 default=self.ARCH_TABLE_PATHS.keys())
-        self.parser.add_argument("--list-archs", action='store_true',
-                                 help="list valid arguments for --archs")
-        self.parser.add_argument("--list-raw", action='store_true',
-                                 help="list raw content parsed from .tbl files")
-        self.parser.add_argument("--list-abis", action='store_true',
-                                 help="list expanded ABI information after processing .tbl files")
-        self.parser.add_argument("--list-all-syscalls", action='store_true',
-                                 help="list every distinct system call and the ABIs they're found in")
-        self.parser.add_argument("--list-unique", action='store_true',
-                                 help="list system calls that are unique for each ABI")
-        self.parser.add_argument("--show-diff", metavar="ABI1:ABI2",
-                                 help="Show differences between the given ABIs")
-        self.parser.add_argument("--generate-sources", metavar="DIR",
-                                 help="Generate C++ sources for the selected architectures in the given directory",
-                                 default=None)
-        self.parser.add_argument("--name-template", default="{abi}.{suffix}", help="template for generated header filenames. {abi} will be replaced by the respective ABI the header is for, {suffix} by .hxx or .cxx.")
-        self.parser.add_argument("--include-prefix", default="clues/syscalls", help="prefix to add for #include directives of generated headers")
+    def __init__(self, kernel_root, archs):
+
+        self.kernel_root = kernel_root
+        self.archs = archs
 
         # all parsed systems calls as they appear in the table file for an
         # arch in the following structure:
@@ -97,59 +85,24 @@ class TableParser:
         # where they have been seen.
         self.syscall_names = {}
 
-    def run(self):
-        self.args = self.parser.parse_args()
-
-        if self.args.list_archs:
-            print('\n'.join(list(sorted(self.ARCH_TABLE_PATHS.keys()))))
-            return
-
-        for arch in self.args.archs:
-            if arch not in self.ARCH_TABLE_PATHS:
-                print(f"Bad --arch value: '{arch}'")
-                return
-
-        self.parse()
-
-        if self.args.list_raw:
-            self.printRaw()
-            return
-
-        self.transformABIs()
-        self.recordSyscallNames()
-
-        if self.args.list_abis:
-            self.printABIs()
-        elif self.args.list_all_syscalls:
-            self.printAllSyscalls()
-        elif self.args.list_unique:
-            self.printUniqueSyscalls()
-        elif self.args.show_diff:
-            abis = self.args.show_diff.split(':')
-            if len(abis) != 2:
-                printe("--show-diff: expected ABI1:ABI2 format", fail=True)
-            for abi in abis:
-                if abi not in self.abis:
-                    printe(f"--show-diff: unknown ABI '{abi}'", fail=True)
-            self.showDiff(*abis)
-        elif self.args.generate_sources:
-            self.generateHeaders()
-        else:
-            self.printSummary()
-
     def parse(self):
-        kernel_root = self.args.kernel_root
+        kernel_root = self.kernel_root
 
         release_subpath = "include/config/kernel.release"
         with open(os.path.join(kernel_root, release_subpath)) as rl:
             self.kernel_release = rl.read().strip()
 
         for arch, subpath in self.ARCH_TABLE_PATHS.items():
-            if arch not in self.args.archs:
+            if arch not in self.archs:
                 continue
             table = self.parsed.setdefault(arch, {})
             with open(os.path.join(kernel_root, subpath)) as fl:
                 self.processTable(subpath, arch, table, fl)
+
+    def process(self):
+        self.parse()
+        self.transformABIs()
+        self.recordSyscallNames()
 
     def processTable(self, subpath, arch, table, fl):
         linenr = 0
@@ -224,124 +177,61 @@ class TableParser:
                 abi_list = self.syscall_names.setdefault(entry.name, [])
                 abi_list.append(abi)
 
-    def printRaw(self):
-        for arch, abi_dict in self.parsed.items():
-            print(arch)
-            for abi, entries in abi_dict.items():
-                print("\t" + abi)
-                for entry in entries:
-                    print(f"\t\t{entry.nr} {entry.name}")
 
-    def printABIs(self):
-        for abi, entries in self.abis.items():
-            print(abi)
-            for entry in entries:
-                print(f"\t{entry.nr} {entry.name}")
+class SourceGenerator:
+    """Generates C++ headers and sources that model the parsed system call number
+    information for selected architectures."""
 
-    def printAllSyscalls(self):
-        for name in sorted(self.syscall_names.keys()):
-            print(f"{name}: ", end='')
-            print(", ".join(self.syscall_names[name]))
+    def __init__(self, parser, src_dir, inc_dir, inc_prefix, template):
+        self.parser = parser
+        self.src_dir = src_dir
+        self.inc_dir = inc_dir
+        self.inc_prefix = inc_prefix
+        self.template = template
 
-    def printUniqueSyscalls(self):
-        for abi, entries in self.abis.items():
-            print(f"Unique system calls in ABI '{abi}':\n")
-            found = False
-            for entry in entries:
-                if len(self.syscall_names[entry.name]) == 1:
-                    print(f"\t{entry.nr} {entry.name}")
-                    found = True
-            if not found:
-                print("\tN/A")
-            print()
-
-    def showDiff(self, abi1, abi2):
-        print(f"Differences between {abi1} and {abi2}\n")
-
-        abi1_map = {}
-        abi2_map = {}
-        only_in_abi1 = []
-        only_in_abi2 = []
-        mismatches = []
-
-        for entry in self.abis[abi1]:
-            abi1_map[entry.name] = entry.nr
-            known_abis = self.syscall_names[entry.name]
-            if abi2 not in known_abis:
-                only_in_abi1.append(entry)
-
-        for entry in self.abis[abi2]:
-            abi2_map[entry.name] = entry.nr
-            known_abis = self.syscall_names[entry.name]
-            if abi1 not in known_abis:
-                only_in_abi2.append(entry)
-            else:
-                other_nr = abi1_map[entry.name]
-                if entry.nr != other_nr:
-                    mismatches.append(entry)
-
-        if only_in_abi1:
-            print("System calls only found in", abi1 + "\n")
-            for entry in only_in_abi1:
-                print(f"\t{entry.nr} {entry.name}")
-            print()
-
-        if only_in_abi2:
-            print("System calls only found in", abi2 + "\n")
-            for entry in only_in_abi2:
-                print(f"\t{entry.nr} {entry.name}")
-            print()
-
-        if mismatches:
-            print("System calls with differing numbers\n")
-            for entry in mismatches:
-                nr1 = abi1_map[entry.name]
-                nr2 = abi2_map[entry.name]
-                print(f"\t{entry.name} ({abi1} = {nr1}, {abi2} = {nr2})")
-
-    def printSummary(self):
-        print("Successfully processed .tbl files.\n")
-        print("Overall number of different system calls across ABIs:", len(self.syscall_names))
-
-        for abi, entries in self.abis.items():
-            print(f"ABI '{abi}': found {len(entries)} system calls")
-
-    def getOutputPath(self, abi, suffix):
-        outdir = self.args.generate_sources
-        base = self.args.name_template.format(abi=abi, suffix=suffix)
+    def getOutputPath(self, outdir, abi, suffix):
+        base = self.template.format(abi=abi, suffix=suffix)
         return os.path.join(outdir, base)
 
     def getHeaderOutputPath(self, abi):
-        return self.getOutputPath(abi, "hxx")
+        os.makedirs(self.inc_dir, exist_ok=True)
+        return self.getOutputPath(self.inc_dir, abi, "hxx")
 
     def getUnitOutputPath(self, abi):
-        return self.getOutputPath(abi, "cxx")
+        os.makedirs(self.src_dir, exist_ok=True)
+        return self.getOutputPath(self.src_dir, abi, "cxx")
 
-    def generateHeaders(self):
-        print("Generating headers into", self.args.generate_sources)
+    def getEnumIdent(self, abi):
+        return f"SystemCallNr{abi.upper()}"
+
+    def generate(self):
         generic_header = self.getHeaderOutputPath("generic")
-        gen_inc = os.path.basename(generic_header)
-        with open(generic_header, 'w') as generic_header_fd:
-            self.writeGenericHeader(generic_header_fd)
+        self._gen_header = os.path.basename(generic_header)
+        with open(generic_header, 'w') as fd:
+            self.writeGenericHeader(fd)
 
-        generic_src = self.getUnitOutputPath("generic")
-        with open(generic_src, 'w') as generic_src_fd:
-            self.writeGenericUnit(generic_src_fd)
+        with open(self.getUnitOutputPath("generic"), 'w') as fd:
+            self.writeGenericUnit(fd)
 
-        abi_headers = []
+        self._abi_headers = []
 
-        for abi, table in self.abis.items():
+        for abi, table in self.parser.abis.items():
             abi_header = self.getHeaderOutputPath(abi)
-            abi_headers.append(os.path.basename(abi_header))
-            with open(abi_header, 'w') as abi_header_fd:
-                self.writeABIHeader(abi_header_fd, gen_inc, abi, table)
+            self._abi_headers.append(os.path.basename(abi_header))
+            with open(abi_header, 'w') as fd:
+                self.writeABIHeader(fd, abi, table)
 
-            abi_source = self.getUnitOutputPath(abi)
-            with open(abi_source, 'w') as abi_src_fd:
-                self.writeABIUnit(abi_src_fd, abi_header, abi, table)
+            with open(self.getUnitOutputPath(abi), 'w') as fd:
+                self.writeABIUnit(fd, os.path.basename(abi_header), abi, table)
 
-        with open(self.getHeaderOutputPath("types"), 'w') as types_fd:
-            self.writeTypesHeader(types_fd, gen_inc, abi_headers)
+        with open(self.getHeaderOutputPath("types"), 'w') as fd:
+            self.writeTypesHeader(fd)
+
+        with open(self.getHeaderOutputPath("fwd"), 'w') as fd:
+            self.writeFwdHeader(fd)
+
+        with open(self.getHeaderOutputPath("all"), 'w') as fd:
+            self.writeAllHeader(fd)
 
     def normalizedSyscalls(self):
         """Returns a normalized version of self.syscall_names which merges ABI
@@ -384,7 +274,7 @@ class TableParser:
         ret = copy.copy(self.syscall_names)
 
         def is386_only(abis):
-            return len(abis) == 1 and abis[0] == "i386"
+            return abis == ["i386"]
 
         for name, abis in self.syscall_names.items():
             if not is386_only(abis):
@@ -434,7 +324,8 @@ class TableParser:
         fd.write("#include <cstddef>\n")
         fd.write("#include <map>\n")
         fd.write("#include <string_view>\n")
-        fd.write("#include <clues/dso_export.h>\n")
+        fd.write("#include <stdint.h>\n")
+        fd.write("\n#include <clues/dso_export.h>\n")
         self.writePreamble(fd)
         fd.write("namespace clues {\n\n")
         fd.write("""
@@ -444,10 +335,13 @@ class TableParser:
  * architectures and ABIs. These are abstract in the sense that their
  * numerical values don't correspond to the actual system call numbers
  * used by the kernel.
+ *
+ * For simplicity the underlying type for the abstract enum type is kept in
+ * sync with the concrete system call number enum types.
  **/\n""")
-        fd.write("enum class SystemCallNr {\n")
+        fd.write("enum class SystemCallNr : uint64_t {\n")
 
-        syscalls = self.syscall_names
+        syscalls = self.parser.syscall_names
         max_label = max([len(ident) for ident in syscalls.keys()])
 
         fd.write(f"\t{'UNKNOWN = 0,'.ljust(max_label+1)} // present in ...\n")
@@ -459,7 +353,7 @@ class TableParser:
             fd.write(f"\t{ident.ljust(max_label+1)} // {' '.join(abis)}\n")
         fd.write("};\n\n")
 
-        fd.write(f"constexpr size_t SYSTEM_CALL_COUNT = {len(syscalls)};\n\n")
+        fd.write(f"constexpr size_t SYSTEM_CALL_COUNT = {len(syscalls)+1};\n\n")
 
         fd.write("CLUES_API const extern std::array<std::string_view, SYSTEM_CALL_COUNT> SYSTEM_CALL_NAMES;\n\n")
 
@@ -468,14 +362,15 @@ class TableParser:
         fd.write("} // end ns\n")
 
     def writeGenericUnit(self, fd):
-        fd.write(f"#include <{self.args.include_prefix}/generic.hxx>\n")
+        fd.write(f"#include <{self.inc_prefix}/generic.hxx>\n")
         fd.write("\n")
         self.writePreamble(fd)
         fd.write("namespace clues {\n\n")
 
-        syscalls = self.syscall_names
+        syscalls = self.parser.syscall_names
 
         fd.write("const std::array<std::string_view, SYSTEM_CALL_COUNT> SYSTEM_CALL_NAMES = {\n")
+        fd.write("\t\"unknown\",\n")
         for syscall in sorted(syscalls.keys()):
             fd.write(f"\t\"{syscall}\",\n")
         fd.write("};\n\n")
@@ -485,31 +380,31 @@ class TableParser:
             fd.write(f"\t{{std::string_view{{\"{syscall}\"}}, SystemCallNr::{syscall.upper()}}},\n")
         fd.write("};\n\n")
 
-        fd.write("\n} // end ns\n")
+        fd.write("} // end ns\n")
 
-    def writeABIHeader(self, fd, gen_inc, abi, table):
+    def writeABIHeader(self, fd, abi, table):
         fd.write("#pragma once\n\n")
         fd.write("#include <stdint.h>\n")
-        fd.write("#include <clues/dso_export.h>\n")
-        fd.write(f"#include \"{gen_inc}\"\n")
+        fd.write("\n#include <clues/dso_export.h>\n")
+        fd.write("\n\n#include \"fwd.hxx\"\n")
         fd.write("\n")
         self.writePreamble(fd)
         abi_comment = self.getABIComment(abi).strip()
-        abi_comment = '\n'.join([' * ' + line for line in abi_comment.splitlines()])
+        abi_comment = '\n'.join([" * " + line for line in abi_comment.splitlines()])
         fd.write(f"/**\n{abi_comment}\n **/\n\n")
         fd.write("namespace clues {\n")
         fd.write(f"""
 /// Native system call numbers as used by Linux on the {abi} ABI.
 /**
  * This strong enum type represents a system call number on the {abi} ABI.
- * The literal values correspond exactly to the numbers used by the operating
+ * The literal values correspond to the numbers used by the operating
  * system and reported by the ptrace() API for this ABI.
  *
  * The underlying data type corresponds to the type used in the
  * `PTRACE_GET_SYSCALL_INFO` API and is the same for all ABIs.
  **/
 """)
-        enum_ident = f"SystemCallNr{abi.upper()}"
+        enum_ident = self.getEnumIdent(abi)
         fd.write(f"enum class {enum_ident} : uint64_t {{\n")
         max_ident = max([len(entry.name) for entry in table])
 
@@ -521,12 +416,14 @@ class TableParser:
             fd.write(f"\t{ident.ljust(max_ident+1)} = {entry.nr},{comment}\n")
         fd.write("};\n\n")
 
-        fd.write(f"CLUES_API constexpr clues::SystemCallNr to_generic(const {enum_ident} nr);\n")
+        fd.write("/// Convert the native system call nr. into its generic representation.\n")
+        fd.write(f"CLUES_API clues::SystemCallNr to_generic(const {enum_ident} nr);\n")
 
         fd.write("\n} // end ns\n")
 
-    def writeABIUnit(self, fd, abi_inc, abi, table):
-        fd.write(f"#include <{self.args.include_prefix}/{abi}.hxx>\n")
+    def writeABIUnit(self, fd, inc_base, abi, table):
+        fd.write(f"#include <{self.inc_prefix}/{inc_base}>\n")
+        fd.write(f"#include <{self.inc_prefix}/{self._gen_header}>\n")
         fd.write("\n")
         self.writePreamble(fd)
         fd.write("namespace clues {\n\n")
@@ -539,8 +436,8 @@ class TableParser:
  * help here in this case.
  * This needs a closer investigation at a later time.
  */\n""")
-        enum_ident = f"SystemCallNr{abi.upper()}"
-        fd.write(f"constexpr clues::SystemCallNr to_generic(const {enum_ident} nr) {{\n")
+        enum_ident = self.getEnumIdent(abi)
+        fd.write(f"clues::SystemCallNr to_generic(const {enum_ident} nr) {{\n")
         fd.write("\n")
         fd.write("\tswitch (nr) {\n")
         fd.write("\t\tdefault: return SystemCallNr::UNKNOWN;\n")
@@ -551,20 +448,18 @@ class TableParser:
         fd.write("}\n\n")
         fd.write("} // end ns\n")
 
-    def writeTypesHeader(self, fd, gen_inc, abi_incs):
+    def writeTypesHeader(self, fd):
         fd.write("#pragma once\n\n")
         fd.write("#include <variant>\n")
-        fd.write(f"#include \"{gen_inc}\"\n")
-        for inc in abi_incs:
-            fd.write(f"#include \"{inc}\"\n")
+        fd.write("\n#include \"fwd.hxx\"\n")
         fd.write("\n")
         self.writePreamble(fd)
 
         fd.write("namespace clues {\n\n")
 
         abi_enums = []
-        for abi in self.abis:
-            ident = f"SystemCallNr{abi.upper()}"
+        for abi in self.parser.abis:
+            ident = self.getEnumIdent(abi)
             abi_enums.append(ident)
 
         fd.write("using SystemCallNrVariant = std::variant<")
@@ -576,12 +471,30 @@ class TableParser:
 
         fd.write("\n} // end ns\n")
 
+    def writeFwdHeader(self, fd):
+        fd.write("#pragma once\n\n")
+        fd.write("namespace clues {\n\n")
+        fd.write("enum class SystemCallNr : uint64_t;\n")
+        for abi in self.parser.abis:
+            ident = self.getEnumIdent(abi)
+            fd.write(f"enum class {ident} : uint64_t;\n")
+        fd.write("\n} // end ns\n")
+
+    def writeAllHeader(self, fd):
+        fd.write("#pragma once\n\n")
+        for base in ("generic", "types"):
+            path = self.getOutputPath(self.inc_prefix, base, "hxx")
+            fd.write(f"#include <{path}>\n")
+        for abi in self.parser.abis:
+            path = self.getOutputPath(self.inc_prefix, abi, "hxx")
+            fd.write(f"#include <{path}>\n")
+
     def writePreamble(self, fd):
         script = os.path.basename(__file__)
         BANNER_LEN = 80
         fd.write("\n/" + "*" * BANNER_LEN + "\n")
         fd.write(f" * this file was generated by {script}\n")
-        fd.write(f" * based on Linux kernel sources {self.kernel_release}\n")
+        fd.write(f" * based on Linux kernel sources {self.parser.kernel_release}\n")
         fd.write(" " + "*" * BANNER_LEN + "/\n\n")
 
     def getABIEntryComment(self, abi, entry):
@@ -622,5 +535,180 @@ This is the standard AMD64 ABI for 64-bit x86 kernels.
         return ""
 
 
-parser = TableParser()
-parser.run()
+class Main:
+    """Main utility class offering a CLI interface to parse *.tbl files and
+    generate C++ code."""
+
+    def getArgParser(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--kernel-root",
+            default="/usr/src/linux",
+            help="where to look for .tbl files to parse")
+        parser.add_argument("--archs", nargs="*",
+            help="Architectures which should be processed",
+            default=TableParser.ARCH_TABLE_PATHS.keys())
+        parser.add_argument("--list-archs", action="store_true",
+            help="list valid arguments for --archs")
+        parser.add_argument("--list-raw", action="store_true",
+            help="list raw content parsed from .tbl files")
+        parser.add_argument("--list-abis", action="store_true",
+            help="list expanded ABI information after processing .tbl files")
+        parser.add_argument("--list-all-syscalls", action="store_true",
+            help="list every distinct system call and the ABIs they're found in")
+        parser.add_argument("--list-unique", action="store_true",
+            help="list system calls that are unique for each ABI")
+        parser.add_argument("--show-diff", metavar="ABI1:ABI2",
+            help="Show differences between the given ABIs")
+        parser.add_argument("--generate-sources",
+            help="Generate C++ sources for the selected architectures in the given directory",
+            action="store_true")
+        parser.add_argument("--name-template",
+            default="{abi}.{suffix}",
+            help="template for generated header filenames. {abi} will be replaced by the respective ABI the header is for, {suffix} by .hxx or .cxx.")
+        parser.add_argument("--include-prefix",
+            default="clues/sysnrs",
+            help="prefix to add for #include directives for generated headers")
+        parser.add_argument("--src-outdir", metavar="DIR",
+            help="Directory where to place generated source files",
+            default="src/sysnrs")
+        parser.add_argument("--inc-outdir", metavar="DIR",
+            help="Directory where to place generated include files",
+            default="include/sysnrs")
+
+        return parser
+
+    def run(self):
+        self.args = self.getArgParser().parse_args()
+
+        if self.args.list_archs:
+            print('\n'.join(list(sorted(TableParser.ARCH_TABLE_PATHS.keys()))))
+            return
+
+        for arch in self.args.archs:
+            if arch not in TableParser.ARCH_TABLE_PATHS:
+                print(f"Bad --arch value: '{arch}'")
+                return
+
+        self.parser = TableParser(self.args.kernel_root, self.args.archs)
+        self.parser.process()
+
+        if self.args.list_raw:
+            self.printRaw()
+            return
+
+        if self.args.list_abis:
+            self.printABIs()
+        elif self.args.list_all_syscalls:
+            self.printAllSyscalls()
+        elif self.args.list_unique:
+            self.printUniqueSyscalls()
+        elif self.args.show_diff:
+            abis = self.args.show_diff.split(':')
+            if len(abis) != 2:
+                printe("--show-diff: expected ABI1:ABI2 format", fail=True)
+            for abi in abis:
+                if abi not in self.parser.abis:
+                    printe(f"--show-diff: unknown ABI '{abi}'", fail=True)
+            self.showDiff(*abis)
+        elif self.args.generate_sources:
+            self.generateHeaders()
+        else:
+            self.printSummary()
+
+    def printRaw(self):
+        for arch, abi_dict in self.parser.parsed.items():
+            print(arch)
+            for abi, entries in abi_dict.items():
+                print("\t" + abi)
+                for entry in entries:
+                    print(f"\t\t{entry.nr} {entry.name}")
+
+    def printABIs(self):
+        for abi, entries in self.parser.abis.items():
+            print(abi)
+            for entry in entries:
+                print(f"\t{entry.nr} {entry.name}")
+
+    def printAllSyscalls(self):
+        names = self.parser.syscall_names
+        for name in sorted(names.keys()):
+            print(f"{name}: ", end='')
+            print(", ".join(names[name]))
+
+    def printUniqueSyscalls(self):
+        for abi, entries in self.parser.abis.items():
+            print(f"Unique system calls in ABI '{abi}':\n")
+            found = False
+            for entry in entries:
+                if len(self.parser.syscall_names[entry.name]) == 1:
+                    print(f"\t{entry.nr} {entry.name}")
+                    found = True
+            if not found:
+                print("\tN/A")
+            print()
+
+    def showDiff(self, abi1, abi2):
+        print(f"Differences between {abi1} and {abi2}\n")
+
+        abi1_map = {}
+        abi2_map = {}
+        only_in_abi1 = []
+        only_in_abi2 = []
+        mismatches = []
+
+        for entry in self.parser.abis[abi1]:
+            abi1_map[entry.name] = entry.nr
+            known_abis = self.parser.syscall_names[entry.name]
+            if abi2 not in known_abis:
+                only_in_abi1.append(entry)
+
+        for entry in self.parser.abis[abi2]:
+            abi2_map[entry.name] = entry.nr
+            known_abis = self.parser.syscall_names[entry.name]
+            if abi1 not in known_abis:
+                only_in_abi2.append(entry)
+            else:
+                other_nr = abi1_map[entry.name]
+                if entry.nr != other_nr:
+                    mismatches.append(entry)
+
+        if only_in_abi1:
+            print("System calls only found in", abi1 + "\n")
+            for entry in only_in_abi1:
+                print(f"\t{entry.nr} {entry.name}")
+            print()
+
+        if only_in_abi2:
+            print("System calls only found in", abi2 + "\n")
+            for entry in only_in_abi2:
+                print(f"\t{entry.nr} {entry.name}")
+            print()
+
+        if mismatches:
+            print("System calls with differing numbers\n")
+            for entry in mismatches:
+                nr1 = abi1_map[entry.name]
+                nr2 = abi2_map[entry.name]
+                print(f"\t{entry.name} ({abi1} = {nr1}, {abi2} = {nr2})")
+
+    def printSummary(self):
+        print("Successfully processed .tbl files.\n")
+        print("Overall number of different system calls across ABIs:", len(self.parser.syscall_names))
+
+        for abi, entries in self.parser.abis.items():
+            print(f"ABI '{abi}': found {len(entries)} system calls")
+
+    def generateHeaders(self):
+        print("Generating headers into", self.args.inc_outdir)
+        print("Generating sources into", self.args.src_outdir)
+        generator = SourceGenerator(self.parser, self.args.src_outdir,
+                                    self.args.inc_outdir,
+                                    self.args.include_prefix,
+                                    self.args.name_template)
+
+        generator.generate()
+
+
+if __name__ == "__main__":
+    main = Main()
+    main.run()
