@@ -16,18 +16,16 @@
 #include <clues/items/strings.hxx>
 #include <clues/items/time.hxx>
 #include <clues/logger.hxx>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallItem.hxx>
 #include <clues/types.hxx>
 
-// generated
-#include <clues/syscallnrs.hxx>
-
 namespace clues {
 
 const char* SystemCall::name(const SystemCallNr nr) {
-	return SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
+	return SYSTEM_CALL_NAMES[cosmos::to_integral(nr)].data();
 }
 
 bool SystemCall::validNr(const SystemCallNr nr) {

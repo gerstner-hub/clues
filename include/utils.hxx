@@ -12,6 +12,7 @@
 
 // clues
 #include <clues/types.hxx>
+#include <clues/sysnrs/fwd.hxx>
 
 namespace clues {
 

@@ -126,16 +126,9 @@ def buildSyscallHeader(target, source, env):
 
     return 0
 
-
-syscallHeaderBuilder = env.Builder(action=buildSyscallHeader, suffix='.hxx', src_suffix='.cxx')
-env.Append(BUILDERS={'SyscallHeaderBuilder': syscallHeaderBuilder})
-
 # this header is only needed in the implementation and does not need to be
 # installed as a public header
 _ = env.ErrnoHeaderBuilder("clues/errnodb.hxx", "generated/errnodb.cxx")
-syscall_header = env.SyscallHeaderBuilder("clues/syscallnrs.hxx", "generated/syscallnrs.cxx")
-
-env.AddGeneratedHeader(syscall_header)
 
 libenv = env.Clone()
 public_includes = Dir('.').srcnode().abspath + '/../include'
@@ -146,7 +139,9 @@ libenv.Append(CPPPATH=["."])
 
 libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False)
 items_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], subpath="items")
+sysnr_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], subpath="sysnrs")
 libclues_srcs += items_srcs
+libclues_srcs += sysnr_srcs
 libenv.ConfigureForLibOrPackage('libcosmos', libclues_srcs)
 
 version, soname, tag = libenv.GetSharedLibVersionInfo('libclues')

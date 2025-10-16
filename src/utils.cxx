@@ -3,12 +3,12 @@
 #include <fstream>
 
 // clues
-#include <clues/utils.hxx>
 #include <clues/logger.hxx>
+#include <clues/sysnrs/generic.hxx>
+#include <clues/utils.hxx>
 
 // generated
 #include <clues/errnodb.hxx>
-#include <clues/syscallnrs.hxx>
 
 // cosmos
 #include <cosmos/error/ApiError.hxx>

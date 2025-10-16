@@ -39,9 +39,6 @@ enum class Word : elf_greg_t {
 	ZERO = 0
 };
 
-// forward declaration
-enum class SystemCallNr : uint64_t;
-
 /// Errno values that can appear in tracing context.
 /**
  * these errno values can appear for interrupted system calls and are not

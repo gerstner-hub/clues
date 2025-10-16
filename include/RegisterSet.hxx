@@ -19,9 +19,8 @@
 
 // clues
 #include <clues/arch.hxx>
+#include <clues/sysnrs/fwd.hxx>
 #include <clues/types.hxx>
-// generated
-#include <clues/syscallnrs.hxx>
 
 namespace clues {
 

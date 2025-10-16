@@ -17,6 +17,7 @@
 // clues
 #include <clues/ProcessData.hxx>
 #include <clues/RegisterSet.hxx>
+#include <clues/SystemCallInfo.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/types.hxx>
 
@@ -345,7 +346,7 @@ protected: // data
 	/// The options we've set for ptrace().
 	cosmos::ptrace::Opts m_ptrace_opts;
 	/// The current system call information, if any.
-	std::optional<cosmos::ptrace::SyscallInfo> m_syscall_info;
+	std::optional<SystemCallInfo> m_syscall_info;
 	/// Reusable database object for tracing system calls.
 	SystemCallDB m_syscall_db;
 	/// Holds state for the currently executing system call.

@@ -16,6 +16,7 @@
 #include <clues/EventConsumer.hxx>
 #include <clues/logger.hxx>
 #include <clues/RegisterSet.hxx>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
@@ -339,7 +340,7 @@ void Tracee::handleStateMismatch() {
 
 void Tracee::handleSystemCall() {
 
-	m_syscall_info = cosmos::ptrace::SyscallInfo{};
+	m_syscall_info = SystemCallInfo{};
 	auto &info = *m_syscall_info;
 
 	// NOTE: this call can fail if the tracee was killed meanwhile
@@ -357,6 +358,8 @@ void Tracee::handleSystemCall() {
 			handleStateMismatch();
 		}
 
+		m_syscall_info->updateSysNr();
+
 		changeState(State::SYSCALL_ENTER_STOP);
 		handleSystemCallEntry();
 	}
@@ -366,9 +369,8 @@ void Tracee::handleSystemCall() {
 
 void Tracee::handleSystemCallEntry() {
 	EventConsumer::StatusFlags flags;
-	auto &info = *m_syscall_info->entryInfo();
 
-	const SystemCallNr nr{info.syscallNr()};
+	const SystemCallNr nr = m_syscall_info->sysNr();
 	m_current_syscall = &m_syscall_db.get(nr);
 
 	verifyArch();
@@ -407,7 +409,7 @@ void Tracee::handleSystemCallEntry() {
 			}
 		}
 	}
-	m_current_syscall->setEntryInfo(*this, info);
+	m_current_syscall->setEntryInfo(*this, *m_syscall_info->entryInfo());
 	m_syscall_ctr++;
 	m_consumer.syscallEntry(*this, *m_current_syscall, flags);
 }

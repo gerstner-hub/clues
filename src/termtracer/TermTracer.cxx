@@ -22,10 +22,10 @@
 // clues
 #include <clues/ChildTracee.hxx>
 #include <clues/ForeignTracee.hxx>
+#include <clues/SystemCallItem.hxx>
 #include <clues/format.hxx>
 #include <clues/logger.hxx>
-#include <clues/syscallnrs.hxx>
-#include <clues/SystemCallItem.hxx>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/utils.hxx>
 
 // termtracer

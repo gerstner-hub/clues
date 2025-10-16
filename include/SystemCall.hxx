@@ -13,6 +13,7 @@
 // clues
 #include <clues/ErrnoResult.hxx>
 #include <clues/items/error.hxx>
+#include <clues/sysnrs/fwd.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
