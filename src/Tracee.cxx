@@ -685,39 +685,22 @@ void Tracee::attachThreads() {
 
 void Tracee::verifyArch() {
 	/*
-	 * TODO: to support tracing 32-bit processes on a 64-bit tracer, we
-	 * would need to cover the following aspects:
-	 *
-	 * - dynamically switch between different instances of SystemCallDB,
-	 *   which would also need to be generated during compile time
-	 *   accordingly.
-	 * - deal with differences in word size that affect the system call
-	 *   ABI (actually that might just work transparently, when the upper
-	 *   32-bits of registers are just zeroes).
-	 * - dealing with the different SystemCallNr specifications between
-	 *   different architectures.
-	 *
-	 * It is questionable whether the additional complexity is worth the
-	 * gain. It might be easier to just compile a separate 32-bit binary.
-	 * Tracing mixed invocations of 64-bit and 32-bit processes won't be
-	 * possible with a separate binary, however.
-	 *
 	 * A Tracee can change "personality" during its lifetime, thus every
-	 * system call has to be observed for changes. In theory the same
-	 * binary could even employ multiple calling conventions at the same
-	 * time.
+	 * system call has to be observed for changes in ABI. In theory the
+	 * same binary could even employ multiple calling conventions at the
+	 * same time.
 	 *
 	 * The usual situation is that 32-bit programs can also be executed on
-	 * 64-bit operating systems. This is the case not only on x86_64 but
+	 * 64-bit operating systems. This is not only the case on x86_64 but
 	 * also on powerpc64, arm64 etc. On x86 we even have three different
-	 * archiectures: i386, x86_64 and x32. The latter is using the amd64
+	 * ABIs: i386, x86_64 and x32. The latter is using the amd64
 	 * instruction set but only 32-bit data types.
 	 *
-	 * To support more than just x86_64 at all, we need to come up with an
-	 * abstract SystemCallID or something like it, that is able to cover
-	 * all system calls on all architectures. Otherwise users of libclues
-	 * won't be able to easily inspect the type of system call that is
-	 * occurring.
+	 * To support these different ABIs we use an abstract SystemCallNr
+	 * which is the same for all ABIs, allowing us to identify the correct
+	 * system calls. Differences between ABIs might still need to be taken
+	 * into account by concrete SystemCall instances (e.g. differently
+	 * sized structures when running 32-bit emulation binaries).
 	 */
 	using Arch = cosmos::ptrace::Arch;
 	switch (m_syscall_info->arch()) {
