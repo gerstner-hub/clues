@@ -723,7 +723,7 @@ void Tracee::verifyArch() {
 	switch (m_syscall_info->arch()) {
 		case Arch::I386:
 			if (cosmos::arch::X86_64) {
-				throw cosmos::RuntimeError{"tracing 32-bit emulation binaries is not supported currently"};
+				// 32-bit emulation, should work out of the box
 			}
 			return;
 		case Arch::X86_64:
