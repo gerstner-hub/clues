@@ -182,6 +182,11 @@ class SourceGenerator:
     """Generates C++ headers and sources that model the parsed system call number
     information for selected architectures."""
 
+    # this bit is or'ed into all the X32 system call numbers
+    # this is all the difference visible to X86_64 in ptrace() when X32 system
+    # calls occur.
+    X32_SYSCALL_BIT = 0x40000000
+
     def __init__(self, parser, src_dir, inc_dir, inc_prefix, template):
         self.parser = parser
         self.src_dir = src_dir
@@ -404,6 +409,8 @@ class SourceGenerator:
  * `PTRACE_GET_SYSCALL_INFO` API and is the same for all ABIs.
  **/
 """)
+        self.writeABIHeaderSpecifics(fd, abi)
+
         enum_ident = self.getEnumIdent(abi)
         fd.write(f"enum class {enum_ident} : uint64_t {{\n")
         max_ident = max([len(entry.name) for entry in table])
@@ -413,13 +420,25 @@ class SourceGenerator:
             comment = self.getABIEntryComment(abi, entry)
             if comment:
                 comment = f" // {comment}"
-            fd.write(f"\t{ident.ljust(max_ident+1)} = {entry.nr},{comment}\n")
+            nr = self.getABISysNr(abi, entry)
+            fd.write(f"\t{ident.ljust(max_ident+1)} = {nr},{comment}\n")
         fd.write("};\n\n")
 
         fd.write("/// Convert the native system call nr. into its generic representation.\n")
         fd.write(f"CLUES_API clues::SystemCallNr to_generic(const {enum_ident} nr);\n")
 
         fd.write("\n} // end ns\n")
+
+    def getABISysNr(self, abi, entry):
+        if abi == "x32":
+            return f"X32_SYSCALL_BIT + {entry.nr}"
+        else:
+            return entry.nr
+
+    def writeABIHeaderSpecifics(self, fd, abi):
+        if abi == "x32":
+            fd.write("\n/// This bit is set for all X32 system call to identify this ABI\n")
+            fd.write(f"constexpr uint64_t X32_SYSCALL_BIT = {hex(self.X32_SYSCALL_BIT)};\n\n")
 
     def writeABIUnit(self, fd, inc_base, abi, table):
         fd.write(f"#include <{self.inc_prefix}/{inc_base}>\n")
