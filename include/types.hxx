@@ -53,6 +53,19 @@ enum class KernelErrno : int {
 	RESTART_RESTARTBLOCK = 516, /* restart by calling sys_restart_syscall */
 };
 
+/// System Call ABI
+/**
+ * This is mostly similar to cosmos::ptrace::Arch, but contains some extra
+ * differentiation. E.g. on Arch::X86_64 there is also the X32 ABI, which can
+ * only be detected by querying a special bit set in the system call nr.
+ **/
+enum class ABI {
+	UNKNOWN,
+	X86_64,
+	I386,
+	X32,    ///< X86_64 with 32-bit pointers
+};
+
 /// Contextual information about a file descriptor in a Tracee.
 struct FDInfo {
 public: // types

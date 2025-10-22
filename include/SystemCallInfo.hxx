@@ -5,6 +5,7 @@
 
 // clues
 #include <clues/sysnrs/types.hxx>
+#include <clues/types.hxx>
 
 namespace clues {
 
@@ -12,10 +13,16 @@ namespace clues {
 /**
  * This type additionally contains the type safe generic SystemCallNr and
  * SystemCallnrVariant denoting the ABI-specific system call nr.
+ *
+ * Furthermore the exact ABI the system call is for is determined and
+ * available via abi().
  **/
 class CLUES_API SystemCallInfo :
 		public cosmos::ptrace::SyscallInfo {
 public: // functions
+
+	SystemCallInfo();
+
 	auto sysNr() const {
 		return m_generic;
 	}
@@ -26,10 +33,15 @@ public: // functions
 
 	void updateSysNr();
 
+	ABI abi() const {
+		return m_abi;
+	}
+
 protected: // data
 
 	SystemCallNr m_generic;
 	SystemCallNrVariant m_native;
+	ABI m_abi = ABI::UNKNOWN;
 };
 
 } // end ns
