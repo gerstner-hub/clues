@@ -41,6 +41,8 @@ public: // types
 		RESUMED                = 1 << 1,
 		/// An exit occurs because another thread called execve() or exit() (only appears in exited()).
 		LOST_TO_MT_EXIT        = 1 << 2,
+		/// The system call ABI changed since the last observed system call.
+		ABI_CHANGED            = 1 << 3,
 	};
 
 	using StatusFlags = cosmos::BitMask<StatusFlag>;

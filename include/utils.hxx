@@ -41,5 +41,16 @@ std::vector<FDInfo> get_fd_infos(const cosmos::ProcessID pid);
 CLUES_API std::optional<SystemCallNr> lookup_system_call(
 		const std::string_view name);
 
+/// Returns whether the given ABI is default ABI for this system.
+/**
+ * The `abi` is checked against the compile time architecture to determine
+ * whether this is the default native ABI, or not.
+ *
+ * For example ABI::I386 in a tracer compiled tor X86_64 would not be
+ * the default ABI.
+ **/
+CLUES_API bool is_default_abi(const ABI abi);
+
+CLUES_API const char* get_abi_label(const ABI abi);
 
 } // end ns

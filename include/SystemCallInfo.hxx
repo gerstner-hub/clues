@@ -31,6 +31,11 @@ public: // functions
 		return m_native;
 	}
 
+	/// Update m_generic and m_native based on the raw system call nr.
+	/**
+	 * This call is only valid upon system call entry. The raw system call
+	 * number will be translated into `m_generic` and `m_native`.
+	 **/
 	void updateSysNr();
 
 	ABI abi() const {

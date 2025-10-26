@@ -11,12 +11,13 @@
 #include <clues/errnodb.hxx>
 
 // cosmos
+#include <cosmos/compiler.hxx>
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/formatting.hxx>
 #include <cosmos/fs/DirStream.hxx>
-#include <cosmos/fs/filesystem.hxx>
 #include <cosmos/fs/File.hxx>
+#include <cosmos/fs/filesystem.hxx>
 #include <cosmos/io/ILogger.hxx>
 #include <cosmos/io/StreamAdaptor.hxx>
 #include <cosmos/string.hxx>
@@ -271,6 +272,23 @@ std::optional<SystemCallNr> lookup_system_call(const std::string_view name) {
 		return {};
 
 	return it->second;
+}
+
+bool is_default_abi(const ABI abi) {
+	switch (abi) {
+		case ABI::X86_64: return cosmos::arch::X86_64;
+		case ABI::I386: return cosmos::arch::I386;
+		default: return false;
+	}
+}
+
+const char* get_abi_label(const ABI abi) {
+	switch (abi) {
+	case ABI::X86_64: return "x86_64";
+	case ABI::I386: return "i386";
+	case ABI::X32: return "x32";
+	default: return "unknown";
+	}
 }
 
 } // end ns

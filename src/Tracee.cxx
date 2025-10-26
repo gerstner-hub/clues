@@ -362,6 +362,7 @@ void Tracee::handleSystemCall() {
 
 		changeState(State::SYSCALL_ENTER_STOP);
 		handleSystemCallEntry();
+		m_last_abi = m_syscall_info->abi();
 	}
 
 	m_syscall_info.reset();
@@ -372,6 +373,10 @@ void Tracee::handleSystemCallEntry() {
 
 	const SystemCallNr nr = m_syscall_info->sysNr();
 	m_current_syscall = &m_syscall_db.get(nr);
+
+	if (m_last_abi != ABI::UNKNOWN && m_last_abi != m_syscall_info->abi()) {
+		flags.set(EventConsumer::StatusFlag::ABI_CHANGED);
+	}
 
 	verifyArch();
 
