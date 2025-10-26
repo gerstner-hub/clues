@@ -311,6 +311,14 @@ void TermTracer::syscallEntry(Tracee &tracee,
 		return;
 	}
 
+	const auto syscall_info = *tracee.currentSystemCallInfo();
+	checkABI(tracee, syscall_info);
+	/* libclues also offers an ABI_CHANGED flag in `cflags`, but this
+	 * doesn't suffice for us, since we might filter system calls, which
+	 * means we don't necessarily need to report every ABI change.
+	 */
+	m_last_abi = syscall_info.abi();
+
 	auto &trace = traceStream(tracee);
 
 	if (flags[StatusFlag::RESUMED]) {
@@ -678,6 +686,23 @@ void TermTracer::abortSyscall(const Tracee &tracee) {
 		 * never visibly returned.
 		 */
 		traceStream(tracee, false) << ") = ?\n";
+	}
+}
+
+void TermTracer::checkABI(const Tracee &tracee, const SystemCallInfo &info) {
+	bool report_abi = false;
+
+	if (m_last_abi == clues::ABI::UNKNOWN) {
+		// check if the initial system call already has some
+		// non-default ABI.
+		if (!clues::is_default_abi(info.abi()))
+			report_abi = true;
+	} else if (info.abi() != m_last_abi) {
+		report_abi = true;
+	}
+
+	if (report_abi) {
+		traceStream(tracee) << "[system call ABI changed to " << get_abi_label(info.abi()) << "]\n";
 	}
 }
 

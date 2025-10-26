@@ -159,6 +159,9 @@ protected: // functions
 	 **/
 	void abortSyscall(const Tracee &tracee);
 
+	/// Checks the current system call's ABI and reports ABI changes.
+	void checkABI(const Tracee &tracee, const SystemCallInfo &info);
+
 protected: // EventConsumer interface
 
 	void syscallEntry(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) override;
@@ -234,6 +237,9 @@ protected: // data
 	 * event that led to the creation.
 	 **/
 	std::map<cosmos::ProcessID, std::pair<cosmos::ProcessID, cosmos::ptrace::Event>> m_new_tracees;
+	/// The ABI of the last system call we've seen.
+	clues::ABI m_last_abi = clues::ABI::UNKNOWN;
+
 };
 
 } // end ns
