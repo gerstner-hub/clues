@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 namespace clues {
 
 enum class SystemCallNr : uint64_t;

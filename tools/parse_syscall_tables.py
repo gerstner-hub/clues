@@ -492,6 +492,7 @@ class SourceGenerator:
 
     def writeFwdHeader(self, fd):
         fd.write("#pragma once\n\n")
+        fd.write("#include <stdint.h>\n\n")
         fd.write("namespace clues {\n\n")
         fd.write("enum class SystemCallNr : uint64_t;\n")
         for abi in self.parser.abis:
