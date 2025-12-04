@@ -27,7 +27,7 @@ public: // functions
 		return m_generic;
 	}
 
-	SystemCallNrVariant nativeSysNr() const {
+	AnySystemCallNr nativeSysNr() const {
 		return m_native;
 	}
 
@@ -45,7 +45,7 @@ public: // functions
 protected: // data
 
 	SystemCallNr m_generic;
-	SystemCallNrVariant m_native;
+	AnySystemCallNr m_native;
 	ABI m_abi = ABI::UNKNOWN;
 };
 

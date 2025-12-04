@@ -12,6 +12,6 @@
 
 namespace clues {
 
-using SystemCallNrVariant = std::variant<SystemCallNrI386, SystemCallNrX64, SystemCallNrX32>;
+using AnySystemCallNr = std::variant<SystemCallNrI386, SystemCallNrX64, SystemCallNrX32>;
 
 } // end ns

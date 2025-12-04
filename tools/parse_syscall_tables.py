@@ -481,7 +481,7 @@ class SourceGenerator:
             ident = self.getEnumIdent(abi)
             abi_enums.append(ident)
 
-        fd.write("using SystemCallNrVariant = std::variant<")
+        fd.write("using AnySystemCallNr = std::variant<")
         for nr, enum in enumerate(abi_enums):
             fd.write(f"{enum}")
             if nr != len(abi_enums) - 1:
