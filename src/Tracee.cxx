@@ -387,7 +387,7 @@ void Tracee::handleSystemCallEntry() {
 		} else if (m_syscall_ctr != 0) {
 			// explicit restart_syscall done by user space?
 			LOG_WARN_PID("unknown system call is resumed");
-		} else {
+		} else if (auto orig_syscall = getInitialSyscallNr(m_syscall_info->abi()); orig_syscall) {
 			// this happens when attaching to a non-child process
 			// and a system call like clock_nanosleep is
 			// interrupted as a result.
@@ -407,9 +407,8 @@ void Tracee::handleSystemCallEntry() {
 			// the system call was not interrupted before already,
 			// though.
 
-			const auto orig_syscall = m_initial_regset.syscall();
-			if (orig_syscall != SystemCallNr::RESTART_SYSCALL && SystemCall::validNr(orig_syscall)) {
-				m_current_syscall = &m_syscall_db.get(orig_syscall);
+			if (*orig_syscall != SystemCallNr::RESTART_SYSCALL && SystemCall::validNr(*orig_syscall)) {
+				m_current_syscall = &m_syscall_db.get(*orig_syscall);
 				flags.set(EventConsumer::StatusFlag::RESUMED);
 			}
 		}
@@ -607,7 +606,7 @@ void Tracee::handleAttached() {
 		m_restart_mode = cosmos::Tracee::RestartMode::SYSCALL;
 	}
 
-	getRegisters(m_initial_regset);
+	getInitialRegisters();
 
 	if (m_process_data->fd_info_map.empty()) {
 		auto &map = m_process_data->fd_info_map;
@@ -724,6 +723,16 @@ void Tracee::verifyArch() {
 	}
 }
 
+std::optional<SystemCallNr> Tracee::getInitialSyscallNr(const ABI abi) const {
+	auto visitor = [abi](const auto &rs) -> std::optional<SystemCallNr> {
+		if (abi == rs.ABI)
+			return rs.syscallNr();
+		return {};
+	};
+
+	return std::visit(visitor, m_initial_regset);
+}
+
 void Tracee::syncState(Tracee &other) {
 	m_syscall_info = other.m_syscall_info;
 	m_syscall_db = std::move(other.m_syscall_db);
@@ -793,7 +802,8 @@ void Tracee::processEvent(const cosmos::ChildState &data) {
 	}
 }
 
-void Tracee::getRegisters(RegisterSet &rs) {
+template <ABI abi>
+void Tracee::getRegisters(RegisterSet<abi> &rs) {
 	cosmos::InputMemoryRegion iovec;
 	rs.fillIov(iovec);
 
@@ -867,6 +877,28 @@ std::optional<SystemCallNr> Tracee::currentSystemCallNr() const {
 void Tracee::readBlob(const long *addr, char *buffer, const size_t bytes) const {
 	BlobFiller filler{bytes, buffer};
 	fillData(addr, filler);
+}
+
+void Tracee::getInitialRegisters() {
+	/*
+	 * TODO: we don't know on which ABI we're sitting on currently, we
+	 * could inspect the ELF binary? (like strace does?), but it's also
+	 * only kind of a heuristic.
+	 */
+
+	try {
+		RegisterSet<get_default_abi()> rs;
+		getRegisters(rs);
+		m_initial_regset = rs;
+	} catch (const cosmos::RuntimeError &) {
+		if (get_default_abi() == ABI::X86_64) {
+			RegisterSet<ABI::I386> rs2;
+			getRegisters(rs2);
+			m_initial_regset = rs2;
+		} else {
+			throw;
+		}
+	}
 }
 
 // explicit template instantiations

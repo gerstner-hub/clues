@@ -6,6 +6,7 @@
 #include <vector>
 
 // cosmos
+#include <cosmos/compiler.hxx>
 #include <cosmos/error/errno.hxx>
 #include <cosmos/fs/types.hxx>
 #include <cosmos/proc/ptrace.hxx>
@@ -50,6 +51,16 @@ CLUES_API std::optional<SystemCallNr> lookup_system_call(
  * the default ABI.
  **/
 CLUES_API bool is_default_abi(const ABI abi);
+
+/// Returns the default ABI for this system.
+constexpr ABI get_default_abi() {
+	if (cosmos::arch::X86_64)
+		return ABI::X86_64;
+	else if (cosmos::arch::I386)
+		return ABI::I386;
+
+	return ABI::UNKNOWN;
+}
 
 CLUES_API const char* get_abi_label(const ABI abi);
 

@@ -11,7 +11,6 @@
 #include <clues/errnodb.hxx>
 
 // cosmos
-#include <cosmos/compiler.hxx>
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/formatting.hxx>

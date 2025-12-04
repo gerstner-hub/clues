@@ -2,12 +2,10 @@
 
 // C++
 #include <iosfwd>
+#include <variant>
 
 // Linux
 #include <sys/uio.h> // struct iov
-#include <sys/procfs.h> // the elf_greg_t & friends are in here
-// unclear what the official headers for these are ...
-#include <elf.h>
 
 // cosmos
 #include <cosmos/error/RuntimeError.hxx>
@@ -18,107 +16,101 @@
 #include <cosmos/utils.hxx>
 
 // clues
-#include <clues/arch.hxx>
+#include <clues/regs/traits.hxx>
 #include <clues/sysnrs/fwd.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
 
-/// Holds a set of registers for the host's CPU architecture.
+/// Holds a set of registers for the given ABI.
 /**
- * This type is able to hold data for each of the host's CPU specific
- * registers.
+ * This type holds and manages data for each of the ABI specific RegisterData
+ * types.
  **/
+template <ABI abi>
 class RegisterSet {
+public: // types
+
+	/// This is the concrete type holding the raw register data for this ABI.
+	using ABIRegisterData = RegisterDataTraits<abi>::type;
+	static constexpr auto ABI = abi;
+	using register_t = ABIRegisterData::register_t;
+
 public: // functions
 
 	explicit RegisterSet(const cosmos::no_init_t &) {
 	}
 
 	RegisterSet() {
-		for (size_t reg = 0; reg < numRegisters(); reg++) {
-			m_regs[reg] = 0;
-		}
+		m_regs.clear();
 	}
 
-	/// Prepares `iov` for doing a ptrace system call TraceRequest::GETREGSET.
+	/// Prepares `iov` for doing a ptrace system call of type ptrace::Request::GETREGSET.
 	void fillIov(cosmos::InputMemoryRegion &iov) {
+		// This makes sure the RegisterData wrapper is not bigger than
+		// the expected amount of register data.
+		static_assert(sizeof(m_regs) == sizeof(typename ABIRegisterData::register_t) * ABIRegisterData::NUM_REGS);
 		iov.setBase(&m_regs);
 		iov.setLength(sizeof(m_regs));
 	}
 
-	/// Verify data received from a ptrace system call TraceRequest::GETREGSET.
+	/// Verify data received from a ptrace system call of type ptrace::Request::GETREGSET.
 	void iovFilled(const cosmos::InputMemoryRegion &iov) {
 		if (iov.getLength() < sizeof(m_regs)) {
 			throw cosmos::RuntimeError{"received incomplete register set"};
 		}
 	}
 
-	/// The type to pass to TraceRequest::GETREGSET for obtaining the general purpose registers.
+	/// The type to pass to ptrace::Request::GETREGSET for obtaining the general purpose registers.
 	static constexpr cosmos::ptrace::RegisterType registerType() {
 		return cosmos::ptrace::RegisterType::GENERAL_PURPOSE;
 	}
 
-	/// Returns the active system call number on entry to a syscall.
-	SystemCallNr syscall() const { return SystemCallNr{m_regs[SYSCALL_NR_REG]}; }
+	/// Returns the ABI-specific system call number on entry to a syscall.
+	auto abiSyscallNr() const { return m_regs.syscallNr(); }
+
+	/// Returns the generic SystemCallNr on entry to a syscall.
+	SystemCallNr syscallNr() const {
+		return to_generic(abiSyscallNr());
+	}
 
 	/// Returns the system call result on exit from a syscall
-	Word syscallRes() const { return Word{m_regs[SYSCALL_RES_REG]}; }
+	register_t syscallRes() const { return m_regs.syscallRes(); }
 
 	/// Returns the content of the given system call parameter register.
 	/**
-	 * The current architecture can pass up to SYSCALL_MAX_PARS registers
-	 * to system calls. To get the n'th system call parameter register
-	 * content, pass (n - 1) as `number` (i.e. counting starts at zero).
+	 * The current ABI can pass up to ABIRegisterData::NUM_SYSCALL_PARS
+	 * registers to system calls. To get the n'th system call parameter
+	 * register content, pass (n - 1) as `number` (i.e. counting starts at
+	 * zero).
 	 **/
-	Word syscallParameter(const size_t number) const {
-		if (number >= SYSCALL_MAX_PARS) {
+	register_t syscallParameter(const size_t number) const {
+		auto pars = m_regs.syscallPars();
+		if (number >= pars.size()) {
 			throw cosmos::UsageError{"invalid system call parameter nr."};
 		}
 
-		return Word{m_regs[SYSCALL_PAR_REGISTER[number]]};
+		return pars[number];
 	}
 
-	/// Returns the content of the given register number.
-	/**
-	 * The exact order of registers is platform and architecture
-	 * dependent. See sys/regs.h for the index offsets for the various
-	 * registers.
-	 *
-	 * You can also use getRegisterName() to get a friendly name for a
-	 * register number.
-	 **/
-	Word registerValue(const size_t number) const {
-		if (number >= numRegisters()) {
-			throw cosmos::UsageError{"invalid register nr."};
-		}
-
-		return Word{m_regs[number]};
-	}
-
-	/// Returns the number of registers available in a RegisterSet.
-	static constexpr size_t numRegisters() {
-		return ELF_NGREG;
+	/// Provides access to the raw RegisterData based data structure.
+	auto& raw() const {
+		return m_regs;
 	}
 
 protected: // data
 
-	/// The raw data structure holding the registers.
-	/**
-	 * This is actually just an array of words with each word representing
-	 * a register. It doesn't necessarily match the hardware register
-	 * order but is a data structure used in the kernel when system calls
-	 * are performed.
-	 *
-	 * The offsets of what register is where, are found in reg.h. The data
-	 * type is in elf.h (?).
-	 *
-	 * Regarding the ABI for system calls on different architectures
-	 * man(2) syscall is helpful.
-	 **/
-	elf_gregset_t m_regs;
+	/// The raw data structure holding the ABI specific register data.
+	ABIRegisterData m_regs;
 };
+
+/// A variant to hold any of the ABI-specific RegisterSet types.
+using AnyRegisterSet = std::variant<
+	RegisterSet<ABI::I386>,
+	RegisterSet<ABI::X86_64>,
+	RegisterSet<ABI::X32>>;
 
 } // end ns
 
-CLUES_API std::ostream& operator<<(std::ostream &o, const clues::RegisterSet &rs);
+template <clues::ABI abi>
+CLUES_API std::ostream& operator<<(std::ostream &o, const clues::RegisterSet<abi> &rs);

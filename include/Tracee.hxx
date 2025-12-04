@@ -24,7 +24,6 @@
 namespace clues {
 
 class SystemCall;
-class RegisterSet;
 class EventConsumer;
 class Engine;
 
@@ -291,7 +290,8 @@ protected: // functions
 	/**
 	 * This is only possible it the tracee is currently in stopped state.
 	 **/
-	void getRegisters(RegisterSet &rs);
+	template <ABI abi>
+	void getRegisters(RegisterSet<abi> &rs);
 
 	void handleSystemCall();
 
@@ -333,6 +333,11 @@ protected: // functions
 	/// Verifies the tracee's architecture according to m_syscall_info, throws on mismatch.
 	void verifyArch();
 
+	/// Returns the initial system call nr. stored in m_initial_regset, if available for `abi`.
+	std::optional<SystemCallNr> getInitialSyscallNr(const ABI abi) const;
+
+	void getInitialRegisters();
+
 protected: // data
 
 	/// The engine that manages this tracee.
@@ -370,7 +375,7 @@ protected: // data
 	/// Number of system calls observed.
 	size_t m_syscall_ctr = 0;
 	/// Register set observed during initial attach event stop.
-	RegisterSet m_initial_regset;
+	AnyRegisterSet m_initial_regset;
 	/// For GROUP_STOP this contains the signal that caused it.
 	std::optional<cosmos::Signal> m_stop_signal;
 	/// Shared process data.
