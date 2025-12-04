@@ -12,7 +12,7 @@
 
 // Clues
 #include <clues/SystemCall.hxx>
-#include <clues/syscallnrs.hxx>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
 // Test

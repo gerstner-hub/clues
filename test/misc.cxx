@@ -6,7 +6,8 @@
 
 // Clues
 #include <clues/RegisterSet.hxx>
-#include <clues/arch.hxx>
+#include <clues/regs/traits.hxx>
+#include <clues/utils.hxx>
 
 // Test
 #include "TestBase.hxx"
@@ -19,9 +20,11 @@ class MiscTest : public cosmos::TestBase {
 	void testArch() {
 		START_TEST("arch detection");
 
-		RUN_STEP("max pars >= 6", clues::SYSCALL_MAX_PARS >= 6);
+		const auto OUR_ABI = clues::get_default_abi();
+		using OurRegisterData = clues::RegisterDataTraits<OUR_ABI>::type;
+		RUN_STEP("max pars >= 6", OurRegisterData::NUM_SYSCALL_PARS >= 6);
 
-		clues::RegisterSet rs;
+		clues::RegisterSet<OUR_ABI> rs;
 		std::cout << "RegisterSet: " << rs << std::endl;
 	}
 };
