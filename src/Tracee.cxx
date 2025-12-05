@@ -890,6 +890,18 @@ void Tracee::getInitialRegisters() {
 		RegisterSet<get_default_abi()> rs;
 		getRegisters(rs);
 		m_initial_regset = rs;
+		if constexpr (rs.ABI == ABI::X86_64) {
+			/*
+			 * detecting the X32 ABI is hard when fetching the
+			 * initial registers. We need to check for the syscall
+			 * bit and redo using the proper ABI in this case.
+			 */
+			if ((cosmos::to_integral(rs.abiSyscallNr()) & X32_SYSCALL_BIT) != 0) {
+				RegisterSet<ABI::X32> rs_x32;
+				getRegisters(rs_x32);
+				m_initial_regset = rs_x32;
+			}
+		}
 	} catch (const cosmos::RuntimeError &) {
 		if (get_default_abi() == ABI::X86_64) {
 			RegisterSet<ABI::I386> rs2;
