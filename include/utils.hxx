@@ -54,7 +54,9 @@ CLUES_API bool is_default_abi(const ABI abi);
 
 /// Returns the default ABI for this system.
 constexpr ABI get_default_abi() {
-	if (cosmos::arch::X86_64)
+	if (cosmos::arch::X32)
+		return ABI::X32;
+	else if (cosmos::arch::X86_64)
 		return ABI::X86_64;
 	else if (cosmos::arch::I386)
 		return ABI::I386;
