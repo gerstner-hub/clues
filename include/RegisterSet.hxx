@@ -108,7 +108,8 @@ protected: // data
 using AnyRegisterSet = std::variant<
 	RegisterSet<ABI::I386>,
 	RegisterSet<ABI::X86_64>,
-	RegisterSet<ABI::X32>>;
+	RegisterSet<ABI::X32>,
+	RegisterSet<ABI::AARCH64>>;
 
 } // end ns
 

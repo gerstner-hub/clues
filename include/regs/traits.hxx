@@ -3,6 +3,7 @@
 // clues
 #include <clues/regs/i386.hxx>
 #include <clues/regs/x86_64.hxx>
+#include <clues/regs/aarch64.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
@@ -16,6 +17,7 @@ struct RegisterDataTraits {
 	 * a documentation purpose.
 	 **/
 	using type = std::nullptr_t;
+	static_assert(false, "no traits are defined for this ABI yet");
 };
 
 template <>
@@ -31,6 +33,11 @@ struct RegisterDataTraits<ABI::X86_64> {
 template <>
 struct RegisterDataTraits<ABI::X32> {
 	using type = RegisterDataX32;
+};
+
+template <>
+struct RegisterDataTraits<ABI::AARCH64> {
+	using type = RegisterDataAARCH64;
 };
 
 } // end ns
