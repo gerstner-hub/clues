@@ -5,3 +5,4 @@
 #include <clues/sysnrs/i386.hxx>
 #include <clues/sysnrs/x64.hxx>
 #include <clues/sysnrs/x32.hxx>
+#include <clues/sysnrs/aarch64.hxx>

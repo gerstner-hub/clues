@@ -56,10 +56,13 @@ class TableParser:
     # the keys here are currently composed of the arch sub-directory plus the
     # <suffix> of the *.tbl file, if present.
     ARCH_TABLE_PATHS = {
+        # classic 32-bit arm
         #"arm":      "arch/arm/tools/syscall.tbl",
         #"powerpc":  "arch/powerpc/kernel/syscalls/syscall.tbl",
-        #"arm64-32": "arch/arm64/tools/syscall_32.tbl",
-        #"arm64-64": "arch/arm64/tools/syscall_64.tbl",
+        # 32-bit arm emulation on 64-bit arm CPUs
+        #"aarch32": "arch/arm64/tools/syscall_32.tbl",
+        # 64-bit arm native ABI
+        "aarch64": "arch/arm64/tools/syscall_64.tbl",
         # this contains i386
         "x86-32":   "arch/x86/entry/syscalls/syscall_32.tbl",
         # this contains x86_64 / x64 and x32
@@ -170,6 +173,23 @@ class TableParser:
             # keep both ABIs sorted by system call nr.
             self.abis["x64"].sort(key=lambda e: e.nr)
             self.abis["x32"].sort(key=lambda e: e.nr)
+
+        if "aarch64" in self.parsed:
+            # this uses a generic syscall.tbl which is used on multiple
+            # architectures.
+            # the "ABIs" which are included on a given arch can be decuced
+            # from the 'syscall_abis_32' and 'syscsall_abis_64' variables in
+            # Makefiles of the kernel source tree.
+
+            # TODO: this code can be generalized for all architectures relying
+            # on the generic syscall.tbl
+            our_abis = ["64", "common", "renameat", "rlimit", "memfd_secret"]
+
+            abi_dict = self.parsed["aarch64"]
+            entries = self.abis.setdefault("aarch64", [])
+            for abi in our_abis:
+                entries.extend(abi_dict[abi])
+            entries.sort(key=lambda e: e.nr)
 
     def recordSyscallNames(self):
         for abi, entries in self.abis.items():

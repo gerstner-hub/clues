@@ -28,245 +28,245 @@ namespace clues {
  **/
 enum class SystemCallNr : uint64_t {
 	UNKNOWN = 0,                  // present in ...
-	ACCEPT,                       // x64 x32
-	ACCEPT4,                      // i386 x64 x32
+	ACCEPT,                       // x64 x32 aarch64
+	ACCEPT4,                      // i386 x64 x32 aarch64
 	ACCESS,                       // i386 x64 x32
-	ACCT,                         // i386 x64 x32
-	ADD_KEY,                      // i386 x64 x32
-	ADJTIMEX,                     // i386 x64 x32
+	ACCT,                         // i386 x64 x32 aarch64
+	ADD_KEY,                      // i386 x64 x32 aarch64
+	ADJTIMEX,                     // i386 x64 x32 aarch64
 	AFS_SYSCALL,                  // i386 x64 x32
 	ALARM,                        // i386 x64 x32
 	ARCH_PRCTL,                   // i386 x64 x32
 	BDFLUSH,                      // i386
-	BIND,                         // i386 x64 x32
-	BPF,                          // i386 x64 x32
+	BIND,                         // i386 x64 x32 aarch64
+	BPF,                          // i386 x64 x32 aarch64
 	BREAK,                        // i386
-	BRK,                          // i386 x64 x32
-	CACHESTAT,                    // i386 x64 x32
-	CAPGET,                       // i386 x64 x32
-	CAPSET,                       // i386 x64 x32
-	CHDIR,                        // i386 x64 x32
+	BRK,                          // i386 x64 x32 aarch64
+	CACHESTAT,                    // i386 x64 x32 aarch64
+	CAPGET,                       // i386 x64 x32 aarch64
+	CAPSET,                       // i386 x64 x32 aarch64
+	CHDIR,                        // i386 x64 x32 aarch64
 	CHMOD,                        // i386 x64 x32
 	CHOWN,                        // i386 x64 x32
 	CHOWN32,                      // i386
-	CHROOT,                       // i386 x64 x32
-	CLOCK_ADJTIME,                // i386 x64 x32
+	CHROOT,                       // i386 x64 x32 aarch64
+	CLOCK_ADJTIME,                // i386 x64 x32 aarch64
 	CLOCK_ADJTIME64,              // i386
-	CLOCK_GETRES,                 // i386 x64 x32
+	CLOCK_GETRES,                 // i386 x64 x32 aarch64
 	CLOCK_GETRES_TIME64,          // i386
-	CLOCK_GETTIME,                // i386 x64 x32
+	CLOCK_GETTIME,                // i386 x64 x32 aarch64
 	CLOCK_GETTIME64,              // i386
-	CLOCK_NANOSLEEP,              // i386 x64 x32
+	CLOCK_NANOSLEEP,              // i386 x64 x32 aarch64
 	CLOCK_NANOSLEEP_TIME64,       // i386
-	CLOCK_SETTIME,                // i386 x64 x32
+	CLOCK_SETTIME,                // i386 x64 x32 aarch64
 	CLOCK_SETTIME64,              // i386
-	CLONE,                        // i386 x64 x32
-	CLONE3,                       // i386 x64 x32
-	CLOSE,                        // i386 x64 x32
-	CLOSE_RANGE,                  // i386 x64 x32
-	CONNECT,                      // i386 x64 x32
-	COPY_FILE_RANGE,              // i386 x64 x32
+	CLONE,                        // i386 x64 x32 aarch64
+	CLONE3,                       // i386 x64 x32 aarch64
+	CLOSE,                        // i386 x64 x32 aarch64
+	CLOSE_RANGE,                  // i386 x64 x32 aarch64
+	CONNECT,                      // i386 x64 x32 aarch64
+	COPY_FILE_RANGE,              // i386 x64 x32 aarch64
 	CREAT,                        // i386 x64 x32
 	CREATE_MODULE,                // i386 x64
-	DELETE_MODULE,                // i386 x64 x32
-	DUP,                          // i386 x64 x32
+	DELETE_MODULE,                // i386 x64 x32 aarch64
+	DUP,                          // i386 x64 x32 aarch64
 	DUP2,                         // i386 x64 x32
-	DUP3,                         // i386 x64 x32
+	DUP3,                         // i386 x64 x32 aarch64
 	EPOLL_CREATE,                 // i386 x64 x32
-	EPOLL_CREATE1,                // i386 x64 x32
-	EPOLL_CTL,                    // i386 x64 x32
+	EPOLL_CREATE1,                // i386 x64 x32 aarch64
+	EPOLL_CTL,                    // i386 x64 x32 aarch64
 	EPOLL_CTL_OLD,                // x64
-	EPOLL_PWAIT,                  // i386 x64 x32
-	EPOLL_PWAIT2,                 // i386 x64 x32
+	EPOLL_PWAIT,                  // i386 x64 x32 aarch64
+	EPOLL_PWAIT2,                 // i386 x64 x32 aarch64
 	EPOLL_WAIT,                   // i386 x64 x32
 	EPOLL_WAIT_OLD,               // x64
 	EVENTFD,                      // i386 x64 x32
-	EVENTFD2,                     // i386 x64 x32
-	EXECVE,                       // i386 x64 x32
-	EXECVEAT,                     // i386 x64 x32
-	EXIT,                         // i386 x64 x32
-	EXIT_GROUP,                   // i386 x64 x32
-	FACCESSAT,                    // i386 x64 x32
-	FACCESSAT2,                   // i386 x64 x32
-	FADVISE64,                    // i386 x64 x32
+	EVENTFD2,                     // i386 x64 x32 aarch64
+	EXECVE,                       // i386 x64 x32 aarch64
+	EXECVEAT,                     // i386 x64 x32 aarch64
+	EXIT,                         // i386 x64 x32 aarch64
+	EXIT_GROUP,                   // i386 x64 x32 aarch64
+	FACCESSAT,                    // i386 x64 x32 aarch64
+	FACCESSAT2,                   // i386 x64 x32 aarch64
+	FADVISE64,                    // i386 x64 x32 aarch64
 	FADVISE64_64,                 // i386
-	FALLOCATE,                    // i386 x64 x32
-	FANOTIFY_INIT,                // i386 x64 x32
-	FANOTIFY_MARK,                // i386 x64 x32
-	FCHDIR,                       // i386 x64 x32
-	FCHMOD,                       // i386 x64 x32
-	FCHMODAT,                     // i386 x64 x32
-	FCHMODAT2,                    // i386 x64 x32
-	FCHOWN,                       // i386 x64 x32
+	FALLOCATE,                    // i386 x64 x32 aarch64
+	FANOTIFY_INIT,                // i386 x64 x32 aarch64
+	FANOTIFY_MARK,                // i386 x64 x32 aarch64
+	FCHDIR,                       // i386 x64 x32 aarch64
+	FCHMOD,                       // i386 x64 x32 aarch64
+	FCHMODAT,                     // i386 x64 x32 aarch64
+	FCHMODAT2,                    // i386 x64 x32 aarch64
+	FCHOWN,                       // i386 x64 x32 aarch64
 	FCHOWN32,                     // i386
-	FCHOWNAT,                     // i386 x64 x32
-	FCNTL,                        // i386 x64 x32
+	FCHOWNAT,                     // i386 x64 x32 aarch64
+	FCNTL,                        // i386 x64 x32 aarch64
 	FCNTL64,                      // i386
-	FDATASYNC,                    // i386 x64 x32
-	FGETXATTR,                    // i386 x64 x32
-	FINIT_MODULE,                 // i386 x64 x32
-	FLISTXATTR,                   // i386 x64 x32
-	FLOCK,                        // i386 x64 x32
+	FDATASYNC,                    // i386 x64 x32 aarch64
+	FGETXATTR,                    // i386 x64 x32 aarch64
+	FINIT_MODULE,                 // i386 x64 x32 aarch64
+	FLISTXATTR,                   // i386 x64 x32 aarch64
+	FLOCK,                        // i386 x64 x32 aarch64
 	FORK,                         // i386 x64 x32
-	FREMOVEXATTR,                 // i386 x64 x32
-	FSCONFIG,                     // i386 x64 x32
-	FSETXATTR,                    // i386 x64 x32
-	FSMOUNT,                      // i386 x64 x32
-	FSOPEN,                       // i386 x64 x32
-	FSPICK,                       // i386 x64 x32
-	FSTAT,                        // i386 x64 x32
+	FREMOVEXATTR,                 // i386 x64 x32 aarch64
+	FSCONFIG,                     // i386 x64 x32 aarch64
+	FSETXATTR,                    // i386 x64 x32 aarch64
+	FSMOUNT,                      // i386 x64 x32 aarch64
+	FSOPEN,                       // i386 x64 x32 aarch64
+	FSPICK,                       // i386 x64 x32 aarch64
+	FSTAT,                        // i386 x64 x32 aarch64
 	FSTAT64,                      // i386
 	FSTATAT64,                    // i386
-	FSTATFS,                      // i386 x64 x32
+	FSTATFS,                      // i386 x64 x32 aarch64
 	FSTATFS64,                    // i386
-	FSYNC,                        // i386 x64 x32
+	FSYNC,                        // i386 x64 x32 aarch64
 	FTIME,                        // i386
-	FTRUNCATE,                    // i386 x64 x32
+	FTRUNCATE,                    // i386 x64 x32 aarch64
 	FTRUNCATE64,                  // i386
-	FUTEX,                        // i386 x64 x32
-	FUTEX_REQUEUE,                // i386 x64 x32
+	FUTEX,                        // i386 x64 x32 aarch64
+	FUTEX_REQUEUE,                // i386 x64 x32 aarch64
 	FUTEX_TIME64,                 // i386
-	FUTEX_WAIT,                   // i386 x64 x32
-	FUTEX_WAITV,                  // i386 x64 x32
-	FUTEX_WAKE,                   // i386 x64 x32
+	FUTEX_WAIT,                   // i386 x64 x32 aarch64
+	FUTEX_WAITV,                  // i386 x64 x32 aarch64
+	FUTEX_WAKE,                   // i386 x64 x32 aarch64
 	FUTIMESAT,                    // i386 x64 x32
 	GET_KERNEL_SYMS,              // i386 x64
-	GET_MEMPOLICY,                // i386 x64 x32
-	GET_ROBUST_LIST,              // i386 x64 x32
+	GET_MEMPOLICY,                // i386 x64 x32 aarch64
+	GET_ROBUST_LIST,              // i386 x64 x32 aarch64
 	GET_THREAD_AREA,              // i386 x64
-	GETCPU,                       // i386 x64 x32
-	GETCWD,                       // i386 x64 x32
+	GETCPU,                       // i386 x64 x32 aarch64
+	GETCWD,                       // i386 x64 x32 aarch64
 	GETDENTS,                     // i386 x64 x32
-	GETDENTS64,                   // i386 x64 x32
-	GETEGID,                      // i386 x64 x32
+	GETDENTS64,                   // i386 x64 x32 aarch64
+	GETEGID,                      // i386 x64 x32 aarch64
 	GETEGID32,                    // i386
-	GETEUID,                      // i386 x64 x32
+	GETEUID,                      // i386 x64 x32 aarch64
 	GETEUID32,                    // i386
-	GETGID,                       // i386 x64 x32
+	GETGID,                       // i386 x64 x32 aarch64
 	GETGID32,                     // i386
-	GETGROUPS,                    // i386 x64 x32
+	GETGROUPS,                    // i386 x64 x32 aarch64
 	GETGROUPS32,                  // i386
-	GETITIMER,                    // i386 x64 x32
-	GETPEERNAME,                  // i386 x64 x32
-	GETPGID,                      // i386 x64 x32
+	GETITIMER,                    // i386 x64 x32 aarch64
+	GETPEERNAME,                  // i386 x64 x32 aarch64
+	GETPGID,                      // i386 x64 x32 aarch64
 	GETPGRP,                      // i386 x64 x32
-	GETPID,                       // i386 x64 x32
+	GETPID,                       // i386 x64 x32 aarch64
 	GETPMSG,                      // i386 x64 x32
-	GETPPID,                      // i386 x64 x32
-	GETPRIORITY,                  // i386 x64 x32
-	GETRANDOM,                    // i386 x64 x32
-	GETRESGID,                    // i386 x64 x32
+	GETPPID,                      // i386 x64 x32 aarch64
+	GETPRIORITY,                  // i386 x64 x32 aarch64
+	GETRANDOM,                    // i386 x64 x32 aarch64
+	GETRESGID,                    // i386 x64 x32 aarch64
 	GETRESGID32,                  // i386
-	GETRESUID,                    // i386 x64 x32
+	GETRESUID,                    // i386 x64 x32 aarch64
 	GETRESUID32,                  // i386
-	GETRLIMIT,                    // i386 x64 x32
-	GETRUSAGE,                    // i386 x64 x32
-	GETSID,                       // i386 x64 x32
-	GETSOCKNAME,                  // i386 x64 x32
-	GETSOCKOPT,                   // i386 x64 x32
-	GETTID,                       // i386 x64 x32
-	GETTIMEOFDAY,                 // i386 x64 x32
-	GETUID,                       // i386 x64 x32
+	GETRLIMIT,                    // i386 x64 x32 aarch64
+	GETRUSAGE,                    // i386 x64 x32 aarch64
+	GETSID,                       // i386 x64 x32 aarch64
+	GETSOCKNAME,                  // i386 x64 x32 aarch64
+	GETSOCKOPT,                   // i386 x64 x32 aarch64
+	GETTID,                       // i386 x64 x32 aarch64
+	GETTIMEOFDAY,                 // i386 x64 x32 aarch64
+	GETUID,                       // i386 x64 x32 aarch64
 	GETUID32,                     // i386
-	GETXATTR,                     // i386 x64 x32
+	GETXATTR,                     // i386 x64 x32 aarch64
 	GTTY,                         // i386
 	IDLE,                         // i386
-	INIT_MODULE,                  // i386 x64 x32
-	INOTIFY_ADD_WATCH,            // i386 x64 x32
+	INIT_MODULE,                  // i386 x64 x32 aarch64
+	INOTIFY_ADD_WATCH,            // i386 x64 x32 aarch64
 	INOTIFY_INIT,                 // i386 x64 x32
-	INOTIFY_INIT1,                // i386 x64 x32
-	INOTIFY_RM_WATCH,             // i386 x64 x32
-	IO_CANCEL,                    // i386 x64 x32
-	IO_DESTROY,                   // i386 x64 x32
-	IO_GETEVENTS,                 // i386 x64 x32
-	IO_PGETEVENTS,                // i386 x64 x32
+	INOTIFY_INIT1,                // i386 x64 x32 aarch64
+	INOTIFY_RM_WATCH,             // i386 x64 x32 aarch64
+	IO_CANCEL,                    // i386 x64 x32 aarch64
+	IO_DESTROY,                   // i386 x64 x32 aarch64
+	IO_GETEVENTS,                 // i386 x64 x32 aarch64
+	IO_PGETEVENTS,                // i386 x64 x32 aarch64
 	IO_PGETEVENTS_TIME64,         // i386
-	IO_SETUP,                     // i386 x64 x32
-	IO_SUBMIT,                    // i386 x64 x32
-	IO_URING_ENTER,               // i386 x64 x32
-	IO_URING_REGISTER,            // i386 x64 x32
-	IO_URING_SETUP,               // i386 x64 x32
-	IOCTL,                        // i386 x64 x32
+	IO_SETUP,                     // i386 x64 x32 aarch64
+	IO_SUBMIT,                    // i386 x64 x32 aarch64
+	IO_URING_ENTER,               // i386 x64 x32 aarch64
+	IO_URING_REGISTER,            // i386 x64 x32 aarch64
+	IO_URING_SETUP,               // i386 x64 x32 aarch64
+	IOCTL,                        // i386 x64 x32 aarch64
 	IOPERM,                       // i386 x64 x32
 	IOPL,                         // i386 x64 x32
-	IOPRIO_GET,                   // i386 x64 x32
-	IOPRIO_SET,                   // i386 x64 x32
+	IOPRIO_GET,                   // i386 x64 x32 aarch64
+	IOPRIO_SET,                   // i386 x64 x32 aarch64
 	IPC,                          // i386
-	KCMP,                         // i386 x64 x32
-	KEXEC_FILE_LOAD,              // x64 x32
-	KEXEC_LOAD,                   // i386 x64 x32
-	KEYCTL,                       // i386 x64 x32
-	KILL,                         // i386 x64 x32
-	LANDLOCK_ADD_RULE,            // i386 x64 x32
-	LANDLOCK_CREATE_RULESET,      // i386 x64 x32
-	LANDLOCK_RESTRICT_SELF,       // i386 x64 x32
+	KCMP,                         // i386 x64 x32 aarch64
+	KEXEC_FILE_LOAD,              // x64 x32 aarch64
+	KEXEC_LOAD,                   // i386 x64 x32 aarch64
+	KEYCTL,                       // i386 x64 x32 aarch64
+	KILL,                         // i386 x64 x32 aarch64
+	LANDLOCK_ADD_RULE,            // i386 x64 x32 aarch64
+	LANDLOCK_CREATE_RULESET,      // i386 x64 x32 aarch64
+	LANDLOCK_RESTRICT_SELF,       // i386 x64 x32 aarch64
 	LCHOWN,                       // i386 x64 x32
 	LCHOWN32,                     // i386
-	LGETXATTR,                    // i386 x64 x32
+	LGETXATTR,                    // i386 x64 x32 aarch64
 	LINK,                         // i386 x64 x32
-	LINKAT,                       // i386 x64 x32
-	LISTEN,                       // i386 x64 x32
-	LISTMOUNT,                    // i386 x64 x32
-	LISTXATTR,                    // i386 x64 x32
-	LLISTXATTR,                   // i386 x64 x32
+	LINKAT,                       // i386 x64 x32 aarch64
+	LISTEN,                       // i386 x64 x32 aarch64
+	LISTMOUNT,                    // i386 x64 x32 aarch64
+	LISTXATTR,                    // i386 x64 x32 aarch64
+	LLISTXATTR,                   // i386 x64 x32 aarch64
 	LLSEEK,                       // i386
 	LOCK,                         // i386
-	LOOKUP_DCOOKIE,               // i386 x64 x32
-	LREMOVEXATTR,                 // i386 x64 x32
-	LSEEK,                        // i386 x64 x32
-	LSETXATTR,                    // i386 x64 x32
-	LSM_GET_SELF_ATTR,            // i386 x64 x32
-	LSM_LIST_MODULES,             // i386 x64 x32
-	LSM_SET_SELF_ATTR,            // i386 x64 x32
+	LOOKUP_DCOOKIE,               // i386 x64 x32 aarch64
+	LREMOVEXATTR,                 // i386 x64 x32 aarch64
+	LSEEK,                        // i386 x64 x32 aarch64
+	LSETXATTR,                    // i386 x64 x32 aarch64
+	LSM_GET_SELF_ATTR,            // i386 x64 x32 aarch64
+	LSM_LIST_MODULES,             // i386 x64 x32 aarch64
+	LSM_SET_SELF_ATTR,            // i386 x64 x32 aarch64
 	LSTAT,                        // i386 x64 x32
 	LSTAT64,                      // i386
-	MADVISE,                      // i386 x64 x32
-	MAP_SHADOW_STACK,             // i386 x64 x32
-	MBIND,                        // i386 x64 x32
-	MEMBARRIER,                   // i386 x64 x32
-	MEMFD_CREATE,                 // i386 x64 x32
-	MEMFD_SECRET,                 // i386 x64 x32
-	MIGRATE_PAGES,                // i386 x64 x32
-	MINCORE,                      // i386 x64 x32
+	MADVISE,                      // i386 x64 x32 aarch64
+	MAP_SHADOW_STACK,             // i386 x64 x32 aarch64
+	MBIND,                        // i386 x64 x32 aarch64
+	MEMBARRIER,                   // i386 x64 x32 aarch64
+	MEMFD_CREATE,                 // i386 x64 x32 aarch64
+	MEMFD_SECRET,                 // i386 x64 x32 aarch64
+	MIGRATE_PAGES,                // i386 x64 x32 aarch64
+	MINCORE,                      // i386 x64 x32 aarch64
 	MKDIR,                        // i386 x64 x32
-	MKDIRAT,                      // i386 x64 x32
+	MKDIRAT,                      // i386 x64 x32 aarch64
 	MKNOD,                        // i386 x64 x32
-	MKNODAT,                      // i386 x64 x32
-	MLOCK,                        // i386 x64 x32
-	MLOCK2,                       // i386 x64 x32
-	MLOCKALL,                     // i386 x64 x32
-	MMAP,                         // i386 x64 x32
+	MKNODAT,                      // i386 x64 x32 aarch64
+	MLOCK,                        // i386 x64 x32 aarch64
+	MLOCK2,                       // i386 x64 x32 aarch64
+	MLOCKALL,                     // i386 x64 x32 aarch64
+	MMAP,                         // i386 x64 x32 aarch64
 	MMAP2,                        // i386
 	MODIFY_LDT,                   // i386 x64 x32
-	MOUNT,                        // i386 x64 x32
-	MOUNT_SETATTR,                // i386 x64 x32
-	MOVE_MOUNT,                   // i386 x64 x32
-	MOVE_PAGES,                   // i386 x64 x32
-	MPROTECT,                     // i386 x64 x32
+	MOUNT,                        // i386 x64 x32 aarch64
+	MOUNT_SETATTR,                // i386 x64 x32 aarch64
+	MOVE_MOUNT,                   // i386 x64 x32 aarch64
+	MOVE_PAGES,                   // i386 x64 x32 aarch64
+	MPROTECT,                     // i386 x64 x32 aarch64
 	MPX,                          // i386
-	MQ_GETSETATTR,                // i386 x64 x32
-	MQ_NOTIFY,                    // i386 x64 x32
-	MQ_OPEN,                      // i386 x64 x32
-	MQ_TIMEDRECEIVE,              // i386 x64 x32
+	MQ_GETSETATTR,                // i386 x64 x32 aarch64
+	MQ_NOTIFY,                    // i386 x64 x32 aarch64
+	MQ_OPEN,                      // i386 x64 x32 aarch64
+	MQ_TIMEDRECEIVE,              // i386 x64 x32 aarch64
 	MQ_TIMEDRECEIVE_TIME64,       // i386
-	MQ_TIMEDSEND,                 // i386 x64 x32
+	MQ_TIMEDSEND,                 // i386 x64 x32 aarch64
 	MQ_TIMEDSEND_TIME64,          // i386
-	MQ_UNLINK,                    // i386 x64 x32
-	MREMAP,                       // i386 x64 x32
-	MSEAL,                        // i386 x64 x32
-	MSGCTL,                       // i386 x64 x32
-	MSGGET,                       // i386 x64 x32
-	MSGRCV,                       // i386 x64 x32
-	MSGSND,                       // i386 x64 x32
-	MSYNC,                        // i386 x64 x32
-	MUNLOCK,                      // i386 x64 x32
-	MUNLOCKALL,                   // i386 x64 x32
-	MUNMAP,                       // i386 x64 x32
-	NAME_TO_HANDLE_AT,            // i386 x64 x32
-	NANOSLEEP,                    // i386 x64 x32
-	NEWFSTATAT,                   // x64 x32
+	MQ_UNLINK,                    // i386 x64 x32 aarch64
+	MREMAP,                       // i386 x64 x32 aarch64
+	MSEAL,                        // i386 x64 x32 aarch64
+	MSGCTL,                       // i386 x64 x32 aarch64
+	MSGGET,                       // i386 x64 x32 aarch64
+	MSGRCV,                       // i386 x64 x32 aarch64
+	MSGSND,                       // i386 x64 x32 aarch64
+	MSYNC,                        // i386 x64 x32 aarch64
+	MUNLOCK,                      // i386 x64 x32 aarch64
+	MUNLOCKALL,                   // i386 x64 x32 aarch64
+	MUNMAP,                       // i386 x64 x32 aarch64
+	NAME_TO_HANDLE_AT,            // i386 x64 x32 aarch64
+	NANOSLEEP,                    // i386 x64 x32 aarch64
+	NEWFSTATAT,                   // x64 x32 aarch64
 	NEWSELECT,                    // i386
-	NFSSERVCTL,                   // i386 x64
+	NFSSERVCTL,                   // i386 x64 aarch64
 	NICE,                         // i386
 	OLDFSTAT,                     // i386
 	OLDLSTAT,                     // i386
@@ -274,222 +274,222 @@ enum class SystemCallNr : uint64_t {
 	OLDSTAT,                      // i386
 	OLDUNAME,                     // i386
 	OPEN,                         // i386 x64 x32
-	OPEN_BY_HANDLE_AT,            // i386 x64 x32
-	OPEN_TREE,                    // i386 x64 x32
-	OPENAT,                       // i386 x64 x32
-	OPENAT2,                      // i386 x64 x32
+	OPEN_BY_HANDLE_AT,            // i386 x64 x32 aarch64
+	OPEN_TREE,                    // i386 x64 x32 aarch64
+	OPENAT,                       // i386 x64 x32 aarch64
+	OPENAT2,                      // i386 x64 x32 aarch64
 	PAUSE,                        // i386 x64 x32
-	PERF_EVENT_OPEN,              // i386 x64 x32
-	PERSONALITY,                  // i386 x64 x32
-	PIDFD_GETFD,                  // i386 x64 x32
-	PIDFD_OPEN,                   // i386 x64 x32
-	PIDFD_SEND_SIGNAL,            // i386 x64 x32
+	PERF_EVENT_OPEN,              // i386 x64 x32 aarch64
+	PERSONALITY,                  // i386 x64 x32 aarch64
+	PIDFD_GETFD,                  // i386 x64 x32 aarch64
+	PIDFD_OPEN,                   // i386 x64 x32 aarch64
+	PIDFD_SEND_SIGNAL,            // i386 x64 x32 aarch64
 	PIPE,                         // i386 x64 x32
-	PIPE2,                        // i386 x64 x32
-	PIVOT_ROOT,                   // i386 x64 x32
-	PKEY_ALLOC,                   // i386 x64 x32
-	PKEY_FREE,                    // i386 x64 x32
-	PKEY_MPROTECT,                // i386 x64 x32
+	PIPE2,                        // i386 x64 x32 aarch64
+	PIVOT_ROOT,                   // i386 x64 x32 aarch64
+	PKEY_ALLOC,                   // i386 x64 x32 aarch64
+	PKEY_FREE,                    // i386 x64 x32 aarch64
+	PKEY_MPROTECT,                // i386 x64 x32 aarch64
 	POLL,                         // i386 x64 x32
-	PPOLL,                        // i386 x64 x32
+	PPOLL,                        // i386 x64 x32 aarch64
 	PPOLL_TIME64,                 // i386
-	PRCTL,                        // i386 x64 x32
-	PREAD64,                      // i386 x64 x32
-	PREADV,                       // i386 x64 x32
-	PREADV2,                      // i386 x64 x32
-	PRLIMIT64,                    // i386 x64 x32
-	PROCESS_MADVISE,              // i386 x64 x32
-	PROCESS_MRELEASE,             // i386 x64 x32
-	PROCESS_VM_READV,             // i386 x64 x32
-	PROCESS_VM_WRITEV,            // i386 x64 x32
+	PRCTL,                        // i386 x64 x32 aarch64
+	PREAD64,                      // i386 x64 x32 aarch64
+	PREADV,                       // i386 x64 x32 aarch64
+	PREADV2,                      // i386 x64 x32 aarch64
+	PRLIMIT64,                    // i386 x64 x32 aarch64
+	PROCESS_MADVISE,              // i386 x64 x32 aarch64
+	PROCESS_MRELEASE,             // i386 x64 x32 aarch64
+	PROCESS_VM_READV,             // i386 x64 x32 aarch64
+	PROCESS_VM_WRITEV,            // i386 x64 x32 aarch64
 	PROF,                         // i386
 	PROFIL,                       // i386
-	PSELECT6,                     // i386 x64 x32
+	PSELECT6,                     // i386 x64 x32 aarch64
 	PSELECT6_TIME64,              // i386
-	PTRACE,                       // i386 x64 x32
+	PTRACE,                       // i386 x64 x32 aarch64
 	PUTPMSG,                      // i386 x64 x32
-	PWRITE64,                     // i386 x64 x32
-	PWRITEV,                      // i386 x64 x32
-	PWRITEV2,                     // i386 x64 x32
+	PWRITE64,                     // i386 x64 x32 aarch64
+	PWRITEV,                      // i386 x64 x32 aarch64
+	PWRITEV2,                     // i386 x64 x32 aarch64
 	QUERY_MODULE,                 // i386 x64
-	QUOTACTL,                     // i386 x64 x32
-	QUOTACTL_FD,                  // i386 x64 x32
-	READ,                         // i386 x64 x32
-	READAHEAD,                    // i386 x64 x32
+	QUOTACTL,                     // i386 x64 x32 aarch64
+	QUOTACTL_FD,                  // i386 x64 x32 aarch64
+	READ,                         // i386 x64 x32 aarch64
+	READAHEAD,                    // i386 x64 x32 aarch64
 	READDIR,                      // i386
 	READLINK,                     // i386 x64 x32
-	READLINKAT,                   // i386 x64 x32
-	READV,                        // i386 x64 x32
-	REBOOT,                       // i386 x64 x32
-	RECVFROM,                     // i386 x64 x32
-	RECVMMSG,                     // i386 x64 x32
+	READLINKAT,                   // i386 x64 x32 aarch64
+	READV,                        // i386 x64 x32 aarch64
+	REBOOT,                       // i386 x64 x32 aarch64
+	RECVFROM,                     // i386 x64 x32 aarch64
+	RECVMMSG,                     // i386 x64 x32 aarch64
 	RECVMMSG_TIME64,              // i386
-	RECVMSG,                      // i386 x64 x32
-	REMAP_FILE_PAGES,             // i386 x64 x32
-	REMOVEXATTR,                  // i386 x64 x32
+	RECVMSG,                      // i386 x64 x32 aarch64
+	REMAP_FILE_PAGES,             // i386 x64 x32 aarch64
+	REMOVEXATTR,                  // i386 x64 x32 aarch64
 	RENAME,                       // i386 x64 x32
-	RENAMEAT,                     // i386 x64 x32
-	RENAMEAT2,                    // i386 x64 x32
-	REQUEST_KEY,                  // i386 x64 x32
-	RESTART_SYSCALL,              // i386 x64 x32
+	RENAMEAT,                     // i386 x64 x32 aarch64
+	RENAMEAT2,                    // i386 x64 x32 aarch64
+	REQUEST_KEY,                  // i386 x64 x32 aarch64
+	RESTART_SYSCALL,              // i386 x64 x32 aarch64
 	RMDIR,                        // i386 x64 x32
-	RSEQ,                         // i386 x64 x32
-	RT_SIGACTION,                 // i386 x64 x32
-	RT_SIGPENDING,                // i386 x64 x32
-	RT_SIGPROCMASK,               // i386 x64 x32
-	RT_SIGQUEUEINFO,              // i386 x64 x32
-	RT_SIGRETURN,                 // i386 x64 x32
-	RT_SIGSUSPEND,                // i386 x64 x32
-	RT_SIGTIMEDWAIT,              // i386 x64 x32
+	RSEQ,                         // i386 x64 x32 aarch64
+	RT_SIGACTION,                 // i386 x64 x32 aarch64
+	RT_SIGPENDING,                // i386 x64 x32 aarch64
+	RT_SIGPROCMASK,               // i386 x64 x32 aarch64
+	RT_SIGQUEUEINFO,              // i386 x64 x32 aarch64
+	RT_SIGRETURN,                 // i386 x64 x32 aarch64
+	RT_SIGSUSPEND,                // i386 x64 x32 aarch64
+	RT_SIGTIMEDWAIT,              // i386 x64 x32 aarch64
 	RT_SIGTIMEDWAIT_TIME64,       // i386
-	RT_TGSIGQUEUEINFO,            // i386 x64 x32
-	SCHED_GET_PRIORITY_MAX,       // i386 x64 x32
-	SCHED_GET_PRIORITY_MIN,       // i386 x64 x32
-	SCHED_GETAFFINITY,            // i386 x64 x32
-	SCHED_GETATTR,                // i386 x64 x32
-	SCHED_GETPARAM,               // i386 x64 x32
-	SCHED_GETSCHEDULER,           // i386 x64 x32
-	SCHED_RR_GET_INTERVAL,        // i386 x64 x32
+	RT_TGSIGQUEUEINFO,            // i386 x64 x32 aarch64
+	SCHED_GET_PRIORITY_MAX,       // i386 x64 x32 aarch64
+	SCHED_GET_PRIORITY_MIN,       // i386 x64 x32 aarch64
+	SCHED_GETAFFINITY,            // i386 x64 x32 aarch64
+	SCHED_GETATTR,                // i386 x64 x32 aarch64
+	SCHED_GETPARAM,               // i386 x64 x32 aarch64
+	SCHED_GETSCHEDULER,           // i386 x64 x32 aarch64
+	SCHED_RR_GET_INTERVAL,        // i386 x64 x32 aarch64
 	SCHED_RR_GET_INTERVAL_TIME64, // i386
-	SCHED_SETAFFINITY,            // i386 x64 x32
-	SCHED_SETATTR,                // i386 x64 x32
-	SCHED_SETPARAM,               // i386 x64 x32
-	SCHED_SETSCHEDULER,           // i386 x64 x32
-	SCHED_YIELD,                  // i386 x64 x32
-	SECCOMP,                      // i386 x64 x32
+	SCHED_SETAFFINITY,            // i386 x64 x32 aarch64
+	SCHED_SETATTR,                // i386 x64 x32 aarch64
+	SCHED_SETPARAM,               // i386 x64 x32 aarch64
+	SCHED_SETSCHEDULER,           // i386 x64 x32 aarch64
+	SCHED_YIELD,                  // i386 x64 x32 aarch64
+	SECCOMP,                      // i386 x64 x32 aarch64
 	SECURITY,                     // x64 x32
 	SELECT,                       // i386 x64 x32
-	SEMCTL,                       // i386 x64 x32
-	SEMGET,                       // i386 x64 x32
-	SEMOP,                        // x64 x32
-	SEMTIMEDOP,                   // x64 x32
+	SEMCTL,                       // i386 x64 x32 aarch64
+	SEMGET,                       // i386 x64 x32 aarch64
+	SEMOP,                        // x64 x32 aarch64
+	SEMTIMEDOP,                   // x64 x32 aarch64
 	SEMTIMEDOP_TIME64,            // i386
-	SENDFILE,                     // i386 x64 x32
+	SENDFILE,                     // i386 x64 x32 aarch64
 	SENDFILE64,                   // i386
-	SENDMMSG,                     // i386 x64 x32
-	SENDMSG,                      // i386 x64 x32
-	SENDTO,                       // i386 x64 x32
-	SET_MEMPOLICY,                // i386 x64 x32
-	SET_MEMPOLICY_HOME_NODE,      // i386 x64 x32
-	SET_ROBUST_LIST,              // i386 x64 x32
+	SENDMMSG,                     // i386 x64 x32 aarch64
+	SENDMSG,                      // i386 x64 x32 aarch64
+	SENDTO,                       // i386 x64 x32 aarch64
+	SET_MEMPOLICY,                // i386 x64 x32 aarch64
+	SET_MEMPOLICY_HOME_NODE,      // i386 x64 x32 aarch64
+	SET_ROBUST_LIST,              // i386 x64 x32 aarch64
 	SET_THREAD_AREA,              // i386 x64
-	SET_TID_ADDRESS,              // i386 x64 x32
-	SETDOMAINNAME,                // i386 x64 x32
-	SETFSGID,                     // i386 x64 x32
+	SET_TID_ADDRESS,              // i386 x64 x32 aarch64
+	SETDOMAINNAME,                // i386 x64 x32 aarch64
+	SETFSGID,                     // i386 x64 x32 aarch64
 	SETFSGID32,                   // i386
-	SETFSUID,                     // i386 x64 x32
+	SETFSUID,                     // i386 x64 x32 aarch64
 	SETFSUID32,                   // i386
-	SETGID,                       // i386 x64 x32
+	SETGID,                       // i386 x64 x32 aarch64
 	SETGID32,                     // i386
-	SETGROUPS,                    // i386 x64 x32
+	SETGROUPS,                    // i386 x64 x32 aarch64
 	SETGROUPS32,                  // i386
-	SETHOSTNAME,                  // i386 x64 x32
-	SETITIMER,                    // i386 x64 x32
-	SETNS,                        // i386 x64 x32
-	SETPGID,                      // i386 x64 x32
-	SETPRIORITY,                  // i386 x64 x32
-	SETREGID,                     // i386 x64 x32
+	SETHOSTNAME,                  // i386 x64 x32 aarch64
+	SETITIMER,                    // i386 x64 x32 aarch64
+	SETNS,                        // i386 x64 x32 aarch64
+	SETPGID,                      // i386 x64 x32 aarch64
+	SETPRIORITY,                  // i386 x64 x32 aarch64
+	SETREGID,                     // i386 x64 x32 aarch64
 	SETREGID32,                   // i386
-	SETRESGID,                    // i386 x64 x32
+	SETRESGID,                    // i386 x64 x32 aarch64
 	SETRESGID32,                  // i386
-	SETRESUID,                    // i386 x64 x32
+	SETRESUID,                    // i386 x64 x32 aarch64
 	SETRESUID32,                  // i386
-	SETREUID,                     // i386 x64 x32
+	SETREUID,                     // i386 x64 x32 aarch64
 	SETREUID32,                   // i386
-	SETRLIMIT,                    // i386 x64 x32
-	SETSID,                       // i386 x64 x32
-	SETSOCKOPT,                   // i386 x64 x32
-	SETTIMEOFDAY,                 // i386 x64 x32
-	SETUID,                       // i386 x64 x32
+	SETRLIMIT,                    // i386 x64 x32 aarch64
+	SETSID,                       // i386 x64 x32 aarch64
+	SETSOCKOPT,                   // i386 x64 x32 aarch64
+	SETTIMEOFDAY,                 // i386 x64 x32 aarch64
+	SETUID,                       // i386 x64 x32 aarch64
 	SETUID32,                     // i386
-	SETXATTR,                     // i386 x64 x32
+	SETXATTR,                     // i386 x64 x32 aarch64
 	SGETMASK,                     // i386
-	SHMAT,                        // i386 x64 x32
-	SHMCTL,                       // i386 x64 x32
-	SHMDT,                        // i386 x64 x32
-	SHMGET,                       // i386 x64 x32
-	SHUTDOWN,                     // i386 x64 x32
+	SHMAT,                        // i386 x64 x32 aarch64
+	SHMCTL,                       // i386 x64 x32 aarch64
+	SHMDT,                        // i386 x64 x32 aarch64
+	SHMGET,                       // i386 x64 x32 aarch64
+	SHUTDOWN,                     // i386 x64 x32 aarch64
 	SIGACTION,                    // i386
-	SIGALTSTACK,                  // i386 x64 x32
+	SIGALTSTACK,                  // i386 x64 x32 aarch64
 	SIGNAL,                       // i386
 	SIGNALFD,                     // i386 x64 x32
-	SIGNALFD4,                    // i386 x64 x32
+	SIGNALFD4,                    // i386 x64 x32 aarch64
 	SIGPENDING,                   // i386
 	SIGPROCMASK,                  // i386
 	SIGRETURN,                    // i386
 	SIGSUSPEND,                   // i386
-	SOCKET,                       // i386 x64 x32
+	SOCKET,                       // i386 x64 x32 aarch64
 	SOCKETCALL,                   // i386
-	SOCKETPAIR,                   // i386 x64 x32
-	SPLICE,                       // i386 x64 x32
+	SOCKETPAIR,                   // i386 x64 x32 aarch64
+	SPLICE,                       // i386 x64 x32 aarch64
 	SSETMASK,                     // i386
 	STAT,                         // i386 x64 x32
 	STAT64,                       // i386
-	STATFS,                       // i386 x64 x32
+	STATFS,                       // i386 x64 x32 aarch64
 	STATFS64,                     // i386
-	STATMOUNT,                    // i386 x64 x32
-	STATX,                        // i386 x64 x32
+	STATMOUNT,                    // i386 x64 x32 aarch64
+	STATX,                        // i386 x64 x32 aarch64
 	STIME,                        // i386
 	STTY,                         // i386
-	SWAPOFF,                      // i386 x64 x32
-	SWAPON,                       // i386 x64 x32
+	SWAPOFF,                      // i386 x64 x32 aarch64
+	SWAPON,                       // i386 x64 x32 aarch64
 	SYMLINK,                      // i386 x64 x32
-	SYMLINKAT,                    // i386 x64 x32
-	SYNC,                         // i386 x64 x32
-	SYNC_FILE_RANGE,              // i386 x64 x32
-	SYNCFS,                       // i386 x64 x32
+	SYMLINKAT,                    // i386 x64 x32 aarch64
+	SYNC,                         // i386 x64 x32 aarch64
+	SYNC_FILE_RANGE,              // i386 x64 x32 aarch64
+	SYNCFS,                       // i386 x64 x32 aarch64
 	SYSCTL,                       // i386 x64
 	SYSFS,                        // i386 x64 x32
-	SYSINFO,                      // i386 x64 x32
-	SYSLOG,                       // i386 x64 x32
-	TEE,                          // i386 x64 x32
-	TGKILL,                       // i386 x64 x32
+	SYSINFO,                      // i386 x64 x32 aarch64
+	SYSLOG,                       // i386 x64 x32 aarch64
+	TEE,                          // i386 x64 x32 aarch64
+	TGKILL,                       // i386 x64 x32 aarch64
 	TIME,                         // i386 x64 x32
-	TIMER_CREATE,                 // i386 x64 x32
-	TIMER_DELETE,                 // i386 x64 x32
-	TIMER_GETOVERRUN,             // i386 x64 x32
-	TIMER_GETTIME,                // i386 x64 x32
+	TIMER_CREATE,                 // i386 x64 x32 aarch64
+	TIMER_DELETE,                 // i386 x64 x32 aarch64
+	TIMER_GETOVERRUN,             // i386 x64 x32 aarch64
+	TIMER_GETTIME,                // i386 x64 x32 aarch64
 	TIMER_GETTIME64,              // i386
-	TIMER_SETTIME,                // i386 x64 x32
+	TIMER_SETTIME,                // i386 x64 x32 aarch64
 	TIMER_SETTIME64,              // i386
-	TIMERFD_CREATE,               // i386 x64 x32
-	TIMERFD_GETTIME,              // i386 x64 x32
+	TIMERFD_CREATE,               // i386 x64 x32 aarch64
+	TIMERFD_GETTIME,              // i386 x64 x32 aarch64
 	TIMERFD_GETTIME64,            // i386
-	TIMERFD_SETTIME,              // i386 x64 x32
+	TIMERFD_SETTIME,              // i386 x64 x32 aarch64
 	TIMERFD_SETTIME64,            // i386
-	TIMES,                        // i386 x64 x32
-	TKILL,                        // i386 x64 x32
-	TRUNCATE,                     // i386 x64 x32
+	TIMES,                        // i386 x64 x32 aarch64
+	TKILL,                        // i386 x64 x32 aarch64
+	TRUNCATE,                     // i386 x64 x32 aarch64
 	TRUNCATE64,                   // i386
 	TUXCALL,                      // x64 x32
 	UGETRLIMIT,                   // i386
 	ULIMIT,                       // i386
-	UMASK,                        // i386 x64 x32
+	UMASK,                        // i386 x64 x32 aarch64
 	UMOUNT,                       // i386
-	UMOUNT2,                      // i386 x64 x32
-	UNAME,                        // i386 x64 x32
+	UMOUNT2,                      // i386 x64 x32 aarch64
+	UNAME,                        // i386 x64 x32 aarch64
 	UNLINK,                       // i386 x64 x32
-	UNLINKAT,                     // i386 x64 x32
-	UNSHARE,                      // i386 x64 x32
+	UNLINKAT,                     // i386 x64 x32 aarch64
+	UNSHARE,                      // i386 x64 x32 aarch64
 	URETPROBE,                    // x64 x32
 	USELIB,                       // i386 x64
-	USERFAULTFD,                  // i386 x64 x32
+	USERFAULTFD,                  // i386 x64 x32 aarch64
 	USTAT,                        // i386 x64 x32
 	UTIME,                        // i386 x64 x32
-	UTIMENSAT,                    // i386 x64 x32
+	UTIMENSAT,                    // i386 x64 x32 aarch64
 	UTIMENSAT_TIME64,             // i386
 	UTIMES,                       // i386 x64 x32
 	VFORK,                        // i386 x64 x32
-	VHANGUP,                      // i386 x64 x32
+	VHANGUP,                      // i386 x64 x32 aarch64
 	VM86,                         // i386
 	VM86OLD,                      // i386
-	VMSPLICE,                     // i386 x64 x32
+	VMSPLICE,                     // i386 x64 x32 aarch64
 	VSERVER,                      // i386 x64
-	WAIT4,                        // i386 x64 x32
-	WAITID,                       // i386 x64 x32
+	WAIT4,                        // i386 x64 x32 aarch64
+	WAITID,                       // i386 x64 x32 aarch64
 	WAITPID,                      // i386
-	WRITE,                        // i386 x64 x32
-	WRITEV,                       // i386 x64 x32
+	WRITE,                        // i386 x64 x32 aarch64
+	WRITEV,                       // i386 x64 x32 aarch64
 };
 
 constexpr size_t SYSTEM_CALL_COUNT = 463;
