@@ -64,6 +64,7 @@ enum class ABI {
 	X86_64,
 	I386,
 	X32,    ///< X86_64 with 32-bit pointers
+	AARCH64
 };
 
 /// Contextual information about a file descriptor in a Tracee.

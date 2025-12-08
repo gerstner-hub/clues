@@ -60,6 +60,8 @@ constexpr ABI get_default_abi() {
 		return ABI::X86_64;
 	else if (cosmos::arch::I386)
 		return ABI::I386;
+	else if (cosmos::arch::AARCH64)
+		return ABI::AARCH64;
 
 	return ABI::UNKNOWN;
 }
