@@ -57,12 +57,14 @@ class TableParser:
     # <suffix> of the *.tbl file, if present.
     ARCH_TABLE_PATHS = {
         # classic 32-bit arm
-        #"arm":      "arch/arm/tools/syscall.tbl",
-        #"powerpc":  "arch/powerpc/kernel/syscalls/syscall.tbl",
-        # 32-bit arm emulation on 64-bit arm CPUs
-        #"aarch32": "arch/arm64/tools/syscall_32.tbl",
+
+        # 32-bit arm emulation on 64-bit arm CPUs (actually there seem to be
+        # no major Linux distributions supporting this).
+        # "aarch32": "arch/arm64/tools/syscall_32.tbl",
+
         # 64-bit arm native ABI
         "aarch64": "arch/arm64/tools/syscall_64.tbl",
+
         # this contains i386
         "x86-32":   "arch/x86/entry/syscalls/syscall_32.tbl",
         # this contains x86_64 / x64 and x32
@@ -582,38 +584,38 @@ class Main:
     def getArgParser(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--kernel-root",
-            default="/usr/src/linux",
-            help="where to look for .tbl files to parse")
+                            default="/usr/src/linux",
+                            help="where to look for .tbl files to parse")
         parser.add_argument("--archs", nargs="*",
-            help="Architectures which should be processed",
-            default=TableParser.ARCH_TABLE_PATHS.keys())
+                            help="Architectures which should be processed",
+                            default=TableParser.ARCH_TABLE_PATHS.keys())
         parser.add_argument("--list-archs", action="store_true",
-            help="list valid arguments for --archs")
+                            help="list valid arguments for --archs")
         parser.add_argument("--list-raw", action="store_true",
-            help="list raw content parsed from .tbl files")
+                            help="list raw content parsed from .tbl files")
         parser.add_argument("--list-abis", action="store_true",
-            help="list expanded ABI information after processing .tbl files")
+                            help="list expanded ABI information after processing .tbl files")
         parser.add_argument("--list-all-syscalls", action="store_true",
-            help="list every distinct system call and the ABIs they're found in")
+                            help="list every distinct system call and the ABIs they're found in")
         parser.add_argument("--list-unique", action="store_true",
-            help="list system calls that are unique for each ABI")
+                            help="list system calls that are unique for each ABI")
         parser.add_argument("--show-diff", metavar="ABI1:ABI2",
-            help="Show differences between the given ABIs")
+                            help="Show differences between the given ABIs")
         parser.add_argument("--generate-sources",
-            help="Generate C++ sources for the selected architectures in the given directory",
-            action="store_true")
+                            help="Generate C++ sources for the selected architectures in the given directory",
+                            action="store_true")
         parser.add_argument("--name-template",
-            default="{abi}.{suffix}",
-            help="template for generated header filenames. {abi} will be replaced by the respective ABI the header is for, {suffix} by .hxx or .cxx.")
+                            default="{abi}.{suffix}",
+                            help="template for generated header filenames. {abi} will be replaced by the respective ABI the header is for, {suffix} by .hxx or .cxx.")
         parser.add_argument("--include-prefix",
-            default="clues/sysnrs",
-            help="prefix to add for #include directives for generated headers")
+                            default="clues/sysnrs",
+                            help="prefix to add for #include directives for generated headers")
         parser.add_argument("--src-outdir", metavar="DIR",
-            help="Directory where to place generated source files",
-            default="src/sysnrs")
+                            help="Directory where to place generated source files",
+                            default="src/sysnrs")
         parser.add_argument("--inc-outdir", metavar="DIR",
-            help="Directory where to place generated include files",
-            default="include/sysnrs")
+                            help="Directory where to place generated include files",
+                            default="include/sysnrs")
 
         return parser
 

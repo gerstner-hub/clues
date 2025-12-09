@@ -126,6 +126,7 @@ def buildSyscallHeader(target, source, env):
 
     return 0
 
+
 # this header is only needed in the implementation and does not need to be
 # installed as a public header
 _ = env.ErrnoHeaderBuilder("clues/errnodb.hxx", "generated/errnodb.cxx")
