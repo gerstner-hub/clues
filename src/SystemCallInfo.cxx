@@ -41,6 +41,13 @@ void SystemCallInfo::updateSysNr() {
 			m_abi = ABI::I386;
 			break;
 		}
+		case Arch::AARCH64: {
+			const auto aarch64_syscall = SystemCallNrAARCH64{native};
+			m_native = aarch64_syscall;
+			m_generic = to_generic(aarch64_syscall);
+			m_abi = ABI::AARCH64;
+			break;
+		}
 	default:
 		throw cosmos::RuntimeError("unsupported ARCH");
 		break;

@@ -277,6 +277,7 @@ bool is_default_abi(const ABI abi) {
 	switch (abi) {
 		case ABI::X86_64: return cosmos::arch::X86_64;
 		case ABI::I386: return cosmos::arch::I386;
+		case ABI::AARCH64: return cosmos::arch::AARCH64;
 		default: return false;
 	}
 }
@@ -286,6 +287,7 @@ const char* get_abi_label(const ABI abi) {
 	case ABI::X86_64: return "x86_64";
 	case ABI::I386: return "i386";
 	case ABI::X32: return "x32";
+	case ABI::AARCH64: return "aarch64";
 	default: return "unknown";
 	}
 }

@@ -718,8 +718,13 @@ void Tracee::verifyArch() {
 				throw cosmos::RuntimeError{"tracing 64-bit binaries with a 32-bit tracer is not supported"};
 			}
 			return;
+		case Arch::AARCH64:
+			if (!cosmos::arch::AARCH64) {
+				throw cosmos::RuntimeError{"tracing 64-bit binaries with a 32-bit tracer is not supported"};
+			}
+			return;
 		default:
-			throw cosmos::RuntimeError{"tracing anything other than x86 / x86_64 binaries is not supported currently"};
+			throw cosmos::RuntimeError{"tracing this architecture/ABI is not currently supported"};
 	}
 }
 
