@@ -1,3 +1,6 @@
 [submodule "libcosmos"]
 	path = libcosmos
 	url = https://github.com/gerstner-hub/libcosmos.git
+[submodule "tclap"]
+	path = tclap
+	url = https://git.code.sf.net/p/tclap/code

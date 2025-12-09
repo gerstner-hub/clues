@@ -188,6 +188,7 @@ tracer_env = env.Clone()
 tracer_srcs = tracer_env.GatherSources(suffixes=['.cxx'], recursive=False, subpath='termtracer')
 tracer_env.ConfigureForLibOrPackage('libclues', tracer_srcs)
 tracer_env.ConfigureForLibOrPackage('libcosmos', tracer_srcs)
+tracer_env.Append(CPPPATH=['#/tclap/include'])
 
 clues = tracer_env.Program("termtracer/clues", tracer_srcs)
 
