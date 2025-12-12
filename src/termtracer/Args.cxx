@@ -50,7 +50,7 @@ Args::Args() :
 		"number of bytes"},
 	list_syscalls{
 		"", "list-syscalls",
-		"list all known system calls and their numbers, then exit.",
+		"list all known system calls names, then exit.",
 		false},
 	syscall_filter{
 		"e", "filter",

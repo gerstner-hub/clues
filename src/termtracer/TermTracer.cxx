@@ -180,7 +180,7 @@ void TermTracer::printSyscalls() {
 		auto NAME = SYSTEM_CALL_NAMES[nr];
 		if (!NAME[0])
 			continue;
-		std::cout << NAME << " (" << nr << ")\n";
+		std::cout << NAME << "\n";
 	}
 }
 
