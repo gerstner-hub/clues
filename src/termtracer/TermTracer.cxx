@@ -175,7 +175,8 @@ bool TermTracer::processPars() {
 }
 
 void TermTracer::printSyscalls() {
-	for (size_t nr = 0; nr < SYSTEM_CALL_NAMES.size(); nr++) {
+	// start at index one to skip the "UKNOWN" system call
+	for (size_t nr = 1; nr < SYSTEM_CALL_NAMES.size(); nr++) {
 		auto NAME = SYSTEM_CALL_NAMES[nr];
 		if (!NAME[0])
 			continue;
