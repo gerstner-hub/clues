@@ -20,8 +20,9 @@ class SystemCall;
  * interface.
  *
  * libclues currently operates in a single-threaded mode only. This means
- * there will only one callback every be active at any given time. You should
- * not block in the context of callbacks to prevent tracing to get stuck.
+ * there will only one callback ever be active at any given time. Blocking
+ * should be avoided in the context of callbacks to prevent tracing to get
+ * stuck.
  *
  * Clients only need to override those methods that they are interested in. If
  * FollowChildren is active, then the `attached()` callback offers the
@@ -49,12 +50,29 @@ public: // types
 
 protected: // functions
 
+	/// A system call is about to be executed in the Tracee.
+	/**
+	 * At this stage only the type of system call as well system call
+	 * parameters of ItemType::PARAM_IN or ItemType::PARAM_IN_OUT have
+	 * useful values. Any out parameters and the return value should not
+	 * be inspected.
+	 **/
 	virtual void syscallEntry(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) {
 		(void)tracee;
 		(void)sc;
 		(void)flags;
 	}
 
+	/// A system call has been finished.
+	/**
+	 * If the system call failed then `sc.hasErrorCode()` returns `true`
+	 * and the `ErrnoResult` can be inspected from `sc.error()`.
+	 *
+	 * If the system call succeeded `sc.hasResultValue()` returns `true`
+	 * and any system call parameters of ItemType::PARAM_OUT or
+	 * ItemType::PARAM_IN_OUT should have been updated by the kernel and
+	 * can be updated and processed by the implementation.
+	 **/
 	virtual void syscallExit(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) {
 		(void)tracee;
 		(void)sc;
