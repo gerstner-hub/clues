@@ -63,6 +63,8 @@ protected: // functions
 
 	void printSyscalls();
 
+	void printABIs();
+
 	cosmos::ExitStatus main(const int argc, const char **argv) override;
 
 	bool configureTracee(const cosmos::ProcessID pid);

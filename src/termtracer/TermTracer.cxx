@@ -73,6 +73,9 @@ bool TermTracer::processPars() {
 	if (m_args.list_syscalls.isSet()) {
 		printSyscalls();
 		throw cosmos::ExitStatus::SUCCESS;
+	} else if (m_args.list_abis.isSet()) {
+		printABIs();
+		throw cosmos::ExitStatus::SUCCESS;
 	}
 
 	if (const auto max_len = m_args.max_value_len.getValue(); max_len == 0)
@@ -181,6 +184,12 @@ void TermTracer::printSyscalls() {
 		if (!NAME[0])
 			continue;
 		std::cout << NAME << "\n";
+	}
+}
+
+void TermTracer::printABIs() {
+	for (const auto abi: clues::get_supported_abis()) {
+		std::cout << clues::get_abi_label(abi) << "\n";
 	}
 }
 

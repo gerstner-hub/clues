@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <array>
 #include <optional>
 #include <set>
 #include <vector>
@@ -66,6 +67,29 @@ constexpr ABI get_default_abi() {
 	return ABI::UNKNOWN;
 }
 
+#ifdef COSMOS_X86_64
+constexpr inline size_t SUPPORTED_ABIS = 3;
+#elif defined(COSMOS_I386)
+constexpr inline size_t SUPPORTED_ABIS = 1;
+#elif defined(COSMOS_AARCH64)
+constexpr inline size_t SUPPORTED_ABIS = 1;
+#else
+#error "no configuration yet for this platform"
+#endif
+
 CLUES_API const char* get_abi_label(const ABI abi);
+
+/// Returns a list of ABIs supported on the current platform.
+CLUES_API std::array<ABI, SUPPORTED_ABIS> get_supported_abis();
+
+/// Returns whether the given ABI is supported on the current platform.
+inline bool is_supported_abi(const ABI abi) {
+	for (const auto supported: get_supported_abis()) {
+		if (supported == abi)
+			return true;
+	}
+
+	return false;
+}
 
 } // end ns

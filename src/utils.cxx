@@ -292,4 +292,27 @@ const char* get_abi_label(const ABI abi) {
 	}
 }
 
+std::array<ABI, SUPPORTED_ABIS> get_supported_abis() {
+#ifdef COSMOS_X86_64
+	/*
+	 * all three can be supported at once, although X32 has
+	 * declined a lot in popularity, or never had it.
+	 */
+	return {ABI::I386, ABI::X86_64, ABI::X32};
+#elif defined(COSMOS_I386)
+	return {ABI::I386};
+#elif defined(COSMOS_AARCH64)
+	/*
+	 * In theory aarch64 also support running aarch32 emulation
+	 * binaries. In practice this is hardly supported by any Linux
+	 * distributions beyond some niche systems. Should this ever
+	 * become relevant, we can extend accordingly, when there's
+	 * been a chance to test it properly.
+	 */
+	return {ABI::AARCH64};
+#else
+	throw cosmos::RuntimeError{"no ABIs supported on this platform?!"};
+#endif
+}
+
 } // end ns

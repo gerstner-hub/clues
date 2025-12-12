@@ -52,6 +52,11 @@ Args::Args() :
 		"", "list-syscalls",
 		"list all known system calls names, then exit.",
 		false},
+	list_abis{
+		"", "list-abis",
+		"list the names of system call ABIs supported on this system.",
+		false
+	},
 	syscall_filter{
 		"e", "filter",
 		"configuration of system call filters. comma separated list of system call names, optionally prefixed with '!' to negate the meaning.",
@@ -69,6 +74,7 @@ Args::Args() :
 	cmdline.add(verbose);
 	cmdline.add(max_value_len);
 	cmdline.add(list_syscalls);
+	cmdline.add(list_abis);
 	cmdline.add(syscall_filter);
 }
 
