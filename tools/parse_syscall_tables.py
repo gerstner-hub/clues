@@ -4,10 +4,9 @@
 # generate C++ headers providing enums for the various architectures and ABIs
 # we might encounter while tracing.
 #
-# For the start this will concentrate on the three PC ABIs: i386, x86_64 and
-# x32. The .tbl files are a bit different for each architecture and their
-# interpretation is not fully clear to me yet for all variants. I'll try to
-# evolve this as I go.
+# This by now supports the three PC ABIs: i386, x86_64 and x32. Also aarch64
+# is supported by now. Pulling in support for further ABIs shouldn't be too
+# much effort.
 
 import argparse
 import copy
@@ -231,6 +230,20 @@ class SourceGenerator:
     def getEnumIdent(self, abi):
         return f"SystemCallNr{abi.upper()}"
 
+    def abi2Enum(self, abi):
+        """Converts an ABI string as used in this script into the
+        corresponding clues::ABI enum value."""
+        if abi == "i386":
+            return "ABI::I386"
+        elif abi == "x64":
+            return "ABI::X86_64"
+        elif abi == "x32":
+            return "ABI::X32"
+        elif abi == "aarch64":
+            return "ABI::AARCH64"
+        else:
+            raise Exception("Unsupported ABI encountered")
+
     def generate(self):
         generic_header = self.getHeaderOutputPath("generic")
         self._gen_header = os.path.basename(generic_header)
@@ -437,16 +450,26 @@ class SourceGenerator:
         fd.write(f"enum class {enum_ident} : uint64_t {{\n")
         max_ident = max([len(entry.name) for entry in table])
 
+        first = True
+
         for entry in sorted(table, key=lambda el: el.nr):
             ident = entry.name.upper()
             comment = self.getABIEntryComment(abi, entry)
             if comment:
                 comment = f" // {comment}"
             nr = self.getABISysNr(abi, entry)
+            if first:
+                fd.write(f"\t{'_FIRST'.ljust(max_ident+1)} = {nr}, // first valid system call nr.\n")
+                first = False
             fd.write(f"\t{ident.ljust(max_ident+1)} = {nr},{comment}\n")
+        fd.write(f"\t{'_LAST'.ljust(max_ident+1)} = {nr}, // last valid system call nr. (careful, could be used in the future by the kernel!)\n")
         fd.write("};\n\n")
 
         fd.write("/// Convert the native system call nr. into its generic representation.\n")
+        fd.write("/**\n")
+        fd.write(" * If there is no generic representation (e.g. because the `nr` is invalid\n")
+        fd.write(" * then SystemCallNr::UNKNOWN is returned.\n")
+        fd.write(" **/\n")
         fd.write(f"CLUES_API clues::SystemCallNr to_generic(const {enum_ident} nr);\n")
 
         fd.write("\n} // end ns\n")
@@ -493,6 +516,7 @@ class SourceGenerator:
         fd.write("#pragma once\n\n")
         fd.write("#include <variant>\n")
         fd.write("\n#include \"fwd.hxx\"\n")
+        fd.write("#include <clues/types.hxx>\n")
         fd.write("\n")
         self.writePreamble(fd)
 
@@ -508,9 +532,24 @@ class SourceGenerator:
             fd.write(f"{enum}")
             if nr != len(abi_enums) - 1:
                 fd.write(", ")
-        fd.write(">;\n")
+        fd.write(">;\n\n")
 
-        fd.write("\n} // end ns\n")
+        fd.write("/// Traits which allow to lookup the correct SystemCallNr type per ABI\n")
+        fd.write("template <ABI abi>\n")
+        fd.write("struct SystemCallNrTraits {\n")
+        fd.write("\tstatic_assert(false, \"no traits defined for this ABI yet\");\n")
+        fd.write("};\n\n")
+
+        for abi, table in self.parser.abis.items():
+            abi_enum_type = self.abi2Enum(abi)
+            sysnr_type = self.getEnumIdent(abi)
+            fd.write("template <>\n")
+            fd.write(f"struct SystemCallNrTraits<{abi_enum_type}> {{\n")
+            fd.write(f"\tusing type = {sysnr_type};\n")
+            fd.write(f"\tsize_t NUM_SYSCALLS = {len(table)};\n")
+            fd.write("};\n\n")
+
+        fd.write("} // end ns\n")
 
     def writeFwdHeader(self, fd):
         fd.write("#pragma once\n\n")

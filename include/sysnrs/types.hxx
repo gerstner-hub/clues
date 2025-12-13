@@ -3,6 +3,7 @@
 #include <variant>
 
 #include "fwd.hxx"
+#include <clues/types.hxx>
 
 
 /********************************************************************************
@@ -13,5 +14,35 @@
 namespace clues {
 
 using AnySystemCallNr = std::variant<SystemCallNrI386, SystemCallNrX64, SystemCallNrX32, SystemCallNrAARCH64>;
+
+/// Traits which allow to lookup the correct SystemCallNr type per ABI
+template <ABI abi>
+struct SystemCallNrTraits {
+	static_assert(false, "no traits defined for this ABI yet");
+};
+
+template <>
+struct SystemCallNrTraits<ABI::I386> {
+	using type = SystemCallNrI386;
+	size_t NUM_SYSCALLS = 452;
+};
+
+template <>
+struct SystemCallNrTraits<ABI::X86_64> {
+	using type = SystemCallNrX64;
+	size_t NUM_SYSCALLS = 375;
+};
+
+template <>
+struct SystemCallNrTraits<ABI::X32> {
+	using type = SystemCallNrX32;
+	size_t NUM_SYSCALLS = 364;
+};
+
+template <>
+struct SystemCallNrTraits<ABI::AARCH64> {
+	using type = SystemCallNrAARCH64;
+	size_t NUM_SYSCALLS = 318;
+};
 
 } // end ns

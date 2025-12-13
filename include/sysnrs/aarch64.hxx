@@ -29,6 +29,7 @@ namespace clues {
  * `PTRACE_GET_SYSCALL_INFO` API and is the same for all ABIs.
  **/
 enum class SystemCallNrAARCH64 : uint64_t {
+	_FIRST                   = 0, // first valid system call nr.
 	IO_SETUP                 = 0,
 	IO_DESTROY               = 1,
 	IO_SUBMIT                = 2,
@@ -347,9 +348,14 @@ enum class SystemCallNrAARCH64 : uint64_t {
 	LSM_SET_SELF_ATTR        = 460,
 	LSM_LIST_MODULES         = 461,
 	MSEAL                    = 462,
+	_LAST                    = 462, // last valid system call nr. (careful, could be used in the future by the kernel!)
 };
 
 /// Convert the native system call nr. into its generic representation.
+/**
+ * If there is no generic representation (e.g. because the `nr` is invalid
+ * then SystemCallNr::UNKNOWN is returned.
+ **/
 CLUES_API clues::SystemCallNr to_generic(const SystemCallNrAARCH64 nr);
 
 } // end ns
