@@ -9,6 +9,11 @@
 namespace clues {
 
 struct Args {
+protected:
+	TCLAP::ValuesConstraint<std::string> m_abi_constraint;
+
+	std::vector<std::string> getABIs();
+public:
 	Args();
 
 	TCLAP::CmdLine cmdline;
@@ -30,6 +35,8 @@ struct Args {
 	TCLAP::ValueArg<int> max_value_len;
 	/// List system call names and their numbers.
 	TCLAP::SwitchArg list_syscalls;
+	/// List ABI-specific system call names and their numbers.
+	TCLAP::ValueArg<std::string> list_abi_syscalls;
 	/// List supported system call ABIs
 	TCLAP::SwitchArg list_abis;
 	/// Configure system calls which to trace.

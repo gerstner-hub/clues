@@ -7,6 +7,7 @@
 #include <map>
 #include <sstream>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 
 // cosmos
@@ -75,6 +76,9 @@ bool TermTracer::processPars() {
 		throw cosmos::ExitStatus::SUCCESS;
 	} else if (m_args.list_abis.isSet()) {
 		printABIs();
+		throw cosmos::ExitStatus::SUCCESS;
+	} else if (m_args.list_abi_syscalls.isSet()) {
+		printABISyscalls(m_args.list_abi_syscalls.getValue());
 		throw cosmos::ExitStatus::SUCCESS;
 	}
 
@@ -185,6 +189,50 @@ void TermTracer::printSyscalls() {
 			continue;
 		std::cout << NAME << "\n";
 	}
+}
+
+void TermTracer::printABISyscalls(const std::string &abi_str) {
+	auto print_syscalls = [](auto sysnr) {
+		using ABISystemCallNr = decltype(sysnr);
+		for (sysnr = ABISystemCallNr::_FIRST;
+				sysnr != ABISystemCallNr::_LAST;
+				sysnr = ABISystemCallNr{cosmos::to_integral(sysnr)+1}) {
+			/*
+			 * convert to the generic system call number, this way
+			 * we can get the system call name
+			 */
+			auto gen_sysnr = clues::to_generic(sysnr);
+			if (gen_sysnr == clues::SystemCallNr::UNKNOWN)
+				// unassigned
+				continue;
+
+			auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(gen_sysnr)];
+
+			std::cout << name << " (";
+			if constexpr (std::is_same<ABISystemCallNr, SystemCallNrX32>::value) {
+				std::cout << "X32_SYSCALL_BIT + " << (cosmos::to_integral(sysnr) & (~clues::X32_SYSCALL_BIT));
+			} else {
+				std::cout << cosmos::to_integral(sysnr);
+			}
+			std::cout << ")\n";
+		}
+	};
+
+	clues::AnySystemCallNr sys_nr;
+
+	if (abi_str == "i386") {
+		sys_nr = SystemCallNrI386{};
+	} else if (abi_str == "x86-64") {
+		sys_nr = SystemCallNrX64{};
+	} else if (abi_str == "x32") {
+		sys_nr = SystemCallNrX32{};
+	} else if (abi_str == "aarch64") {
+		sys_nr = SystemCallNrAARCH64{};
+	} else {
+		throw cosmos::RuntimeError{"unexpected abi string encountered"};
+	}
+
+	std::visit(print_syscalls, sys_nr);
 }
 
 void TermTracer::printABIs() {

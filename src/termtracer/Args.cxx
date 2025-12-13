@@ -3,6 +3,7 @@
 namespace clues {
 
 Args::Args() :
+	m_abi_constraint{getABIs()},
 	cmdline{"Command line process tracer.\nTo use clues as a front-end pass the command line to execute after '--'", ' ', "0.1"},
 	attach_proc{
 		"p", "process",
@@ -52,6 +53,13 @@ Args::Args() :
 		"", "list-syscalls",
 		"list all known system calls names, then exit.",
 		false},
+	list_abi_syscalls{
+		"", "list-abi-syscalls",
+		"list all system calls names and their numbers for the given system call ABI.",
+		false,
+		"",
+		&m_abi_constraint
+	},
 	list_abis{
 		"", "list-abis",
 		"list the names of system call ABIs supported on this system.",
@@ -62,8 +70,7 @@ Args::Args() :
 		"configuration of system call filters. comma separated list of system call names, optionally prefixed with '!' to negate the meaning.",
 		false,
 		"",
-		"comma separated list of system call names"}
-	{
+		"comma separated list of system call names"} {
 
 	cmdline.add(attach_proc);
 	cmdline.add(follow_execve);
@@ -74,8 +81,15 @@ Args::Args() :
 	cmdline.add(verbose);
 	cmdline.add(max_value_len);
 	cmdline.add(list_syscalls);
+	cmdline.add(list_abi_syscalls);
 	cmdline.add(list_abis);
 	cmdline.add(syscall_filter);
+}
+
+std::vector<std::string> Args::getABIs() {
+	return std::vector<std::string>{
+		"i386", "x86-64", "x32", "aarch64"
+	};
 }
 
 } // end ns

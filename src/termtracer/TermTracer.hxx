@@ -63,6 +63,8 @@ protected: // functions
 
 	void printSyscalls();
 
+	void printABISyscalls(const std::string &abi);
+
 	void printABIs();
 
 	cosmos::ExitStatus main(const int argc, const char **argv) override;
