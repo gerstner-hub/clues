@@ -35,19 +35,15 @@ bool SystemCall::validNr(const SystemCallNr nr) {
 SystemCall::SystemCall(
 		const SystemCallNr nr,
 		ParameterVector &&pars,
-		SystemCallItemPtr ret,
-		std::optional<size_t> open_id_par,
-		std::optional<size_t> close_fd_par) :
+		SystemCallItemPtr ret) :
 		m_nr{nr}, m_name{SystemCall::name(nr)},
-		m_return{ret}, m_pars{pars},
-		m_open_id_par{open_id_par},
-		m_close_fd_par{close_fd_par} {
-
-	assert(!open_id_par || *open_id_par < m_pars.size());
-	assert(!close_fd_par || *close_fd_par < m_pars.size());
+		m_return{ret}, m_pars{pars} {
 
 	for (auto &par: m_pars)
 		par->setSystemCall(*this);
+
+	setOpenIDPar();
+	setCloseFDPar();
 }
 
 void SystemCall::setEntryInfo(const Tracee &proc,
@@ -140,12 +136,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 
 	auto new_call = [nr](
 			SystemCall::ParameterVector &&pars,
-			ItemPtr ret = nullptr,
-			const std::optional<size_t> open_id_par = {},
-			const std::optional<size_t> close_fd_par = {}) {
-		return std::make_shared<SystemCall>(
-				nr, std::move(pars),
-				ret, open_id_par, close_fd_par);
+			ItemPtr ret = nullptr) {
+		return std::make_shared<SystemCall>(nr, std::move(pars), ret);
 	};
 
 	switch (nr) {
@@ -263,8 +255,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				ItemPtr{new OpenFlagsValue{}},
 				ItemPtr{new FileModeParameter{}}
 			},
-			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}},
-			0 // number of parameter that is the to-be-opened ID
+			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}}
 		);
 	case SystemCallNr::OPENAT:
 		return new_call({
@@ -273,16 +264,13 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 				ItemPtr{new OpenFlagsValue{}},
 				ItemPtr{new FileModeParameter{}}
 			},
-			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}},
-			1 // number of the parameter that is the to-be-opened ID
+			ItemPtr{new FileDescriptor{ItemType::PARAM_OUT}}
 		);
 	case SystemCallNr::CLOSE:
 		return new_call({
 				ItemPtr{new FileDescriptor{}}
 			},
-			ItemPtr{new SuccessResult{}},
-			{},
-			0 // number of parameter that is the to-be-closed fd
+			ItemPtr{new SuccessResult{}}
 		);
 	case SystemCallNr::RT_SIGACTION:
 		return new_call({
@@ -444,6 +432,31 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 			ItemPtr{new ValueOutParameter{"result", {}}}
 		);
 	}
+}
+
+void SystemCall::setOpenIDPar() {
+	switch (m_nr) {
+	default: break;
+	case SystemCallNr::OPEN:
+		 m_open_id_par = 0; /* pathname */
+		 break;
+	case SystemCallNr::OPENAT:
+		 m_open_id_par = 1; /* pathname comes 2nd in openat() */
+		 break;
+	}
+
+	assert(!m_open_id_par || *m_open_id_par < m_pars.size());
+}
+
+void SystemCall::setCloseFDPar() {
+	switch (m_nr) {
+	default: break;
+	case SystemCallNr::CLOSE:
+		 m_close_fd_par = 0; /* the single fd parameter to close */
+		 break;
+	}
+
+	assert(!m_close_fd_par || *m_close_fd_par < m_pars.size());
 }
 
 } // end ns

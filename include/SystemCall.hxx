@@ -74,9 +74,7 @@ public: // functions
 	SystemCall(
 		const SystemCallNr nr,
 		ParameterVector &&pars,
-		SystemCallItemPtr ret,
-		std::optional<size_t> open_id_par = {},
-		std::optional<size_t> close_fd_par = {}
+		SystemCallItemPtr ret
 	);
 
 	virtual ~SystemCall() {}
@@ -140,6 +138,14 @@ public: // functions
 
 protected: // data
 
+	/// Assign m_open_id_par based on the current system call nr.
+	void setOpenIDPar();
+
+	/// Assign m_close_fd_par based on the current system call nr.
+	void setCloseFDPar();
+
+protected: // data
+
 	/// The raw system call number of the system call.
 	SystemCallNr m_nr;
 	/// The basic name of the system call.
@@ -151,9 +157,9 @@ protected: // data
 	/// The array of system call parameters, if any.
 	ParameterVector m_pars;
 	/// if this is an open-like system call, then this gives the number of the parameter that contains the open identifier.
-	const std::optional<size_t> m_open_id_par;
+	std::optional<size_t> m_open_id_par;
 	/// If this is a close-like system call, then this gives the number of the parameter that contains the open file descriptor.
-	const std::optional<size_t> m_close_fd_par;
+	std::optional<size_t> m_close_fd_par;
 };
 
 /// Creates a dynamically allocated SystemCall instance for the given system call number
