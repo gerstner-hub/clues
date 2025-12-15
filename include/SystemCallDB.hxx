@@ -12,6 +12,9 @@ namespace clues {
 /**
  * This is a caching map object. It doesn't fill in all system calls at once,
  * but fills in each system call as it comes up in a lazy manner.
+ *
+ * Each Tracee uses its dedicated SystemCallDB to avoid different tracees
+ * meddling with each other's system call state.
  **/
 class SystemCallDB {
 public: // functions

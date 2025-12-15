@@ -29,20 +29,17 @@ class SystemCallItem;
 using SystemCallPtr = std::shared_ptr<SystemCall>;
 using SystemCallItemPtr = std::shared_ptr<SystemCallItem>;
 
-/// Base class to represent system call properties.
+/// Access to System Call Data
 /**
  * This type stores properties that are common to all system calls:
- * 
+ *
  * - the system call number.
  * - an ordered list of parameters the system call expects, represented
  *   by the abstract SystemCallItem base class.
  * - a human readable name to identify the system call.
- * 
- * The actual derived type knows all about the individual system call
- * parameters and type of return value etc.
- * 
- * Also the stream output operator<< allows to generically output
- * information about a system call.
+ *
+ * The stream output operator<< allows to generically output information about
+ * a system call.
  **/
 class CLUES_API SystemCall {
 	friend std::ostream& ::operator<<(std::ostream&, const SystemCall&);
