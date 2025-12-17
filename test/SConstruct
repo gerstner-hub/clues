@@ -16,6 +16,8 @@ run_env = test_env.Clone()
 if not env['use_system_pkgs']:
     run_env.ConfigureRunForLib('libcosmos')
 run_env.ConfigureRunForLib('libclues')
+if env['sanitizer']:
+    run_env['ENV']['ASAN_OPTIONS'] = 'detect_odr_violation=0'
 
 need_helpers = ["execve.cxx", "tracer.cxx"]
 
