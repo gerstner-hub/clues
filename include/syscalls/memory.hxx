@@ -1,0 +1,81 @@
+#pragma once
+
+// clues
+#include <clues/items/files.hxx>
+#include <clues/items/items.hxx>
+#include <clues/items/mmap.hxx>
+#include <clues/sysnrs/generic.hxx>
+#include <clues/SystemCall.hxx>
+
+namespace clues {
+
+struct BreakSystemCall :
+		public SystemCall {
+	BreakSystemCall() :
+			SystemCall{SystemCallNr::BREAK},
+			req_addr{"req_addr", "requested data segment end"},
+			ret_addr{"ret_addr", "actual data segment end"} {
+		setReturnItem(ret_addr);
+		setParameters(req_addr);
+	}
+
+	item::GenericPointerValue req_addr;
+	item::GenericPointerValue ret_addr;
+};
+
+struct MmapSystemCall :
+		public SystemCall {
+	MmapSystemCall() :
+			SystemCall{SystemCallNr::MMAP},
+			hint{"hint", "address placement hint"},
+			length{"len", "length"},
+			protection{"prot", "protection"},
+			flags{"flags"},
+			offset{"offset"},
+			addr{"addr", "mapped memory address", ItemType::PARAM_OUT} {
+		setReturnItem(addr);
+		setParameters(hint, length, protection, flags, fd, offset);
+	}
+
+	item::GenericPointerValue hint;
+	item::ValueInParameter length;
+	item::ValueInParameter protection;
+	item::ValueInParameter flags;
+	item::FileDescriptor fd;
+	item::ValueInParameter offset;
+	item::GenericPointerValue addr;
+};
+
+struct MunmapSystemCall :
+		public SystemCall {
+
+	MunmapSystemCall() :
+			SystemCall{SystemCallNr::MUNMAP},
+			addr{"addr", "address to unmap"},
+			length{"len", "length"} {
+		setReturnItem(result);
+		setParameters(addr, length);
+	}
+
+	item::GenericPointerValue addr;
+	item::ValueInParameter length;
+	item::SuccessResult result;
+};
+
+struct MprotectSystemCall :
+		public SystemCall {
+	MprotectSystemCall() :
+			SystemCall{SystemCallNr::MPROTECT},
+			addr{"addr"},
+			length{"length"} {
+		setReturnItem(result);
+		setParameters(addr, length, protection);
+	}
+
+	item::GenericPointerValue addr;
+	item::ValueInParameter length;
+	item::MemoryProtectionParameter protection;
+	item::SuccessResult result;
+};
+
+} // end ns

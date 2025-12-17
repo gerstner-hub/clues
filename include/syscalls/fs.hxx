@@ -1,0 +1,144 @@
+#pragma once
+
+// clues
+#include <clues/items/files.hxx>
+#include <clues/items/strings.hxx>
+#include <clues/sysnrs/generic.hxx>
+#include <clues/SystemCall.hxx>
+
+namespace clues {
+
+struct AccessSystemCall :
+		public SystemCall {
+
+	AccessSystemCall() :
+			SystemCall{SystemCallNr::ACCESS},
+			path{"path"} {
+		setReturnItem(result);
+		setParameters(path, mode);
+	}
+
+	item::StringData path;
+	item::AccessModeParameter mode;
+	item::SuccessResult result;
+};
+
+struct FcntlSystemCall :
+		public SystemCall {
+
+	FcntlSystemCall() :
+			SystemCall{SystemCallNr::FCNTL},
+			command{"cmd", "command"} {
+		setReturnItem(result);
+		setParameters(fd, command);
+	}
+
+	item::FileDescriptor fd;
+	item::ValueInParameter command; // TODO: wolpertinger parameter
+	item::SuccessResult result;
+};
+
+struct FstatSystemCall :
+		public SystemCall {
+
+	FstatSystemCall() :
+			SystemCall{SystemCallNr::FSTAT} {
+		setReturnItem(result);
+		setParameters(fd, statbuf);
+	}
+
+	item::FileDescriptor fd;
+	item::StatParameter statbuf;
+	item::SuccessResult result;
+};
+
+// This covers both stat() and lstat(), they only differ in semantics
+template <SystemCallNr STAT_SYS_NR>
+struct StatSystemCallT :
+		public SystemCall {
+
+	StatSystemCallT() :
+			SystemCall{STAT_SYS_NR},
+			path{"path"} {
+		setReturnItem(result);
+		setParameters(path, statbuf);
+	}
+
+	item::StringData path;
+	item::StatParameter statbuf;
+	item::SuccessResult result;
+};
+
+using StatSystemCall = StatSystemCallT<SystemCallNr::STAT>;
+using LstatSystemCall = StatSystemCallT<SystemCallNr::LSTAT>;
+
+struct OpenSystemCall :
+		public SystemCall {
+
+	OpenSystemCall() :
+			SystemCall{SystemCallNr::OPEN},
+			filename{"filename"},
+			new_fd{ItemType::PARAM_OUT} {
+		setReturnItem(new_fd);
+		setParameters(filename, flags, mode);
+		m_open_id_par = 1; /* filename */
+	}
+
+	item::StringData filename;
+	item::OpenFlagsValue flags;
+	item::FileModeParameter mode;
+	item::FileDescriptor new_fd;
+};
+
+struct OpenatSystemCall :
+		public SystemCall {
+
+	OpenatSystemCall() :
+			SystemCall{SystemCallNr::OPENAT},
+			fd{ItemType::PARAM_IN, item::AtSemantics{true}},
+			filename{"filename"},
+			new_fd{ItemType::PARAM_OUT} {
+		setReturnItem(new_fd);
+		setParameters(fd, filename, flags, mode);
+		m_open_id_par = 1; /* filename */
+	}
+
+	item::FileDescriptor fd;
+	item::StringData filename;
+	item::OpenFlagsValue flags;
+	item::FileModeParameter mode;
+	item::FileDescriptor new_fd;
+};
+
+struct CloseSystemCall :
+		public SystemCall {
+
+	CloseSystemCall() :
+			SystemCall{SystemCallNr::CLOSE} {
+		setReturnItem(result);
+		setParameters(fd);
+		m_close_fd_par = 0; /* fd */
+	}
+
+	item::FileDescriptor fd;
+	item::SuccessResult result;
+};
+
+struct GetdentsSystemCall :
+		public SystemCall {
+
+	GetdentsSystemCall() :
+			SystemCall{SystemCallNr::GETDENTS},
+			size{"size", "dirent size in bytes"},
+			ret_bytes{"bytes", "bytes returned in dirent"} {
+		setReturnItem(ret_bytes);
+		setParameters(fd, dirent, size);
+	}
+
+	item::FileDescriptor fd; ///< directory FD
+	item::DirEntries dirent; ///< struct linux_dirent*
+	item::ValueInParameter size; ///< size of dirent buffer
+	item::ValueOutParameter ret_bytes; ///< number of bytes filled in buffer
+};
+
+} // end ns

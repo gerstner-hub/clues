@@ -27,7 +27,7 @@ namespace clues {
 
 class SystemCallItem;
 using SystemCallPtr = std::shared_ptr<SystemCall>;
-using SystemCallItemPtr = std::shared_ptr<SystemCallItem>;
+using SystemCallItemPtr = SystemCallItem*;
 
 /// Access to System Call Data
 /**
@@ -54,28 +54,12 @@ public: // functions
 	/**
 	 * \param[in] nr
 	 *	The unique well-known number of this system call.
-	 * \param[in] name
-	 * 	A friendly, human readable name for the system call. This is
-	 * 	considered to be statically allocated literal string, that
-	 * 	will not be freed.
-	 * \param[in] ret
-	 * 	A pointer to the return parameter definition for this syscall.
-	 * 	The pointer ownership will be moved to the new SystemCall
-	 * 	instance, i.e. it will be deleted during destruction of
-	 * 	SystemCall. For system calls where there is no return value
-	 * 	(exit), a synthetic parameter instance should be passed to
-	 * 	avoid having to deal with the possibility of no return value
-	 * 	existing.
 	 * \param[in] pars
 	 * 	A vector of the parameters in the order they need to be passed
 	 * 	to the system call. The ownership is transferred to the
 	 * 	SystemCall instance.
 	 **/
-	SystemCall(
-		const SystemCallNr nr,
-		ParameterVector &&pars,
-		SystemCallItemPtr ret
-	);
+	SystemCall(const SystemCallNr nr);
 
 	virtual ~SystemCall() {}
 
@@ -113,7 +97,7 @@ public: // functions
 	/// Access to the parameters associated with this system call.
 	const ParameterVector& parameters() const { return m_pars; }
 	/// Access to the return value parameter associated with this system call.
-	const SystemCallItemPtr result() const { return hasResultValue() ? m_return : nullptr; }
+	SystemCallItemPtr result() const { return hasResultValue() ? m_return : nullptr; }
 	/// Access to the errno result seen for this system call.
 	std::optional<ErrnoResult> error() const { return m_error; }
 
@@ -138,11 +122,28 @@ public: // functions
 
 protected: // data
 
-	/// Assign m_open_id_par based on the current system call nr.
-	void setOpenIDPar();
+	/// Sets the return value system call item.
+	/**
+	 * A pointer to the return parameter definition for this syscall. The
+	 * pointer ownership will be moved to the new SystemCall instance,
+	 * i.e. it will be deleted during destruction of SystemCall. For
+	 * system calls where there is no return value (exit), a synthetic
+	 * parameter instance should be passed to avoid having to deal with
+	 * the possibility of no return value existing.
+	 **/
+	void setReturnItem(SystemCallItem &ret) {
+		m_return = &ret;
+		m_return->setSystemCall(*this);
+	}
 
-	/// Assign m_close_fd_par based on the current system call nr.
-	void setCloseFDPar();
+	void setParameters() {}
+
+	template <typename T, typename... Targs>
+	void setParameters(T &par, Targs& ...rest) {
+		par.setSystemCall(*this);
+		m_pars.push_back(&par);
+		setParameters(rest...);
+	}
 
 protected: // data
 
