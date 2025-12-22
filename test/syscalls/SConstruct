@@ -1,0 +1,17 @@
+Import('env')
+
+# these test program invoke individual system calls for testing them with the
+# tracer in a manual or automated fashion
+
+static_sources = []
+env.ConfigureForLibOrPackage('libclues', static_sources)
+
+for sys_test in env.GatherSources(suffixes=['.cxx']):
+    label = '.'.join(sys_test.split('.')[:-1])
+    exe = label.rsplit('.', 1)[0]
+    node = env.Program(exe, [sys_test] + static_sources)
+
+    # key = f'syscall_test_{label}'
+    env.Alias("syscall_tests", node)
+
+Return('env')

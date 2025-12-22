@@ -43,6 +43,7 @@ for test in tests:
     env.Alias('run_clues_tests', run_test_key)
 
 env.SConscript(test_env['buildroot'] + 'test/helpers/SConstruct')
+env.SConscript(test_env['buildroot'] + 'test/syscalls/SConstruct')
 
 env.Alias("tests", "clues_tests")
 env.Alias('run_tests', 'run_clues_tests')

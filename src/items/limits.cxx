@@ -1,9 +1,11 @@
 // C++
+#include <limits>
 #include <sstream>
 
 // clues
 #include <clues/format.hxx>
 #include <clues/items/limits.hxx>
+#include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
 #include <clues/Tracee.hxx>
 
@@ -45,13 +47,45 @@ std::string ResourceLimit::str() const {
 }
 
 void ResourceLimit::updateData(const Tracee &proc) {
-	if (!m_limit) {
+	auto update_rlimit = [this, &proc]<typename RLIM_T>() {
+		RLIM_T rlim;
+
+		if (!proc.readStruct(m_val, rlim)) {
+			m_limit.reset();
+			return;
+		}
+
 		m_limit = rlimit{};
+
+		/*
+		 * RLIM_INFINITY is simply the maximum of unsigned long, thus
+		 * check the ABI-specific maximum value here and translate it
+		 * into the native RLIM_INFINITY;
+		 */
+		constexpr auto RLIM_T_INFINITY = std::numeric_limits<decltype(rlim.rlim_cur)>::max();
+		if (rlim.rlim_cur == RLIM_T_INFINITY)
+			m_limit->rlim_cur = RLIM_INFINITY;
+		else
+			m_limit->rlim_cur = rlim.rlim_cur;
+
+		if (rlim.rlim_max == RLIM_T_INFINITY)
+			m_limit->rlim_max = RLIM_INFINITY;
+		else
+			m_limit->rlim_max = rlim.rlim_max;
+	};
+
+	if (isCompatSyscall()) {
+		update_rlimit.operator()<struct rlimit32>();
+	} else {
+		update_rlimit.operator()<struct rlimit64>();
 	}
 
-	if (!proc.readStruct(m_val, *m_limit)) {
-		m_limit.reset();
-	}
+}
+
+bool ResourceLimit::isCompatSyscall() const {
+	const auto abi = m_call->abi();
+
+	return abi == ABI::I386;
 }
 
 } // end ns

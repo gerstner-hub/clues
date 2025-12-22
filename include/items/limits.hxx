@@ -35,6 +35,14 @@ protected: // functions
 
 	void updateData(const Tracee &proc) override;
 
+	/// Checks whether the current context involves a 32-bit struct rlimit.
+	/**
+	 * On older 32-bit ABIs like I386, `getrlimit()` and `setrlimit()` use
+	 * `struct compat_rlimit` in the kernel, with only 32-bit unsigned
+	 * integer members.
+	 **/
+	bool isCompatSyscall() const;
+
 protected: // data
 
 	std::optional<struct rlimit> m_limit;
