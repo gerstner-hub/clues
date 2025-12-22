@@ -18,6 +18,7 @@
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
+#include <clues/SystemCallInfo.hxx>
 #include <clues/SystemCallItem.hxx>
 #include <clues/types.hxx>
 
@@ -35,9 +36,10 @@ SystemCall::SystemCall(const SystemCallNr nr) :
 		m_nr{nr}, m_name{SystemCall::name(nr)} {
 }
 
-void SystemCall::setEntryInfo(const Tracee &proc,
-		const cosmos::ptrace::SyscallInfo::EntryInfo &info) {
-	const uint64_t *args = info.args();
+void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
+	m_abi = info.abi();
+
+	const uint64_t *args = info.entryInfo()->args();
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
 		par.fill(proc, Word{static_cast<Word>(args[numpar])});
@@ -55,12 +57,13 @@ bool SystemCall::hasOutParameter() const {
 	return false;
 }
 
-void SystemCall::setExitInfo(const Tracee &proc,
-		const cosmos::ptrace::SyscallInfo::ExitInfo &info) {
-	if (info.isValue()) {
-		m_return->fill(proc, Word{static_cast<Word>(*info.retVal())});
+void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
+	const auto &exit_info = *info.exitInfo();
+
+	if (exit_info.isValue()) {
+		m_return->fill(proc, Word{static_cast<Word>(*exit_info.retVal())});
 	} else {
-		m_error = ErrnoResult{*info.errVal()};
+		m_error = ErrnoResult{*exit_info.errVal()};
 	}
 
 	for (auto &par: m_pars) {

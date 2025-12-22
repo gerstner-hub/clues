@@ -362,7 +362,6 @@ void Tracee::handleSystemCall() {
 
 		changeState(State::SYSCALL_ENTER_STOP);
 		handleSystemCallEntry();
-		m_last_abi = m_syscall_info->abi();
 	}
 
 	m_syscall_info.reset();
@@ -374,7 +373,9 @@ void Tracee::handleSystemCallEntry() {
 	const SystemCallNr nr = m_syscall_info->sysNr();
 	m_current_syscall = &m_syscall_db.get(nr);
 
-	if (m_last_abi != ABI::UNKNOWN && m_last_abi != m_syscall_info->abi()) {
+	if (const auto last_abi = m_current_syscall->abi();
+			last_abi != ABI::UNKNOWN &&
+				last_abi != m_syscall_info->abi()) {
 		flags.set(EventConsumer::StatusFlag::ABI_CHANGED);
 	}
 
@@ -413,7 +414,7 @@ void Tracee::handleSystemCallEntry() {
 			}
 		}
 	}
-	m_current_syscall->setEntryInfo(*this, *m_syscall_info->entryInfo());
+	m_current_syscall->setEntryInfo(*this, *m_syscall_info);
 	m_syscall_ctr++;
 	m_consumer.syscallEntry(*this, *m_current_syscall, flags);
 }
@@ -422,7 +423,7 @@ void Tracee::handleSystemCallExit() {
 	EventConsumer::StatusFlags flags;
 	auto &syscall = *m_current_syscall;
 
-	syscall.setExitInfo(*this, *m_syscall_info->exitInfo());
+	syscall.setExitInfo(*this, *m_syscall_info);
 	syscall.updateOpenFiles(m_process_data->fd_info_map);
 
 	if (auto error = syscall.error(); error && error->hasKernelErrorCode()) {

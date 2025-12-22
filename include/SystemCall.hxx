@@ -18,6 +18,7 @@
 
 namespace clues {
 	class SystemCall;
+	class SystemCallInfo;
 	class Tracee;
 }
 
@@ -73,8 +74,7 @@ public: // functions
 	 * Introspect the parameter values and store them in the current
 	 * object's ParameterVector.
 	 **/
-	void setEntryInfo(const Tracee &proc,
-			const cosmos::ptrace::SyscallInfo::EntryInfo &info);
+	void setEntryInfo(const Tracee &proc, const SystemCallInfo &info);
 
 	/// Update possible out and return parameter values from the given tracee.
 	/**
@@ -82,8 +82,7 @@ public: // functions
 	 * Introspect the return value and update out or in-out parameters as
 	 * applicable.
 	 **/
-	void setExitInfo(const Tracee &proc,
-			const cosmos::ptrace::SyscallInfo::ExitInfo &info);
+	void setExitInfo(const Tracee &proc, const SystemCallInfo &info);
 
 	void updateOpenFiles(FDInfoMap &map);
 
@@ -109,6 +108,11 @@ public: // functions
 
 	bool hasErrorCode() const {
 		return !hasResultValue();
+	}
+
+	/// Returns the system call ABi seen during system call entry.
+	ABI abi() const {
+		return m_abi;
 	}
 
 	/// Returns the name of the given system call or "<unknown>" if unknown.
@@ -161,6 +165,8 @@ protected: // data
 	std::optional<size_t> m_open_id_par;
 	/// If this is a close-like system call, then this gives the number of the parameter that contains the open file descriptor.
 	std::optional<size_t> m_close_fd_par;
+	/// The current system call ABI which is in effect.
+	ABI m_abi = ABI::UNKNOWN;
 };
 
 /// Creates a dynamically allocated SystemCall instance for the given system call number

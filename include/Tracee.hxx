@@ -356,8 +356,6 @@ protected: // data
 	cosmos::ptrace::Opts m_ptrace_opts;
 	/// The current system call information, if any.
 	std::optional<SystemCallInfo> m_syscall_info;
-	/// The ABI we've seen in the previous system call.
-	ABI m_last_abi = ABI::UNKNOWN;
 	/// Reusable database object for tracing system calls.
 	SystemCallDB m_syscall_db;
 	/// Holds state for the currently executing system call.
