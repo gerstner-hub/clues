@@ -149,6 +149,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::GETEUID:         return new_sys<GetEuidSystemCall>();
 	case SystemCallNr::GETGID:          return new_sys<GetGidSystemCall>();
 	case SystemCallNr::GETRLIMIT:       return new_sys<GetrlimitSystemCall>();
+	case SystemCallNr::SETRLIMIT:       return new_sys<SetrlimitSystemCall>();
 	case SystemCallNr::GET_ROBUST_LIST: return new_sys<GetRobustListSystemCall>();
 	case SystemCallNr::GETUID:          return new_sys<GetUidSystemCall>();
 	case SystemCallNr::IOCTL:           return new_sys<IoctlSystemCall>();

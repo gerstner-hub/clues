@@ -19,11 +19,13 @@ struct UnknownSystemCall :
 	item::ValueOutParameter result;
 };
 
-struct GetrlimitSystemCall :
+// This covers both getrlimit() and setrlimit() which use the same data structures
+template <SystemCallNr LIMIT_SYS_NR>
+struct LimitSystemCallT :
 		public SystemCall {
 
-	GetrlimitSystemCall() :
-			SystemCall{SystemCallNr::GETRLIMIT} {
+	LimitSystemCallT() :
+			SystemCall{LIMIT_SYS_NR} {
 		setReturnItem(result);
 		setParameters(type, limit);
 	}
@@ -32,6 +34,9 @@ struct GetrlimitSystemCall :
 	item::ResourceLimit limit;
 	item::SuccessResult result;
 };
+
+using GetrlimitSystemCall = LimitSystemCallT<SystemCallNr::GETRLIMIT>;
+using SetrlimitSystemCall = LimitSystemCallT<SystemCallNr::SETRLIMIT>;
 
 struct RestartSystemCall :
 		public SystemCall {
