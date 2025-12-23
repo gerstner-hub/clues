@@ -30,7 +30,9 @@ std::string SigactionParameter::str() const {
 
 	std::stringstream ss;
 
-	ss << "handler(";
+	ss
+		<< "{"
+		<< "handler=";
 
 	if (m_sigaction->handler == SIG_IGN)
 		ss << "SIG_IGN";
@@ -39,8 +41,8 @@ std::string SigactionParameter::str() const {
 	else
 		ss << (void*)m_sigaction->handler;
 
-	ss << "), sa_mask(" << format::signal_set(m_sigaction->mask) << "), sa_flags("
-		<< format::saflags(m_sigaction->flags) << "), sa_restorer("
+	ss << ", sa_mask=" << format::signal_set(m_sigaction->mask) << ", sa_flags="
+		<< format::saflags(m_sigaction->flags) << ", sa_restorer="
 		<< (void*)m_sigaction->restorer << ")";
 
 	return ss.str();

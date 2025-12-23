@@ -136,8 +136,11 @@ std::string StatParameter::str() const {
 
 	std::stringstream ss;
 
-	ss << "st_size = " << m_stat->st_size << ", ";
-	ss << "st_dev = " << m_stat->st_dev;
+	ss
+		<< "{"
+		<< "st_size=" << m_stat->st_size << ", "
+		<< "st_dev=" << m_stat->st_dev
+		<< "}";
 
 	return ss.str();
 }

@@ -27,7 +27,7 @@ std::string TimespecParameter::str() const {
 
 	std::stringstream ss;
 
-	ss << m_timespec->tv_sec << "s, " << m_timespec->tv_nsec << "ns";
+	ss << "{" << m_timespec->tv_sec << "s, " << m_timespec->tv_nsec << "ns}";
 
 	return ss.str();
 }

@@ -41,8 +41,8 @@ std::string ResourceLimit::str() const {
 	std::stringstream ss;
 
 	ss
-		<< "rlim_cur(" << format::limit(m_limit->rlim_cur) << "), rlim_max("
-		<< format::limit(m_limit->rlim_max) << ")";
+		<< "{rlim_cur=" << format::limit(m_limit->rlim_cur) << ", rlim_max="
+		<< format::limit(m_limit->rlim_max) << "}";
 
 	return ss.str();
 }
