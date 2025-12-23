@@ -32,7 +32,7 @@ class ValueParameter :
 public: // functions
 
 	explicit ValueParameter(
-		const ItemType &type,
+		const ItemType type,
 		const std::string_view short_name,
 		const std::string_view long_name = {}) :
 			SystemCallItem{type, short_name, long_name} {
@@ -75,7 +75,7 @@ class PointerValue :
 public: // functions
 
 	explicit PointerValue(
-		const ItemType &type,
+		const ItemType type,
 		const std::string_view short_name,
 		const std::string_view long_name) :
 			SystemCallItem{type, short_name, long_name} {
@@ -95,7 +95,7 @@ public: // functions
 	explicit PointerOutValue(
 		const std::string_view short_name,
 		const std::string_view long_name = {},
-		const ItemType &type = ItemType::PARAM_OUT) :
+		const ItemType type = ItemType::PARAM_OUT) :
 			PointerValue{type, short_name, long_name} {
 	}
 };
