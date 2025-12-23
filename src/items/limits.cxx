@@ -7,6 +7,7 @@
 #include <clues/items/limits.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
 namespace clues::item {
@@ -83,6 +84,10 @@ void ResourceLimit::updateData(const Tracee &proc) {
 }
 
 bool ResourceLimit::isCompatSyscall() const {
+	if (m_call->callNr() == SystemCallNr::PRLIMIT64)
+		// prlimit64() always uses 64-bit wide fields
+		return false;
+
 	const auto abi = m_call->abi();
 
 	return abi == ABI::I386;

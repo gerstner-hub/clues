@@ -40,6 +40,25 @@ struct LimitSystemCallT :
 using GetrlimitSystemCall = LimitSystemCallT<SystemCallNr::GETRLIMIT>;
 using SetrlimitSystemCall = LimitSystemCallT<SystemCallNr::SETRLIMIT>;
 
+struct Prlimit64SystemCall :
+		public SystemCall {
+
+	Prlimit64SystemCall() :
+			SystemCall{SystemCallNr::PRLIMIT64},
+			pid{"pid", "target process"},
+			limit{ItemType::PARAM_IN},
+			old_limit{ItemType::PARAM_OUT, "old_limit"} {
+		setReturnItem(result);
+		setParameters(pid, type, limit, old_limit);
+	}
+
+	item::ValueInParameter pid;
+	item::ResourceType type;
+	item::ResourceLimit limit;
+	item::ResourceLimit old_limit;
+	item::SuccessResult result;
+};
+
 struct RestartSystemCall :
 		public SystemCall {
 
