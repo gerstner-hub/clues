@@ -23,10 +23,10 @@ public: // functions
 };
 
 class CLUES_API ResourceLimit :
-		public PointerOutValue {
+		public PointerValue {
 public: // functions
-	explicit ResourceLimit() :
-			PointerOutValue{"limit"} {
+	explicit ResourceLimit(const ItemType type) :
+			PointerValue{type, "limit", ""} {
 	}
 
 	std::string str() const override;
@@ -34,6 +34,11 @@ public: // functions
 protected: // functions
 
 	void updateData(const Tracee &proc) override;
+
+	void processValue(const Tracee &proc) override {
+		// the same logic on input as on output
+		return updateData(proc);
+	}
 
 	/// Checks whether the current context involves a 32-bit struct rlimit.
 	/**

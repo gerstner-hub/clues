@@ -25,7 +25,9 @@ struct LimitSystemCallT :
 		public SystemCall {
 
 	LimitSystemCallT() :
-			SystemCall{LIMIT_SYS_NR} {
+			SystemCall{LIMIT_SYS_NR},
+			limit{LIMIT_SYS_NR == SystemCallNr::GETRLIMIT ?
+				ItemType::PARAM_OUT : ItemType::PARAM_IN} {
 		setReturnItem(result);
 		setParameters(type, limit);
 	}
