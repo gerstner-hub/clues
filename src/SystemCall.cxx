@@ -141,6 +141,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::CLONE:           return new_sys<CloneSystemCall>();
 	case SystemCallNr::CLOSE:           return new_sys<CloseSystemCall>();
 	case SystemCallNr::EXECVE:          return new_sys<ExecveSystemCall>();
+	case SystemCallNr::EXECVEAT:        return new_sys<ExecveAtSystemCall>();
 	case SystemCallNr::EXIT_GROUP:      return new_sys<ExitGroupSystemCall>();
 	case SystemCallNr::FCNTL:           return new_sys<FcntlSystemCall>();
 	case SystemCallNr::FORK:            return new_sys<ForkSystemCall>();

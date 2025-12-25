@@ -4,6 +4,7 @@
 #include <clues/items/items.hxx>
 #include <clues/items/prctl.hxx>
 #include <clues/items/strings.hxx>
+#include <clues/items/files.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
 
@@ -20,6 +21,7 @@ struct ArchPrctlSystemCall :
 	}
 
 	item::ArchCodeParameter op;
+	// this is also used as a boolean scalar and sometimes ignored depending on `op`
 	item::GenericPointerValue addr;
 	item::SuccessResult result;
 };
@@ -79,6 +81,27 @@ struct ExecveSystemCall :
 	item::StringData pathname;
 	item::StringArrayData argv;
 	item::StringArrayData envp;
+	item::SuccessResult result;
+};
+
+struct ExecveAtSystemCall :
+		public SystemCall {
+
+	ExecveAtSystemCall() :
+			SystemCall{SystemCallNr::EXECVEAT},
+			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}},
+			pathname{"filename"},
+			argv{"argv", "argument vector"},
+			envp{"envp", "environment block pointer"} {
+		setReturnItem(result);
+		setParameters(dirfd, pathname, argv, envp, flags);
+	}
+
+	item::FileDescriptor dirfd;
+	item::StringData pathname;
+	item::StringArrayData argv;
+	item::StringArrayData envp;
+	item::AtFlagsValue flags;
 	item::SuccessResult result;
 };
 
