@@ -132,6 +132,8 @@ std::shared_ptr<T> new_sys(Args&&... args)
 SystemCallPtr create_syscall(const SystemCallNr nr) {
 	switch (nr) {
 	case SystemCallNr::ACCESS:          return new_sys<AccessSystemCall>();
+	case SystemCallNr::FACCESSAT:       return new_sys<FaccessatSystemCall>();
+	case SystemCallNr::FACCESSAT2:      return new_sys<Faccessat2SystemCall>();
 	case SystemCallNr::ALARM:           return new_sys<AlarmSystemCall>();
 	case SystemCallNr::ARCH_PRCTL:      return new_sys<ArchPrctlSystemCall>();
 	case SystemCallNr::BRK:             return new_sys<BreakSystemCall>();

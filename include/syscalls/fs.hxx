@@ -23,6 +23,36 @@ struct AccessSystemCall :
 	item::SuccessResult result;
 };
 
+// this is an earlier variant of faccessat() which doesn't take a flags argument
+struct FaccessatSystemCall :
+		public SystemCall {
+
+	explicit FaccessatSystemCall(const SystemCallNr nr = SystemCallNr::FACCESSAT) :
+			SystemCall{nr},
+			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}},
+			path{"path"} {
+		setReturnItem(result);
+		setParameters(dirfd, path, mode);
+	}
+
+	item::FileDescriptor dirfd;
+	item::StringData path;
+	item::AccessModeParameter mode;
+	item::SuccessResult result;
+};
+
+// follow-up variant of faccessat() supporting an additional flags argument, introduced in Linux 5.8
+struct Faccessat2SystemCall :
+		public FaccessatSystemCall {
+
+	Faccessat2SystemCall() :
+			FaccessatSystemCall{SystemCallNr::FACCESSAT2} {
+		setParameters(flags);
+	}
+
+	item::AtFlagsValue flags;
+};
+
 struct FcntlSystemCall :
 		public SystemCall {
 

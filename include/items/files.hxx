@@ -53,6 +53,17 @@ public:
 	std::string str() const override;
 };
 
+/// Flags for system calls with at semantics like linkat(), faccessat().
+class CLUES_API AtFlagsValue :
+		public SystemCallItem {
+public:
+	AtFlagsValue() :
+			SystemCallItem{ItemType::PARAM_IN, "flags", "*at flags"} {
+	}
+
+	std::string str() const override;
+};
+
 /// The mode parameter in access().
 class AccessModeParameter :
 		public item::ValueInParameter {

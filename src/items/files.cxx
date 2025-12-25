@@ -9,9 +9,20 @@
 // clues
 #include <clues/items/files.hxx>
 #include <clues/kernel_structs.hxx>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
 namespace clues::item {
+
+namespace {
+
+std::string strip_back(std::string &&s, const char ch = '|') {
+	if (s.back() == ch)
+		s.pop_back();
+	return s;
+}
+
+} // end anon ns
 
 std::string FileDescriptor::str() const {
 	const auto fd = valueAs<cosmos::FileNum>();
@@ -22,7 +33,7 @@ std::string FileDescriptor::str() const {
 		return std::to_string(cosmos::to_integral(fd));
 }
 
-#define chk_open_flag(FLAG) if (flags & FLAG) ss << "|" << #FLAG;
+#define add_bitflag(FLAG) if (flags & FLAG) ss << #FLAG << '|';
 
 std::string OpenFlagsValue::str() const {
 	std::stringstream ss;
@@ -41,27 +52,51 @@ std::string OpenFlagsValue::str() const {
 		case cosmos::OpenMode::READ_WRITE: ss << "O_RDWR"; break;
 	}
 
-	chk_open_flag(O_APPEND);
-	chk_open_flag(O_ASYNC);
-	chk_open_flag(O_CLOEXEC);
-	chk_open_flag(O_CREAT);
-	chk_open_flag(O_DIRECT);
-	chk_open_flag(O_DIRECTORY);
-	chk_open_flag(O_DSYNC);
-	chk_open_flag(O_EXCL);
-	chk_open_flag(O_LARGEFILE);
-	chk_open_flag(O_NOATIME);
-	chk_open_flag(O_NOCTTY);
-	chk_open_flag(O_NOFOLLOW);
-	chk_open_flag(O_NONBLOCK);
-	chk_open_flag(O_PATH);
-	chk_open_flag(O_SYNC);
-	chk_open_flag(O_TMPFILE);
-	chk_open_flag(O_TRUNC);
+	if ((flags & ~0x3) != 0) {
+		ss << '|';
+	}
 
-	ss << ")";
+	add_bitflag(O_APPEND);
+	add_bitflag(O_ASYNC);
+	add_bitflag(O_CLOEXEC);
+	add_bitflag(O_CREAT);
+	add_bitflag(O_DIRECT);
+	add_bitflag(O_DIRECTORY);
+	add_bitflag(O_DSYNC);
+	add_bitflag(O_EXCL);
+	add_bitflag(O_LARGEFILE);
+	add_bitflag(O_NOATIME);
+	add_bitflag(O_NOCTTY);
+	add_bitflag(O_NOFOLLOW);
+	add_bitflag(O_NONBLOCK);
+	add_bitflag(O_PATH);
+	add_bitflag(O_SYNC);
+	add_bitflag(O_TMPFILE);
+	add_bitflag(O_TRUNC);
 
-	return ss.str();
+	return strip_back(ss.str()) + ")";
+}
+
+std::string AtFlagsValue::str() const {
+	std::stringstream ss;
+
+	const auto flags = valueAs<int>();
+
+	ss << "0x" << std::hex << flags << " (";
+
+	add_bitflag(AT_EMPTY_PATH);
+	add_bitflag(AT_SYMLINK_NOFOLLOW);
+	add_bitflag(AT_SYMLINK_FOLLOW);
+	/*
+	 * some AT_ constants share the same values and are system call
+	 * dependent, thus we need to check the context here.
+	 */
+	if (m_call->callNr() == SystemCallNr::UNLINKAT)
+		add_bitflag(AT_REMOVEDIR);
+	if (m_call->callNr() == SystemCallNr::FACCESSAT2)
+		add_bitflag(AT_EACCESS);
+
+	return strip_back(ss.str()) + ")";
 }
 
 std::string AccessModeParameter::str() const {
@@ -87,12 +122,10 @@ std::string AccessModeParameter::str() const {
 	auto ret = ss.str();
 
 	if (ret.empty()) {
-		ret = "???";
-	} else if (ret.back() == '|') {
-		ret.erase(ret.size() - 1);
+		return "???";
 	}
 
-	return ret;
+	return strip_back(std::move(ret));
 }
 
 std::string FileModeParameter::str() const {
