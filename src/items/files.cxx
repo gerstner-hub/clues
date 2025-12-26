@@ -3,12 +3,14 @@
 
 // cosmos
 #include <cosmos/error/ApiError.hxx>
+#include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/fs/types.hxx>
 
 // clues
 #include <clues/items/files.hxx>
 #include <clues/kernel_structs.hxx>
+#include <clues/macros.h>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
@@ -238,6 +240,49 @@ void DirEntries::updateData(const Tracee &proc) {
 		const auto namelen = cur->d_reclen - 2 - offsetof(struct linux_dirent, d_name);
 		m_entries.emplace_back(std::string{cur->d_name, namelen});
 		pos += cur->d_reclen;
+	}
+}
+
+void FcntlOperation::processValue(const Tracee &) {
+	m_op = valueAs<Oper>();
+}
+
+std::string FcntlOperation::str() const {
+	if (!m_op) {
+		throw cosmos::RuntimeError{"no operation stored"};
+	}
+
+	switch (cosmos::to_integral(*m_op)) {
+		CASE_ENUM_TO_STR(F_DUPFD);
+		CASE_ENUM_TO_STR(F_DUPFD_CLOEXEC);
+		CASE_ENUM_TO_STR(F_GETFD);
+		CASE_ENUM_TO_STR(F_SETFD);
+		CASE_ENUM_TO_STR(F_GETFL);
+		CASE_ENUM_TO_STR(F_SETFL);
+		CASE_ENUM_TO_STR(F_SETLK);
+		CASE_ENUM_TO_STR(F_SETLKW);
+		CASE_ENUM_TO_STR(F_GETLK);
+		CASE_ENUM_TO_STR(F_OFD_SETLK);
+		CASE_ENUM_TO_STR(F_OFD_SETLKW);
+		CASE_ENUM_TO_STR(F_OFD_GETLK);
+		CASE_ENUM_TO_STR(F_GETOWN);
+		CASE_ENUM_TO_STR(F_SETOWN);
+		CASE_ENUM_TO_STR(F_GETOWN_EX);
+		CASE_ENUM_TO_STR(F_SETOWN_EX);
+		CASE_ENUM_TO_STR(F_GETSIG);
+		CASE_ENUM_TO_STR(F_SETSIG);
+		CASE_ENUM_TO_STR(F_SETLEASE);
+		CASE_ENUM_TO_STR(F_GETLEASE);
+		CASE_ENUM_TO_STR(F_NOTIFY);
+		CASE_ENUM_TO_STR(F_SETPIPE_SZ);
+		CASE_ENUM_TO_STR(F_GETPIPE_SZ);
+		CASE_ENUM_TO_STR(F_ADD_SEALS);
+		CASE_ENUM_TO_STR(F_GET_SEALS);
+		CASE_ENUM_TO_STR(F_GET_RW_HINT);
+		CASE_ENUM_TO_STR(F_SET_RW_HINT);
+		CASE_ENUM_TO_STR(F_GET_FILE_RW_HINT);
+		CASE_ENUM_TO_STR(F_SET_FILE_RW_HINT);
+		default: return "???";
 	}
 }
 

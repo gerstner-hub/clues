@@ -126,4 +126,60 @@ protected: // data
 	std::vector<std::string> m_entries;
 };
 
+class FcntlOperation :
+		public item::ValueInParameter {
+public: // types
+
+	FcntlOperation() :
+			ValueInParameter{"op", "operation"} {
+	}
+
+	/// All possible arguments for the `op` parameter to `fcntl(2)`.
+	enum class Oper : int {
+		DUPFD         = F_DUPFD,
+		DUPFD_CLOEXEC = F_DUPFD_CLOEXEC,
+		GETFD         = F_GETFD,
+		SETFD         = F_SETFD,
+		GETFL         = F_GETFL,
+		SETFL         = F_SETFL,
+		SETLK         = F_SETLK,
+		SETLKW        = F_SETLKW,
+		GETLK         = F_GETLK,
+		OFD_SETLK     = F_OFD_SETLK,
+		OFD_SETLKW    = F_OFD_SETLKW,
+		OFD_GETLK     = F_OFD_GETLK,
+		GETOWN        = F_GETOWN,
+		SETOWN        = F_SETOWN,
+		GETOWN_EX     = F_GETOWN_EX,
+		SETOWN_EX     = F_SETOWN_EX,
+		GETSIG        = F_GETSIG,
+		SETSIG        = F_SETSIG,
+		SETLEASE      = F_SETLEASE,
+		GETLEASE      = F_GETLEASE,
+		NOTIFY        = F_NOTIFY,
+		SETPIPE_SZ    = F_SETPIPE_SZ,
+		GETPIPE_SZ    = F_GETPIPE_SZ,
+		ADD_SEALS     = F_ADD_SEALS,
+		GET_SEALS     = F_GET_SEALS,
+		GET_RW_HINT   = F_GET_RW_HINT,
+		SET_RW_HINT   = F_SET_RW_HINT,
+		GET_FILE_RW_HINT = F_GET_FILE_RW_HINT,
+		SET_FILE_RW_HINT = F_SET_FILE_RW_HINT
+	};
+
+	using enum Oper;
+
+public: // functions
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<Oper> m_op;
+};
+
 } // end ns

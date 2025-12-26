@@ -57,14 +57,13 @@ struct FcntlSystemCall :
 		public SystemCall {
 
 	FcntlSystemCall() :
-			SystemCall{SystemCallNr::FCNTL},
-			command{"cmd", "command"} {
+			SystemCall{SystemCallNr::FCNTL} {
 		setReturnItem(result);
-		setParameters(fd, command);
+		setParameters(fd, operation);
 	}
 
 	item::FileDescriptor fd;
-	item::ValueInParameter command; // TODO: wolpertinger parameter
+	item::FcntlOperation operation;
 	item::SuccessResult result;
 };
 
