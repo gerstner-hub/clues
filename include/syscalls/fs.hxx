@@ -53,18 +53,25 @@ struct Faccessat2SystemCall :
 	item::AtFlagsValue flags;
 };
 
-struct FcntlSystemCall :
+struct CLUES_API FcntlSystemCall :
 		public SystemCall {
 
 	FcntlSystemCall() :
 			SystemCall{SystemCallNr::FCNTL} {
-		setReturnItem(result);
+		// these two parameters are always present
 		setParameters(fd, operation);
 	}
 
 	item::FileDescriptor fd;
 	item::FcntlOperation operation;
-	item::SuccessResult result;
+	std::optional<item::FileDescriptor> dup_num;
+
+	std::optional<item::SuccessResult> result;
+	std::optional<item::FileDescriptor> dupfd;
+
+protected: // functions
+
+	bool newSystemCall() override;
 };
 
 struct FstatSystemCall :

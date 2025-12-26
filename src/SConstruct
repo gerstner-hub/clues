@@ -141,8 +141,10 @@ libenv.Append(CPPPATH=["."])
 libclues_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], recursive=False)
 items_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], subpath="items")
 sysnr_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], subpath="sysnrs")
+syscall_srcs = libenv.GatherSources(suffixes=['.cxx', '.c'], subpath="syscalls")
 libclues_srcs += items_srcs
 libclues_srcs += sysnr_srcs
+libclues_srcs += syscall_srcs
 libenv.ConfigureForLibOrPackage('libcosmos', libclues_srcs)
 
 version, soname, tag = libenv.GetSharedLibVersionInfo('libclues')

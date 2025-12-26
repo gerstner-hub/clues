@@ -30,8 +30,10 @@ public: // functions
 	 * 	AT_FDCWD can occur.
 	 **/
 	explicit FileDescriptor(const ItemType type = ItemType::PARAM_IN,
-				const AtSemantics at_semantics = AtSemantics{false}) :
-			SystemCallItem{type, "fd", "file descriptor"},
+				const AtSemantics at_semantics = AtSemantics{false},
+				const std::string_view short_name = "fd",
+				const std::string_view long_name = "file descriptor") :
+			SystemCallItem{type, short_name, long_name},
 			m_at_semantics{at_semantics} {
 	}
 
@@ -172,6 +174,10 @@ public: // types
 public: // functions
 
 	std::string str() const override;
+
+	Oper operation() const {
+		return *m_op;
+	}
 
 protected: // functions
 
