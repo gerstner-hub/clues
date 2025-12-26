@@ -126,6 +126,8 @@ public: // functions
 
 protected: // data
 
+	void fillParameters(const Tracee &proc, const SystemCallInfo &info);
+
 	/// Sets the return value system call item.
 	/**
 	 * A pointer to the return parameter definition for this syscall. The
@@ -148,6 +150,20 @@ protected: // data
 		m_pars.push_back(&par);
 		setParameters(rest...);
 	}
+
+	/// A new system call is about to be started.
+	/**
+	 * This function can be overriden by the actual system call
+	 * implementation to perform cleanup steps or context-sensitive
+	 * evaluation of system call parameters (e.g. for `ioctl()` style
+	 * system calls).
+	 *
+	 * The implementation of this function is allowed to modify the amount
+	 * and types of system call parameters and return value. In this case
+	 * `true` must be returned to let the base class implementation
+	 * reevaluate all system call parameters.
+	 **/
+	virtual bool newSystemCall() { return false; };
 
 protected: // data
 

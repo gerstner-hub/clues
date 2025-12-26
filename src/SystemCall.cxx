@@ -36,16 +36,23 @@ SystemCall::SystemCall(const SystemCallNr nr) :
 		m_nr{nr}, m_name{SystemCall::name(nr)} {
 }
 
-void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
-	m_abi = info.abi();
-
+void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) {
 	const uint64_t *args = info.entryInfo()->args();
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
 		par.fill(proc, Word{static_cast<Word>(args[numpar])});
 	}
+}
 
+void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
+	m_abi = info.abi();
 	m_error.reset();
+
+	fillParameters(proc, info);
+
+	if (newSystemCall()) {
+		fillParameters(proc, info);
+	}
 }
 
 bool SystemCall::hasOutParameter() const {
