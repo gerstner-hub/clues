@@ -120,7 +120,7 @@ struct OpenSystemCall :
 	OpenSystemCall() :
 			SystemCall{SystemCallNr::OPEN},
 			filename{"filename"},
-			new_fd{ItemType::PARAM_OUT} {
+			new_fd{ItemType::RETVAL} {
 		setReturnItem(new_fd);
 		setParameters(filename, flags, mode);
 		m_open_id_par = 1; /* filename */
@@ -139,7 +139,7 @@ struct OpenatSystemCall :
 			SystemCall{SystemCallNr::OPENAT},
 			fd{ItemType::PARAM_IN, item::AtSemantics{true}},
 			filename{"filename"},
-			new_fd{ItemType::PARAM_OUT} {
+			new_fd{ItemType::RETVAL} {
 		setReturnItem(new_fd);
 		setParameters(fd, filename, flags, mode);
 		m_open_id_par = 1; /* filename */
@@ -180,7 +180,7 @@ struct GetdentsSystemCall :
 	item::FileDescriptor fd; ///< directory FD
 	item::DirEntries dirent; ///< struct linux_dirent*
 	item::ValueInParameter size; ///< size of dirent buffer
-	item::ValueOutParameter ret_bytes; ///< number of bytes filled in buffer
+	item::ReturnValue ret_bytes; ///< number of bytes filled in buffer
 };
 
 } // end ns

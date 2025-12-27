@@ -14,7 +14,7 @@ struct BreakSystemCall :
 	BreakSystemCall() :
 			SystemCall{SystemCallNr::BREAK},
 			req_addr{"req_addr", "requested data segment end"},
-			ret_addr{"ret_addr", "actual data segment end"} {
+			ret_addr{"ret_addr", "actual data segment end", ItemType::RETVAL} {
 		setReturnItem(ret_addr);
 		setParameters(req_addr);
 	}
@@ -32,7 +32,7 @@ struct MmapSystemCall :
 			protection{"prot", "protection"},
 			flags{"flags"},
 			offset{"offset"},
-			addr{"addr", "mapped memory address", ItemType::PARAM_OUT} {
+			addr{"addr", "mapped memory address", ItemType::RETVAL} {
 		setReturnItem(addr);
 		setParameters(hint, length, protection, flags, fd, offset);
 	}

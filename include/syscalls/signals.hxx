@@ -19,7 +19,7 @@ struct AlarmSystemCall :
 	}
 
 	item::ValueInParameter seconds;
-	item::ValueOutParameter old_seconds;
+	item::ReturnValue old_seconds;
 };
 
 struct SigactionSystemCall :

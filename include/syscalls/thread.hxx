@@ -21,7 +21,7 @@ struct SetTidAddressSystemCall :
 	}
 
 	item::GenericPointerValue address;
-	item::ValueOutParameter caller_tid;
+	item::ReturnValue caller_tid;
 };
 
 struct GetRobustListSystemCall :
@@ -86,7 +86,7 @@ struct FutexSystemCall :
 	item::TimespecParameter timeout;
 	item::GenericPointerValue requeue_futex;
 	item::ValueInParameter requeue_check_val;
-	item::ValueOutParameter num_woken_up;
+	item::ReturnValue num_woken_up;
 };
 
 } // end ns

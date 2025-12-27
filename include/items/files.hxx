@@ -116,7 +116,7 @@ protected: // data
 /// Flags used with `fcntl()` to set and get file descriptor flags.
 struct CLUES_API FileDescFlagsValue :
 		public SystemCallItem {
-	FileDescFlagsValue(ItemType type) :
+	explicit FileDescFlagsValue(ItemType type) :
 			SystemCallItem{type, "fdflags", "file descriptor flags"} {
 	}
 

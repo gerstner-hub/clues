@@ -51,7 +51,7 @@ struct CloneSystemCall :
 	item::GenericPointerValue parent_tid;
 	item::GenericPointerValue child_tid;
 	item::GenericPointerValue tls;
-	item::ValueOutParameter new_pid;
+	item::ReturnValue new_pid;
 };
 
 struct ForkSystemCall :
@@ -63,7 +63,7 @@ struct ForkSystemCall :
 		setReturnItem(pid);
 	}
 
-	item::ValueOutParameter pid;
+	item::ReturnValue pid;
 };
 
 struct ExecveSystemCall :
@@ -116,7 +116,7 @@ struct GetXIdSystemCall :
 	}
 
 
-	item::ValueOutParameter id;
+	item::ReturnValue id;
 
 protected:
 
@@ -164,7 +164,7 @@ struct Wait4SystemCall :
 	item::GenericPointerValue wstatus;
 	item::ValueInParameter options;
 	item::GenericPointerValue rusage;
-	item::ValueOutParameter event_pid;
+	item::ReturnValue event_pid;
 };
 
 } // end ns

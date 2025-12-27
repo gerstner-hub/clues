@@ -16,7 +16,7 @@ struct UnknownSystemCall :
 		setReturnItem(result);
 	}
 
-	item::ValueOutParameter result;
+	item::ReturnValue result;
 };
 
 // This covers both getrlimit() and setrlimit() which use the same data structures

@@ -8,6 +8,7 @@
 #include <vector>
 
 // cosmos
+#include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
@@ -140,6 +141,9 @@ protected: // data
 	void setReturnItem(SystemCallItem &ret) {
 		m_return = &ret;
 		m_return->setSystemCall(*this);
+		if (!ret.isReturnValue()) {
+			throw cosmos::RuntimeError{"added non-return-value as return item"};
+		}
 	}
 
 	void setParameters() {}
