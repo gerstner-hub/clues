@@ -73,6 +73,8 @@ struct CLUES_API FcntlSystemCall :
 
 protected: // functions
 
+	void clear();
+
 	bool newSystemCall() override;
 };
 

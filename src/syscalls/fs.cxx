@@ -3,17 +3,23 @@
 
 namespace clues {
 
-bool FcntlSystemCall::newSystemCall() {
-	using Oper = item::FcntlOperation::Oper;
-
+void FcntlSystemCall::clear() {
 	m_pars.clear();
 
+	/* args */
 	dup_num.reset();
 	flags_arg.reset();
 
+	/* retvals */
 	result.reset();
 	dupfd.reset();
 	ret_flags.reset();
+}
+
+bool FcntlSystemCall::newSystemCall() {
+	using Oper = item::FcntlOperation::Oper;
+
+	clear();
 
 	switch (operation.operation()) {
 		case Oper::DUPFD: /* fallthrough */
