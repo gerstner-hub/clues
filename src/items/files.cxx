@@ -35,7 +35,7 @@ std::string FileDescriptor::str() const {
 		return std::to_string(cosmos::to_integral(fd));
 }
 
-#define add_bitflag(FLAG) if (flags & FLAG) ss << #FLAG << '|';
+#define add_bitflag(FLAG) if (m_flags.raw() & FLAG) ss << #FLAG << '|';
 
 std::string OpenFlagsValue::str() const {
 	std::stringstream ss;
@@ -44,17 +44,14 @@ std::string OpenFlagsValue::str() const {
 
 	ss << "0x" << std::hex << flags << " (";
 
-	// the access mode consists of the lower two bits
-	const auto open_mode = cosmos::OpenMode{flags & 0x3};
-
-	switch (open_mode) {
+	switch (m_mode) {
 		default: ss << "O_???"; break;
 		case cosmos::OpenMode::READ_ONLY: ss << "O_RDONLY"; break;
 		case cosmos::OpenMode::WRITE_ONLY: ss << "O_WRONLY"; break;
 		case cosmos::OpenMode::READ_WRITE: ss << "O_RDWR"; break;
 	}
 
-	if ((flags & ~0x3) != 0) {
+	if (m_flags.any()) {
 		ss << '|';
 	}
 
@@ -79,12 +76,17 @@ std::string OpenFlagsValue::str() const {
 	return strip_back(ss.str()) + ")";
 }
 
+void OpenFlagsValue::processValue(const Tracee &) {
+	const auto raw = valueAs<int>();
+	// the access mode consists of the lower two bits
+	m_mode = cosmos::OpenMode{raw & 0x3};
+	m_flags = cosmos::OpenFlags{raw & ~0x3};
+}
+
 std::string AtFlagsValue::str() const {
 	std::stringstream ss;
 
-	const auto flags = valueAs<int>();
-
-	ss << "0x" << std::hex << flags << " (";
+	ss << "0x" << std::hex << m_flags.raw() << " (";
 
 	add_bitflag(AT_EMPTY_PATH);
 	add_bitflag(AT_SYMLINK_NOFOLLOW);
@@ -99,6 +101,10 @@ std::string AtFlagsValue::str() const {
 		add_bitflag(AT_EACCESS);
 
 	return strip_back(ss.str()) + ")";
+}
+
+void AtFlagsValue::processValue(const Tracee&) {
+	m_flags = AtFlags{valueAs<int>()};
 }
 
 std::string FileDescFlagsValue::str() const {

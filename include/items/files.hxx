@@ -54,17 +54,63 @@ public:
 	}
 
 	std::string str() const override;
+
+	cosmos::OpenMode mode() const {
+		return m_mode;
+	}
+
+	cosmos::OpenFlags flags() const {
+		return m_flags;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+	void updateData(const Tracee &t) override {
+		return processValue(t);
+	}
+
+protected: // data
+
+	cosmos::OpenMode m_mode;
+	cosmos::OpenFlags m_flags;
 };
 
 /// Flags for system calls with at semantics like linkat(), faccessat().
 class CLUES_API AtFlagsValue :
 		public SystemCallItem {
-public:
+public: // types
+
+	enum class AtFlag : int {
+		EMPTY_PATH       = AT_EMPTY_PATH,
+		SYMLINK_NOFOLLOW = AT_SYMLINK_NOFOLLOW,
+		SYMLINK_FOLLOW   = AT_SYMLINK_FOLLOW,
+		REMOVEDIR        = AT_REMOVEDIR, ///< only used with unlinkat
+		EACCESS          = AT_EACCESS ///< only used with faccessat2
+	};
+
+	using AtFlags = cosmos::BitMask<AtFlag>;
+
+public: // functions
+
 	AtFlagsValue() :
 			SystemCallItem{ItemType::PARAM_IN, "flags", "*at flags"} {
 	}
 
 	std::string str() const override;
+
+	AtFlags flags() const {
+		return m_flags;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	AtFlags m_flags;
 };
 
 /// Flags used with `fcntl()` to set and get file descriptor flags.
