@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 
 // cosmos
+#include <cosmos/fs/FileDescriptor.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -64,6 +65,30 @@ public:
 	}
 
 	std::string str() const override;
+};
+
+/// Flags used with `fcntl()` to set and get file descriptor flags.
+struct CLUES_API FileDescFlagsValue :
+		public SystemCallItem {
+	FileDescFlagsValue(ItemType type) :
+			SystemCallItem{type, "fdflags", "file descriptor flags"} {
+	}
+
+	std::string str() const override;
+
+	cosmos::FileDescriptor::DescFlags flags() const {
+		return m_flags;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	cosmos::FileDescriptor::DescFlags m_flags;
 };
 
 /// The mode parameter in access().
