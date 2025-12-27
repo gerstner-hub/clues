@@ -65,11 +65,13 @@ struct CLUES_API FcntlSystemCall :
 	item::FileDescriptor fd;
 	item::FcntlOperation operation;
 	std::optional<item::FileDescriptor> dup_num;
-	std::optional<item::FileDescFlagsValue> flags_arg;
+	std::optional<item::FileDescFlagsValue> fd_flags_arg;
+	std::optional<item::OpenFlagsValue> status_flags_arg;
 
 	std::optional<item::SuccessResult> result;
 	std::optional<item::FileDescriptor> dupfd;
-	std::optional<item::FileDescFlagsValue> ret_flags;
+	std::optional<item::FileDescFlagsValue> ret_fd_flags;
+	std::optional<item::OpenFlagsValue>  ret_status_flags;
 
 protected: // functions
 

@@ -7,4 +7,7 @@ int main() {
 	(void)fcntl(0, F_GETFD);
 	(void)fcntl(0, F_SETFD, FD_CLOEXEC);
 	(void)fcntl(0, F_GETFD);
+	(void)fcntl(2, F_GETFL);
+	(void)fcntl(2, F_SETFL, O_APPEND);
+	(void)fcntl(2, F_GETFL);
 }
