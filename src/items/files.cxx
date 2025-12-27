@@ -110,9 +110,7 @@ void AtFlagsValue::processValue(const Tracee&) {
 std::string FileDescFlagsValue::str() const {
 	std::stringstream ss;
 
-	const auto flags = valueAs<int>();
-
-	ss << "0x" << std::hex << flags << " (";
+	ss << "0x" << std::hex << m_flags.raw() << " (";
 
 	add_bitflag(FD_CLOEXEC);
 
@@ -120,15 +118,13 @@ std::string FileDescFlagsValue::str() const {
 }
 
 void FileDescFlagsValue::processValue(const Tracee &) {
-	if (isIn()) {
+	if (!isOut()) {
 		m_flags = cosmos::FileDescriptor::DescFlags{valueAs<int>()};
 	}
 }
 
 void FileDescFlagsValue::updateData(const Tracee &) {
-	if (isOut()) {
-		m_flags = cosmos::FileDescriptor::DescFlags{valueAs<int>()};
-	}
+	m_flags = cosmos::FileDescriptor::DescFlags{valueAs<int>()};
 }
 
 std::string AccessModeParameter::str() const {

@@ -62,16 +62,20 @@ struct CLUES_API FcntlSystemCall :
 		setParameters(fd, operation);
 	}
 
+	/* fixed parameters */
 	item::FileDescriptor fd;
 	item::FcntlOperation operation;
-	std::optional<item::FileDescriptor> dup_num;
-	std::optional<item::FileDescFlagsValue> fd_flags_arg;
-	std::optional<item::OpenFlagsValue> status_flags_arg;
 
-	std::optional<item::SuccessResult> result;
-	std::optional<item::FileDescriptor> dupfd;
-	std::optional<item::FileDescFlagsValue> ret_fd_flags;
-	std::optional<item::OpenFlagsValue>  ret_status_flags;
+	/* context dependent parameters */
+	std::optional<item::FileDescriptor> dup_num; ///< for DUPFD, DUPFD_CLOEXEC
+	std::optional<item::FileDescFlagsValue> fd_flags_arg; ///< for GETFD, SETFD
+	std::optional<item::OpenFlagsValue> status_flags_arg; ///< for GETFL, SETFL
+
+	/* context dependent return values */
+	std::optional<item::SuccessResult> result; ///< for all other cases
+	std::optional<item::FileDescriptor> dupfd; ///< for DUPFD, DUPFD_CLOEXEC
+	std::optional<item::FileDescFlagsValue> ret_fd_flags; ///< for GETFD
+	std::optional<item::OpenFlagsValue> ret_status_flags; ///< for GETFL
 
 protected: // functions
 

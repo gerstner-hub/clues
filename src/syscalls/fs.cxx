@@ -19,46 +19,54 @@ void FcntlSystemCall::clear() {
 }
 
 bool FcntlSystemCall::newSystemCall() {
-	using Oper = item::FcntlOperation::Oper;
+	auto setDefaultParameters = [this]() {
+		setParameters(fd, operation);
+	};
+	auto setNewParameters = [this, setDefaultParameters](auto &extra_par) {
+		setDefaultParameters();
+		setParameters(extra_par);
+	};
+	auto setDefaultReturnValue = [this]() {
+		result.emplace(item::SuccessResult{});
+		setReturnItem(*result);
+	};
 
 	clear();
 
+	using Oper = item::FcntlOperation::Oper;
 	switch (operation.operation()) {
 		case Oper::DUPFD: /* fallthrough */
 		case Oper::DUPFD_CLOEXEC: {
 			dup_num.emplace(item::FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{false},
 				"lowest_fd", "lowest dup file descriptor number"});
-			dupfd.emplace(item::FileDescriptor{ItemType::PARAM_OUT, item::AtSemantics{false},
+			dupfd.emplace(item::FileDescriptor{ItemType::RETVAL, item::AtSemantics{false},
 				"dupfd", "duplicated file descriptor"});
 			setReturnItem(*dupfd);
-			setParameters(fd, operation, *dup_num);
+			setNewParameters(*dup_num);
 			break;
 		} case Oper::GETFD: {
-			setParameters(fd, operation);
-			ret_fd_flags.emplace(item::FileDescFlagsValue{ItemType::PARAM_OUT});
+			setDefaultParameters();
+			ret_fd_flags.emplace(item::FileDescFlagsValue{ItemType::RETVAL});
 			setReturnItem(*ret_fd_flags);
 			break;
 		} case Oper::SETFD: {
 			fd_flags_arg.emplace(item::FileDescFlagsValue{ItemType::PARAM_IN});
-			setParameters(fd, operation, *fd_flags_arg);
-			result.emplace(item::SuccessResult{});
-			setReturnItem(*result);
+			setNewParameters(*fd_flags_arg);
+			setDefaultReturnValue();
 			break;
 		} case Oper::GETFL: {
-			ret_status_flags.emplace(item::OpenFlagsValue{ItemType::PARAM_OUT});
+			ret_status_flags.emplace(item::OpenFlagsValue{ItemType::RETVAL});
 			setParameters(fd, operation);
 			setReturnItem(*ret_status_flags);
 			break;
 		} case Oper::SETFL: {
 			status_flags_arg.emplace(item::OpenFlagsValue{ItemType::PARAM_IN});
-			setParameters(fd, operation, *status_flags_arg);
-			result.emplace(item::SuccessResult{});
-			setReturnItem(*result);
+			setNewParameters(*status_flags_arg);
+			setDefaultReturnValue();
 			break;
 		} default: {
-			setParameters(fd, operation);
-			result.emplace(item::SuccessResult{});
-			setReturnItem(*result);
+			setDefaultParameters();
+			setDefaultReturnValue();
 			break;
 		}
 	}
