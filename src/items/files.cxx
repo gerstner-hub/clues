@@ -4,6 +4,7 @@
 // cosmos
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/error/RuntimeError.hxx>
+#include <cosmos/formatting.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/fs/types.hxx>
 
@@ -11,6 +12,7 @@
 #include <clues/items/files.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
+#include <clues/syscalls/fs.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
@@ -310,6 +312,68 @@ std::string FcntlOperation::str() const {
 		CASE_ENUM_TO_STR(F_SET_FILE_RW_HINT);
 		default: return "???";
 	}
+}
+
+void FLockParameter::processValue(const Tracee &proc) {
+	/* all flock related operations provide input, so unconditionally
+	 * process it */
+
+	// TODO: handle flock32 case on i386 & friends
+
+	clues::flock64 lock;
+
+	if (!proc.readStruct(m_val, lock)) {
+		m_lock.reset();
+		return;
+	}
+
+	if (!m_lock) {
+		m_lock = std::make_optional<cosmos::FileLock>(cosmos::FileLock::Type::READ_LOCK);
+	}
+
+	m_lock->l_type = lock.l_type;
+	m_lock->l_whence = lock.l_whence;
+	m_lock->l_start = lock.l_start;
+	m_lock->l_len = lock.l_len;
+	m_lock->l_pid = lock.l_pid;
+}
+
+void FLockParameter::updateData(const Tracee &proc) {
+	const auto fcntl_sc = dynamic_cast<const FcntlSystemCall*>(m_call);
+	if (!fcntl_sc || fcntl_sc->operation.operation() != item::FcntlOperation::Oper::GETLK) {
+		// only the F_GETLK operation causes changes on output
+		return;
+	}
+
+	processValue(proc);
+}
+
+std::string FLockParameter::str() const {
+	auto type_str = [](short type) {
+		switch(type) {
+			CASE_ENUM_TO_STR(F_RDLCK);
+			CASE_ENUM_TO_STR(F_WRLCK);
+			CASE_ENUM_TO_STR(F_UNLCK);
+			default: return "???";
+		}
+	};
+
+	auto whence_str = [](short whence) {
+		switch(whence) {
+			CASE_ENUM_TO_STR(SEEK_SET);
+			CASE_ENUM_TO_STR(SEEK_CUR);
+			CASE_ENUM_TO_STR(SEEK_END);
+			default: return "???";
+		}
+	};
+
+	return cosmos::sprintf("{l_type=%s, l_whence=%s, l_start=%ld, l_len=%ld, l_pid=%d}",
+			type_str(cosmos::to_integral(m_lock->type())),
+			whence_str(cosmos::to_integral(m_lock->whence())),
+			m_lock->start(),
+			m_lock->start(),
+			cosmos::to_integral(m_lock->pid())
+	);
 }
 
 } // end ns

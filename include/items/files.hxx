@@ -8,6 +8,7 @@
 
 // cosmos
 #include <cosmos/fs/FileDescriptor.hxx>
+#include <cosmos/fs/FileLock.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -257,6 +258,29 @@ protected: // functions
 protected: // data
 
 	std::optional<Oper> m_op;
+};
+
+/// Corresponds to `struct flock` Used with fcntl() `F_*LK` operations.
+class CLUES_API FLockParameter :
+		public PointerValue {
+public: // functions
+	explicit FLockParameter() :
+			// this can be PARAM_IN and PARAM_IN_OUT, but we
+			// simply claim it's always IN_OUT
+			PointerValue{ItemType::PARAM_IN_OUT, "flock", "struct flock"} {
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<cosmos::FileLock> m_lock;
 };
 
 } // end ns

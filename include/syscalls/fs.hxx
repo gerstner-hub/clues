@@ -70,6 +70,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::FileDescriptor> dup_num; ///< for DUPFD, DUPFD_CLOEXEC
 	std::optional<item::FileDescFlagsValue> fd_flags_arg; ///< for GETFD, SETFD
 	std::optional<item::OpenFlagsValue> status_flags_arg; ///< for GETFL, SETFL
+	std::optional<item::FLockParameter> flock_arg; ///< for F_SETLK, F_SETLKW, F_GETLK
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases

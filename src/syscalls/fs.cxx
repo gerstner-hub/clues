@@ -64,6 +64,13 @@ bool FcntlSystemCall::newSystemCall() {
 			setNewParameters(*status_flags_arg);
 			setDefaultReturnValue();
 			break;
+		} case Oper::SETLK: /* fallthrough */
+		  case Oper::SETLKW: /* fallthrough */
+		  case Oper::GETLK: {
+			flock_arg.emplace(item::FLockParameter{});
+			setNewParameters(*flock_arg);
+			setDefaultReturnValue();
+			break;
 		} default: {
 			setDefaultParameters();
 			setDefaultReturnValue();
