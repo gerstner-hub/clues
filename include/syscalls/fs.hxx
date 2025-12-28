@@ -71,12 +71,14 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::FileDescFlagsValue> fd_flags_arg; ///< for GETFD, SETFD
 	std::optional<item::OpenFlagsValue> status_flags_arg; ///< for GETFL, SETFL
 	std::optional<item::FLockParameter> flock_arg; ///< for F_SETLK, F_SETLKW, F_GETLK
+	std::optional<item::FileDescOwner> owner_arg; ///< for SETOWN
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases
 	std::optional<item::FileDescriptor> dupfd; ///< for DUPFD, DUPFD_CLOEXEC
 	std::optional<item::FileDescFlagsValue> ret_fd_flags; ///< for GETFD
 	std::optional<item::OpenFlagsValue> ret_status_flags; ///< for GETFL
+	std::optional<item::FileDescOwner> ret_owner; ///< for GET_OWNER
 
 protected: // functions
 

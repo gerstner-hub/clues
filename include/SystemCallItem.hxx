@@ -128,9 +128,9 @@ protected: // data
 	/// The type of item.
 	const ItemType m_type;
 	/// A human readable short name for the item, should be one word only.
-	const std::string_view m_short_name;
+	std::string_view m_short_name;
 	/// A human readable longer name for the item.
-	const std::string_view m_long_name;
+	std::string_view m_long_name;
 	/// The raw register value for the item.
 	Word m_val;
 };

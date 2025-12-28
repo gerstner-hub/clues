@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
 
 static void flockCntl() {
 	char path[] = "/tmp/fcntl_syscall_test.XXXXXX";
@@ -77,4 +78,9 @@ int main() {
 
 	flockCntl();
 	flockCntlOFD();
+
+	fcntl(0, F_SETOWN, getpid());
+	syscall(SYS_fcntl, 0, F_GETOWN);
+	fcntl(0, F_SETOWN, -getpgid(getpid()));
+	syscall(SYS_fcntl, 0, F_GETOWN);
 }

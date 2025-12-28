@@ -16,11 +16,13 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	fd_flags_arg.reset();
 	status_flags_arg.reset();
 	flock_arg.reset();
+	owner_arg.reset();
 
 	/* retvals */
 	dupfd.reset();
 	ret_fd_flags.reset();
 	ret_status_flags.reset();
+	ret_owner.reset();
 }
 
 bool FcntlSystemCall::check2ndPass() {
@@ -71,6 +73,14 @@ bool FcntlSystemCall::check2ndPass() {
 			 */
 			flock_arg.emplace(item::FLockParameter{});
 			setExtraParameter(*flock_arg);
+			break;
+		} case Oper::GETOWN: {
+			ret_owner.emplace(item::FileDescOwner{ItemType::RETVAL});
+			setNewReturnItem(*ret_owner);
+			break;
+		} case Oper::SETOWN: {
+			owner_arg.emplace(item::FileDescOwner{ItemType::PARAM_IN});
+			setExtraParameter(*owner_arg);
 			break;
 		} default: {
 			/* keep defaults */

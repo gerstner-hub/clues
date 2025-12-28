@@ -283,4 +283,40 @@ protected: // data
 	std::optional<cosmos::FileLock> m_lock;
 };
 
+/// The value used with the F_GETOWN and F_SETOWN `fcntl()` operations.
+/**
+ * This can either be a PID (positive value) or a PGID (negative value).
+ * Accordingly the type contains either a cosmos::ProcessID or
+ * cosmos::ProcessGroupID.
+ **/
+class CLUES_API FileDescOwner :
+		public SystemCallItem {
+public: // functions
+
+	explicit FileDescOwner(const ItemType type) :
+			SystemCallItem{type} {
+	}
+
+	std::string str() const override;
+
+	auto pid() const {
+		return m_pid;
+	}
+
+	auto pgid() const {
+		return m_pgid;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<cosmos::ProcessID> m_pid;
+	std::optional<cosmos::ProcessGroupID> m_pgid;
+};
+
 } // end ns

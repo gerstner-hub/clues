@@ -376,4 +376,32 @@ std::string FLockParameter::str() const {
 	);
 }
 
+void FileDescOwner::processValue(const Tracee &) {
+	const auto pid_or_pgid = valueAs<int>();
+
+	if (pid_or_pgid >= 0) {
+		m_pgid.reset();
+		m_pid = cosmos::ProcessID{pid_or_pgid};
+		m_short_name = "pid";
+		m_long_name = "process id";
+	} else {
+		m_pid.reset();
+		m_pgid = cosmos::ProcessGroupID{-pid_or_pgid};
+		m_short_name = "pgid";
+		m_long_name = "process group id";
+	}
+}
+
+void FileDescOwner::updateData(const Tracee &proc) {
+	if (isReturnValue())
+		return processValue(proc);
+}
+
+std::string FileDescOwner::str() const {
+	if (m_pid)
+		return std::to_string(cosmos::to_integral(*m_pid));
+	else
+		return std::to_string(cosmos::to_integral(*m_pgid));
+}
+
 } // end ns
