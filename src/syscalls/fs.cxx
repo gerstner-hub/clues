@@ -64,9 +64,16 @@ bool FcntlSystemCall::newSystemCall() {
 			setNewParameters(*status_flags_arg);
 			setDefaultReturnValue();
 			break;
-		} case Oper::SETLK: /* fallthrough */
-		  case Oper::SETLKW: /* fallthrough */
-		  case Oper::GETLK: {
+		} case Oper::SETLK: [[fallthrough]];
+		  case Oper::SETLKW: [[fallthrough]];
+		  case Oper::GETLK: [[fallthrough]];
+		  case Oper::OFD_SETLK: [[fallthrough]];
+		  case Oper::OFD_SETLKW: [[fallthrough]];
+		  case Oper::OFD_GETLK: {
+			/*
+			 * OFD locks and old style locks use the same API
+			 * details
+			 */
 			flock_arg.emplace(item::FLockParameter{});
 			setNewParameters(*flock_arg);
 			setDefaultReturnValue();

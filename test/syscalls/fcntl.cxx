@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-void flockCntl() {
+static void flockCntl() {
 	char path[] = "/tmp/fcntl_syscall_test.XXXXXX";
 	int fd = mkstemp(path);
 
@@ -33,6 +33,37 @@ void flockCntl() {
 	unlink(path);
 }
 
+static void flockCntlOFD() {
+	char path[] = "/tmp/fcntl_syscall_test.XXXXXX";
+	int fd = mkstemp(path);
+
+	struct flock fl;
+	fl.l_type = F_RDLCK;
+	fl.l_whence = SEEK_CUR;
+	fl.l_start = 10;
+	fl.l_len = 100;
+	fl.l_pid = 0;
+
+	fcntl(fd, F_OFD_SETLK, &fl);
+
+	fl.l_type = F_UNLCK;
+
+	fcntl(fd, F_OFD_SETLK, &fl);
+
+	fl.l_type = F_RDLCK;
+
+	fcntl(fd, F_OFD_SETLKW, &fl);
+
+	fcntl(fd, F_OFD_GETLK, &fl);
+
+	fl.l_type = F_WRLCK;
+
+	fcntl(fd, F_OFD_SETLK, &fl);
+
+	close(fd);
+	unlink(path);
+}
+
 int main() {
 
 	(void)fcntl(0, F_DUPFD, 5);
@@ -45,5 +76,5 @@ int main() {
 	(void)fcntl(2, F_GETFL);
 
 	flockCntl();
-
+	flockCntlOFD();
 }
