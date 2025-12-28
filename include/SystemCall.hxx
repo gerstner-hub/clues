@@ -155,19 +155,22 @@ protected: // data
 		setParameters(rest...);
 	}
 
-	/// A new system call is about to be started.
+	/// Check whether a second pass needs to be made processing parameters.
 	/**
-	 * This function can be overriden by the actual system call
-	 * implementation to perform cleanup steps or context-sensitive
-	 * evaluation of system call parameters (e.g. for `ioctl()` style
-	 * system calls).
+	 * This function can be overridden by the actual system call
+	 * implementation to perform context-sensitive evaluation of system
+	 * call parameters (e.g. for `ioctl()` style system calls) upon system
+	 * call entry..
 	 *
 	 * The implementation of this function is allowed to modify the amount
-	 * and types of system call parameters and return value. In this case
-	 * `true` must be returned to let the base class implementation
+	 * and types of system call parameters and return parameter. In this
+	 * case `true` must be returned to let the base class implementation
 	 * reevaluate all system call parameters.
 	 **/
-	virtual bool newSystemCall() { return false; };
+	virtual bool check2ndPass() { return false; };
+
+	/// Perform any necessary actions before processing a new system call entry event.
+	virtual void prepareNewSystemCall() {}
 
 protected: // data
 

@@ -48,9 +48,11 @@ void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
 	m_abi = info.abi();
 	m_error.reset();
 
+	prepareNewSystemCall();
+
 	fillParameters(proc, info);
 
-	if (newSystemCall()) {
+	if (check2ndPass()) {
 		fillParameters(proc, info);
 	}
 }

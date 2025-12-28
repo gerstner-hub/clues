@@ -82,7 +82,9 @@ protected: // functions
 
 	void clear();
 
-	bool newSystemCall() override;
+	bool check2ndPass() override;
+
+	void prepareNewSystemCall() override;
 };
 
 struct FstatSystemCall :
