@@ -2,6 +2,7 @@
 
 // clues
 #include <clues/items/files.hxx>
+#include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
@@ -73,6 +74,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::FLockParameter> flock_arg; ///< for F_SETLK, F_SETLKW, F_GETLK
 	std::optional<item::FileDescOwner> owner_arg; ///< for SETOWN
 	std::optional<item::ExtFileDescOwner> ext_owner_arg; ///< for SETOWN_EX, GETOWN_EX
+	std::optional<item::SignalNumber> io_signal_arg; ///< for SETSIG
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases
@@ -80,6 +82,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::FileDescFlagsValue> ret_fd_flags; ///< for GETFD
 	std::optional<item::OpenFlagsValue> ret_status_flags; ///< for GETFL
 	std::optional<item::FileDescOwner> ret_owner; ///< for GET_OWNER
+	std::optional<item::SignalNumber> ret_io_signal; ///< for GETSIG
 
 protected: // functions
 

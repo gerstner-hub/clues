@@ -18,12 +18,14 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	flock_arg.reset();
 	owner_arg.reset();
 	ext_owner_arg.reset();
+	io_signal_arg.reset();
 
 	/* retvals */
 	ret_dupfd.reset();
 	ret_fd_flags.reset();
 	ret_status_flags.reset();
 	ret_owner.reset();
+	ret_io_signal.reset();
 }
 
 bool FcntlSystemCall::check2ndPass() {
@@ -90,6 +92,14 @@ bool FcntlSystemCall::check2ndPass() {
 		} case Oper::SETOWN_EX: {
 			ext_owner_arg.emplace(item::ExtFileDescOwner{ItemType::PARAM_IN});
 			setExtraParameter(*ext_owner_arg);
+			break;
+		} case Oper::GETSIG: {
+			ret_io_signal.emplace(item::SignalNumber{ItemType::RETVAL});
+			setNewReturnItem(*ret_io_signal);
+			break;
+		} case Oper::SETSIG: {
+			io_signal_arg.emplace(item::SignalNumber{});
+			setExtraParameter(*io_signal_arg);
 			break;
 		} default: {
 			/* keep defaults */

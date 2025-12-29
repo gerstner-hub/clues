@@ -22,10 +22,10 @@ public:
 
 /// A signal number specification.
 class CLUES_API SignalNumber :
-		public ValueInParameter {
+		public ValueParameter {
 public: // functions
-	explicit SignalNumber() :
-		ValueInParameter{"signum", "signal number"} {
+	explicit SignalNumber(const ItemType type = ItemType::PARAM_IN) :
+		ValueParameter{type, "signum", "signal number"} {
 	}
 
 	std::string str() const override;

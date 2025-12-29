@@ -2,6 +2,7 @@
 #include <clues/format.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/macros.h>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
 // cosmos
@@ -20,7 +21,13 @@ std::string SigSetOperation::str() const {
 }
 
 std::string SignalNumber::str() const {
-	std::string s;
+	if (m_val == Word::ZERO && m_call->callNr() == SystemCallNr::FCNTL) {
+		/*
+		 * this is a special case for fcntl(fd, GETSIG), a zero value
+		 * means that SIGIO without extended information is delivered.
+		 */
+		return "0 (default SIGIO)";
+	}
 	return format::signal(valueAs<cosmos::SignalNr>());
 }
 
