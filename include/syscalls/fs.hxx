@@ -76,7 +76,7 @@ struct CLUES_API FcntlSystemCall :
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases
-	std::optional<item::FileDescriptor> dupfd; ///< for DUPFD, DUPFD_CLOEXEC
+	std::optional<item::FileDescriptor> ret_dupfd; ///< for DUPFD, DUPFD_CLOEXEC
 	std::optional<item::FileDescFlagsValue> ret_fd_flags; ///< for GETFD
 	std::optional<item::OpenFlagsValue> ret_status_flags; ///< for GETFL
 	std::optional<item::FileDescOwner> ret_owner; ///< for GET_OWNER

@@ -20,7 +20,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	ext_owner_arg.reset();
 
 	/* retvals */
-	dupfd.reset();
+	ret_dupfd.reset();
 	ret_fd_flags.reset();
 	ret_status_flags.reset();
 	ret_owner.reset();
@@ -41,9 +41,9 @@ bool FcntlSystemCall::check2ndPass() {
 		case Oper::DUPFD_CLOEXEC: {
 			dup_num.emplace(item::FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{false},
 				"lowest_fd", "lowest dup file descriptor number"});
-			dupfd.emplace(item::FileDescriptor{ItemType::RETVAL, item::AtSemantics{false},
+			ret_dupfd.emplace(item::FileDescriptor{ItemType::RETVAL, item::AtSemantics{false},
 				"dupfd", "duplicated file descriptor"});
-			setNewReturnItem(*dupfd);
+			setNewReturnItem(*ret_dupfd);
 			setExtraParameter(*dup_num);
 			break;
 		} case Oper::GETFD: {
