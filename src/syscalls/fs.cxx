@@ -20,6 +20,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	ext_owner_arg.reset();
 	io_signal_arg.reset();
 	lease_arg.reset();
+	dnotify_arg.reset();
 
 	/* retvals */
 	ret_dupfd.reset();
@@ -110,6 +111,10 @@ bool FcntlSystemCall::check2ndPass() {
 		} case Oper::SETLEASE: {
 			lease_arg.emplace(item::LeaseType{ItemType::PARAM_IN});
 			setExtraParameter(*lease_arg);
+			break;
+		} case Oper::NOTIFY: {
+			dnotify_arg.emplace(item::DNotifySettings{});
+			setExtraParameter(*dnotify_arg);
 			break;
 		} default: {
 			/* keep defaults */

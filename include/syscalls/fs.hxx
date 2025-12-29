@@ -76,6 +76,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::ExtFileDescOwner> ext_owner_arg; ///< for SETOWN_EX, GETOWN_EX
 	std::optional<item::SignalNumber> io_signal_arg; ///< for SETSIG
 	std::optional<item::LeaseType> lease_arg; ///< for SETLEASE
+	std::optional<item::DNotifySettings> dnotify_arg; ///< for NOTIFY
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases

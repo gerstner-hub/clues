@@ -370,4 +370,43 @@ protected: // data
 	std::optional<cosmos::FileDescriptor::LeaseType> m_lease;
 };
 
+/// The value used with F_NOTIFY `fcntl()` operations.
+class CLUES_API DNotifySettings :
+		public ValueInParameter {
+public: // types
+
+	enum class Setting : int {
+		ACCESS = DN_ACCESS,
+		MODIFY = DN_MODIFY,
+		CREATE = DN_CREATE,
+		DELETE = DN_DELETE,
+		RENAME = DN_RENAME,
+		ATTRIB = DN_ATTRIB
+	};
+
+	using enum Setting;
+
+	using Settings = cosmos::BitMask<Setting>;
+
+public: // functions
+
+	explicit DNotifySettings() :
+			ValueInParameter{"events", "dnotify event bitmask"} {
+	}
+
+	auto settings() const {
+		return m_settings;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	Settings m_settings;
+};
+
 } // end ns

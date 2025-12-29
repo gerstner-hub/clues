@@ -37,7 +37,7 @@ std::string FileDescriptor::str() const {
 		return std::to_string(cosmos::to_integral(fd));
 }
 
-#define add_bitflag(FLAG) if (m_flags.raw() & FLAG) ss << #FLAG << '|';
+#define add_bitflag(FLAG) if (flags & FLAG) ss << #FLAG << '|';
 
 std::string OpenFlagsValue::str() const {
 	std::stringstream ss;
@@ -90,6 +90,8 @@ std::string AtFlagsValue::str() const {
 
 	ss << "0x" << std::hex << m_flags.raw() << " (";
 
+	const auto flags = m_flags.raw();
+
 	add_bitflag(AT_EMPTY_PATH);
 	add_bitflag(AT_SYMLINK_NOFOLLOW);
 	add_bitflag(AT_SYMLINK_FOLLOW);
@@ -113,6 +115,8 @@ std::string FileDescFlagsValue::str() const {
 	std::stringstream ss;
 
 	ss << "0x" << std::hex << m_flags.raw() << " (";
+
+	const auto flags = m_flags.raw();
 
 	add_bitflag(FD_CLOEXEC);
 
@@ -443,6 +447,27 @@ void LeaseType::updateData(const Tracee &proc) {
 
 std::string LeaseType::str() const {
 	return std::string{lock_type_to_str(cosmos::to_integral(*m_lease))};
+}
+
+void DNotifySettings::processValue(const Tracee &) {
+	m_settings = Settings{valueAs<int>()};
+}
+
+std::string DNotifySettings::str() const {
+	const auto flags = m_settings.raw();
+	std::stringstream ss;
+
+	ss << "0x" << std::hex << flags << " (";
+
+	add_bitflag(DN_ACCESS);
+	add_bitflag(DN_MODIFY);
+	add_bitflag(DN_CREATE);
+	add_bitflag(DN_DELETE);
+	add_bitflag(DN_RENAME);
+	add_bitflag(DN_ATTRIB);
+	add_bitflag(DN_MULTISHOT);
+
+	return strip_back(ss.str()) + ")";
 }
 
 } // end ns

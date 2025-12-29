@@ -103,6 +103,13 @@ static void leases() {
 	unlink(path);
 }
 
+static void dnotify() {
+	int fd = open("/", O_RDONLY|O_DIRECTORY);
+	fcntl(fd, F_NOTIFY, DN_ACCESS|DN_DELETE|DN_MULTISHOT);
+	fcntl(fd, F_NOTIFY, 0);
+	close(fd);
+}
+
 int main() {
 
 	(void)fcntl(0, F_DUPFD, 5);
@@ -130,4 +137,6 @@ int main() {
 	fcntl(0, F_GETSIG);
 
 	leases();
+
+	dnotify();
 }
