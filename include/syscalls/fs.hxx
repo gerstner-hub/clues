@@ -72,6 +72,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::OpenFlagsValue> status_flags_arg; ///< for GETFL, SETFL
 	std::optional<item::FLockParameter> flock_arg; ///< for F_SETLK, F_SETLKW, F_GETLK
 	std::optional<item::FileDescOwner> owner_arg; ///< for SETOWN
+	std::optional<item::ExtFileDescOwner> ext_owner_arg; ///< for SETOWN_EX, GETOWN_EX
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases

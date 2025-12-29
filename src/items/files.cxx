@@ -350,7 +350,7 @@ void FLockParameter::updateData(const Tracee &proc) {
 
 std::string FLockParameter::str() const {
 	auto type_str = [](short type) {
-		switch(type) {
+		switch (type) {
 			CASE_ENUM_TO_STR(F_RDLCK);
 			CASE_ENUM_TO_STR(F_WRLCK);
 			CASE_ENUM_TO_STR(F_UNLCK);
@@ -359,7 +359,7 @@ std::string FLockParameter::str() const {
 	};
 
 	auto whence_str = [](short whence) {
-		switch(whence) {
+		switch (whence) {
 			CASE_ENUM_TO_STR(SEEK_SET);
 			CASE_ENUM_TO_STR(SEEK_CUR);
 			CASE_ENUM_TO_STR(SEEK_END);
@@ -402,6 +402,34 @@ std::string FileDescOwner::str() const {
 		return std::to_string(cosmos::to_integral(*m_pid));
 	else
 		return std::to_string(cosmos::to_integral(*m_pgid));
+}
+
+std::string ExtFileDescOwner::str() const {
+	auto type_str = [](cosmos::FileDescriptor::Owner::Type type) {
+		switch (cosmos::to_integral(type)) {
+			CASE_ENUM_TO_STR(F_OWNER_TID);
+			CASE_ENUM_TO_STR(F_OWNER_PID);
+			CASE_ENUM_TO_STR(F_OWNER_PGRP);
+			default: return "???";
+		}
+	};
+
+	std::stringstream ss;
+	ss << "{type=" << type_str(m_owner->type()) << ", id=" << m_owner->raw()->pid << "}";
+	return ss.str();
+}
+
+void ExtFileDescOwner::processValue(const Tracee &proc) {
+	m_owner = cosmos::FileDescriptor::Owner{};
+
+	if (!proc.readStruct(m_val, *m_owner->raw())) {
+		m_owner.reset();
+	}
+	
+}
+
+void ExtFileDescOwner::updateData(const Tracee &proc) {
+	return processValue(proc);
 }
 
 } // end ns

@@ -319,4 +319,29 @@ protected: // data
 	std::optional<cosmos::ProcessGroupID> m_pgid;
 };
 
+/// The structure used with the F_GETOWN_EX and F_SETOWN_EX `fcntl()` operations.
+class CLUES_API ExtFileDescOwner :
+		public SystemCallItem {
+public: // functions
+	explicit ExtFileDescOwner(const ItemType type) :
+			SystemCallItem{type, "owner_ex", "struct f_owner_ex"} {
+	}
+
+	std::string str() const override;
+
+	const auto& owner() const {
+		return m_owner;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<cosmos::FileDescriptor::Owner> m_owner;
+};
+
 } // end ns

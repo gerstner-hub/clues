@@ -65,6 +65,25 @@ static void flockCntlOFD() {
 	unlink(path);
 }
 
+static void ownerEx() {
+	struct f_owner_ex ex;
+
+	fcntl(0, F_GETOWN_EX, &ex);
+
+	ex.type = F_OWNER_PID;
+	ex.pid = getpid();
+	fcntl(0, F_SETOWN_EX, &ex);
+	fcntl(0, F_GETOWN_EX, &ex);
+	ex.type = F_OWNER_TID;
+	ex.pid = gettid();
+	fcntl(0, F_SETOWN_EX, &ex);
+	fcntl(0, F_GETOWN_EX, &ex);
+	ex.type = F_OWNER_PGRP;
+	ex.pid = getpgid(getpid());
+	fcntl(0, F_SETOWN_EX, &ex);
+	fcntl(0, F_GETOWN_EX, &ex);
+}
+
 int main() {
 
 	(void)fcntl(0, F_DUPFD, 5);
@@ -83,4 +102,6 @@ int main() {
 	syscall(SYS_fcntl, 0, F_GETOWN);
 	fcntl(0, F_SETOWN, -getpgid(getpid()));
 	syscall(SYS_fcntl, 0, F_GETOWN);
+
+	ownerEx();
 }
