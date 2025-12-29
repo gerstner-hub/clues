@@ -173,6 +173,9 @@ std::string FileModeParameter::str() const {
 
 	using cosmos::FileModeBit;
 
+	// TODO: proper output format for the special bits like `ls` does it
+	// is to replace the `x` either by lower case or upper case `s` or
+	// `t`, depending on whether `x` is also set, or not.
 	chk_mode_flag(FileModeBit::SETUID,      "s");
 	chk_mode_flag(FileModeBit::SETGID,      "S");
 	chk_mode_flag(FileModeBit::STICKY,      "t");

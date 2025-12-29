@@ -144,6 +144,7 @@ struct OpenSystemCall :
 
 	item::StringData filename;
 	item::OpenFlagsValue flags;
+	// TODO: make this optional depending on `flags` (e.g. `O_CREAT`)
 	item::FileModeParameter mode;
 	item::FileDescriptor new_fd;
 };
