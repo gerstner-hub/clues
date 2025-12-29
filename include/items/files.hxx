@@ -68,10 +68,6 @@ protected: // functions
 
 	void processValue(const Tracee&) override;
 
-	void updateData(const Tracee &t) override {
-		return processValue(t);
-	}
-
 protected: // data
 
 	cosmos::OpenMode m_mode;
@@ -130,8 +126,6 @@ struct CLUES_API FileDescFlagsValue :
 protected: // functions
 
 	void processValue(const Tracee &proc) override;
-
-	void updateData(const Tracee &proc) override;
 
 protected: // data
 
@@ -311,8 +305,6 @@ protected: // functions
 
 	void processValue(const Tracee &proc) override;
 
-	void updateData(const Tracee &proc) override;
-
 protected: // data
 
 	std::optional<cosmos::ProcessID> m_pid;
@@ -337,8 +329,6 @@ protected: // functions
 
 	void processValue(const Tracee &proc) override;
 
-	void updateData(const Tracee &proc) override;
-
 protected: // data
 
 	std::optional<cosmos::FileDescriptor::Owner> m_owner;
@@ -362,8 +352,6 @@ public: // functions
 protected: // functions
 
 	void processValue(const Tracee &proc) override;
-
-	void updateData(const Tracee &proc) override;
 
 protected: // data
 

@@ -125,12 +125,6 @@ std::string FileDescFlagsValue::str() const {
 }
 
 void FileDescFlagsValue::processValue(const Tracee &) {
-	if (!isOut()) {
-		m_flags = cosmos::FileDescriptor::DescFlags{valueAs<int>()};
-	}
-}
-
-void FileDescFlagsValue::updateData(const Tracee &) {
 	m_flags = cosmos::FileDescriptor::DescFlags{valueAs<int>()};
 }
 
@@ -398,11 +392,6 @@ void FileDescOwner::processValue(const Tracee &) {
 	}
 }
 
-void FileDescOwner::updateData(const Tracee &proc) {
-	if (isReturnValue())
-		return processValue(proc);
-}
-
 std::string FileDescOwner::str() const {
 	if (m_pid)
 		return std::to_string(cosmos::to_integral(*m_pid));
@@ -434,16 +423,8 @@ void ExtFileDescOwner::processValue(const Tracee &proc) {
 	
 }
 
-void ExtFileDescOwner::updateData(const Tracee &proc) {
-	return processValue(proc);
-}
-
 void LeaseType::processValue(const Tracee &) {
 	m_lease = cosmos::FileDescriptor::LeaseType{valueAs<int>()};
-}
-
-void LeaseType::updateData(const Tracee &proc) {
-	return processValue(proc);
 }
 
 std::string LeaseType::str() const {
