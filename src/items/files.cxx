@@ -169,7 +169,7 @@ std::string FileModeParameter::str() const {
 			ss << '-';
 	};
 
-	ss << "0x" << std::hex << valueAs<mode_t>() << " (";
+	ss << "0" << std::oct << valueAs<mode_t>() << " (";
 
 	using cosmos::FileModeBit;
 
