@@ -37,7 +37,7 @@ std::string FileDescriptor::str() const {
 		return std::to_string(cosmos::to_integral(fd));
 }
 
-#define add_bitflag(FLAG) if (flags & FLAG) ss << #FLAG << '|';
+#define add_bitflag(FLAG) if (FLAG && (flags & FLAG) == FLAG) ss << #FLAG << '|';
 
 std::string OpenFlagsValue::str() const {
 	std::stringstream ss;
@@ -53,9 +53,10 @@ std::string OpenFlagsValue::str() const {
 		case cosmos::OpenMode::READ_WRITE: ss << "O_RDWR"; break;
 	}
 
-	if (m_flags.any()) {
-		ss << '|';
-	}
+	ss << '|';
+
+	// TODO: O_LARGEFILE might not be visible for 32-bit emulation
+	// binaries, since on x86_64 the constant is set to 0.
 
 	add_bitflag(O_APPEND);
 	add_bitflag(O_ASYNC);
