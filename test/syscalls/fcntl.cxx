@@ -85,6 +85,24 @@ static void ownerEx() {
 	fcntl(0, F_GETOWN_EX, &ex);
 }
 
+static void leases() {
+	char path[] = "/tmp/fcntl_syscall_test.XXXXXX";
+	int fd = mkstemp(path);
+	fcntl(fd, F_GETLEASE);
+	fcntl(fd, F_SETLEASE, F_WRLCK);
+	fcntl(fd, F_GETLEASE);
+	fcntl(fd, F_SETLEASE, F_UNLCK);
+	close(fd);
+
+	int fd2 = open(path, O_RDONLY);
+	fcntl(fd2, F_SETLEASE, F_RDLCK);
+	fcntl(fd2, F_GETLEASE);
+	fcntl(fd2, F_SETLEASE, F_UNLCK);
+
+	close(fd2);
+	unlink(path);
+}
+
 int main() {
 
 	(void)fcntl(0, F_DUPFD, 5);
@@ -111,4 +129,5 @@ int main() {
 	fcntl(0, F_SETSIG, SIGUSR1);
 	fcntl(0, F_GETSIG);
 
+	leases();
 }

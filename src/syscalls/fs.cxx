@@ -19,6 +19,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	owner_arg.reset();
 	ext_owner_arg.reset();
 	io_signal_arg.reset();
+	lease_arg.reset();
 
 	/* retvals */
 	ret_dupfd.reset();
@@ -26,6 +27,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	ret_status_flags.reset();
 	ret_owner.reset();
 	ret_io_signal.reset();
+	ret_lease.reset();
 }
 
 bool FcntlSystemCall::check2ndPass() {
@@ -100,6 +102,14 @@ bool FcntlSystemCall::check2ndPass() {
 		} case Oper::SETSIG: {
 			io_signal_arg.emplace(item::SignalNumber{});
 			setExtraParameter(*io_signal_arg);
+			break;
+		} case Oper::GETLEASE: {
+			ret_lease.emplace(item::LeaseType{ItemType::RETVAL});
+			setNewReturnItem(*ret_lease);
+			break;
+		} case Oper::SETLEASE: {
+			lease_arg.emplace(item::LeaseType{ItemType::PARAM_IN});
+			setExtraParameter(*lease_arg);
 			break;
 		} default: {
 			/* keep defaults */

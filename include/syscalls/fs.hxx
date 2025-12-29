@@ -75,6 +75,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::FileDescOwner> owner_arg; ///< for SETOWN
 	std::optional<item::ExtFileDescOwner> ext_owner_arg; ///< for SETOWN_EX, GETOWN_EX
 	std::optional<item::SignalNumber> io_signal_arg; ///< for SETSIG
+	std::optional<item::LeaseType> lease_arg; ///< for SETLEASE
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases
@@ -83,6 +84,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::OpenFlagsValue> ret_status_flags; ///< for GETFL
 	std::optional<item::FileDescOwner> ret_owner; ///< for GET_OWNER
 	std::optional<item::SignalNumber> ret_io_signal; ///< for GETSIG
+	std::optional<item::LeaseType> ret_lease; ///< for GETLEASE
 
 protected: // functions
 

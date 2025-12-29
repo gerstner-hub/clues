@@ -344,4 +344,30 @@ protected: // data
 	std::optional<cosmos::FileDescriptor::Owner> m_owner;
 };
 
+/// The value used with F_GETLEASE and F_SETLEASE `fcntl()` operations.
+class CLUES_API LeaseType :
+		public SystemCallItem {
+public: // functions
+
+	explicit LeaseType(const ItemType type) :
+			SystemCallItem{type, "lease", "lease type"} {
+	}
+
+	std::string str() const override;
+
+	const auto& lease() const {
+		return m_lease;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<cosmos::FileDescriptor::LeaseType> m_lease;
+};
+
 } // end ns

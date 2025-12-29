@@ -348,16 +348,17 @@ void FLockParameter::updateData(const Tracee &proc) {
 	processValue(proc);
 }
 
-std::string FLockParameter::str() const {
-	auto type_str = [](short type) {
-		switch (type) {
-			CASE_ENUM_TO_STR(F_RDLCK);
-			CASE_ENUM_TO_STR(F_WRLCK);
-			CASE_ENUM_TO_STR(F_UNLCK);
-			default: return "???";
-		}
-	};
+template <typename INT>
+static std::string_view lock_type_to_str(INT type) {
+	switch (type) {
+		CASE_ENUM_TO_STR(F_RDLCK);
+		CASE_ENUM_TO_STR(F_WRLCK);
+		CASE_ENUM_TO_STR(F_UNLCK);
+		default: return "???";
+	}
+}
 
+std::string FLockParameter::str() const {
 	auto whence_str = [](short whence) {
 		switch (whence) {
 			CASE_ENUM_TO_STR(SEEK_SET);
@@ -368,7 +369,7 @@ std::string FLockParameter::str() const {
 	};
 
 	return cosmos::sprintf("{l_type=%s, l_whence=%s, l_start=%ld, l_len=%ld, l_pid=%d}",
-			type_str(cosmos::to_integral(m_lock->type())),
+			lock_type_to_str(cosmos::to_integral(m_lock->type())).data(),
 			whence_str(cosmos::to_integral(m_lock->whence())),
 			m_lock->start(),
 			m_lock->start(),
@@ -430,6 +431,18 @@ void ExtFileDescOwner::processValue(const Tracee &proc) {
 
 void ExtFileDescOwner::updateData(const Tracee &proc) {
 	return processValue(proc);
+}
+
+void LeaseType::processValue(const Tracee &) {
+	m_lease = cosmos::FileDescriptor::LeaseType{valueAs<int>()};
+}
+
+void LeaseType::updateData(const Tracee &proc) {
+	return processValue(proc);
+}
+
+std::string LeaseType::str() const {
+	return std::string{lock_type_to_str(cosmos::to_integral(*m_lease))};
 }
 
 } // end ns
