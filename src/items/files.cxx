@@ -162,6 +162,10 @@ std::string FileModeParameter::str() const {
 
 	const auto mode = cosmos::FileModeBits{valueAs<mode_t>()};
 
+	if (mode.none()) {
+		return "0";
+	}
+
 	auto chk_mode_flag = [&ss, mode](const cosmos::FileModeBit bit, const char *ch) {
 		if (mode[bit])
 			ss << ch;
