@@ -110,6 +110,20 @@ static void dnotify() {
 	close(fd);
 }
 
+static void pipes() {
+	int pipe_ends[2];
+	if (::pipe(pipe_ends) != 0) {
+		_exit(1);
+	}
+
+	fcntl(pipe_ends[0], F_GETPIPE_SZ);
+	fcntl(pipe_ends[1], F_SETPIPE_SZ, 5192);
+	fcntl(pipe_ends[1], F_GETPIPE_SZ);
+
+	close(pipe_ends[0]);
+	close(pipe_ends[1]);
+}
+
 int main() {
 
 	(void)fcntl(0, F_DUPFD, 5);
@@ -139,4 +153,6 @@ int main() {
 	leases();
 
 	dnotify();
+
+	pipes();
 }

@@ -134,10 +134,39 @@ public: // functions
 
 	std::string str() const override;
 
-protected: // data
+protected: // functions
 
 	void processValue(const Tracee &) override {}
 	void updateData(const Tracee &) override {}
+};
+
+/// A simple `int` in/out/return value parameter.
+class CLUES_API IntValue :
+		public ValueParameter {
+public: // functions
+
+	explicit IntValue(
+		const ItemType type,
+		const std::string_view short_name,
+		const std::string_view long_name) :
+			ValueParameter{type, short_name, long_name} {
+	}
+
+	int value() const {
+		return m_value;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_value = valueAs<int>();
+	}
+
+protected: // data
+
+	int m_value = 0;
 };
 
 } // end ns

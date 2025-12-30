@@ -21,6 +21,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	io_signal_arg.reset();
 	lease_arg.reset();
 	dnotify_arg.reset();
+	pipe_size_arg.reset();
 
 	/* retvals */
 	ret_dupfd.reset();
@@ -29,6 +30,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	ret_owner.reset();
 	ret_io_signal.reset();
 	ret_lease.reset();
+	ret_pipe_size.reset();
 }
 
 bool FcntlSystemCall::check2ndPass() {
@@ -115,6 +117,19 @@ bool FcntlSystemCall::check2ndPass() {
 		} case Oper::NOTIFY: {
 			dnotify_arg.emplace(item::DNotifySettings{});
 			setExtraParameter(*dnotify_arg);
+			break;
+		} case Oper::SETPIPE_SZ: {
+			pipe_size_arg.emplace(item::IntValue{ItemType::PARAM_IN,
+					"pipe size", "pipe buffer size"});
+			setExtraParameter(*pipe_size_arg);
+			/*
+			 * SET and GET both return the current pipe size
+			 */
+			[[fallthrough]];
+		} case Oper::GETPIPE_SZ: {
+			ret_pipe_size.emplace(item::IntValue{ItemType::RETVAL,
+					"pipe size", "pipe buffer size"});
+			setNewReturnItem(*ret_pipe_size);
 			break;
 		} default: {
 			/* keep defaults */

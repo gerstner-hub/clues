@@ -77,6 +77,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::SignalNumber> io_signal_arg; ///< for SETSIG
 	std::optional<item::LeaseType> lease_arg; ///< for SETLEASE
 	std::optional<item::DNotifySettings> dnotify_arg; ///< for NOTIFY
+	std::optional<item::IntValue> pipe_size_arg; ///< for SETPIPE_SZ
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases
@@ -86,6 +87,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::FileDescOwner> ret_owner; ///< for GET_OWNER
 	std::optional<item::SignalNumber> ret_io_signal; ///< for GETSIG
 	std::optional<item::LeaseType> ret_lease; ///< for GETLEASE
+	std::optional<item::IntValue> ret_pipe_size; ///< for GETPIPE_SZ, SETPIPE_SZ
 
 protected: // functions
 
