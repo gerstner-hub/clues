@@ -459,4 +459,23 @@ std::string DNotifySettings::str() const {
 	return strip_back(ss.str()) + ")";
 }
 
+void FileSealSettings::processValue(const Tracee &) {
+	m_flags = cosmos::FileDescriptor::SealFlags{valueAs<unsigned int>()};
+}
+
+std::string FileSealSettings::str() const {
+	const auto flags = m_flags.raw();
+	std::stringstream ss;
+
+	ss << "0x" << std::hex << flags << " (";
+
+	add_bitflag(F_SEAL_SEAL);
+	add_bitflag(F_SEAL_SHRINK);
+	add_bitflag(F_SEAL_GROW);
+	add_bitflag(F_SEAL_WRITE);
+	add_bitflag(F_SEAL_FUTURE_WRITE);
+
+	return strip_back(ss.str()) + ")";
+}
+
 } // end ns

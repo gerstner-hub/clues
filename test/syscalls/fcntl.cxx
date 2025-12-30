@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
 #include <signal.h>
+#include <sys/mman.h>
 
 static void flockCntl() {
 	char path[] = "/tmp/fcntl_syscall_test.XXXXXX";
@@ -124,6 +125,14 @@ static void pipes() {
 	close(pipe_ends[1]);
 }
 
+static void seals() {
+	int fd = ::memfd_create("mymemfd", MFD_CLOEXEC|MFD_ALLOW_SEALING);
+	fcntl(fd, F_ADD_SEALS, F_SEAL_SHRINK);
+	fcntl(fd, F_GET_SEALS);
+	fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL);
+	close(fd);
+}
+
 int main() {
 
 	(void)fcntl(0, F_DUPFD, 5);
@@ -155,4 +164,6 @@ int main() {
 	dnotify();
 
 	pipes();
+
+	seals();
 }

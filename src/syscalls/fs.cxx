@@ -22,6 +22,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	lease_arg.reset();
 	dnotify_arg.reset();
 	pipe_size_arg.reset();
+	file_seals_arg.reset();
 
 	/* retvals */
 	ret_dupfd.reset();
@@ -31,6 +32,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	ret_io_signal.reset();
 	ret_lease.reset();
 	ret_pipe_size.reset();
+	ret_seals.reset();
 }
 
 bool FcntlSystemCall::check2ndPass() {
@@ -130,6 +132,14 @@ bool FcntlSystemCall::check2ndPass() {
 			ret_pipe_size.emplace(item::IntValue{ItemType::RETVAL,
 					"pipe size", "pipe buffer size"});
 			setNewReturnItem(*ret_pipe_size);
+			break;
+		} case Oper::ADD_SEALS: {
+			file_seals_arg.emplace(item::FileSealSettings{ItemType::PARAM_IN});
+			setExtraParameter(*file_seals_arg);
+			break;
+		} case Oper::GET_SEALS: {
+			ret_seals.emplace(item::FileSealSettings{ItemType::RETVAL});
+			setNewReturnItem(*ret_seals);
 			break;
 		} default: {
 			/* keep defaults */

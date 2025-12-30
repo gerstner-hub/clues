@@ -397,4 +397,29 @@ protected: // data
 	Settings m_settings;
 };
 
+/// The enum value used with file seal operations in the `fcntl()` system call.
+class CLUES_API FileSealSettings :
+		public ValueParameter {
+public: // functions
+
+	explicit FileSealSettings(const ItemType type) :
+			ValueParameter{type, "flags", "seal flags"} {
+	}
+
+	/// Returns the currently stored SealFlags
+	auto flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	cosmos::FileDescriptor::SealFlags m_flags;
+};
+
 } // end ns
