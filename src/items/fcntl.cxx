@@ -124,7 +124,7 @@ std::string FLockParameter::str() const {
 		}
 	};
 
-	return cosmos::sprintf("{l_type=%s, l_whence=%s, l_start=%ld, l_len=%ld, l_pid=%d}",
+	return cosmos::sprintf("{l_type=%s, l_whence=%s, l_start=%jd, l_len=%jd, l_pid=%d}",
 			lock_type_to_str(cosmos::to_integral(m_lock->type())).data(),
 			whence_str(cosmos::to_integral(m_lock->whence())),
 			m_lock->start(),
