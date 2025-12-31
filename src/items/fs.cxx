@@ -27,6 +27,23 @@ std::string FileDescriptor::str() const {
 }
 
 std::string OpenFlagsValue::str() const {
+	/*
+	 * When compling for x86_64 then O_LARGEFILE is defined to 0, which won't work
+	 * when tracing 32-bit emulation binaries. The purpose of O_LARGEFILE being
+	 * defined to 0 on x86_64 is to avoid passing the bit to `open()`
+	 * unnecessarily.
+	 * For tracing, in the context of this compilation unit, it should be okay to
+	 * redefine the value to the actual O_LARGEFILE bit to make it visible when
+	 * tracing 32-bit emulation binaries.
+	 * Hopefully the value is the same on other architectures as well.
+	 */
+#if O_LARGEFILE == 0
+#	define RESTORE_LARGEFILE
+#	pragma push_macro("O_LARGEFILE")
+#	undef O_LARGEFILE
+#	define O_LARGEFILE 0100000
+#endif
+
 	BITFLAGS_FORMAT_START(m_flags);
 
 	switch (m_mode) {
@@ -37,9 +54,6 @@ std::string OpenFlagsValue::str() const {
 	}
 
 	BITFLAGS_STREAM() << '|';
-
-	// TODO: O_LARGEFILE might not be visible for 32-bit emulation
-	// binaries, since on x86_64 the constant is set to 0.
 
 	BITFLAGS_ADD(O_APPEND);
 	BITFLAGS_ADD(O_ASYNC);
@@ -60,6 +74,9 @@ std::string OpenFlagsValue::str() const {
 	BITFLAGS_ADD(O_TRUNC);
 
 	return BITFLAGS_STR();
+#ifdef RESTORE_LARGEFILE
+#	pragma pop_macro("O_LARGEFILE")
+#endif
 }
 
 void OpenFlagsValue::processValue(const Tracee &) {
