@@ -9,12 +9,12 @@
 #include <cosmos/fs/types.hxx>
 
 // clues
-#include <clues/items/files.hxx>
+#include <clues/Tracee.hxx>
+#include <clues/items/fs.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
 #include <clues/syscalls/fs.hxx>
 #include <clues/sysnrs/generic.hxx>
-#include <clues/Tracee.hxx>
 
 namespace clues::item {
 
