@@ -23,6 +23,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	dnotify_arg.reset();
 	pipe_size_arg.reset();
 	file_seals_arg.reset();
+	rw_hint_arg.reset();
 
 	/* retvals */
 	ret_dupfd.reset();
@@ -141,8 +142,18 @@ bool FcntlSystemCall::check2ndPass() {
 			ret_seals.emplace(item::FileSealSettings{ItemType::RETVAL});
 			setNewReturnItem(*ret_seals);
 			break;
+		} case Oper::GET_RW_HINT: [[fallthrough]];
+		  case Oper::GET_FILE_RW_HINT: {
+			rw_hint_arg.emplace(item::ReadWriteHint{ItemType::PARAM_OUT});
+			setExtraParameter(*rw_hint_arg);
+			break;
+		} case Oper::SET_RW_HINT: [[fallthrough]];
+		  case Oper::SET_FILE_RW_HINT: {
+			rw_hint_arg.emplace(item::ReadWriteHint{ItemType::PARAM_IN});
+			setExtraParameter(*rw_hint_arg);
+			break;
 		} default: {
-			/* keep defaults */
+			/* unknown operation? keep defaults */
 			break;
 		}
 	}

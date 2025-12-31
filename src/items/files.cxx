@@ -427,7 +427,6 @@ void ExtFileDescOwner::processValue(const Tracee &proc) {
 	if (!proc.readStruct(m_val, *m_owner->raw())) {
 		m_owner.reset();
 	}
-	
 }
 
 void LeaseType::processValue(const Tracee &) {
@@ -476,6 +475,30 @@ std::string FileSealSettings::str() const {
 	add_bitflag(F_SEAL_FUTURE_WRITE);
 
 	return strip_back(ss.str()) + ")";
+}
+
+void ReadWriteHint::processValue(const Tracee &proc) {
+	/*
+	 * this is used for both input and output parameter variants
+	 */
+	uint64_t native_hint;
+	if (proc.readStruct(m_val, native_hint)) {
+		m_hint = Hint{native_hint};
+	} else {
+		m_hint = Hint::LIFE_NOT_SET;
+	}
+}
+
+std::string ReadWriteHint::str() const {
+	switch (cosmos::to_integral(m_hint)) {
+		CASE_ENUM_TO_STR(RWH_WRITE_LIFE_NOT_SET);
+		CASE_ENUM_TO_STR(RWH_WRITE_LIFE_NONE);
+		CASE_ENUM_TO_STR(RWH_WRITE_LIFE_SHORT);
+		CASE_ENUM_TO_STR(RWH_WRITE_LIFE_MEDIUM);
+		CASE_ENUM_TO_STR(RWH_WRITE_LIFE_LONG);
+		CASE_ENUM_TO_STR(RWH_WRITE_LIFE_EXTREME);
+		default: return "???";
+	}
 }
 
 } // end ns

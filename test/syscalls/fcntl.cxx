@@ -1,9 +1,10 @@
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/syscall.h>
 #include <signal.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 static void flockCntl() {
 	char path[] = "/tmp/fcntl_syscall_test.XXXXXX";
@@ -133,6 +134,31 @@ static void seals() {
 	close(fd);
 }
 
+static void rwhints() {
+	int pipe_ends[2];
+	if (::pipe(pipe_ends) != 0) {
+		_exit(1);
+	}
+
+	int fd = pipe_ends[0];
+
+	uint64_t hint = -1;
+
+	fcntl(fd, F_GET_RW_HINT, &hint);
+	hint = RWH_WRITE_LIFE_SHORT;
+	fcntl(fd, F_SET_RW_HINT, &hint);
+	/*
+	 * the following two seem unimplemented in the kernel for unknown
+	 * reasons
+	 */
+	fcntl(fd, F_GET_FILE_RW_HINT, &hint);
+	hint = RWH_WRITE_LIFE_MEDIUM;
+	fcntl(fd, F_SET_FILE_RW_HINT, &hint);
+
+	close(pipe_ends[0]);
+	close(pipe_ends[1]);
+}
+
 int main() {
 
 	(void)fcntl(0, F_DUPFD, 5);
@@ -166,4 +192,6 @@ int main() {
 	pipes();
 
 	seals();
+
+	rwhints();
 }

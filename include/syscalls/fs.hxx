@@ -79,6 +79,7 @@ struct CLUES_API FcntlSystemCall :
 	std::optional<item::DNotifySettings> dnotify_arg; ///< for NOTIFY
 	std::optional<item::IntValue> pipe_size_arg; ///< for SETPIPE_SZ
 	std::optional<item::FileSealSettings> file_seals_arg; ///< for ADD_SEALS
+	std::optional<item::ReadWriteHint> rw_hint_arg; ///< for {GET,SET}_[FILE]_RW_HINT
 
 	/* context dependent return values */
 	std::optional<item::SuccessResult> result; ///< for all other cases

@@ -422,4 +422,39 @@ protected: // data
 	cosmos::FileDescriptor::SealFlags m_flags;
 };
 
+/// The read/write hint value used with R/W hint operations in the `fcntl()` system call.
+/**
+ * The `fcntl()` data type used for this is an `uint64_t*`. For some reason a
+ * 64-bit wide integer has been selected here, for which the usual `int`
+ * values do not provide enough space on 32-bit platforms. Probably for this
+ * reason both GET and SET operations operate on pointers to `uint64_t` passed
+ * in a second `fcntl()` argument.
+ **/
+class CLUES_API ReadWriteHint :
+		public SystemCallItem {
+public: // types
+
+	using Hint = cosmos::FileDescriptor::ReadWriteHint;
+
+public: // functions
+
+	explicit ReadWriteHint(const ItemType type) :
+			SystemCallItem{type, "rw_hint", "read/write lifetime hint"} {
+	}
+
+	Hint hint() const {
+		return m_hint;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected:
+
+	Hint m_hint = Hint::LIFE_NOT_SET;
+};
+
 } // end ns
