@@ -16,15 +16,11 @@
 namespace clues::item {
 
 std::string FileDescFlagsValue::str() const {
-	std::stringstream ss;
+	BITFLAGS_FORMAT_START(m_flags);
 
-	ss << "0x" << std::hex << m_flags.raw() << " (";
+	BITFLAGS_ADD(FD_CLOEXEC);
 
-	const auto flags = m_flags.raw();
-
-	add_bitflag(FD_CLOEXEC);
-
-	return strip_back(ss.str()) + ")";
+	return BITFLAGS_STR();
 }
 
 void FileDescFlagsValue::processValue(const Tracee &) {
@@ -196,20 +192,17 @@ void DNotifySettings::processValue(const Tracee &) {
 }
 
 std::string DNotifySettings::str() const {
-	const auto flags = m_settings.raw();
-	std::stringstream ss;
+	BITFLAGS_FORMAT_START(m_settings);
 
-	ss << "0x" << std::hex << flags << " (";
+	BITFLAGS_ADD(DN_ACCESS);
+	BITFLAGS_ADD(DN_MODIFY);
+	BITFLAGS_ADD(DN_CREATE);
+	BITFLAGS_ADD(DN_DELETE);
+	BITFLAGS_ADD(DN_RENAME);
+	BITFLAGS_ADD(DN_ATTRIB);
+	BITFLAGS_ADD(DN_MULTISHOT);
 
-	add_bitflag(DN_ACCESS);
-	add_bitflag(DN_MODIFY);
-	add_bitflag(DN_CREATE);
-	add_bitflag(DN_DELETE);
-	add_bitflag(DN_RENAME);
-	add_bitflag(DN_ATTRIB);
-	add_bitflag(DN_MULTISHOT);
-
-	return strip_back(ss.str()) + ")";
+	return BITFLAGS_STR();
 }
 
 void FileSealSettings::processValue(const Tracee &) {
@@ -217,18 +210,15 @@ void FileSealSettings::processValue(const Tracee &) {
 }
 
 std::string FileSealSettings::str() const {
-	const auto flags = m_flags.raw();
-	std::stringstream ss;
+	BITFLAGS_FORMAT_START(m_flags);
 
-	ss << "0x" << std::hex << flags << " (";
+	BITFLAGS_ADD(F_SEAL_SEAL);
+	BITFLAGS_ADD(F_SEAL_SHRINK);
+	BITFLAGS_ADD(F_SEAL_GROW);
+	BITFLAGS_ADD(F_SEAL_WRITE);
+	BITFLAGS_ADD(F_SEAL_FUTURE_WRITE);
 
-	add_bitflag(F_SEAL_SEAL);
-	add_bitflag(F_SEAL_SHRINK);
-	add_bitflag(F_SEAL_GROW);
-	add_bitflag(F_SEAL_WRITE);
-	add_bitflag(F_SEAL_FUTURE_WRITE);
-
-	return strip_back(ss.str()) + ")";
+	return BITFLAGS_STR();
 }
 
 void ReadWriteHint::processValue(const Tracee &proc) {

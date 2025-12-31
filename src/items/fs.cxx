@@ -27,43 +27,39 @@ std::string FileDescriptor::str() const {
 }
 
 std::string OpenFlagsValue::str() const {
-	std::stringstream ss;
-
-	const auto flags = valueAs<int>();
-
-	ss << "0x" << std::hex << flags << " (";
+	BITFLAGS_FORMAT_START(m_flags);
 
 	switch (m_mode) {
-		default: ss << "O_???"; break;
-		case cosmos::OpenMode::READ_ONLY: ss << "O_RDONLY"; break;
-		case cosmos::OpenMode::WRITE_ONLY: ss << "O_WRONLY"; break;
-		case cosmos::OpenMode::READ_WRITE: ss << "O_RDWR"; break;
+		default: BITFLAGS_STREAM() << "O_???"; break;
+		case cosmos::OpenMode::READ_ONLY:  BITFLAGS_STREAM() << "O_RDONLY"; break;
+		case cosmos::OpenMode::WRITE_ONLY: BITFLAGS_STREAM() << "O_WRONLY"; break;
+		case cosmos::OpenMode::READ_WRITE: BITFLAGS_STREAM() << "O_RDWR"; break;
 	}
 
-	ss << '|';
+	BITFLAGS_STREAM() << '|';
 
 	// TODO: O_LARGEFILE might not be visible for 32-bit emulation
 	// binaries, since on x86_64 the constant is set to 0.
 
-	add_bitflag(O_APPEND);
-	add_bitflag(O_ASYNC);
-	add_bitflag(O_CLOEXEC);
-	add_bitflag(O_CREAT);
-	add_bitflag(O_DIRECT);
-	add_bitflag(O_DIRECTORY);
-	add_bitflag(O_DSYNC);
-	add_bitflag(O_EXCL);
-	add_bitflag(O_LARGEFILE);
-	add_bitflag(O_NOATIME);
-	add_bitflag(O_NOCTTY);
-	add_bitflag(O_NOFOLLOW);
-	add_bitflag(O_NONBLOCK);
-	add_bitflag(O_PATH);
-	add_bitflag(O_SYNC);
-	add_bitflag(O_TMPFILE);
-	add_bitflag(O_TRUNC);
+	BITFLAGS_ADD(O_APPEND);
+	BITFLAGS_ADD(O_ASYNC);
+	BITFLAGS_ADD(O_CLOEXEC);
+	BITFLAGS_ADD(O_CREAT);
+	BITFLAGS_ADD(O_DIRECT);
+	BITFLAGS_ADD(O_DIRECTORY);
+	BITFLAGS_ADD(O_DSYNC);
+	BITFLAGS_ADD(O_EXCL);
+	BITFLAGS_ADD(O_LARGEFILE);
+	BITFLAGS_ADD(O_NOATIME);
+	BITFLAGS_ADD(O_NOCTTY);
+	BITFLAGS_ADD(O_NOFOLLOW);
+	BITFLAGS_ADD(O_NONBLOCK);
+	BITFLAGS_ADD(O_PATH);
+	BITFLAGS_ADD(O_SYNC);
+	BITFLAGS_ADD(O_TMPFILE);
+	BITFLAGS_ADD(O_TRUNC);
 
-	return strip_back(ss.str()) + ")";
+	return BITFLAGS_STR();
 }
 
 void OpenFlagsValue::processValue(const Tracee &) {
@@ -74,25 +70,21 @@ void OpenFlagsValue::processValue(const Tracee &) {
 }
 
 std::string AtFlagsValue::str() const {
-	std::stringstream ss;
+	BITFLAGS_FORMAT_START(m_flags);
 
-	ss << "0x" << std::hex << m_flags.raw() << " (";
-
-	const auto flags = m_flags.raw();
-
-	add_bitflag(AT_EMPTY_PATH);
-	add_bitflag(AT_SYMLINK_NOFOLLOW);
-	add_bitflag(AT_SYMLINK_FOLLOW);
+	BITFLAGS_ADD(AT_EMPTY_PATH);
+	BITFLAGS_ADD(AT_SYMLINK_NOFOLLOW);
+	BITFLAGS_ADD(AT_SYMLINK_FOLLOW);
 	/*
 	 * some AT_ constants share the same values and are system call
 	 * dependent, thus we need to check the context here.
 	 */
 	if (m_call->callNr() == SystemCallNr::UNLINKAT)
-		add_bitflag(AT_REMOVEDIR);
+		BITFLAGS_ADD(AT_REMOVEDIR);
 	if (m_call->callNr() == SystemCallNr::FACCESSAT2)
-		add_bitflag(AT_EACCESS);
+		BITFLAGS_ADD(AT_EACCESS);
 
-	return strip_back(ss.str()) + ")";
+	return BITFLAGS_STR();
 }
 
 void AtFlagsValue::processValue(const Tracee&) {
