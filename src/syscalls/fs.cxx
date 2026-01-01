@@ -75,6 +75,9 @@ bool FcntlSystemCall::check2ndPass() {
 		} case Oper::SETLK: [[fallthrough]];
 		  case Oper::SETLKW: [[fallthrough]];
 		  case Oper::GETLK: [[fallthrough]];
+		  case Oper::SETLK64: [[fallthrough]];
+		  case Oper::SETLKW64: [[fallthrough]];
+		  case Oper::GETLK64: [[fallthrough]];
 		  case Oper::OFD_SETLK: [[fallthrough]];
 		  case Oper::OFD_SETLKW: [[fallthrough]];
 		  case Oper::OFD_GETLK: {

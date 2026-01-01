@@ -35,6 +35,35 @@ std::string FcntlOperation::str() const {
 	if (!m_op) {
 		throw cosmos::RuntimeError{"no operation stored"};
 	}
+	/*
+	 * the F_*LK definitions exported by userspace headers are not helpful
+	 * for our tracer context at all. They have different values on 64-bit
+	 * targets than on 32-bit targets without _FILE_OFFSET_BITS=64 than on
+	 * 32-bit targets with the latter define. They don't relate to what
+	 * happens on system call level at all.
+	 *
+	 * Thus get rid of the macro definitions and use our own literal
+	 * constants.
+	 */
+#pragma push_macro("F_GETLK")
+#pragma push_macro("F_GETLK64")
+#pragma push_macro("F_SETLK")
+#pragma push_macro("F_SETLK64")
+#pragma push_macro("F_SETLKW")
+#pragma push_macro("F_SETLKW64")
+#undef F_GETLK
+#undef F_SETLK
+#undef F_SETLKW
+#undef F_GETLK64
+#undef F_SETLK64
+#undef F_SETLKW64
+
+	constexpr int F_GETLK    = cosmos::to_integral(Oper::GETLK);
+	constexpr int F_GETLK64  = cosmos::to_integral(Oper::GETLK64);
+	constexpr int F_SETLK    = cosmos::to_integral(Oper::SETLK);
+	constexpr int F_SETLK64  = cosmos::to_integral(Oper::SETLK64);
+	constexpr int F_SETLKW   = cosmos::to_integral(Oper::SETLKW);
+	constexpr int F_SETLKW64 = cosmos::to_integral(Oper::SETLKW64);
 
 	switch (cosmos::to_integral(*m_op)) {
 		CASE_ENUM_TO_STR(F_DUPFD);
@@ -43,9 +72,12 @@ std::string FcntlOperation::str() const {
 		CASE_ENUM_TO_STR(F_SETFD);
 		CASE_ENUM_TO_STR(F_GETFL);
 		CASE_ENUM_TO_STR(F_SETFL);
+		CASE_ENUM_TO_STR(F_GETLK);
 		CASE_ENUM_TO_STR(F_SETLK);
 		CASE_ENUM_TO_STR(F_SETLKW);
-		CASE_ENUM_TO_STR(F_GETLK);
+		CASE_ENUM_TO_STR(F_GETLK64);
+		CASE_ENUM_TO_STR(F_SETLK64);
+		CASE_ENUM_TO_STR(F_SETLKW64);
 		CASE_ENUM_TO_STR(F_OFD_SETLK);
 		CASE_ENUM_TO_STR(F_OFD_SETLKW);
 		CASE_ENUM_TO_STR(F_OFD_GETLK);
@@ -68,6 +100,12 @@ std::string FcntlOperation::str() const {
 		CASE_ENUM_TO_STR(F_SET_FILE_RW_HINT);
 		default: return "???";
 	}
+#pragma pop_macro("F_GETLK")
+#pragma pop_macro("F_GETLK64")
+#pragma pop_macro("F_SETLK")
+#pragma pop_macro("F_SETLK64")
+#pragma pop_macro("F_SETLKW")
+#pragma pop_macro("F_SETLKW64")
 }
 
 void FLockParameter::processValue(const Tracee &proc) {
@@ -75,6 +113,51 @@ void FLockParameter::processValue(const Tracee &proc) {
 	 * process it */
 
 	// TODO: handle flock32 case on i386 & friends
+	/*
+	 * The situation with fcntl() and fcntl64() is quite messy. fcntl64()
+	 * only exists on 32-bit platforms like I386. The difference is only
+	 * in the data structure used with the GETLK and SETLK operations.
+	 *
+	 * On 64-bit targets, with the single `fcntl()` system call these
+	 * operations always take `struct flock` with 64-bit wide `off_t`. On
+	 * i386 `fcntl()` takes `struct flock` with 32-bit wide `off_t`
+	 * fields. `fcntl64` on the other hand can support both, the 32-bit
+	 * wide and 64-bit wide `off_t` fields. To differentiate this,
+	 * additional operations GETLK64, SETLK64 and SETLKW64 have been
+	 * introduced. These operations are _only_ supported in `fcntl64` on
+	 * 32-bit targets.
+	 *
+	 * To make things worse, the definition of F_GETLK and F_GETLK64 we
+	 * get from the userspace headers depends on the following factors:
+	 *
+	 * - in a 64-bit compilation environment they're both always
+	 *   set to 5,6,7, because `fcntl()` always uses struct
+	 *   flock64 with 64-bit wide `off_t.
+	 * - in a 32-bit compilation environment with
+	 *   _FILE_OFFSET_BITS=64 they're always set to 12,13,14 so
+	 *   that fcntl64 with struct flock64 is always used transparently.
+	 * - in a 32-bit compilation environment _without_
+	 *   _FILE_OFFSET_BITS=64 F_GETLK & friends are set to 5,6,7
+	 *   and F_GETLK64 & friends are set to 12,13,14 allowing to
+	 *   call regular fcntl() with 32-bit wide `off_t` and fcntl64() with
+	 *   32-bit or 64-bit `off_t`.
+	 *
+	 * Thus these constants are a moving target depending on a lot
+	 * of factors, which gets even more worse when a 64-bit tracer
+	 * is looking at a 32-bit emulation binary. For this reason we are
+	 * using our own literal values in FcntlOperation::Oper for the LK
+	 * family of operations.
+	 *
+	 * The rule of thumb when looking at the raw system call is that on
+	 * 64-bit targets either LK operation is always expecting a 64-bit
+	 * `off_t` struct. On a 32-bit target like I386 the literal values
+	 * 5,6,7 are always expecting a 32-bit `off_t` and the literal values
+	 * 12,13,14 are always expecting a 64-bit `off_t` (and are only
+	 * supported in `fcntl64()`).
+	 *
+	 * The OFD_ locks are not affected by this, they always use a 64-bit
+	 * wide `off_t` in `struct flock`.
+	 */
 
 	clues::flock64 lock;
 

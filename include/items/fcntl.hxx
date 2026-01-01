@@ -28,9 +28,18 @@ public: // types
 		SETFD         = F_SETFD,
 		GETFL         = F_GETFL,
 		SETFL         = F_SETFL,
-		SETLK         = F_SETLK,
-		SETLKW        = F_SETLKW,
-		GETLK         = F_GETLK,
+		/*
+		 * We cannot rely on the preprocessor definitions exported by
+		 * the userspace headers due to a lot of magic going on. See
+		 * the implementation of the str() method and FLockParameter
+		 * for more details.
+		 */
+		GETLK         = 5, /* F_GETLK */
+		SETLK         = 6, /* F_SETLK */
+		SETLKW        = 7, /* F_SETLKW */
+		GETLK64       = 12, /* F_GETLK64 */
+		SETLK64       = 13, /* F_SETLK64 */
+		SETLKW64      = 14, /* F_SETLKW64 */
 		OFD_SETLK     = F_OFD_SETLK,
 		OFD_SETLKW    = F_OFD_SETLKW,
 		OFD_GETLK     = F_OFD_GETLK,

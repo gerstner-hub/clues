@@ -152,7 +152,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::EXECVE:          return new_sys<ExecveSystemCall>();
 	case SystemCallNr::EXECVEAT:        return new_sys<ExecveAtSystemCall>();
 	case SystemCallNr::EXIT_GROUP:      return new_sys<ExitGroupSystemCall>();
-	case SystemCallNr::FCNTL:           return new_sys<FcntlSystemCall>();
+	case SystemCallNr::FCNTL: [[fallthrough]];
+	case SystemCallNr::FCNTL64:         return new_sys<FcntlSystemCall>(nr);
 	case SystemCallNr::FORK:            return new_sys<ForkSystemCall>();
 	case SystemCallNr::FSTAT:           return new_sys<FstatSystemCall>();
 	case SystemCallNr::FUTEX:           return new_sys<FutexSystemCall>();

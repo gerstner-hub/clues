@@ -33,6 +33,51 @@ static void flockCntl() {
 
 	fcntl(fd, F_SETLK, &fl);
 
+	fl.l_type = F_UNLCK;
+	fcntl(fd, F_SETLK, &fl);
+
+#ifdef __i386__
+
+	/*
+	 * extra tests with struct flock using 32-bit off_t, we need to invoke
+	 * the raw system calls here and use literal values for get the 32-bit
+	 * variant (we're compiled with _FILE_OFFSET_BITS=64).
+	 */
+
+#define F_GETLK32 5
+#define F_SETLK32 6
+#define F_SETLKW32 7
+
+	struct flock32 {
+		short l_type;
+		short l_whence;
+		uint32_t l_start;
+		uint32_t l_len;
+		pid_t l_pid;
+	};
+
+	struct flock32 fl32;
+	fl32.l_type = F_RDLCK;
+	fl32.l_whence = SEEK_SET;
+	fl32.l_start = 20;
+	fl32.l_len = 200;
+	fl32.l_pid = 815;
+
+	syscall(SYS_fcntl, fd, F_SETLK32, &fl32);
+	syscall(SYS_fcntl, fd, F_GETLK32, &fl32);
+	fl32.l_type = F_UNLCK;
+	syscall(SYS_fcntl, fd, F_SETLKW32, &fl32);
+
+	fl32.l_type = F_RDLCK;
+	syscall(SYS_fcntl64, fd, F_SETLK32, &fl32);
+	syscall(SYS_fcntl64, fd, F_GETLK32, &fl32);
+	fl32.l_type = F_UNLCK;
+	syscall(SYS_fcntl64, fd, F_SETLKW32, &fl32);
+
+	// should fail with 32-bit fcntl()
+	syscall(SYS_fcntl, fd, F_GETLK, &fl);
+#endif
+
 	close(fd);
 	unlink(path);
 }

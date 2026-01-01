@@ -57,8 +57,8 @@ struct Faccessat2SystemCall :
 struct CLUES_API FcntlSystemCall :
 		public SystemCall {
 
-	FcntlSystemCall() :
-			SystemCall{SystemCallNr::FCNTL} {
+	explicit FcntlSystemCall(const SystemCallNr sysnr) :
+			SystemCall{sysnr} {
 		// these two parameters are always present
 		setParameters(fd, operation);
 	}
