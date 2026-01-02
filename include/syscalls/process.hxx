@@ -5,6 +5,7 @@
 #include <clues/items/fs.hxx>
 #include <clues/items/items.hxx>
 #include <clues/items/prctl.hxx>
+#include <clues/items/process.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
 
@@ -59,11 +60,11 @@ struct ForkSystemCall :
 
 	ForkSystemCall() :
 			SystemCall{SystemCallNr::FORK},
-			pid{"pid", "child pid"} {
+			pid{ItemType::RETVAL, "child pid"} {
 		setReturnItem(pid);
 	}
 
-	item::ReturnValue pid;
+	item::ProcessIDItem pid;
 };
 
 struct ExecveSystemCall :
