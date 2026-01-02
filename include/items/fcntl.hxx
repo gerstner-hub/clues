@@ -6,6 +6,7 @@
 // cosmos
 #include <cosmos/fs/FileDescriptor.hxx>
 #include <cosmos/fs/FileLock.hxx>
+#include <cosmos/utils.hxx>
 
 // clues
 #include <clues/items/items.hxx>
@@ -70,6 +71,11 @@ public: // functions
 
 	Oper operation() const {
 		return *m_op;
+	}
+
+	/// Returns whether the operation is one of the LK64 operations.
+	bool isLock64() const {
+		return cosmos::in_list(*m_op, {Oper::GETLK64, Oper::SETLK64, Oper::SETLKW64});
 	}
 
 protected: // functions

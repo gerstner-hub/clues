@@ -108,11 +108,46 @@ std::string FcntlOperation::str() const {
 #pragma pop_macro("F_SETLKW64")
 }
 
+namespace kernel {
+
+/*
+ * to make things around `struct flock` still more confusing, there are
+ * different alignments of the structure between i386 and x86_64 regarding
+ * `struct flock64`. When compiled in 64-bit context it has 32 bytes
+ * size, when compiled in 32-bit context it has 24 bytes size. For this reason
+ * we need a dedicated compat flock64 when tracing 32-bit emulation binaries.
+ * 
+ * see also `compat_flock64` in include/linux/compat.h of the kernel sources.
+ */
+template <typename OFF_T>
+struct flock_t {
+	short l_type;
+	short l_whence;
+	OFF_T l_start;
+	OFF_T l_len;
+	pid_t l_pid;
+} __attribute__((packed));
+
+// 32-bit `off_t` structure which is only used on I386 with fcntl() or fcntl64() when passing GETLK/SETLK/SETLKW
+using flock32 = flock_t<int32_t>;
+// 64-bit `off_t` structure which is only used on I386 with fcntl64() when passing GETLK64/SETLK64/SETLKW64
+using flock64_i386 = flock_t<int64_t>;
+
+// 64-bit `off_t` structure which is used on 64-bit targets with flock()
+struct flock64 {
+	short l_type;
+	short l_whence;
+	uint64_t l_start;
+	uint64_t l_len;
+	pid_t l_pid;
+};
+
+} // end ns kernel
+
 void FLockParameter::processValue(const Tracee &proc) {
 	/* all flock related operations provide input, so unconditionally
 	 * process it */
 
-	// TODO: handle flock32 case on i386 & friends
 	/*
 	 * The situation with fcntl() and fcntl64() is quite messy. fcntl64()
 	 * only exists on 32-bit platforms like I386. The difference is only
@@ -159,22 +194,71 @@ void FLockParameter::processValue(const Tracee &proc) {
 	 * wide `off_t` in `struct flock`.
 	 */
 
-	clues::flock64 lock;
+	cosmos::DeferGuard reset_lock{[this]() { m_lock.reset(); }};
 
-	if (!proc.readStruct(m_val, lock)) {
-		m_lock.reset();
+	auto assign_data = [this, &reset_lock](const auto &lock) {
+		if (!m_lock) {
+			m_lock = std::make_optional<cosmos::FileLock>(cosmos::FileLock::Type::READ_LOCK);
+		}
+
+		m_lock->l_type = lock.l_type;
+		m_lock->l_whence = lock.l_whence;
+		m_lock->l_start = lock.l_start;
+		m_lock->l_len = lock.l_len;
+		m_lock->l_pid = lock.l_pid;
+		reset_lock.disarm();
+	};
+
+	auto fetch_lock = [this, assign_data, &proc]<typename FLOCK>() {
+		FLOCK lock;
+		if (proc.readStruct(m_val, lock)) {
+			assign_data(lock);
+		}
+	};
+
+	if (const auto abi = m_call->abi(); abi != ABI::I386) {
+		/*
+		 * if the target ABI is 64-bit based then it's easy, simply
+		 * use the only supported native 64-bit struct
+		 */
+		fetch_lock.operator()<kernel::flock64>();
 		return;
 	}
 
-	if (!m_lock) {
-		m_lock = std::make_optional<cosmos::FileLock>(cosmos::FileLock::Type::READ_LOCK);
+	// on i386 things get complicated
+
+	if (const auto sysnr = m_call->callNr(); sysnr != SystemCallNr::FCNTL64) {
+		/*
+		 * for the old fcntl() call only the 32-bit `off_t` structure
+		 * is supported. This one also has no alignment issues if the
+		 * target is a 32-bit emulation binary.
+		 */
+		fetch_lock.operator()<kernel::flock32>();
+		return;
 	}
 
-	m_lock->l_type = lock.l_type;
-	m_lock->l_whence = lock.l_whence;
-	m_lock->l_start = lock.l_start;
-	m_lock->l_len = lock.l_len;
-	m_lock->l_pid = lock.l_pid;
+	/*
+	 * for the fcntl64() call both 32-bit and 64-bit `off_t` are supported
+	 * depending on the value found in the `op` parameter. Also we need to
+	 * consider alignment for flock64 in case we're dealing with an
+	 * emulation binary.
+	 */
+	auto fcntl_sys = dynamic_cast<const FcntlSystemCall*>(m_call);
+	if (!fcntl_sys)
+		// alien system call?
+		return;
+
+	if (fcntl_sys->operation.isLock64()) {
+		// either native 32-bit tracing or the target is a 32-bit
+		// emulation binary, we need i386 alignment in both cases
+		fetch_lock.operator()<kernel::flock64_i386>();
+	} else {
+		/*
+		 * with the 32-bit flock no alignment issues should occur when
+		 * tracing emulation binaries
+		 */
+		fetch_lock.operator()<kernel::flock32>();
+	}
 }
 
 void FLockParameter::updateData(const Tracee &proc) {

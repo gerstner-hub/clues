@@ -80,25 +80,4 @@ struct rlimit64 {
 
 } // end extern "C"
 
-/// Basic flock data structure for use with 32-bit and 64-bit off_t types.
-/*
- * On modern Linux only 64-bit OFF_T is used anymore, but on legacy ABIs like
- * I386 there exist two fcntl() system calls whic use two different `struct
- * flock`, one with a 32-bit `off_t` and one with a 64-bit `off_t`.
- *
- * The specializations flock32 and flock64 below are used with system call
- * tracing depending on context.
- */
-template <typename OFF_T>
-struct flock_t {
-	short l_type;
-	short l_whence;
-	OFF_T l_start;
-	OFF_T l_len;
-	pid_t l_pid;
-};
-
-using flock32 = flock_t<uint32_t>;
-using flock64 = flock_t<uint64_t>;
-
 } // end ns
