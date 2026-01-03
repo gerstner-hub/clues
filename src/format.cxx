@@ -3,9 +3,11 @@
 
 // Linux
 #include <sys/resource.h> // *rlimit()
+#include <sys/time.h>
 
 // cosmos
 #include <cosmos/formatting.hxx>
+#include <cosmos/fs/filesystem.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/string.hxx>
 #include <cosmos/utils.hxx>
@@ -438,6 +440,20 @@ std::string file_mode_numeric(const cosmos::FileModeBits mode) {
 	}
 
 	return static_cast<std::string>(cosmos::OctNum{mode.raw(), 3});
+}
+
+std::string device_id(const cosmos::DeviceID id) {
+	const auto [major, minor] = cosmos::fs::split_device_id(id);
+	return cosmos::sprintf("%s:%s",
+		static_cast<std::string>(cosmos::HexNum{cosmos::to_integral(major), 2}).c_str(),
+		static_cast<std::string>(cosmos::HexNum{cosmos::to_integral(minor), 2}).c_str());
+
+}
+
+std::string timespec(const struct timespec &ts) {
+	std::stringstream ss;
+	ss << "{" << ts.tv_sec << "s, " << ts.tv_nsec << "ns}";
+	return ss.str();
 }
 
 } // end ns

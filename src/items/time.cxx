@@ -5,6 +5,7 @@
 #include <cosmos/formatting.hxx>
 
 // clues
+#include <clues/format.hxx>
 #include <clues/items/time.hxx>
 #include <clues/macros.h>
 #include <clues/Tracee.hxx>
@@ -25,11 +26,7 @@ std::string TimespecParameter::str() const {
 	if (!m_timespec)
 		return "NULL";
 
-	std::stringstream ss;
-
-	ss << "{" << m_timespec->tv_sec << "s, " << m_timespec->tv_nsec << "ns}";
-
-	return ss.str();
+	return format::timespec(*m_timespec);
 }
 
 std::string ClockID::str() const {

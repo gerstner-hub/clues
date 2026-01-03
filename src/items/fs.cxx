@@ -139,10 +139,10 @@ std::string AccessModeParameter::str() const {
 }
 
 std::string FileModeParameter::str() const {
-	const auto mode = cosmos::FileModeBits{valueAs<mode_t>()};
+	const auto mode = cosmos::FileMode{valueAs<cosmos::ModeT>()};
 
-	return format::file_mode_numeric(mode) +
-		" (" + format::file_mode_symbolic(mode) + ")";
+	return format::file_mode_numeric(mode.mask()) +
+		" (" + mode.symbolic() + ")";
 }
 
 std::string StatParameter::str() const {
@@ -152,10 +152,25 @@ std::string StatParameter::str() const {
 
 	std::stringstream ss;
 
+	const auto st = *m_stat->raw();
+	using namespace std::string_literals;
+
 	ss
 		<< "{"
-		<< "st_size=" << m_stat->st_size << ", "
-		<< "st_dev=" << m_stat->st_dev
+		<< "size=" << st.st_size << ", "
+		<< "ino=" << st.st_ino << ", "
+		<< "dev=" << format::device_id(m_stat->device()) << ", "
+		<< "mode=" << format::file_type(m_stat->type()) << "|" << format::file_mode_numeric(m_stat->mode().mask()) << ", "
+		<< "nlink=" << m_stat->numLinks() << ", "
+		<< "uid=" << st.st_uid << ", "
+		<< "gid=" << st.st_gid << ", "
+		<< (m_stat->type().isCharDev() || m_stat->type().isBlockDev() ? "rdev="s + format::device_id(m_stat->representedDevice()) + ", " : "")
+		<< "size=" << st.st_size << ", "
+		<< "blksize=" << st.st_blksize << ", "
+		<< "blocks=" << st.st_blocks << ", "
+		<< "atim=" << format::timespec(m_stat->accessTime()) << ", "
+		<< "mtim=" << format::timespec(m_stat->modTime()) << ", "
+		<< "ctim=" << format::timespec(m_stat->statusTime())
 		<< "}";
 
 	return ss.str();
@@ -163,10 +178,10 @@ std::string StatParameter::str() const {
 
 void StatParameter::updateData(const Tracee &proc) {
 	if (!m_stat) {
-		m_stat = std::make_optional<struct stat>({});
+		m_stat = std::make_optional<cosmos::FileStatus>();
 	}
 
-	if (!proc.readStruct(m_val, *m_stat)) {
+	if (!proc.readStruct(m_val, *m_stat->raw())) {
 		m_stat.reset();
 	}
 }

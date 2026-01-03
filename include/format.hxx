@@ -12,6 +12,8 @@
 // clues
 #include <clues/dso_export.h>
 
+struct timespec;
+
 namespace cosmos {
 	class SigInfo;
 }
@@ -74,6 +76,12 @@ CLUES_API std::string file_mode_numeric(const cosmos::FileModeBits mode);
 
 /// Returns a string like "rwxr-xr-x" corresponding to `mode`.
 CLUES_API std::string file_mode_symbolic(const cosmos::FileModeBits mode);
+
+/// returns a string like "0x10:0x05" corresponding to `id`.
+CLUES_API std::string device_id(const cosmos::DeviceID id);
+
+/// returns a string like {10s 500ns} corresponding to `ts`.
+CLUES_API std::string timespec(const struct timespec &ts);
 
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);

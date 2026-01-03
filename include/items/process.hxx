@@ -16,7 +16,7 @@ public: // functions
 			SystemCallItem{type, "pid", desc} {
 	}
 
-	const auto pid() const { return m_pid; }
+	auto pid() const { return m_pid; }
 
 protected: // functions
 

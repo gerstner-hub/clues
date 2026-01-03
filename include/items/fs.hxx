@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 
 // cosmos
+#include <cosmos/fs/FileStatus.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -40,7 +41,19 @@ public: // functions
 
 	std::string str() const override;
 
+	auto fd() const {
+		return m_fd;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_fd = valueAs<cosmos::FileNum>();
+	}
+
 protected: // data
+
+	cosmos::FileNum m_fd;
 
 	const AtSemantics m_at_semantics = AtSemantics{false};
 };
@@ -142,13 +155,17 @@ public: // functions
 
 	std::string str() const override;
 
+	const auto& status() const {
+		return *m_stat;
+	}
+
 protected: // functions
 
 	void updateData(const Tracee &proc) override;
 
 protected: // data
 
-	std::optional<struct ::stat> m_stat;
+	std::optional<cosmos::FileStatus> m_stat;
 };
 
 /// A range of directory entries from getdents().

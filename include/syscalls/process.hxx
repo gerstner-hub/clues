@@ -1,13 +1,14 @@
 #pragma once
 
 // clues
-#include <clues/SystemCall.hxx>
+#include <clues/items/creds.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/items/items.hxx>
 #include <clues/items/prctl.hxx>
 #include <clues/items/process.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
+#include <clues/SystemCall.hxx>
 
 namespace clues {
 
@@ -106,18 +107,19 @@ struct ExecveAtSystemCall :
 	item::SuccessResult result;
 };
 
-template <SystemCallNr GETXID_SYS_NR>
+template <SystemCallNr GETXID_SYS_NR, typename ID_T>
 struct GetXIdSystemCall :
 		public SystemCall {
 
 	GetXIdSystemCall() :
 			SystemCall{GETXID_SYS_NR},
-			id{getShortLabel(), getLongLabel()} {
+			id{ItemType::RETVAL, getShortLabel(), getLongLabel()} {
 		setReturnItem(id);
 	}
 
 
-	item::ReturnValue id;
+	/// the UserID or GroupID
+	ID_T id;
 
 protected:
 
@@ -142,10 +144,10 @@ protected:
 	}
 };
 
-using GetUidSystemCall = GetXIdSystemCall<SystemCallNr::GETUID>;
-using GetEuidSystemCall = GetXIdSystemCall<SystemCallNr::GETEUID>;
-using GetGidSystemCall = GetXIdSystemCall<SystemCallNr::GETGID>;
-using GetEgidSystemCall = GetXIdSystemCall<SystemCallNr::GETEGID>;
+using GetUidSystemCall = GetXIdSystemCall<SystemCallNr::GETUID, item::UserID>;
+using GetEuidSystemCall = GetXIdSystemCall<SystemCallNr::GETEUID, item::UserID>;
+using GetGidSystemCall = GetXIdSystemCall<SystemCallNr::GETGID, item::GroupID>;
+using GetEgidSystemCall = GetXIdSystemCall<SystemCallNr::GETEGID, item::GroupID>;
 
 // TODO: properly implement options, rusage
 struct Wait4SystemCall :
