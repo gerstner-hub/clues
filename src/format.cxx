@@ -5,6 +5,7 @@
 #include <sys/resource.h> // *rlimit()
 
 // cosmos
+#include <cosmos/formatting.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/string.hxx>
 #include <cosmos/utils.hxx>
@@ -416,6 +417,27 @@ std::string event(const cosmos::ChildState &state) {
 	}
 
 	return ss.str();
+}
+
+std::string_view file_type(const cosmos::FileType type) {
+	switch (cosmos::to_integral(type.raw())) {
+		CASE_ENUM_TO_STR(S_IFSOCK);
+		CASE_ENUM_TO_STR(S_IFLNK);
+		CASE_ENUM_TO_STR(S_IFREG);
+		CASE_ENUM_TO_STR(S_IFBLK);
+		CASE_ENUM_TO_STR(S_IFDIR);
+		CASE_ENUM_TO_STR(S_IFCHR);
+		CASE_ENUM_TO_STR(S_IFIFO);
+		default: return "???";
+	}
+}
+
+std::string file_mode_numeric(const cosmos::FileModeBits mode) {
+	if (mode.none()) {
+		return "0";
+	}
+
+	return static_cast<std::string>(cosmos::OctNum{mode.raw(), 3});
 }
 
 } // end ns

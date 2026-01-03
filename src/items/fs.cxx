@@ -7,13 +7,14 @@
 #include <cosmos/string.hxx>
 
 // clues
-#include <clues/Tracee.hxx>
+#include <clues/format.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
+#include <clues/private/utils.hxx>
 #include <clues/syscalls/fs.hxx>
 #include <clues/sysnrs/generic.hxx>
-#include <clues/private/utils.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues::item {
 
@@ -138,44 +139,10 @@ std::string AccessModeParameter::str() const {
 }
 
 std::string FileModeParameter::str() const {
-	std::stringstream ss;
-
 	const auto mode = cosmos::FileModeBits{valueAs<mode_t>()};
 
-	if (mode.none()) {
-		return "0";
-	}
-
-	auto chk_mode_flag = [&ss, mode](const cosmos::FileModeBit bit, const char *ch) {
-		if (mode[bit])
-			ss << ch;
-		else
-			ss << '-';
-	};
-
-	ss << "0" << std::oct << valueAs<mode_t>() << " (";
-
-	using cosmos::FileModeBit;
-
-	// TODO: proper output format for the special bits like `ls` does it
-	// is to replace the `x` either by lower case or upper case `s` or
-	// `t`, depending on whether `x` is also set, or not.
-	chk_mode_flag(FileModeBit::SETUID,      "s");
-	chk_mode_flag(FileModeBit::SETGID,      "S");
-	chk_mode_flag(FileModeBit::STICKY,      "t");
-	chk_mode_flag(FileModeBit::OWNER_READ,  "r");
-	chk_mode_flag(FileModeBit::OWNER_WRITE, "w");
-	chk_mode_flag(FileModeBit::OWNER_EXEC,  "x");
-	chk_mode_flag(FileModeBit::GROUP_READ,  "r");
-	chk_mode_flag(FileModeBit::GROUP_WRITE, "w");
-	chk_mode_flag(FileModeBit::GROUP_EXEC,  "x");
-	chk_mode_flag(FileModeBit::OTHER_READ,  "r");
-	chk_mode_flag(FileModeBit::OTHER_WRITE, "w");
-	chk_mode_flag(FileModeBit::OTHER_EXEC,  "x");
-
-	ss << ")";
-
-	return ss.str();
+	return format::file_mode_numeric(mode) +
+		" (" + format::file_mode_symbolic(mode) + ")";
 }
 
 std::string StatParameter::str() const {

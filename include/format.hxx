@@ -66,6 +66,15 @@ CLUES_API std::string poll_events(const cosmos::PollEvents events);
 /// Returns a string like "10 (SIGINT) {si_code=<code> si_timerid=<id> ...}"
 CLUES_API std::string sig_info(const cosmos::SigInfo &info);
 
+/// Returns a literal string like "S_IFSOCK" matching `type`.
+CLUES_API std::string_view file_type(const cosmos::FileType type);
+
+/// Returns an octal number string like "0644" corresponding to `mode`.
+CLUES_API std::string file_mode_numeric(const cosmos::FileModeBits mode);
+
+/// Returns a string like "rwxr-xr-x" corresponding to `mode`.
+CLUES_API std::string file_mode_symbolic(const cosmos::FileModeBits mode);
+
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);
 
