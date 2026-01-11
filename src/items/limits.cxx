@@ -5,10 +5,11 @@
 // clues
 #include <clues/format.hxx>
 #include <clues/items/limits.hxx>
-#include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
+// private
+#include <clues/private/kernel/other.hxx>
 
 namespace clues::item {
 

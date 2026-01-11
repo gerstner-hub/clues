@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <climits>
 
-#include <clues/kernel_structs.hxx>
+#include <clues/private/kernel/other.hxx>
 #include <iostream>
 
 int main() {
