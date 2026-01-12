@@ -450,9 +450,13 @@ std::string device_id(const cosmos::DeviceID id) {
 
 }
 
-std::string timespec(const struct timespec &ts) {
+std::string timespec(const struct timespec &ts, const bool only_secs) {
 	std::stringstream ss;
-	ss << "{" << ts.tv_sec << "s, " << ts.tv_nsec << "ns}";
+	if (only_secs) {
+		ss << ts.tv_sec << "s";
+	} else {
+		ss << "{" << ts.tv_sec << "s, " << ts.tv_nsec << "ns}";
+	}
 	return ss.str();
 }
 

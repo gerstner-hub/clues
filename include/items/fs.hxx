@@ -163,6 +163,15 @@ protected: // functions
 
 	void updateData(const Tracee &proc) override;
 
+	/// Whether this is related to one of the OLDSTAT family of system calls.
+	bool isOldStat() const;
+
+	/// Whether this is related to one of the STAT64 family of system calls.
+	bool isStat64() const;
+
+	/// Whether this is related to one of the STAT family of system calls.
+	bool isRegularStat() const;
+
 protected: // data
 
 	std::optional<cosmos::FileStatus> m_stat;

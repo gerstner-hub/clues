@@ -155,8 +155,9 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::FCNTL:           [[fallthrough]];
 	case SystemCallNr::FCNTL64:         return new_sys<FcntlSystemCall>(nr);
 	case SystemCallNr::FORK:            return new_sys<ForkSystemCall>();
+	case SystemCallNr::OLDFSTAT:        [[fallthrough]];
 	case SystemCallNr::FSTAT:           [[fallthrough]];
-	case SystemCallNr::FSTAT64:         return new_sys<FstatSystemCall>();
+	case SystemCallNr::FSTAT64:         return new_sys<FstatSystemCall>(nr);
 	case SystemCallNr::FUTEX:           return new_sys<FutexSystemCall>();
 	case SystemCallNr::GETDENTS:        return new_sys<GetdentsSystemCall>();
 	case SystemCallNr::GETEGID:         return new_sys<GetEgidSystemCall>();
@@ -168,7 +169,9 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::GET_ROBUST_LIST: return new_sys<GetRobustListSystemCall>();
 	case SystemCallNr::GETUID:          return new_sys<GetUidSystemCall>();
 	case SystemCallNr::IOCTL:           return new_sys<IoctlSystemCall>();
-	case SystemCallNr::LSTAT:           return new_sys<LstatSystemCall>();
+	case SystemCallNr::LSTAT:           [[fallthrough]];
+	case SystemCallNr::LSTAT64:         [[fallthrough]];
+	case SystemCallNr::OLDLSTAT:        return new_sys<LstatSystemCall>(nr);
 	case SystemCallNr::MMAP:            return new_sys<MmapSystemCall>();
 	case SystemCallNr::MPROTECT:        return new_sys<MprotectSystemCall>();
 	case SystemCallNr::MUNMAP:          return new_sys<MunmapSystemCall>();
@@ -181,7 +184,9 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::RT_SIGPROCMASK:  return new_sys<SigprocmaskSystemCall>();
 	case SystemCallNr::SET_ROBUST_LIST: return new_sys<SetRobustListSystemCall>();
 	case SystemCallNr::SET_TID_ADDRESS: return new_sys<SetTidAddressSystemCall>();
-	case SystemCallNr::STAT:            return new_sys<StatSystemCall>();
+	case SystemCallNr::OLDSTAT:         [[fallthrough]];
+	case SystemCallNr::STAT64:          [[fallthrough]];
+	case SystemCallNr::STAT:            return new_sys<StatSystemCall>(nr);
 	case SystemCallNr::TGKILL:          return new_sys<TgKillSystemCall>();
 	case SystemCallNr::WAIT4:           return new_sys<Wait4SystemCall>();
 	case SystemCallNr::WRITE:           return new_sys<WriteSystemCall>();

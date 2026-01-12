@@ -104,8 +104,8 @@ protected: // functions
 struct FstatSystemCall :
 		public SystemCall {
 
-	FstatSystemCall() :
-			SystemCall{SystemCallNr::FSTAT} {
+	explicit FstatSystemCall(const SystemCallNr nr) :
+			SystemCall{nr} {
 		setReturnItem(result);
 		setParameters(fd, statbuf);
 	}
@@ -116,12 +116,11 @@ struct FstatSystemCall :
 };
 
 // This covers both stat() and lstat(), they only differ in semantics
-template <SystemCallNr STAT_SYS_NR>
 struct StatSystemCallT :
 		public SystemCall {
 
-	StatSystemCallT() :
-			SystemCall{STAT_SYS_NR},
+	explicit StatSystemCallT(const SystemCallNr nr) :
+			SystemCall{nr},
 			path{"path"} {
 		setReturnItem(result);
 		setParameters(path, statbuf);
@@ -132,8 +131,8 @@ struct StatSystemCallT :
 	item::SuccessResult result;
 };
 
-using StatSystemCall = StatSystemCallT<SystemCallNr::STAT>;
-using LstatSystemCall = StatSystemCallT<SystemCallNr::LSTAT>;
+using StatSystemCall = StatSystemCallT;
+using LstatSystemCall = StatSystemCallT;
 
 struct OpenSystemCall :
 		public SystemCall {

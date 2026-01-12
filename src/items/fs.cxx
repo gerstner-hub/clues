@@ -2,6 +2,8 @@
 #include <sstream>
 
 // cosmos
+#include <cosmos/compiler.hxx>
+#include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/fs/types.hxx>
 #include <cosmos/string.hxx>
@@ -15,6 +17,8 @@
 #include <clues/syscalls/fs.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
+// private
+#include <clues/private/kernel/stat.hxx>
 
 namespace clues::item {
 
@@ -155,6 +159,8 @@ std::string StatParameter::str() const {
 	const auto st = *m_stat->raw();
 	using namespace std::string_literals;
 
+	const auto is_old_stat = isOldStat();
+
 	ss
 		<< "{"
 		<< "size=" << st.st_size << ", "
@@ -165,15 +171,55 @@ std::string StatParameter::str() const {
 		<< "uid=" << st.st_uid << ", "
 		<< "gid=" << st.st_gid << ", "
 		<< (m_stat->type().isCharDev() || m_stat->type().isBlockDev() ? "rdev="s + format::device_id(m_stat->representedDevice()) + ", " : "")
-		<< "size=" << st.st_size << ", "
-		<< "blksize=" << st.st_blksize << ", "
-		<< "blocks=" << st.st_blocks << ", "
-		<< "atim=" << format::timespec(m_stat->accessTime()) << ", "
-		<< "mtim=" << format::timespec(m_stat->modTime()) << ", "
-		<< "ctim=" << format::timespec(m_stat->statusTime())
+		<< "size=" << st.st_size << ", ";
+
+	if (!is_old_stat) {
+		/*
+		 * these fields do not exist in oldstat syscalls
+		 */
+		ss << "blksize=" << st.st_blksize << ", " << "blocks=" << st.st_blocks << ", ";
+	}
+
+	ss
+		<< "atim=" << format::timespec(m_stat->accessTime(), is_old_stat) << ", "
+		<< "mtim=" << format::timespec(m_stat->modTime(), is_old_stat) << ", "
+		<< "ctim=" << format::timespec(m_stat->statusTime(), is_old_stat)
 		<< "}";
 
 	return ss.str();
+}
+
+bool StatParameter::isOldStat() const {
+	using enum SystemCallNr;
+
+	switch (m_call->callNr()) {
+		case OLDSTAT: [[fallthrough]];
+		case OLDLSTAT: [[fallthrough]];
+		case OLDFSTAT: return true;
+		default: return false;
+	}
+}
+
+bool StatParameter::isStat64() const {
+	using enum SystemCallNr;
+
+	switch (m_call->callNr()) {
+		case STAT64: [[fallthrough]];
+		case LSTAT64: [[fallthrough]];
+		case FSTAT64: return true;
+		default: return false;
+	}
+}
+
+bool StatParameter::isRegularStat() const {
+	using enum SystemCallNr;
+
+	switch (m_call->callNr()) {
+		case SystemCallNr::STAT: [[fallthrough]];
+		case SystemCallNr::LSTAT: [[fallthrough]];
+		case SystemCallNr::FSTAT: return true;
+		default: return false;
+	}
 }
 
 void StatParameter::updateData(const Tracee &proc) {
@@ -181,8 +227,96 @@ void StatParameter::updateData(const Tracee &proc) {
 		m_stat = std::make_optional<cosmos::FileStatus>();
 	}
 
-	if (!proc.readStruct(m_val, *m_stat->raw())) {
-		m_stat.reset();
+#if defined(COSMOS_X86_64) || defined(COSMOS_AARCH64)
+	/*
+	 * on 64-bit platforms life is simple, we directly copy the data into
+	 * a cosmos::FileStatus struct.
+	 * make sure the raw kernel data structure `stat64` matches `struct
+	 * stat` and then copy everything into it.
+	 */
+	static_assert(sizeof(*m_stat->raw()) == sizeof(stat64));
+#else
+	/*
+	 * on modern 32-bit we can still do the same for the stat64 family of
+	 * system calls, but only if the tracer is 32-bit as well...
+	 */
+	static_assert(sizeof(*m_stat->raw()) == sizeof(stat32_64));
+#endif
+
+	auto fetch_and_copy = [this, &proc]<typename STAT>() {
+		STAT st;
+		if (!proc.readStruct(m_val, st)) {
+			m_stat.reset();
+			return;
+		}
+
+		auto &raw = *m_stat->raw();
+		/*
+		 * to be layout agnostic simply copy over field-by-field
+		 */
+		raw.st_dev = st.dev;
+		raw.st_ino = st.ino;
+		raw.st_mode = st.mode;
+		raw.st_nlink = st.nlink;
+		raw.st_uid = st.uid;
+		raw.st_gid = st.gid;
+		raw.st_rdev = st.rdev;
+		raw.st_size = st.size;
+
+		if constexpr (std::is_same_v<STAT, old_kernel_stat>) {
+			/* the old kernel stat is missing a lot of stuff */
+			raw.st_atim.tv_sec = st.atime;
+			raw.st_atim.tv_nsec = 0;
+			raw.st_mtim.tv_sec = st.mtime;
+			raw.st_mtim.tv_nsec = 0;
+			raw.st_ctim.tv_sec = st.ctime;
+			raw.st_ctim.tv_nsec = 0;
+			raw.st_blksize = 0;
+			raw.st_blocks = 0;
+		}
+
+		if constexpr (!std::is_same_v<STAT, old_kernel_stat>) {
+			raw.st_blksize = st.blksize;
+			raw.st_blocks = st.blocks;
+			raw.st_atim.tv_sec = st.atime;
+			raw.st_atim.tv_nsec = st.atime_nsec;
+			raw.st_mtim.tv_sec = st.mtime;
+			raw.st_mtim.tv_nsec = st.mtime_nsec;
+			raw.st_ctim.tv_sec = st.ctime;
+			raw.st_ctim.tv_nsec = st.ctime_nsec;
+		}
+	};
+
+	switch (m_call->abi()) {
+		case ABI::X86_64: [[fallthrough]];
+		case ABI::X32:    [[fallthrough]];
+		case ABI::AARCH64: {
+			/*
+			 * there's only one type of stat
+			 * directly read into libcosmos's FileStatus
+			 */
+			if (!proc.readStruct(m_val, *m_stat->raw())) {
+				m_stat.reset();
+			}
+			break;
+		} case ABI::I386: {
+			/*
+			 * on 32-bit platforms things get messy, we have three
+			 * different possibilities using three different data
+			 * structures.
+			 */
+			if (isOldStat()) {
+				fetch_and_copy.operator()<old_kernel_stat>();
+			} else if (isStat64()) {
+				fetch_and_copy.operator()<stat32_64>();
+			} else if (isRegularStat()) {
+				// regular 32-bit stat
+				fetch_and_copy.operator()<stat32>();
+			} else {
+				throw cosmos::RuntimeError{"unexpected syscall nr for struct stat"};
+			}
+			break;
+		} default: throw cosmos::RuntimeError{"unexpected ABI for struct stat"};
 	}
 }
 
