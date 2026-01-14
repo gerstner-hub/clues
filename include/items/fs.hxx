@@ -96,7 +96,8 @@ public: // types
 		SYMLINK_NOFOLLOW = AT_SYMLINK_NOFOLLOW,
 		SYMLINK_FOLLOW   = AT_SYMLINK_FOLLOW,
 		REMOVEDIR        = AT_REMOVEDIR, ///< only used with unlinkat
-		EACCESS          = AT_EACCESS ///< only used with faccessat2
+		EACCESS          = AT_EACCESS, ///< only used with faccessat2
+		NO_AUTOMOUNT     = AT_NO_AUTOMOUNT, ///< only used with fstatat()
 	};
 
 	using AtFlags = cosmos::BitMask<AtFlag>;

@@ -105,6 +105,8 @@ std::string AtFlagsValue::str() const {
 		BITFLAGS_ADD(AT_REMOVEDIR);
 	if (m_call->callNr() == SystemCallNr::FACCESSAT2)
 		BITFLAGS_ADD(AT_EACCESS);
+	if (m_call->callNr() == SystemCallNr::FSTATAT64 || m_call->callNr() == SystemCallNr::NEWFSTATAT)
+		BITFLAGS_ADD(AT_NO_AUTOMOUNT);
 
 	return BITFLAGS_STR();
 }
@@ -206,7 +208,8 @@ bool StatParameter::isStat64() const {
 	switch (m_call->callNr()) {
 		case STAT64: [[fallthrough]];
 		case LSTAT64: [[fallthrough]];
-		case FSTAT64: return true;
+		case FSTAT64: [[fallthrough]];
+		case FSTATAT64: return true;
 		default: return false;
 	}
 }

@@ -115,6 +115,23 @@ struct FstatSystemCall :
 	item::SuccessResult result;
 };
 
+struct FstatAtSystemCall :
+		public SystemCall {
+
+	explicit FstatAtSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+       			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}} {
+		setReturnItem(result);
+		setParameters(dirfd, path, statbuf, flags);
+	}
+
+	item::FileDescriptor dirfd;
+	item::StringData path;
+	item::StatParameter statbuf;
+	item::AtFlagsValue flags;
+	item::SuccessResult result;
+};
+
 // This covers both stat() and lstat(), they only differ in semantics
 struct StatSystemCallT :
 		public SystemCall {

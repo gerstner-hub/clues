@@ -158,6 +158,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::OLDFSTAT:        [[fallthrough]];
 	case SystemCallNr::FSTAT:           [[fallthrough]];
 	case SystemCallNr::FSTAT64:         return new_sys<FstatSystemCall>(nr);
+	case SystemCallNr::FSTATAT64:       [[fallthrough]];
+	case SystemCallNr::NEWFSTATAT:      return new_sys<FstatAtSystemCall>(nr);
 	case SystemCallNr::FUTEX:           return new_sys<FutexSystemCall>();
 	case SystemCallNr::GETDENTS:        return new_sys<GetdentsSystemCall>();
 	case SystemCallNr::GETEGID:         return new_sys<GetEgidSystemCall>();

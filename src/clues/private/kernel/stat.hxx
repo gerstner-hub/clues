@@ -48,6 +48,8 @@ struct stat32 {
 /**
  * According to the kernel sources this is based on some Glibc data structure
  * which is the reason for the weird padding.
+ *
+ * This one is also used in `fstatat64()`.
  **/
 struct stat32_64 {
         uint64_t dev;

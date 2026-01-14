@@ -112,14 +112,17 @@ int main() {
 	struct stat st;
 	constexpr const char *PATH{"/etc/os-release"};
 	const auto fd = ::open(PATH, O_RDONLY);
+	const auto dirfd = ::open("/etc", O_RDONLY|O_DIRECTORY);
 
-	if (fd == -1)
+	if (fd == -1 || dirfd == -1)
 		return 1;
 
 	// default stat as provided by glibc
 	::stat(PATH, &st);
 	::lstat(PATH, &st);
 	::fstat(fd, &st);
+	::fstatat(fd, "", &st, AT_EMPTY_PATH);
+	::fstatat(dirfd, "os-release", &st, AT_NO_AUTOMOUNT);
 
 #ifdef __i386__
 	/*
@@ -146,12 +149,19 @@ int main() {
 	::syscall(SYS_lstat64, PATH, &st32_64);
 	::syscall(SYS_fstat64, fd, &st32_64);
 
+	::syscall(SYS_fstatat64, fd, "", &st, AT_EMPTY_PATH);
+	::syscall(SYS_fstatat64, dirfd, "os-release", &st, AT_NO_AUTOMOUNT);
+
 	::close(dev_fd);
 #else
 	struct kernel::stat64 st64;
 	::syscall(SYS_stat, PATH, &st64);
 	::syscall(SYS_lstat, PATH, &st64);
 	::syscall(SYS_fstat, fd, &st64);
+
+	::syscall(SYS_newfstatat, fd, "", &st, AT_EMPTY_PATH);
+	::syscall(SYS_newfstatat, dirfd, "os-release", &st, AT_NO_AUTOMOUNT);
 #endif
 	::close(fd);
+	::close(dirfd);
 }
