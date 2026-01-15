@@ -70,6 +70,15 @@ class TableParser:
         "x86-64":   "arch/x86/entry/syscalls/syscall_64.tbl",
     }
 
+    # These a preprocessor defines found in system headers that clash with
+    # system call constants we generated. These will be changed to avoid the
+    # clash.
+    CLASHING_DEFINES = {
+        "FUTEX_REQUEUE",
+        "FUTEX_WAIT",
+        "FUTEX_WAKE",
+    }
+
     def __init__(self, kernel_root, archs):
 
         self.kernel_root = kernel_root
@@ -230,6 +239,12 @@ class SourceGenerator:
     def getEnumIdent(self, abi):
         return f"SystemCallNr{abi.upper()}"
 
+    def getSyscallIdent(self, syscall):
+        label = syscall.upper()
+        if label in self.parser.CLASHING_DEFINES:
+            label = f"_{label}"
+        return label
+
     def abi2Enum(self, abi):
         """Converts an ABI string as used in this script into the
         corresponding clues::ABI enum value."""
@@ -388,7 +403,7 @@ class SourceGenerator:
 
         for syscall in sorted(syscalls.keys()):
             abis = syscalls[syscall]
-            ident = syscall.upper()
+            ident = self.getSyscallIdent(syscall)
             ident += ","
             fd.write(f"\t{ident.ljust(max_label+1)} // {' '.join(abis)}\n")
         fd.write("};\n\n")
@@ -417,7 +432,8 @@ class SourceGenerator:
 
         fd.write("const std::map<std::string_view, SystemCallNr> SYSTEM_CALL_NAME_MAP = {\n")
         for syscall in sorted(syscalls.keys()):
-            fd.write(f"\t{{std::string_view{{\"{syscall}\"}}, SystemCallNr::{syscall.upper()}}},\n")
+            ident = self.getSyscallIdent(syscall)
+            fd.write(f"\t{{std::string_view{{\"{syscall}\"}}, SystemCallNr::{ident}}},\n")
         fd.write("};\n\n")
 
         fd.write("} // end ns\n")
@@ -453,7 +469,7 @@ class SourceGenerator:
         first = True
 
         for entry in sorted(table, key=lambda el: el.nr):
-            ident = entry.name.upper()
+            ident = self.getSyscallIdent(entry.name)
             comment = self.getABIEntryComment(abi, entry)
             if comment:
                 comment = f" // {comment}"
@@ -506,7 +522,7 @@ class SourceGenerator:
         fd.write("\tswitch (nr) {\n")
         fd.write("\t\tdefault: return SystemCallNr::UNKNOWN;\n")
         for entry in sorted(table, key=lambda el: el.nr):
-            ident = entry.name.upper()
+            ident = self.getSyscallIdent(entry.name)
             fd.write(f"\t\tcase {enum_ident}::{ident}: return clues::SystemCallNr::{ident};\n")
         fd.write("\t}\n")
         fd.write("}\n\n")
