@@ -278,7 +278,9 @@ void TermTracer::printParsOnEntry(std::ostream &trace, const SystemCall::Paramet
 	const auto &last = pars.back();
 
 	for (const auto &par: pars) {
-		if (!par->isIn()) {
+		if (clues::item::is_unused_par(*par)) {
+			continue;
+		} else if (!par->isIn()) {
 			// non-input parameter encountered, stop output
 			break;
 		}
@@ -299,7 +301,9 @@ void TermTracer::printParsOnExit(std::ostream &trace, const SystemCall::Paramete
 	bool seen_non_input = false;
 
 	for (const auto &par: pars) {
-		if (!seen_non_input) {
+		if (clues::item::is_unused_par(*par)) {
+			continue;
+		} else if (!seen_non_input) {
 		       	if (par->isIn()) {
 				// this was already printed during entry
 				continue;

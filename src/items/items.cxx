@@ -16,5 +16,6 @@ std::string GenericPointerValue::str() const {
 	return ss.str();
 }
 
+SystemCallItem unused = SystemCallItem{ItemType::PARAM_IN, "unused", "unused parameter"};
 
 } // end ns

@@ -40,6 +40,8 @@ void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) 
 	const uint64_t *args = info.entryInfo()->args();
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
+		if (item::is_unused_par(par))
+			continue;
 		par.fill(proc, Word{static_cast<Word>(args[numpar])});
 	}
 }

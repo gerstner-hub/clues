@@ -175,4 +175,17 @@ protected: // data
 using IntValue = IntValueT<int>;
 using Uint32Value = IntValueT<uint32_t>;
 
+///! Represents an unused system call parameter.
+/**
+ * In some system calls a certain system call parameter needs to be skipped
+ * (e.g. in futex()). Since the SystemCall uses a `std::vector` to access
+ * parameters linearly we need a way to identify unused parameters. This
+ * global instance is used for this purpose.
+ **/
+CLUES_API extern SystemCallItem unused;
+
+inline bool is_unused_par(const SystemCallItem &item) {
+	return &item == &unused;
+}
+
 } // end ns
