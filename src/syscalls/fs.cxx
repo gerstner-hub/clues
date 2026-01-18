@@ -38,7 +38,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 
 bool FcntlSystemCall::check2ndPass() {
 	auto setExtraParameter = [this](auto &extra_par) {
-		setParameters(extra_par);
+		addParameters(extra_par);
 	};
 	auto setNewReturnItem = [this](auto &new_ret) {
 		result.reset();

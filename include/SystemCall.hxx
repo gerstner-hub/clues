@@ -146,13 +146,19 @@ protected: // data
 		}
 	}
 
-	void setParameters() {}
+	void addParameters() {}
 
 	template <typename T, typename... Targs>
-	void setParameters(T &par, Targs& ...rest) {
+	void addParameters(T &par, Targs& ...rest) {
 		par.setSystemCall(*this);
 		m_pars.push_back(&par);
-		setParameters(rest...);
+		addParameters(rest...);
+	}
+
+	template <typename... Targs>
+	void setParameters(Targs& ...args) {
+		m_pars.clear();
+		addParameters(args...);
 	}
 
 	/// Check whether a second pass needs to be made processing parameters.

@@ -48,7 +48,7 @@ struct Faccessat2SystemCall :
 
 	Faccessat2SystemCall() :
 			FaccessatSystemCall{SystemCallNr::FACCESSAT2} {
-		setParameters(flags);
+		addParameters(flags);
 	}
 
 	item::AtFlagsValue flags;
