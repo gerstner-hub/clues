@@ -1,8 +1,10 @@
 #pragma once
 
 // clues
+#include <clues/items/fs.hxx>
 #include <clues/items/futex.hxx>
 #include <clues/items/items.hxx>
+#include <clues/items/signal.hxx>
 #include <clues/items/time.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
@@ -59,34 +61,69 @@ struct SetRobustListSystemCall :
 	item::SuccessResult result;
 };
 
-/*
- * TODO: this requires context-sensitive interpretation of the non-error
- * returns (the `operation` is the context).
- * TODO: allows some special operations that might need to be considered as
- * well
- */
+/// futex() system call with context-sensitive parameters and return values.
+/**
+ * This is an `ioctl()` style system call or high complexity.
+ **/
 struct FutexSystemCall :
 		public SystemCall {
 
 	FutexSystemCall() :
 			SystemCall{SystemCallNr::FUTEX},
 			futex_addr{"addr", "pointer to futex word"},
-			value{"val"},
-			timeout{"timeout"},
-			requeue_futex{"uaddr2", "requeue futex"},
-			requeue_check_val{"val3", "requeue check value"},
-			num_woken_up{"nwokenup", "processes woken up"} {
-		setReturnItem(num_woken_up);
-		setParameters(futex_addr, operation, value, timeout, requeue_futex, requeue_check_val);
+			result{item::SuccessResult{}} {
+		/*
+		 * minimal default setup, the actual parameters and return
+		 * values are setup in the member functions in a
+		 * context-sensitive manner.
+		 */
+		setReturnItem(*result);
+		setParameters(futex_addr, operation);
 	}
 
+	/* fixed parameters */
+
+	// this points to a 32-bit value which is operated on
 	item::GenericPointerValue futex_addr;
 	item::FutexOperation operation;
-	item::ValueInParameter value;
-	item::TimespecParameter timeout;
-	item::GenericPointerValue requeue_futex;
-	item::ValueInParameter requeue_check_val;
-	item::ReturnValue num_woken_up;
+
+	/* context-dependent parameters */
+
+	///! the value expected as `futex_addr` (WAIT, WAIT_REQUEUE_PI).
+	std::optional<item::Uint32Value> value;
+	///! number of waiters to wake up (WAKE, REQUEUE, CMP_REQUEUE, WAKE_OP, CMD_REQUEUE_PI).
+	std::optional<item::Uint32Value> wake_count;
+	///! signal used for asynchronous notifications (CREATE_FD).
+	std::optional<item::SignalNumber> fd_sig;
+	///! optional relative timeout (WAIT) or absolute timeout (WAIT_BITSET, LOCK_PI, LOCK_PI2).
+	std::optional<item::TimespecParameter> timeout;
+	///! "uaddr2" requeue address (REQUEUE, CMP_REQUEUE, CMP_REQUEUE_PI, WAIT_REQUEUE_PI) or additional futex (WAKE_OP).
+	std::optional<item::GenericPointerValue> futex2_addr;
+	///! "val3" used for comparison in CMP_REQUEUE, CMP_REQUEUE_PI.
+	std::optional<item::Uint32Value> requeue_value;
+	///! "val2", upper limit on waiters to be requeued to addr2 (REQUEUE, CMP_REQUEUE, CMP_REQUEUE_PI).
+	std::optional<item::Uint32Value> requeue_limit;
+	///! "val2", number of waiters at `futex2_addr` to wakeup (WAKE_OP).
+	std::optional<item::Uint32Value> wake_count2;
+	///! instructions for how to perform the wake operation (WAKE_OP).
+	std::optional<item::FutexWakeOperation> wake_op;
+	///! bitset to restrict wait/wakeup (FUTEX_WAIT_BITSET, FUTEX_WAKE_BITSET).
+	std::optional<item::GenericPointerValue> bitset;
+
+	/* context-dependent return values */
+
+	///! number of waiters woken up (WAKE, WAKE_OP).
+	std::optional<item::ReturnValue> num_woken_up;
+	///! new file descriptor (CREATE_FD).
+	std::optional<item::FileDescriptor> new_fd;
+	///! success status (all remaining operations).
+	std::optional<item::SuccessResult> result;
+
+protected: // functions
+
+	bool check2ndPass() override;
+
+	void prepareNewSystemCall() override;
 };
 
 } // end ns
