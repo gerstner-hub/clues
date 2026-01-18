@@ -140,33 +140,39 @@ protected: // functions
 	void updateData(const Tracee &) override {}
 };
 
-/// A simple `int` in/out/return value parameter.
-class CLUES_API IntValue :
+/// A simple scalar in/out/return value parameter.
+template <typename INT, ItemType DEF_ITEM_TYPE = ItemType::PARAM_IN>
+class CLUES_API IntValueT :
 		public ValueParameter {
 public: // functions
 
-	explicit IntValue(
-		const ItemType type,
+	explicit IntValueT(
 		const std::string_view short_name,
-		const std::string_view long_name) :
+		const std::string_view long_name = "",
+		const ItemType type = DEF_ITEM_TYPE) :
 			ValueParameter{type, short_name, long_name} {
 	}
 
-	int value() const {
+	INT value() const {
 		return m_value;
 	}
 
-	std::string str() const override;
+	std::string str() const override {
+		return std::to_string(m_value);
+	}
 
 protected: // functions
 
 	void processValue(const Tracee &) override {
-		m_value = valueAs<int>();
+		m_value = valueAs<INT>();
 	}
 
 protected: // data
 
-	int m_value = 0;
+	INT m_value = 0;
 };
+
+using IntValue = IntValueT<int>;
+using Uint32Value = IntValueT<uint32_t>;
 
 } // end ns

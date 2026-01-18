@@ -16,8 +16,5 @@ std::string GenericPointerValue::str() const {
 	return ss.str();
 }
 
-std::string IntValue::str() const {
-	return std::to_string(m_value);
-}
 
 } // end ns

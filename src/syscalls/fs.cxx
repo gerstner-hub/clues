@@ -125,16 +125,14 @@ bool FcntlSystemCall::check2ndPass() {
 			setExtraParameter(*dnotify_arg);
 			break;
 		} case Oper::SETPIPE_SZ: {
-			pipe_size_arg.emplace(item::IntValue{ItemType::PARAM_IN,
-					"pipe size", "pipe buffer size"});
+			pipe_size_arg.emplace(item::IntValue{"pipe size", "pipe buffer size"});
 			setExtraParameter(*pipe_size_arg);
 			/*
 			 * SET and GET both return the current pipe size
 			 */
 			[[fallthrough]];
 		} case Oper::GETPIPE_SZ: {
-			ret_pipe_size.emplace(item::IntValue{ItemType::RETVAL,
-					"pipe size", "pipe buffer size"});
+			ret_pipe_size.emplace(item::IntValue{"pipe size", "pipe buffer size", ItemType::RETVAL});
 			setNewReturnItem(*ret_pipe_size);
 			break;
 		} case Oper::ADD_SEALS: {
