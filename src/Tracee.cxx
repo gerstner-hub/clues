@@ -765,7 +765,18 @@ void Tracee::processEvent(const cosmos::ChildState &data) {
 		}
 
 		if (data.signal == cosmos::signal::SYS_TRAP) {
-			handleSystemCall();
+			try {
+				handleSystemCall();
+			} catch (const std::exception &ex) {
+				/*
+				 * TODO: we need some way to robustly deal
+				 * with unexpected errors during tracing.
+				 *
+				 * we could offer an API to lib clients to let
+				 * them decide what to do.
+				 */
+				throw;
+			}
 		} else if (data.signal->isPtraceEventStop()) {
 			changeState(State::EVENT_STOP);
 			const auto [signr, event] = cosmos::ptrace::decode_event(*data.signal);
