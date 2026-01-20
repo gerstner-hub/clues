@@ -21,7 +21,7 @@
 
 namespace clues::format {
 
-std::string signal(const cosmos::SignalNr signal) {
+std::string signal(const cosmos::SignalNr signal, const bool verbose) {
 	std::stringstream ss;
 
 	const auto SIGRTMIN_PRIV = SIGRTMIN - 2;
@@ -67,7 +67,9 @@ std::string signal(const cosmos::SignalNr signal) {
 		ss << "SIGRT" << raw - SIGRTMIN;
 	}
 
-	ss << " (" << cosmos::Signal{signal}.name() << ")";
+	if (verbose) {
+		ss << " (" << cosmos::Signal{signal}.name() << ")";
+	}
 
 	return ss.str();
 }
