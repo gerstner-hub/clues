@@ -13,7 +13,7 @@
 
 namespace clues::item {
 
-std::string ArchCodeParameter::str() const {
+std::string ArchOpParameter::str() const {
 	switch (valueAs<int>()) {
 #ifdef COSMOS_X86
 		CASE_ENUM_TO_STR(ARCH_SET_CPUID);

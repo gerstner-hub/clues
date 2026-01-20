@@ -1,19 +1,48 @@
 #pragma once
 
+// Linux
+#include <asm/prctl.h>
+
 // clues
 #include <clues/items/items.hxx>
 
 namespace clues::item {
 
-/// The code parameter to the arch_prctl system call.
-class CLUES_API ArchCodeParameter :
+/// The `op` parameter to the arch_prctl system call.
+class CLUES_API ArchOpParameter :
 		public ValueInParameter {
-public:
-	explicit ArchCodeParameter() :
-			ValueInParameter{"subfunction"} {
+public: // types
+
+	enum class Operation : int {
+		SET_CPUID = ARCH_SET_CPUID,
+		GET_CPUID = ARCH_GET_CPUID,
+		SET_FS    = ARCH_SET_FS,
+		GET_FS    = ARCH_GET_FS,
+		SET_GS    = ARCH_SET_GS,
+		GET_GS    = ARCH_GET_GS
+	};
+
+public: // functions
+
+	explicit ArchOpParameter() :
+			ValueInParameter{"op"} {
 	}
 
 	std::string str() const override;
+
+	Operation operation() const {
+		return m_op;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_op = Operation{valueAs<int>()};
+	}
+
+protected: // data
+
+	Operation m_op = Operation{0};
 };
 
 } // end ns

@@ -12,20 +12,35 @@
 
 namespace clues {
 
+/// x86-specific prctl() extension.
 struct ArchPrctlSystemCall :
 		public SystemCall {
 
 	ArchPrctlSystemCall() :
-			SystemCall{SystemCallNr::ARCH_PRCTL},
-			addr{"addr", "request code ('set') or return pointer ('get')"} {
-		setReturnItem(result);
-		setParameters(op, addr);
+			SystemCall{SystemCallNr::ARCH_PRCTL} {
+		setParameters(op);
+		result.emplace(item::SuccessResult{});
+		setReturnItem(*result);
 	}
 
-	item::ArchCodeParameter op;
-	// this is also used as a boolean scalar and sometimes ignored depending on `op`
-	item::GenericPointerValue addr;
-	item::SuccessResult result;
+	/* parameters */
+	item::ArchOpParameter op;
+	/// On/off value for SET_CPUID.
+	std::optional<item::ULongValue> on_off;
+	/// new FS/GS base for SET_FS/SET_GS
+	std::optional<item::ULongValue> set_addr;
+	/// pointer to base for GET_FS/GET_GS
+	std::optional<item::PointerToScalar<unsigned long>> get_addr;
+	/* return values */
+	std::optional<item::SuccessResult> result;
+	/// On/off return for GET_CPUID.
+	std::optional<item::IntValue> on_off_ret;
+
+protected: // functions
+
+	bool check2ndPass() override;
+
+	void prepareNewSystemCall() override;
 };
 
 /*
