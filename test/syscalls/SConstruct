@@ -4,6 +4,7 @@ Import('env')
 # tracer in a manual or automated fashion
 
 static_sources = []
+env.ConfigureForLibOrPackage('libcosmos', static_sources)
 env.ConfigureForLibOrPackage('libclues', static_sources)
 
 for sys_test in env.GatherSources(suffixes=['.cxx']):
