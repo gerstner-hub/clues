@@ -140,16 +140,64 @@ protected: // functions
 	void updateData(const Tracee &) override {}
 };
 
+/// A pointer to an integral data type which will be filled in by the kernel.
+template <typename INT>
+class CLUES_API PointerToScalar :
+		public PointerValue {
+public: // types
+
+	enum class TraceePtr : uintptr_t {
+		NO_POINTER = 0
+	};
+
+public: // functions
+
+	explicit PointerToScalar(
+		const std::string_view short_name,
+		const std::string_view long_name = {},
+		const ItemType type = ItemType::PARAM_OUT) :
+			PointerValue{type, short_name, long_name} {
+	}
+
+	TraceePtr pointer() const {
+		return m_ptr;
+	}
+
+	std::optional<INT> value() const {
+		return m_val;
+	}
+
+	std::string str() const override;
+
+	void setBase(const Base base) {
+		m_base = base;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_ptr = valueAs<TraceePtr>();
+	}
+
+	void updateData(const Tracee &tracee) override;
+
+protected: // data
+
+	TraceePtr m_ptr = TraceePtr{};
+	std::optional<INT> m_val;
+	Base m_base = Base::DEC;
+};
+
 /// A simple scalar in/out/return value parameter.
-template <typename INT, ItemType DEF_ITEM_TYPE = ItemType::PARAM_IN>
+template <typename INT>
 class CLUES_API IntValueT :
 		public ValueParameter {
 public: // functions
 
 	explicit IntValueT(
 		const std::string_view short_name,
-		const std::string_view long_name = "",
-		const ItemType type = DEF_ITEM_TYPE) :
+		const std::string_view long_name = {},
+		const ItemType type = ItemType::PARAM_IN) :
 			ValueParameter{type, short_name, long_name} {
 	}
 
@@ -157,8 +205,10 @@ public: // functions
 		return m_value;
 	}
 
-	std::string str() const override {
-		return std::to_string(m_value);
+	std::string str() const override;
+
+	void setBase(const Base base) {
+		m_base = base;
 	}
 
 protected: // functions
@@ -170,10 +220,12 @@ protected: // functions
 protected: // data
 
 	INT m_value = 0;
+	Base m_base = Base::DEC;
 };
 
 using IntValue = IntValueT<int>;
 using Uint32Value = IntValueT<uint32_t>;
+using ULongValue = IntValueT<unsigned long>;
 
 ///! Represents an unused system call parameter.
 /**

@@ -108,4 +108,11 @@ public: // data
 /// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.
 using FDInfoMap = std::map<cosmos::FileNum, FDInfo>;
 
+/// Integer number display base for formatting purposes.
+enum class Base {
+	OCT,
+	DEC,
+	HEX
+};
+
 } // end ns
