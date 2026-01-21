@@ -1,6 +1,7 @@
 #pragma once
 
 // clues
+#include <clues/items/clone.hxx>
 #include <clues/items/creds.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/items/items.hxx>
@@ -53,7 +54,6 @@ struct CloneSystemCall :
 
 	CloneSystemCall() :
 			SystemCall{SystemCallNr::CLONE},
-			flags{"flags", "clone flags"},
 			stack{"stack", "stack address"},
 			parent_tid{"parent tid", "parent thread ID"},
 			child_tid{"child tid", "child thread ID"},
@@ -63,7 +63,7 @@ struct CloneSystemCall :
 		setParameters(flags, stack, parent_tid, child_tid, tls);
 	}
 
-	item::ValueInParameter flags;
+	item::CloneFlagsValue flags;
 	item::GenericPointerValue stack;
 	item::GenericPointerValue parent_tid;
 	item::GenericPointerValue child_tid;

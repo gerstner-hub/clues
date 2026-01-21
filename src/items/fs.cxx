@@ -13,12 +13,12 @@
 #include <clues/items/fs.hxx>
 #include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
-#include <clues/private/utils.hxx>
 #include <clues/syscalls/fs.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 // private
 #include <clues/private/kernel/stat.hxx>
+#include <clues/private/utils.hxx>
 
 namespace clues::item {
 
