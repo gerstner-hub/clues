@@ -141,6 +141,10 @@ protected: // functions
 };
 
 /// A pointer to an integral data type which will be filled in by the kernel.
+/**
+ * The type can also be an enum type, but the size of the underlying type must
+ * match the system call's pointed-to type.
+ **/
 template <typename INT>
 class CLUES_API PointerToScalar :
 		public PointerValue {

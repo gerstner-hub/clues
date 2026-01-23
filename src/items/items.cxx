@@ -1,5 +1,6 @@
 // C++
 #include <sstream>
+#include <type_traits>
 
 // cosmos
 #include <cosmos/formatting.hxx>
@@ -67,7 +68,12 @@ std::string PointerToScalar<INT>::str() const {
 
 	ss << (void*)m_ptr << " → ";
 	if (m_val) {
-		ss << "[" << format_number(*m_val, m_base) << "]";
+		if constexpr (std::is_enum_v<INT>) {
+			ss << "[" << format_number(cosmos::to_integral(*m_val), m_base) << "]";
+		}
+		if constexpr (!std::is_enum_v<INT>) {
+			ss << "[" << format_number(*m_val, m_base) << "]";
+		}
 	} else {
 		ss << "???";
 	}
@@ -83,6 +89,8 @@ SystemCallItem unused = SystemCallItem{ItemType::PARAM_IN, "unused", "unused par
 
 template class CLUES_API PointerToScalar<unsigned long>;
 template class CLUES_API PointerToScalar<unsigned int>;
+template class CLUES_API PointerToScalar<cosmos::ProcessID>;
+template class CLUES_API PointerToScalar<cosmos::FileNum>;
 template class CLUES_API IntValueT<int>;
 template class CLUES_API IntValueT<uint32_t>;
 template class CLUES_API IntValueT<unsigned long>;
