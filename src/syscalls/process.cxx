@@ -65,6 +65,7 @@ bool CloneSystemCall::check2ndPass()  {
 	// clone() to store either the child pid or a pidfd at.
 	static_assert( sizeof(int) == sizeof(pid_t), "sizeof(int) != sizeof(pid_t)" );
 	using enum cosmos::CloneFlag;
+	const auto clone_flags = this->flags.flags();
 
 	auto maybe_add_unused_par = [this](const size_t need_index) {
 		while (need_index > m_pars.size()) {
@@ -72,7 +73,22 @@ bool CloneSystemCall::check2ndPass()  {
 		}
 	};
 
-	const auto clone_flags = this->flags.flags();
+	auto maybe_add_settid_par = [this, clone_flags, maybe_add_unused_par](const size_t pos) {
+		if (clone_flags[CHILD_SETTID]) {
+			child_tid.emplace(item::GenericPointerValue{"child_tid", "pointer to child TID in child's memory"});
+			maybe_add_unused_par(pos);
+			addParameters(*child_tid);
+		}
+	};
+
+	auto maybe_add_settls_par = [this, clone_flags, maybe_add_unused_par](const size_t pos) {
+		if (clone_flags[SETTLS]) {
+			tls.emplace(item::GenericPointerValue{"tls", "ABI-specific thread-local-storage data"});
+
+			maybe_add_unused_par(pos);
+			addParameters(*tls);
+		}
+	};
 
 	// these two are mutual-exclusive in the old clone() system call
 	if (clone_flags[PARENT_SETTID]) {
@@ -85,17 +101,32 @@ bool CloneSystemCall::check2ndPass()  {
 		addParameters(*pidfd);
 	}
 
-	if (clone_flags[CHILD_SETTID]) {
-		child_tid.emplace(item::GenericPointerValue{"child_tid", "pointer to child TID in child's memory"});
-		maybe_add_unused_par(3);
-		addParameters(*child_tid);
-	}
+	/*
+	 * Things are messy with clone(), the order of parameters differs
+	 * between ABIs and we might need to skip some parameters by adding
+	 * item::unused.
+	 *
+	 * The man page is a bit sketchy on the ABI details. In the kernel
+	 * source we have to look for `CONFIG_CLONE_BACKWARDS*`, define in
+	 * "arch/.../KConfig" as CLONE_BACKWARDS*.
+	 *
+	 * The situation for the ABIs we support is as follows:
+	 *
+	 * X86_32 (I386), ARM, ARM64: CLONE_BACKWARDS
+	 * X86_64 (seems to include X32): no define
+	 *
+	 * CLONE_BACKWARDS means the final two arguments are tls /
+	 * child_tidptr.
+	 *
+	 * no define means the final two arguments are child_tidptr / tls.
+	 */
 
-	if (clone_flags[SETTLS]) {
-		tls.emplace(item::GenericPointerValue{"tls", "ABI-specific thread-local-storage data"});
-
-		maybe_add_unused_par(4);
-		addParameters(*tls);
+	if (const auto abi = this->abi(); abi == ABI::X86_64 || abi == ABI::X32) {
+		maybe_add_settid_par(3);
+		maybe_add_settls_par(4);
+	} else if (abi == ABI::AARCH64 || abi == ABI::I386) {
+		maybe_add_settls_par(3);
+		maybe_add_settid_par(4);
 	}
 
 	return m_pars.size() > 2;

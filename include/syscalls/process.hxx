@@ -44,11 +44,6 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
-/*
- * TODO: the order of parameters for clone differs between
- * architectures. This is currently for x86-64 and some other ABIs only.
- * We need something like a per-ABI system call set to cover this.
- */
 /// Wrapper for the clone() and clone2() system calls.
 /**
  * For clone3() a separate wrapper type is used, since the two variants of
