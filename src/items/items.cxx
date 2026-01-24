@@ -72,7 +72,12 @@ std::string PointerToScalar<INT>::str() const {
 			ss << "[" << format_number(cosmos::to_integral(*m_val), m_base) << "]";
 		}
 		if constexpr (!std::is_enum_v<INT>) {
-			ss << "[" << format_number(*m_val, m_base) << "]";
+			if constexpr (std::is_pointer_v<INT>) {
+				ss << "[" << *m_val << "]";
+			}
+			if constexpr (!std::is_pointer_v<INT>) {
+				ss << "[" << format_number(*m_val, m_base) << "]";
+			}
 		}
 	} else {
 		ss << "???";
@@ -91,6 +96,7 @@ template class CLUES_API PointerToScalar<unsigned long>;
 template class CLUES_API PointerToScalar<unsigned int>;
 template class CLUES_API PointerToScalar<cosmos::ProcessID>;
 template class CLUES_API PointerToScalar<cosmos::FileNum>;
+template class CLUES_API PointerToScalar<void*>;
 template class CLUES_API IntValueT<int>;
 template class CLUES_API IntValueT<uint32_t>;
 template class CLUES_API IntValueT<unsigned long>;
