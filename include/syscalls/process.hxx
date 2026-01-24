@@ -49,26 +49,70 @@ protected: // functions
  * architectures. This is currently for x86-64 and some other ABIs only.
  * We need something like a per-ABI system call set to cover this.
  */
+/// Wrapper for the clone() and clone2() system calls.
+/**
+ * For clone3() a separate wrapper type is used, since the two variants of
+ * clone system calls differ too much from each other.
+ **/
 struct CloneSystemCall :
 		public SystemCall {
 
 	CloneSystemCall() :
 			SystemCall{SystemCallNr::CLONE},
 			stack{"stack", "stack address"},
-			parent_tid{"parent tid", "parent thread ID"},
-			child_tid{"child tid", "child thread ID"},
-			tls{"tls", "thread local storage"},
 			new_pid{"pid", "child pid"} {
 		setReturnItem(new_pid);
-		setParameters(flags, stack, parent_tid, child_tid, tls);
+		setParameters(flags, stack);
+		//parent_tid{"parent tid", "parent thread ID"},
 	}
 
+	/* fixed parameters */
 	item::CloneFlagsValue flags;
 	item::GenericPointerValue stack;
-	item::GenericPointerValue parent_tid;
-	item::GenericPointerValue child_tid;
-	item::GenericPointerValue tls;
+
+	/* optional parameters */
+
+	/* the following two are based on the same `parent_tid` pointer argument */
+
+	/// TID of the new child written out to a pid_t* in the parent.
+	/**
+	 * This is only filled in if CLONE_PARENT_SETTID is set.
+	 **/
+	std::optional<item::PointerToScalar<cosmos::ProcessID>> parent_tid;
+	/// PID file descriptor referring to the new child.
+	/**
+	 * This is only filled in if CLONE_PIDFD is set.
+	 **/
+	std::optional<item::PointerToScalar<cosmos::FileNum>> pidfd;
+
+	/// TID of the new child written out to a pid_* in the child.
+	/**
+	 * This is only filled in if CLONE_CHILD_SETTID is set.
+	 *
+	 * This is only placed into the child's memory, not to the parent's.
+	 * Thus we have no reliable way of retrieving the value, which is why
+	 * we're not using `PointerToScalar` here.
+	 **/
+	std::optional<item::GenericPointerValue> child_tid;
+	/// Thread-local-storage data for the new child.
+	/**
+	 * This is only filled in if CLONE_SETTLS is set.
+	 *
+	 * The interpretation is highly ABI-specific, which is why we
+	 * currently model it generically as a pointer.
+	 **/
+	std::optional<item::GenericPointerValue> tls;
+
+	/* return value */
+
+	/// The new child's PID.
 	item::ReturnValue new_pid;
+
+protected: // functions
+
+	bool check2ndPass() override;
+
+	void prepareNewSystemCall() override;
 };
 
 struct ForkSystemCall :
