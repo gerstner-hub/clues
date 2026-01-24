@@ -19,6 +19,11 @@ public: // functions
 
 	std::string str() const override;
 
+	/// Returns the unmodified string data.
+	const std::string& data() const {
+		return m_str;
+	}
+
 protected: // functions
 
 	void processValue(const Tracee &proc) override {
@@ -54,6 +59,11 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+	/// Returns the unmodified string array data as a std::vector.
+	const auto& data() const {
+		return m_strs;
+	}
 
 protected: // functions
 
