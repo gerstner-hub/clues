@@ -58,8 +58,11 @@ struct MunmapSystemCall :
 		setParameters(addr, length);
 	}
 
+	/* parameters */
 	item::GenericPointerValue addr;
 	item::ValueInParameter length;
+
+	/* return value */
 	item::SuccessResult result;
 };
 
@@ -73,9 +76,12 @@ struct MprotectSystemCall :
 		setParameters(addr, length, protection);
 	}
 
+	/* parameters */
 	item::GenericPointerValue addr;
 	item::ValueInParameter length;
 	item::MemoryProtectionParameter protection;
+
+	/* return value */
 	item::SuccessResult result;
 };
 

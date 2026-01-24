@@ -6,5 +6,6 @@ int main() {
 	addr = mmap((void*)0x815, 0x2000, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 	munmap(addr, 0x2000);
 	addr = mmap(0, 0xf000, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB|MAP_HUGE_2MB, -1, 0);
+	mprotect(addr, 0xf000, PROT_WRITE);
 	munmap(addr, 0xf000);
 }
