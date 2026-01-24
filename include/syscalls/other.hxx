@@ -1,10 +1,11 @@
 #pragma once
 
 // clues
+#include <clues/SystemCall.hxx>
 #include <clues/items/items.hxx>
 #include <clues/items/limits.hxx>
+#include <clues/items/process.hxx>
 #include <clues/sysnrs/generic.hxx>
-#include <clues/SystemCall.hxx>
 
 namespace clues {
 
@@ -75,12 +76,12 @@ struct ExitGroupSystemCall :
 
 	ExitGroupSystemCall() :
 			SystemCall{SystemCallNr::EXIT_GROUP},
-			status{"status", "exit code"} {
+			status{ItemType::PARAM_IN, "exit code"} {
 		setReturnItem(result);
 		setParameters(status);
 	}
 
-	item::ValueInParameter status;
+	item::ExitStatusItem status;
 	item::SuccessResult result; // actually it never returns
 };
 
