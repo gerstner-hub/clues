@@ -49,7 +49,7 @@ std::string OpenFlagsValue::str() const {
 #	define O_LARGEFILE 0100000
 #endif
 
-	BITFLAGS_FORMAT_START(m_flags);
+	BITFLAGS_FORMAT_START_COMBINED(m_flags, valueAs<int>());
 
 	switch (m_mode) {
 		default: BITFLAGS_STREAM() << "O_???"; break;
