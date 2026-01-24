@@ -28,7 +28,8 @@ std::string MemoryProtectionParameter::str() const {
 }
 
 std::string MapFlagsParameter::str() const {
-	BITFLAGS_FORMAT_START_COMBINED(m_flags, valueAs<int>());
+	const auto raw = valueAs<int>();
+	BITFLAGS_FORMAT_START_COMBINED(m_flags, raw);
 
 	using enum cosmos::mem::MapType;
 
@@ -54,6 +55,13 @@ std::string MapFlagsParameter::str() const {
 	BITFLAGS_ADD(MAP_STACK);
 	BITFLAGS_ADD(MAP_SYNC);
 	BITFLAGS_ADD(MAP_UNINITIALIZED);
+
+	const auto huge_shift = (raw >> MAP_HUGE_SHIFT) & 0x3f;
+
+	if (huge_shift != 0) {
+		/* there's also the TLB page size encoded into the bit mask */
+		BITFLAGS_STREAM() << huge_shift << "<<MAP_HUGE_SHIFT|";
+	}
 
 	return BITFLAGS_STR();
 }
