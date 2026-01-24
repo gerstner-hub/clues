@@ -18,8 +18,11 @@ struct NanosleepSystemCall :
 		setParameters(req_time, rem_time);
 	}
 
+	/* parameters */
 	item::TimespecParameter req_time;
 	item::TimespecParameter rem_time;
+
+	/* return value */
 	item::SuccessResult result;
 };
 
@@ -34,10 +37,13 @@ struct ClockNanosleepSystemCall :
 		setParameters(clockid, flags, time, remaining);
 	}
 
+	/* parameters */
 	item::ClockID clockid;
 	item::ClockNanoSleepFlags flags;
 	item::TimespecParameter time;
 	item::TimespecParameter remaining;
+
+	/* return value */
 	item::SuccessResult result;
 };
 
