@@ -29,20 +29,21 @@ struct MmapSystemCall :
 			SystemCall{SystemCallNr::MMAP},
 			hint{"hint", "address placement hint"},
 			length{"len", "length"},
-			protection{"prot", "protection"},
-			flags{"flags"},
 			offset{"offset"},
 			addr{"addr", "mapped memory address", ItemType::RETVAL} {
 		setReturnItem(addr);
 		setParameters(hint, length, protection, flags, fd, offset);
 	}
 
+	/* parameters */
 	item::GenericPointerValue hint;
 	item::ValueInParameter length;
-	item::ValueInParameter protection;
-	item::ValueInParameter flags;
+	item::MemoryProtectionParameter protection;
+	item::MapFlagsParameter flags;
 	item::FileDescriptor fd;
 	item::ValueInParameter offset;
+
+	/* return value */
 	item::GenericPointerValue addr;
 };
 

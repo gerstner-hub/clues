@@ -6,39 +6,56 @@
 
 // clues
 #include <clues/items/mmap.hxx>
+// private
+#include <clues/private/utils.hxx>
 
 namespace clues::item {
 
 std::string MemoryProtectionParameter::str() const {
-	std::stringstream ss;
+	if (m_prot.none())
+		// this is just zero
+		return "PROT_NONE";
 
-	using cosmos::mem::AccessFlag;
-	const auto flags = cosmos::mem::AccessFlags{valueAs<AccessFlag>()};
+	BITFLAGS_FORMAT_START(m_prot);
 
-	if (flags == cosmos::mem::AccessFlags{}) {
-		ss << "PROT_NONE";
-	} else {
-		if (flags[AccessFlag::READ])
-			ss << "PROT_READ|";
-		if (flags[AccessFlag::WRITE])
-			ss << "PROT_WRITE|";
-		if (flags[AccessFlag::EXEC])
-			ss << "PROT_EXEC";
-		if (flags[AccessFlag::SEM])
-			ss << "PROT_SEM";
-		if (flags[AccessFlag::SAO])
-			ss << "PROT_SAO";
+	BITFLAGS_ADD(PROT_READ);
+	BITFLAGS_ADD(PROT_WRITE);
+	BITFLAGS_ADD(PROT_EXEC);
+	BITFLAGS_ADD(PROT_SEM);
+	BITFLAGS_ADD(PROT_SAO);
+
+	return BITFLAGS_STR();
+}
+
+std::string MapFlagsParameter::str() const {
+	BITFLAGS_FORMAT_START_COMBINED(m_flags, valueAs<int>());
+
+	using enum cosmos::mem::MapType;
+
+	switch (m_type) {
+		default:              BITFLAGS_STREAM() << "MAP_???"; break;
+		case SHARED:          BITFLAGS_STREAM() << "MAP_SHARED"; break;
+		case SHARED_VALIDATE: BITFLAGS_STREAM() << "MAP_SHARED_VALIDATE"; break;
+		case PRIVATE:         BITFLAGS_STREAM() << "MAP_PRIVATE"; break;
 	}
 
-	auto ret = ss.str();
+	BITFLAGS_STREAM() << '|';
 
-	if (ret.empty()) {
-		ret = "???";
-	} else if (ret.back() == '|') {
-		ret.erase(ret.size() - 1);
-	}
+	BITFLAGS_ADD(MAP_32BIT);
+	BITFLAGS_ADD(MAP_ANONYMOUS);
+	BITFLAGS_ADD(MAP_FIXED);
+	BITFLAGS_ADD(MAP_FIXED_NOREPLACE);
+	BITFLAGS_ADD(MAP_GROWSDOWN);
+	BITFLAGS_ADD(MAP_HUGETLB);
+	BITFLAGS_ADD(MAP_LOCKED);
+	BITFLAGS_ADD(MAP_NONBLOCK);
+	BITFLAGS_ADD(MAP_NORESERVE);
+	BITFLAGS_ADD(MAP_POPULATE);
+	BITFLAGS_ADD(MAP_STACK);
+	BITFLAGS_ADD(MAP_SYNC);
+	BITFLAGS_ADD(MAP_UNINITIALIZED);
 
-	return ret;
+	return BITFLAGS_STR();
 }
 
 } // end ns

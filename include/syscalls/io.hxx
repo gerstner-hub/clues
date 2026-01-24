@@ -48,6 +48,10 @@ struct ReadSystemCall :
 // have been passed?
 // some well-known commands could be interpreted, but we don't
 // know of what type a file descriptor is, or do we?
+//
+// the request integer can be interpreted in a generic way by use of some
+// macros (e.g.: in/out/in-out operation, size of next parameter), but the man
+// page says that this is unreliable, due to legacy APIs.
 struct IoctlSystemCall :
 		public SystemCall {
 
