@@ -145,10 +145,8 @@ std::string AccessModeParameter::str() const {
 }
 
 std::string FileModeParameter::str() const {
-	const auto mode = cosmos::FileMode{valueAs<cosmos::ModeT>()};
-
-	return format::file_mode_numeric(mode.mask()) +
-		" (" + mode.symbolic() + ")";
+	return format::file_mode_numeric(m_mode.mask()) +
+		" (" + m_mode.symbolic() + ")";
 }
 
 std::string StatParameter::str() const {

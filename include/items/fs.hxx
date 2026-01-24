@@ -144,6 +144,20 @@ public:
 	}
 
 	std::string str() const override;
+
+	auto mode() const {
+		return m_mode;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_mode = cosmos::FileMode{valueAs<cosmos::ModeT>()};
+	}
+
+protected: // data
+
+	cosmos::FileMode m_mode;
 };
 
 /// The stat structure used in stat() & friends.

@@ -159,15 +159,23 @@ struct OpenSystemCall :
 			filename{"filename"},
 			new_fd{ItemType::RETVAL} {
 		setReturnItem(new_fd);
-		setParameters(filename, flags, mode);
+		setParameters(filename, flags);
 		m_open_id_par = 1; /* filename */
 	}
 
+	/* parameters */
 	item::StringData filename;
 	item::OpenFlagsValue flags;
-	// TODO: make this optional depending on `flags` (e.g. `O_CREAT`)
-	item::FileModeParameter mode;
+	std::optional<item::FileModeParameter> mode;
+
+	/* return value */
 	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	bool check2ndPass() override;
+
+	void prepareNewSystemCall() override;
 };
 
 struct OpenatSystemCall :
@@ -179,15 +187,24 @@ struct OpenatSystemCall :
 			filename{"filename"},
 			new_fd{ItemType::RETVAL} {
 		setReturnItem(new_fd);
-		setParameters(fd, filename, flags, mode);
+		setParameters(fd, filename, flags);
 		m_open_id_par = 1; /* filename */
 	}
 
+	/* parameters */
 	item::FileDescriptor fd;
 	item::StringData filename;
 	item::OpenFlagsValue flags;
-	item::FileModeParameter mode;
+	std::optional<item::FileModeParameter> mode;
+
+	/* return value */
 	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	bool check2ndPass() override;
+
+	void prepareNewSystemCall() override;
 };
 
 struct CloseSystemCall :

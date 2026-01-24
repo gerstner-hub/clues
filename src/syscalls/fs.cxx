@@ -162,4 +162,39 @@ bool FcntlSystemCall::check2ndPass() {
 	return true;
 }
 
+void OpenSystemCall::prepareNewSystemCall() {
+	m_pars.erase(m_pars.begin() + 2, m_pars.end());
+
+	mode.reset();
+}
+
+bool OpenSystemCall::check2ndPass() {
+	using enum cosmos::OpenFlag;
+
+	if (const auto _flags = flags.flags(); _flags[CREATE] || _flags[TMPFILE]) {
+		mode.emplace(item::FileModeParameter{});
+		addParameters(*mode);
+		return true;
+	}
+
+	return false;
+}
+
+void OpenatSystemCall::prepareNewSystemCall() {
+	m_pars.erase(m_pars.begin() + 3, m_pars.end());
+	mode.reset();
+}
+
+bool OpenatSystemCall::check2ndPass() {
+	using enum cosmos::OpenFlag;
+
+	if (const auto _flags = flags.flags(); _flags[CREATE] || _flags[TMPFILE]) {
+		mode.emplace(item::FileModeParameter{});
+		addParameters(*mode);
+		return true;
+	}
+
+	return false;
+}
+
 } // end ns
