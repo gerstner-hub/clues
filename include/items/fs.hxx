@@ -189,6 +189,10 @@ public: // functions
 
 	std::string str() const override;
 
+	const auto& entries() const {
+		return m_entries;
+	}
+
 protected: // functions
 
 	void updateData(const Tracee &proc) override;
