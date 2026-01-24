@@ -46,14 +46,14 @@ struct Prlimit64SystemCall :
 
 	Prlimit64SystemCall() :
 			SystemCall{SystemCallNr::PRLIMIT64},
-			pid{"pid", "target process"},
+			pid{ItemType::PARAM_IN, "target process"},
 			limit{ItemType::PARAM_IN},
 			old_limit{ItemType::PARAM_OUT, "old_limit"} {
 		setReturnItem(result);
 		setParameters(pid, type, limit, old_limit);
 	}
 
-	item::ValueInParameter pid;
+	item::ProcessIDItem pid;
 	item::ResourceType type;
 	item::ResourceLimit limit;
 	item::ResourceLimit old_limit;
