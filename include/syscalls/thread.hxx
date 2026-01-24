@@ -1,13 +1,14 @@
 #pragma once
 
 // clues
+#include <clues/SystemCall.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/items/futex.hxx>
 #include <clues/items/items.hxx>
+#include <clues/items/process.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/items/time.hxx>
 #include <clues/sysnrs/generic.hxx>
-#include <clues/SystemCall.hxx>
 
 namespace clues {
 
@@ -31,17 +32,22 @@ struct GetRobustListSystemCall :
 
 	GetRobustListSystemCall() :
 			SystemCall{SystemCallNr::GET_ROBUST_LIST},
-			thread_id{"tid", "thread ID"},
+			thread_id{ItemType::PARAM_IN, "thread ID"},
 			list_head{"head", "pointer to robust list head"},
-			size_ptr{"sizep", "pointer to robust list size"} {
+			size_ptr{"sizep", "pointer to robust list head size"} {
 		setReturnItem(result);
 		setParameters(thread_id, list_head, size_ptr);
+		list_head.setBase(Base::HEX);
 	}
 
-	item::ValueInParameter thread_id;
-	item::GenericPointerValue list_head;
-	// TODO: new parameter type which also prints the size stored on in-/output
-	item::GenericPointerValue size_ptr;
+	item::ThreadIDItem thread_id;
+	/*
+	 * This points to `struct robust_list_head*` defined in futex.h. It
+	 * could be fully modeled, but since this is so low-level and exotic I
+	 * believe there is little value in this at this point.
+	 */
+	item::PointerToScalar<void*> list_head;
+	item::PointerToScalar<size_t> size_ptr;
 	item::SuccessResult result;
 };
 
@@ -50,7 +56,7 @@ struct SetRobustListSystemCall :
 
 	SetRobustListSystemCall() :
 			SystemCall{SystemCallNr::SET_ROBUST_LIST},
-			list_head{"head", "point to robust list head"},
+			list_head{"head", "pointer to robust list head"},
 			size{"size", "robust list size"} {
 		setReturnItem(result);
 		setParameters(list_head, size);

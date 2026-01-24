@@ -40,4 +40,10 @@ int main() {
 	futex(&myfux, FUTEX_UNLOCK_PI, 0);
 	futex(&myfux, FUTEX_CMP_REQUEUE_PI, 10, 5, &myfux2, 200);
 	futex(&myfux, FUTEX_WAIT_REQUEUE_PI, 10, &ts, &myfux2);
+
+	struct robust_list_head *rlist;
+	size_t rlist_size;
+
+	syscall(SYS_get_robust_list, 0, &rlist, &rlist_size);
+	syscall(SYS_set_robust_list, rlist, rlist_size);
 }

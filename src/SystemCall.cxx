@@ -171,6 +171,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::SETRLIMIT:       return new_sys<SetrlimitSystemCall>();
 	case SystemCallNr::PRLIMIT64:       return new_sys<Prlimit64SystemCall>();
 	case SystemCallNr::GET_ROBUST_LIST: return new_sys<GetRobustListSystemCall>();
+	case SystemCallNr::SET_ROBUST_LIST: return new_sys<SetRobustListSystemCall>();
 	case SystemCallNr::GETUID:          return new_sys<GetUidSystemCall>();
 	case SystemCallNr::IOCTL:           return new_sys<IoctlSystemCall>();
 	case SystemCallNr::LSTAT:           [[fallthrough]];
@@ -186,7 +187,6 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::RESTART_SYSCALL: return new_sys<RestartSystemCall>();
 	case SystemCallNr::RT_SIGACTION:    return new_sys<SigactionSystemCall>();
 	case SystemCallNr::RT_SIGPROCMASK:  return new_sys<SigprocmaskSystemCall>();
-	case SystemCallNr::SET_ROBUST_LIST: return new_sys<SetRobustListSystemCall>();
 	case SystemCallNr::SET_TID_ADDRESS: return new_sys<SetTidAddressSystemCall>();
 	case SystemCallNr::OLDSTAT:         [[fallthrough]];
 	case SystemCallNr::STAT64:          [[fallthrough]];
