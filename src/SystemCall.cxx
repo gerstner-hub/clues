@@ -164,6 +164,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::NEWFSTATAT:      return new_sys<FstatAtSystemCall>(nr);
 	case SystemCallNr::FUTEX:           return new_sys<FutexSystemCall>();
 	case SystemCallNr::GETDENTS:        return new_sys<GetdentsSystemCall>();
+	case SystemCallNr::GETUID:          return new_sys<GetUidSystemCall>();
 	case SystemCallNr::GETEGID:         return new_sys<GetEgidSystemCall>();
 	case SystemCallNr::GETEUID:         return new_sys<GetEuidSystemCall>();
 	case SystemCallNr::GETGID:          return new_sys<GetGidSystemCall>();
@@ -172,7 +173,6 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::PRLIMIT64:       return new_sys<Prlimit64SystemCall>();
 	case SystemCallNr::GET_ROBUST_LIST: return new_sys<GetRobustListSystemCall>();
 	case SystemCallNr::SET_ROBUST_LIST: return new_sys<SetRobustListSystemCall>();
-	case SystemCallNr::GETUID:          return new_sys<GetUidSystemCall>();
 	case SystemCallNr::IOCTL:           return new_sys<IoctlSystemCall>();
 	case SystemCallNr::LSTAT:           [[fallthrough]];
 	case SystemCallNr::LSTAT64:         [[fallthrough]];
