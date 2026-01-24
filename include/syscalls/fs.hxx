@@ -215,10 +215,10 @@ struct GetdentsSystemCall :
 		setParameters(fd, dirent, size);
 	}
 
-	item::FileDescriptor fd; ///< directory FD
-	item::DirEntries dirent; ///< struct linux_dirent*
-	item::ValueInParameter size; ///< size of dirent buffer
-	item::ReturnValue ret_bytes; ///< number of bytes filled in buffer
+	item::FileDescriptor fd; ///< directory FD.
+	item::DirEntries dirent; ///< struct linux_dirent*.
+	item::ValueInParameter size; ///< size of dirent buffer.
+	item::ReturnValue ret_bytes; ///< number of bytes filled in buffer.
 };
 
 } // end ns
