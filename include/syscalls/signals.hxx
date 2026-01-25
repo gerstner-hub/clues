@@ -43,8 +43,8 @@ struct SigprocmaskSystemCall :
 
 	SigprocmaskSystemCall() :
 			SystemCall{SystemCallNr::RT_SIGPROCMASK},
-			new_mask{"new mask"},
-			old_mask{"old mask"},
+			new_mask{ItemType::PARAM_IN, "new mask"},
+			old_mask{ItemType::PARAM_OUT, "old mask"},
 			size{"size", "size of signal sets in bytes"} {
 		setReturnItem(result);
 		setParameters(operation, new_mask, old_mask, size);

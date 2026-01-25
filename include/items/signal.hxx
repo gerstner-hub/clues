@@ -54,11 +54,12 @@ protected: // data
 
 /// A set of POSIX signals for setting or masking in the context of various system calls.
 class CLUES_API SigSetParameter :
-		public PointerInValue {
+		public PointerValue {
 public: // functions
 	explicit SigSetParameter(
+		const ItemType type = ItemType::PARAM_IN,
 		const std::string_view short_name = "sigset", const std::string_view name = "signal set") :
-			PointerInValue{short_name, name} {
+			PointerValue{type, short_name, name} {
 	}
 
 	std::string str() const override;
