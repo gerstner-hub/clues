@@ -2,6 +2,7 @@
 
 // clues
 #include <clues/items/signal.hxx>
+#include <clues/items/process.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
 
@@ -68,15 +69,15 @@ struct TgKillSystemCall :
 
 	TgKillSystemCall() :
 			SystemCall{SystemCallNr::TGKILL},
-			thread_group{"tgid", "thread group id"},
-			thread_id{"tid", "thread id"} {
+			thread_group{ItemType::PARAM_IN, "thread group id"},
+			thread_id{ItemType::PARAM_IN} {
 		setReturnItem(result);
 		setParameters(thread_group, thread_id, signum);
 	}
 
 	/* parameters */
-	item::ValueInParameter thread_group;
-	item::ValueInParameter thread_id;
+	item::ProcessIDItem thread_group;
+	item::ThreadIDItem thread_id;
 	item::SignalNumber signum;
 
 	/* return value */

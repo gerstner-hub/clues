@@ -34,7 +34,7 @@ class ThreadIDItem :
 		public SystemCallItem {
 public: // functions
 
-	explicit ThreadIDItem(const ItemType type, const std::string_view desc) :
+	explicit ThreadIDItem(const ItemType type, const std::string_view desc = "thread id") :
 			SystemCallItem{type, "tid", desc} {
 	}
 
