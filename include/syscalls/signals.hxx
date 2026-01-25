@@ -32,9 +32,12 @@ struct SigactionSystemCall :
 		setParameters(signum, action, old_action);
 	}
 
+	/* parameters */
 	item::SignalNumber signum;
 	item::SigactionParameter action;
 	item::SigactionParameter old_action;
+
+	/* return value */
 	item::SuccessResult result;
 };
 
@@ -50,10 +53,13 @@ struct SigprocmaskSystemCall :
 		setParameters(operation, new_mask, old_mask, size);
 	}
 
+	/* parameters */
 	item::SigSetOperation operation;
 	item::SigSetParameter new_mask;
 	item::SigSetParameter old_mask;
 	item::ValueInParameter size;
+
+	/* return value */
 	item::SuccessResult result;
 };
 
@@ -68,9 +74,12 @@ struct TgKillSystemCall :
 		setParameters(thread_group, thread_id, signum);
 	}
 
+	/* parameters */
 	item::ValueInParameter thread_group;
 	item::ValueInParameter thread_id;
 	item::SignalNumber signum;
+
+	/* return value */
 	item::SuccessResult result;
 };
 

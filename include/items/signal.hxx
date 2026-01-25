@@ -3,6 +3,9 @@
 // C++
 #include <optional>
 
+// cosmos
+#include <cosmos/proc/types.hxx>
+
 // clues
 #include <clues/kernel_structs.hxx>
 #include <clues/items/items.hxx>
@@ -12,12 +15,34 @@ namespace clues::item {
 /// The operation to performed on a signal set.
 class CLUES_API SigSetOperation :
 		public ValueInParameter {
+public: // types
+
+	enum class Op : int {
+		BLOCK   = SIG_BLOCK,   ///< additionally block.
+		UNBLOCK = SIG_UNBLOCK, ///< unblock the given signals.
+		SETMASK = SIG_SETMASK  ///< replace the whole mask.
+	};
+
 public:
 	explicit SigSetOperation() :
 			ValueInParameter{"sigsetop", "signal set operation"} {
 	}
 
 	std::string str() const override;
+
+	auto op() const {
+		return m_op;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_op = valueAs<Op>();
+	}
+
+protected: // data
+
+	Op m_op;
 };
 
 /// A signal number specification.
@@ -29,6 +54,20 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+	auto nr() const {
+		return m_nr;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_nr = valueAs<cosmos::SignalNr>();
+	}
+
+protected: // data
+
+	cosmos::SignalNr m_nr = cosmos::SignalNr::NONE;
 };
 
 /// The struct sigaction used in various signal related system calls.
@@ -42,6 +81,10 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+	auto& action() const {
+		return m_sigaction;
+	}
 
 protected: // functions
 
@@ -63,6 +106,10 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+	auto& sigset() const {
+		return m_sigset;
+	}
 
 protected: // functions
 

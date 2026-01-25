@@ -12,7 +12,7 @@
 namespace clues::item {
 
 std::string SigSetOperation::str() const {
-	switch (valueAs<int>()) {
+	switch (cosmos::to_integral(m_op)) {
 		CASE_ENUM_TO_STR(SIG_BLOCK);
 		CASE_ENUM_TO_STR(SIG_UNBLOCK);
 		CASE_ENUM_TO_STR(SIG_SETMASK);
