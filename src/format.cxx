@@ -81,18 +81,16 @@ std::string signal_set(const sigset_t &set) {
 
 	for (int signum = 1; signum < SIGRTMAX; signum++) {
 		if (sigismember(&set, signum)) {
-			ss << format::signal(cosmos::SignalNr{signum}) << ", ";
+			ss << format::signal(cosmos::SignalNr{signum}, /*verbose=*/false) << ", ";
 		}
 	}
-
-	ss << "}";
 
 	auto ret = ss.str();
 	if (cosmos::is_suffix(ret, ", ")) {
 		ret = ret.substr(0, ret.size() - 2);
 	}
 
-	return ret;
+	return ret + "}";
 }
 
 std::string saflags(const int flags) {
