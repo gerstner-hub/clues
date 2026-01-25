@@ -18,13 +18,21 @@ struct SetTidAddressSystemCall :
 	SetTidAddressSystemCall() :
 			SystemCall{SystemCallNr::SET_TID_ADDRESS},
 			address{"addr", "thread ID location"},
-			caller_tid{"tid", "caller thread ID"} {
+			caller_tid{ItemType::RETVAL, "caller thread ID"} {
 		setReturnItem(caller_tid);
 		setParameters(address);
 	}
 
+	/// location where to find a futex the kernel operates on.
+	/**
+	 * When the calling thread exits and other threads exist in the
+	 * process then this address will be manipulated with futex
+	 * operations.
+	 **/
 	item::GenericPointerValue address;
-	item::ReturnValue caller_tid;
+
+	/// This will always be the TID of the caller.
+	item::ThreadIDItem caller_tid;
 };
 
 struct GetRobustListSystemCall :
