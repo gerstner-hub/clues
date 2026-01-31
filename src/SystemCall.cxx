@@ -37,7 +37,7 @@ SystemCall::SystemCall(const SystemCallNr nr) :
 }
 
 void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) {
-	const uint64_t *args = info.entryInfo()->args();
+	const auto args = info.entryInfo()->args();
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
 		if (item::is_unused_par(par))
@@ -69,7 +69,7 @@ bool SystemCall::hasOutParameter() const {
 }
 
 void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
-	const auto &exit_info = *info.exitInfo();
+	const auto exit_info = *info.exitInfo();
 
 	if (exit_info.isValue()) {
 		m_return->fill(proc, Word{static_cast<Word>(*exit_info.retVal())});
