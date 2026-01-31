@@ -203,25 +203,27 @@ using GetEuidSystemCall = GetXIdSystemCall<SystemCallNr::GETEUID, item::UserID>;
 using GetGidSystemCall = GetXIdSystemCall<SystemCallNr::GETGID, item::GroupID>;
 using GetEgidSystemCall = GetXIdSystemCall<SystemCallNr::GETEGID, item::GroupID>;
 
-// TODO: properly implement options, rusage
+// TODO: properly implement `wstatus`, `rusage`
 struct Wait4SystemCall :
 		public SystemCall {
 	Wait4SystemCall() :
 			SystemCall{SystemCallNr::WAIT4},
-			pid{"pid", "pid to wait for"},
+			pid{ItemType::PARAM_IN, "pid to wait for"},
 			wstatus{"status", "pointer to status result"},
-			options{"options", "wait options"},
 			rusage{"rusage", "resource usage"},
-			event_pid{"pid", "pid of child with status change"} {
+			event_pid{ItemType::RETVAL, "pid of child with status change"} {
 		setReturnItem(event_pid);
 		setParameters(pid, wstatus, options, rusage);
 	}
 
-	item::ValueInParameter pid;
-	item::GenericPointerValue wstatus;
-	item::ValueInParameter options;
+	/* parameters */
+	item::ProcessIDItem pid;
+	item::PointerToScalar<int> wstatus;
+	item::WaitOptionsItem options;
 	item::GenericPointerValue rusage;
-	item::ReturnValue event_pid;
+
+	/* return value */
+	item::ProcessIDItem event_pid;
 };
 
 } // end ns

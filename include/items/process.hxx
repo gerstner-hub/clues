@@ -80,4 +80,29 @@ protected: // data
 	cosmos::ExitStatus m_status = cosmos::ExitStatus::INVALID;
 };
 
+class WaitOptionsItem :
+		public SystemCallItem {
+public: // functions
+
+	explicit WaitOptionsItem() :
+			SystemCallItem{ItemType::PARAM_IN, "options", "wait options"} {
+	}
+
+	auto options() const {
+		return m_options;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_options = cosmos::WaitFlags{valueAs<int>()};
+	}
+
+protected: // data
+
+	cosmos::WaitFlags m_options;
+};
+
 } // end ns

@@ -21,7 +21,7 @@ int main() {
 		return 1;
 	}
 
-	wait(NULL);
+	waitpid(-1, NULL, WSTOPPED|__WNOTHREAD);
 
 	pid_t child_tid = 0;
 
@@ -33,7 +33,9 @@ int main() {
 		return 1;
 	}
 
-	wait(NULL);
+	int status = 1;
+
+	wait(&status);
 
 	int stuff = 1234;
 

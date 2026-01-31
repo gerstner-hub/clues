@@ -94,6 +94,7 @@ SystemCallItem unused = SystemCallItem{ItemType::PARAM_IN, "unused", "unused par
 
 template class CLUES_API PointerToScalar<unsigned long>;
 template class CLUES_API PointerToScalar<unsigned int>;
+template class CLUES_API PointerToScalar<int>;
 template class CLUES_API PointerToScalar<cosmos::ProcessID>;
 template class CLUES_API PointerToScalar<cosmos::FileNum>;
 template class CLUES_API PointerToScalar<void*>;
