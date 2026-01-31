@@ -1,6 +1,7 @@
 #pragma once
 
 // cosmos
+#include <cosmos/proc/process.hxx>
 #include <cosmos/proc/types.hxx>
 #include <cosmos/thread/thread.hxx>
 
@@ -18,6 +19,13 @@ public: // functions
 	}
 
 	auto pid() const { return m_pid; }
+
+	std::string str() const override {
+		if (m_pid == cosmos::ProcessID::INVALID)
+			return "-1";
+
+		return SystemCallItem::str();
+	}
 
 protected: // functions
 
@@ -61,7 +69,7 @@ public: // functions
 
 	auto status() const { return m_status; }
 
-protected: // fnctions
+protected: // functions
 
 	void processValue(const Tracee&) override {
 		m_status = valueAs<cosmos::ExitStatus>();
