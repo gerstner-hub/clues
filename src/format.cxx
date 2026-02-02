@@ -460,4 +460,14 @@ std::string timespec(const struct timespec &ts, const bool only_secs) {
 	return ss.str();
 }
 
+std::string timeval(const struct timeval &tv, const bool only_secs) {
+	std::stringstream ss;
+	if (only_secs) {
+		ss << tv.tv_sec << "s";
+	} else {
+		ss << "{" << tv.tv_sec << "s, " << tv.tv_usec << "us}";
+	}
+	return ss.str();
+}
+
 } // end ns

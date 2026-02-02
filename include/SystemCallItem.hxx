@@ -82,6 +82,11 @@ public: // functions
 	 **/
 	virtual std::string str() const;
 
+	/// Returns whether the parameter is set to 0 / NULL.
+	bool isZero() const {
+		return value() == Word::ZERO;
+	}
+
 	/// Returns the currently stored raw value of the item.
 	Word value() const { return m_val; }
 

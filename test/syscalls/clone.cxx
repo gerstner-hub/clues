@@ -1,5 +1,6 @@
 #include <sched.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 
 int child(void *) {
 	return 5;
@@ -34,8 +35,9 @@ int main() {
 	}
 
 	int status = 1;
+	struct rusage rus;
 
-	wait(&status);
+	wait4(-1, &status, 0, &rus);
 
 	int stuff = 1234;
 

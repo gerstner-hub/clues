@@ -87,6 +87,9 @@ CLUES_API std::string device_id(const cosmos::DeviceID id);
 /// returns a string like {10s 500ns} corresponding to `ts`.
 CLUES_API std::string timespec(const struct timespec &ts, const bool only_secs = false);
 
+/// returns a string like {10s 100µ} corresponding to `tv`.
+CLUES_API std::string timeval(const struct timeval &tv, const bool only_secs = false);
+
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);
 

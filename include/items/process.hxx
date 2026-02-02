@@ -2,10 +2,12 @@
 
 // cosmos
 #include <cosmos/proc/process.hxx>
+#include <cosmos/proc/ResourceUsage.hxx>
 #include <cosmos/proc/types.hxx>
 #include <cosmos/thread/thread.hxx>
 
 // clues
+#include <clues/items/items.hxx>
 #include <clues/SystemCallItem.hxx>
 
 namespace clues::item {
@@ -103,6 +105,38 @@ protected: // functions
 protected: // data
 
 	cosmos::WaitFlags m_options;
+};
+
+/// Pointer to a `struct rusage` to be filled in.
+class ResourceUsageItem :
+		public PointerOutValue {
+public: // functions
+
+	ResourceUsageItem() :
+			PointerOutValue{"rusage", "resource usage"} {
+	}
+
+	std::string str() const override;
+
+protected: // types
+
+	struct ResourceUsage :
+			public cosmos::ResourceUsage {
+
+		struct rusage& raw() {
+			return m_ru;
+		}
+
+		using cosmos::ResourceUsage::raw;
+	};
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<ResourceUsage> m_rusage;
 };
 
 } // end ns

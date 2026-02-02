@@ -210,7 +210,6 @@ struct Wait4SystemCall :
 			SystemCall{SystemCallNr::WAIT4},
 			pid{ItemType::PARAM_IN, "pid to wait for"},
 			wstatus{"status", "pointer to status result"},
-			rusage{"rusage", "resource usage"},
 			event_pid{ItemType::RETVAL, "pid of child with status change"} {
 		setReturnItem(event_pid);
 		setParameters(pid, wstatus, options, rusage);
@@ -220,7 +219,7 @@ struct Wait4SystemCall :
 	item::ProcessIDItem pid;
 	item::PointerToScalar<int> wstatus;
 	item::WaitOptionsItem options;
-	item::GenericPointerValue rusage;
+	item::ResourceUsageItem rusage;
 
 	/* return value */
 	item::ProcessIDItem event_pid;
