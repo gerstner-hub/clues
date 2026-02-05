@@ -25,16 +25,19 @@ instroot = Path(env['instroot'])
 
 install_dev_files = env['install_dev_files']
 
-if env['project'] == 'clues':
-    SConscript(env['buildroot'] + 'test/SConstruct')
-    SConscript(env['buildroot'] + 'doc/SConstruct')
-    Default(env['bins']['clues'])
-
 if install_dev_files or env['libtype'] == 'shared':
     node = env.InstallVersionedLib(os.path.join(instroot, env['lib_base_dir']), env['libs']['libclues'])
     env.Alias('install', node)
 
 if install_dev_files:
     env.InstallHeaders('clues')
+
+if env['project'] == 'clues':
+    SConscript(env['buildroot'] + 'test/SConstruct')
+    SConscript(env['buildroot'] + 'doc/SConstruct')
+    Default(env['bins']['clues'])
+
     clues_bin = env.Install(instroot / 'bin', env['bins']['clues'])
     env.Alias('install', clues_bin)
+    if env['libtype'] == 'shared':
+        env.AdjustInstallRPath(clues_bin, f"$$ORIGIN/../{env['lib_base_dir']}")
