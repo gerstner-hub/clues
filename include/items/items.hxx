@@ -185,6 +185,8 @@ protected: // functions
 
 	void updateData(const Tracee &tracee) override;
 
+	virtual std::string scalarToString() const;
+
 protected: // data
 
 	TraceePtr m_ptr = TraceePtr{};

@@ -68,22 +68,27 @@ std::string PointerToScalar<INT>::str() const {
 
 	ss << (void*)m_ptr << " → ";
 	if (m_val) {
-		if constexpr (std::is_enum_v<INT>) {
-			ss << "[" << format_number(cosmos::to_integral(*m_val), m_base) << "]";
-		}
-		if constexpr (!std::is_enum_v<INT>) {
-			if constexpr (std::is_pointer_v<INT>) {
-				ss << "[" << *m_val << "]";
-			}
-			if constexpr (!std::is_pointer_v<INT>) {
-				ss << "[" << format_number(*m_val, m_base) << "]";
-			}
-		}
+		ss << "[" << scalarToString() << "]";
 	} else {
 		ss << "???";
 	}
 
 	return ss.str();
+}
+
+template <typename INT>
+std::string PointerToScalar<INT>::scalarToString() const {
+	if constexpr (std::is_enum_v<INT>) {
+		return format_number(cosmos::to_integral(*m_val), m_base);
+	}
+	if constexpr (!std::is_enum_v<INT>) {
+		if constexpr (std::is_pointer_v<INT>) {
+			return format_number(reinterpret_cast<uintptr_t>(*m_val), clues::Base::HEX);
+		}
+		if constexpr (!std::is_pointer_v<INT>) {
+			return format_number(*m_val, m_base);
+		}
+	}
 }
 
 SystemCallItem unused = SystemCallItem{ItemType::PARAM_IN, "unused", "unused parameter"};
