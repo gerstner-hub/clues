@@ -139,4 +139,38 @@ protected: // data
 	std::optional<ResourceUsage> m_rusage;
 };
 
+/// Pointer to an int containing wait() status result data.
+class WaitStatusItem :
+		public PointerToScalar<int> {
+public: // functions
+
+	explicit WaitStatusItem() :
+			PointerToScalar{"wstatus", "wait status"} {
+	}
+
+	auto& status() const {
+		return m_status;
+	}
+
+protected: // functions
+
+	std::string scalarToString() const override;
+
+	void processValue(const Tracee &tracee) override {
+		m_status.reset();
+		PointerToScalar<int>::processValue(tracee);
+	}
+
+	void updateData(const Tracee &tracee) override {
+		PointerToScalar<int>::updateData(tracee);
+		if (m_val) {
+			m_status = cosmos::WaitStatus{*m_val};
+		}
+	}
+
+protected: // data
+
+	std::optional<cosmos::WaitStatus> m_status;
+};
+
 } // end ns

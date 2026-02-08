@@ -57,4 +57,24 @@ std::string ResourceUsageItem::str() const {
 	return ss.str();
 }
 
+std::string WaitStatusItem::scalarToString() const {
+	if (!m_status) {
+		return "???";
+	}
+
+	std::stringstream ss;
+
+	if (m_status->exited()) {
+		ss << "WIFEXITED && WEXITSTATUS == " << cosmos::to_integral(*m_status->status());
+	} else if (m_status->signaled()) {
+		ss << "WIFSIGNALED &&";
+		if (m_status->dumped()) {
+			ss << "WCOREDUMP &&";
+		}
+		ss << "WTERMSIG == " << format::signal(m_status->termSig()->raw(), false);
+	}
+
+	return ss.str();
+}
+
 } // end ns
