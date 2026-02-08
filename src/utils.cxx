@@ -103,12 +103,14 @@ FDInfo::Type to_fd_info_type(const std::string &type) {
 		return Type::TIMER_FD;
 	else if (type == "inotify")
 		return Type::INOTIFY;
-	// TODO: the following strings have not been verified during runtime
-	else if (type == "bpf")
-		return Type::BPF;
-	else if (type == "perfevent")
+	else if (type == "bpf-map")
+		return Type::BPF_MAP;
+	else if (type == "bpf-prog")
+		return Type::BPF_PROG;
+	else if (type == "perf_event")
 		return Type::PERF_EVENT;
 
+	// NOTE: there might exist various other, exotic anon_inodes
 	LOG_WARN("Unknown /proc/<pid>/fd file type '" << type << "' encountered");
 	return Type::UNKNOWN;
 }

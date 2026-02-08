@@ -90,7 +90,8 @@ public: // types
 		PIPE,
 		INOTIFY,
 		PID_FD,
-		BPF,
+		BPF_MAP, ///< refers to a BPF type map
+		BPF_PROG, ///< refers to a BPF program validated and loaded
 		PERF_EVENT,
 		UNKNOWN
 	};
