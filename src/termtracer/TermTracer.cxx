@@ -498,20 +498,11 @@ void TermTracer::disappeared(Tracee &tracee, const cosmos::ChildState &data) {
 	if (tracee.pid() == m_main_tracee_pid) {
 		/*
 		 * Here we get a more complex cosmos::ChildState instead of
-		 * WaitStatus as in the other callbacks. This is unfortunate,
-		 * we can build a WaitStatus from ChildState, however.
-		 *
-		 * TODO: add a helper to libcosmos, pass homogenous types from
-		 * libclues into EventConsumer to avoid this on the
-		 * application's end.
+		 * WaitStatus as in the other callbacks. Convert it into a
+		 * WaitStatus so that we can treat all exit paths
+		 * homogeneously.
 		 */
-		int raw_status = 0;
-		if (data.exited()) {
-			raw_status = cosmos::to_integral(*data.status) << 8;
-		} else {
-			raw_status = cosmos::to_integral(data.signal->raw());
-		}
-		m_main_status = cosmos::WaitStatus{raw_status};
+		m_main_status = cosmos::WaitStatus{data};
 	}
 
 	cleanupTracee(tracee);
