@@ -12,7 +12,7 @@ struct WriteSystemCall :
 	WriteSystemCall() :
 			SystemCall{SystemCallNr::WRITE},
 			fd{},
-			buf{"buf", "source buffer"},
+			buf{count, ItemType::PARAM_IN, "buf", "source buffer"},
 			count{"count", "buffer length"},
 			written{"bytes", "bytes written"} {
 		setReturnItem(written);
@@ -20,7 +20,7 @@ struct WriteSystemCall :
 	}
 
 	item::FileDescriptor fd;
-	item::GenericPointerValue buf;
+	item::BufferPointer buf;
 	item::ValueInParameter count;
 	item::ReturnValue written;
 };
@@ -30,7 +30,7 @@ struct ReadSystemCall :
 	ReadSystemCall() :
 			SystemCall{SystemCallNr::READ},
 			fd{},
-			buf{"buf", "target buffer", ItemType::PARAM_OUT},
+			buf{read, ItemType::PARAM_OUT, "buf", "target buffer"},
 			count{"count", "buffer length"},
 			read{"bytes", "bytes read"} {
 		setReturnItem(read);
@@ -38,7 +38,7 @@ struct ReadSystemCall :
 	}
 
 	item::FileDescriptor fd;
-	item::GenericPointerValue buf;
+	item::BufferPointer buf;
 	item::ValueInParameter count;
 	item::ReturnValue read;
 };

@@ -1,5 +1,8 @@
 #pragma once
 
+// C++
+#include <vector>
+
 // clues
 #include <clues/SystemCallItem.hxx>
 
@@ -117,10 +120,6 @@ public: // functions
 	}
 };
 
-/*
- * TODO: support to get the length of the data area from a context-sensitive
- * sibling parameter and then print out the binary/ascii data as appropriate
- */
 class CLUES_API GenericPointerValue :
 		public PointerValue {
 public: // functions
@@ -138,6 +137,55 @@ protected: // functions
 
 	void processValue(const Tracee &) override {}
 	void updateData(const Tracee &) override {}
+};
+
+/// Pointer to a buffer of a certain size containing arbitrary data.
+/**
+ * This type is used for read/write buffers like found in read()/write()
+ * system calls. They are accompanied by another system call parameter
+ * denoting the number of bytes found in the buffer.
+ **/
+class CLUES_API BufferPointer :
+		public PointerValue {
+public: // functions
+
+	explicit BufferPointer(
+		const SystemCallItem &size_par,
+		const ItemType type,
+		const std::string_view short_name,
+		const std::string_view long_name = {}) :
+			PointerValue{type, short_name, long_name},
+			m_size_par{size_par} {
+	}
+
+	const auto& data() const {
+		return m_data;
+	}
+
+	/// Returns the actual buffer size in the Tracee.
+	/**
+	 * Depending on configuration libclues only fetches part of the
+	 * tracee's buffer data. This function returns the actual amount of
+	 * data available in the tracee, in bytes.
+	 *
+	 * The amount of pre-fetched data can be controlled per tracee via
+	 * Tracee::setMaxBufferPrefetch().
+	 **/
+	size_t actualBufferSize() const;
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+	void updateData(const Tracee &) override;
+
+	void fillBuffer(const Tracee &);
+
+protected: // data
+
+	const SystemCallItem &m_size_par;
+	std::vector<uint8_t> m_data;
 };
 
 /// A pointer to an integral data type which will be filled in by the kernel.

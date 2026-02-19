@@ -90,6 +90,34 @@ public: // functions
 		return pid() != cosmos::ProcessID::INVALID;
 	}
 
+	size_t maxBufferPrefetch() const {
+		return m_max_buffer_prefetch;
+	}
+
+	/// Sets an upper limit for the retrieval of variable-length buffer parameters in system calls.
+	/**
+	 * System calls like `read()` and `write()` process variable-length
+	 * raw buffer data, which can be quite large. Fetching the complete
+	 * buffer contents from tracee memory for all these system calls can
+	 * affect tracing performance, especially when the full buffer data is
+	 * not actually needed by the tracer application.
+	 *
+	 * By default only a small part of the buffer data will be
+	 * automatically fetched by specializations of SystemCall. You can set
+	 * this to 0 to completely disable prefetching of buffer data or to
+	 * SIZE_MAX to always fetch the complete buffers from tracees. In case
+	 * the buffer data has not been completely pre-fetched, but the
+	 * application is interested in the buffer data for a specific system
+	 * call only, then the application can explicitly fetch the rest of
+	 * the data from the tracee during a system call stop event.
+	 *
+	 * This is a per-tracee setting to allow tracee-specific variations of
+	 * this setting.
+	 **/
+	void setMaxBufferPrefetch(const size_t bytes) {
+		m_max_buffer_prefetch = bytes;
+	}
+
 	/// Returns the number of system calls observed so far
 	/**
 	 * This counts the number of system call entries observed while
@@ -350,7 +378,7 @@ protected: // data
 	State m_prev_state = State::UNKNOWN;
 	/// These keep track of various state on the tracer side.
 	Flags m_flags;
-	/// PID of the tracee we're dealing with.
+	/// libcosmos API for the Tracee.
 	cosmos::Tracee m_ptrace;
 	/// The options we've set for ptrace().
 	cosmos::ptrace::Opts m_ptrace_opts;
@@ -374,10 +402,12 @@ protected: // data
 	size_t m_syscall_ctr = 0;
 	/// Register set observed during initial attach event stop.
 	AnyRegisterSet m_initial_regset;
-	/// For GROUP_STOP this contains the signal that caused it.
+	/// For State::GROUP_STOP this contains the signal that caused it.
 	std::optional<cosmos::Signal> m_stop_signal;
 	/// Shared process data.
 	ProcessDataPtr m_process_data;
+	/// Number of bytes system calls will fetch for variable-length data buffers.
+	size_t m_max_buffer_prefetch = 128;
 };
 
 } // end ns

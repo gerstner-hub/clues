@@ -1,4 +1,5 @@
 // C++
+#include <cctype>
 #include <sstream>
 
 // Linux
@@ -467,6 +468,58 @@ std::string timeval(const struct timeval &tv, const bool only_secs) {
 	} else {
 		ss << "{" << tv.tv_sec << "s, " << tv.tv_usec << "us}";
 	}
+	return ss.str();
+}
+
+struct HexChar :
+		public cosmos::FormattedNumber<unsigned char> {
+	HexChar(const unsigned char ch) :
+		cosmos::FormattedNumber<unsigned char>{ch, 2, [](std::ostream &o){ o << std::hex; }, "\\x"}
+	{}
+};
+
+std::string control_char(const char ch) {
+	switch(ch) {
+		case '\n': return "\\n";
+		case '\r': return "\\r";
+		case '\v': return "\\v";
+		case '\t': return "\\t";
+		case '\f': return "\\f";
+		case '\b': return "\\b";
+		default: return "\\?";
+	}
+}
+
+std::string buffer(const uint8_t *buffer, const size_t len) {
+	std::stringstream ss;
+	ss << '"';
+
+	/*
+	 * By default show printable characters and everything else as hex
+	 * bytes. This can be made configurable via input parameters and/or a
+	 * global setting for achieve behaviour like:
+	 *
+	 * - hex output only
+	 * - oct output only
+	 * - text output only, discard anything else
+	 */
+
+	// TODO: what about unicode strings?
+
+	for (size_t idx = 0; idx < len; idx++) {
+		const auto ch = static_cast<unsigned char>(buffer[idx]);
+
+		if (std::isprint(ch)) {
+			ss << ch;
+		} else if (std::isspace(ch)) {
+			ss << control_char(ch);
+		} else {
+			ss << HexChar{ch};
+		}
+	}
+
+	ss << '"';
+
 	return ss.str();
 }
 

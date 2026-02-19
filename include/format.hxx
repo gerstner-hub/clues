@@ -90,6 +90,12 @@ CLUES_API std::string timespec(const struct timespec &ts, const bool only_secs =
 /// returns a string like {10s 100µ} corresponding to `tv`.
 CLUES_API std::string timeval(const struct timeval &tv, const bool only_secs = false);
 
+/// returns a string like "text \x08"
+CLUES_API std::string buffer(const uint8_t *buffer, const size_t len);
+
+/// translates a character like \n into its string representation "\n".
+CLUES_API std::string control_char(const char ch);
+
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);
 

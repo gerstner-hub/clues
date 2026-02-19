@@ -1,12 +1,16 @@
 // C++
+#include <algorithm>
 #include <sstream>
 #include <type_traits>
 
 // cosmos
 #include <cosmos/formatting.hxx>
+#include <cosmos/io/ILogger.hxx>
 
 // clues
+#include <clues/format.hxx>
 #include <clues/items/items.hxx>
+#include <clues/logger.hxx>
 #include <clues/Tracee.hxx>
 
 namespace clues::item {
@@ -89,6 +93,52 @@ std::string PointerToScalar<INT>::scalarToString() const {
 			return format_number(*m_val, m_base);
 		}
 	}
+}
+
+void BufferPointer::processValue(const Tracee &tracee) {
+	if (isOut()) {
+		// this is an out buffer only, will be filled in updateData()
+		m_data.clear();
+		return;
+	}
+
+	fillBuffer(tracee);
+}
+
+void BufferPointer::updateData(const Tracee &tracee) {
+	if (isIn()) {
+		// nothing to update on system call return
+		return;
+	}
+
+	fillBuffer(tracee);
+}
+
+void BufferPointer::fillBuffer(const Tracee &tracee) {
+	const auto to_fetch = std::min(tracee.maxBufferPrefetch(), actualBufferSize());
+	m_data.resize(to_fetch);
+
+	try {
+		tracee.readBlob(valueAs<const long*>(), reinterpret_cast<char*>(m_data.data()), to_fetch);
+	} catch (const cosmos::CosmosError &e) {
+		LOG_ERROR("Failed to fetch buffer data from Tracee: " << e.what());
+		m_data.clear();
+	}
+}
+
+size_t BufferPointer::actualBufferSize() const {
+	return m_size_par.valueAs<size_t>();
+}
+
+std::string BufferPointer::str() const {
+	const auto is_cut_off = actualBufferSize() != m_data.size();
+	auto ret = format::buffer(m_data.data(), m_data.size());
+
+	if (is_cut_off) {
+		ret += "...";
+	}
+
+	return ret;
 }
 
 SystemCallItem unused = SystemCallItem{ItemType::PARAM_IN, "unused", "unused parameter"};
