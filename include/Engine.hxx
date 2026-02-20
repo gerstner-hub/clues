@@ -21,6 +21,7 @@ namespace clues {
 
 class Tracee;
 class EventConsumer;
+class SystemCall;
 
 /// Main class for configuring and running libclues
 /**
@@ -180,9 +181,11 @@ protected: // functions
 	/**
 	 * `pid` provides the process ID of the new child process and `event`
 	 * describes the event that triggered the creation of the new child.
+	 * `sc` refers to the system call that lead to the creation of the new
+	 * child, providing additional details of child properties.
 	 **/
 	void handleAutoAttach(Tracee &parent, const cosmos::ProcessID pid,
-			const cosmos::ptrace::Event event);
+			const cosmos::ptrace::Event event, const SystemCall &sc);
 
 	/// Invoked by a Tracee when multi-threaded execve() leads to substitution of a PID by another.
 	TraceePtr handleSubstitution(const cosmos::ProcessID old_pid);

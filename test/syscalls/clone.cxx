@@ -46,4 +46,10 @@ int main() {
 	}
 
 	wait(NULL);
+
+	if (clone(&child, child_stack, CLONE_FILES|SIGCHLD, &arg, /*parent_tid=*/nullptr, /*tls=*/nullptr) < 0) {
+		return 1;
+	}
+
+	wait(NULL);
 }

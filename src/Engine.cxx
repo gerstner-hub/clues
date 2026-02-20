@@ -260,8 +260,8 @@ void Engine::stop(const std::optional<cosmos::Signal> signal) {
 	}
 }
 
-void Engine::handleAutoAttach(
-		Tracee &parent, const cosmos::ProcessID pid, const cosmos::ptrace::Event event) {
+void Engine::handleAutoAttach(Tracee &parent, const cosmos::ProcessID pid,
+		const cosmos::ptrace::Event event, const SystemCall &sc) {
 
 	LOG_DEBUG("auto-attach for " << cosmos::to_integral(pid));
 
@@ -271,7 +271,7 @@ void Engine::handleAutoAttach(
 				m_consumer,
 				m_tracees[parent.pid()]);
 
-		tracee->configure(pid, event);
+		tracee->configure(pid, event, sc);
 
 		auto [it, _] = m_tracees.insert({pid, tracee});
 

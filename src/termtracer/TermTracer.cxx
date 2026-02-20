@@ -445,7 +445,7 @@ void TermTracer::attached(Tracee &tracee) {
 	} else if (auto it = m_new_tracees.find(tracee.pid()); it != m_new_tracees.end()) {
 		auto [parent, event] = it->second;
 
-		traceStream(tracee) << "→ automatically attached (created by PID " << parent << " via " << to_label(event) << "\n";
+		traceStream(tracee) << "→ automatically attached (created by PID " << parent << " via " << to_label(event) << ")\n";
 		m_new_tracees.erase(it);
 	} else {
 		traceStream(tracee) << "unknown Tracee " << cosmos::to_integral(tracee.pid()) << " attached?!";

@@ -597,7 +597,10 @@ void Tracee::handleExecEvent(const cosmos::ProcessID main_pid) {
 void Tracee::handleNewChildEvent(const cosmos::ptrace::Event event) {
 	// the engine will perform callbacks at m_consumer, since it is
 	// responsible for creating the new Tracee instance.
-	m_engine.handleAutoAttach(*this, m_ptrace.getPIDEventMsg(), event);
+	//
+	// m_current_syscall should always be valid at this point, since the
+	// new child must have been created some way.
+	m_engine.handleAutoAttach(*this, m_ptrace.getPIDEventMsg(), event, *m_current_syscall);
 }
 
 void Tracee::handleAttached() {

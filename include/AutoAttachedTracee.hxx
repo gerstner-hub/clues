@@ -21,7 +21,11 @@ public: // functions
 	~AutoAttachedTracee() override;
 
 	/// Sets the given process ID as the process to be traced.
-	void configure(const cosmos::ProcessID pid, const cosmos::ptrace::Event event);
+	/**
+	 * `event` and `sc` describe how the new tracee has come into
+	 * existence.
+	 **/
+	void configure(const cosmos::ProcessID pid, const cosmos::ptrace::Event event, const SystemCall &sc);
 };
 
 } // end ns
