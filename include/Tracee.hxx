@@ -267,6 +267,11 @@ protected: // constants
 
 protected: // functions
 
+	/**
+	 * \param[in] sibling establish a process data sharing relationship
+	 * with `sibling. Do this only if you knows that both tracees are
+	 * related (e.g. member of the same thread group).
+	 **/
 	explicit Tracee(Engine &engine, EventConsumer &consumer,
 			TraceePtr sibling = nullptr);
 
