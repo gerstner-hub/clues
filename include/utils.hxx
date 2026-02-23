@@ -2,6 +2,7 @@
 
 // C++
 #include <array>
+#include <functional>
 #include <optional>
 #include <set>
 #include <vector>
@@ -13,8 +14,9 @@
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
-#include <clues/types.hxx>
+#include <clues/fwd.hxx>
 #include <clues/sysnrs/fwd.hxx>
+#include <clues/types.hxx>
 
 namespace clues {
 
@@ -91,5 +93,23 @@ inline bool is_supported_abi(const ABI abi) {
 
 	return false;
 }
+
+/// Parse a proc file of the given process using the given functor.
+/**
+ * This function performs a line-wise read of the file found in
+ * /proc/<pid>/<subpath> and calls `parser` for each line. When the function
+ * returns `true` then parsing ends and the function call returns, otherwise
+ * further lines will be passed to `parser` until the end of file is
+ * encountered.
+ *
+ * If opening or reading the file fails then a cosmos::RuntimeError is thrown.
+ **/
+void CLUES_API parse_proc_file(const cosmos::ProcessID pid, const std::string_view subpath, std::function<bool(const std::string&)> parser);
+
+/// Parse proc file of the given Tracee.
+/**
+ * This is just a shorthand to parse a proc file of the given tracee.
+ **/
+void CLUES_API parse_proc_file(const Tracee &tracee, const std::string_view subpath, std::function<bool(const std::string&)> parser);
 
 } // end ns

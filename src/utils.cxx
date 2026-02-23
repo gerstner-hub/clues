@@ -9,6 +9,7 @@
 
 // generated
 #include <clues/errnodb.hxx>
+#include <clues/Tracee.hxx>
 
 // cosmos
 #include <cosmos/error/ApiError.hxx>
@@ -19,6 +20,7 @@
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/io/ILogger.hxx>
 #include <cosmos/io/StreamAdaptor.hxx>
+#include <cosmos/proc/process.hxx>
 #include <cosmos/string.hxx>
 #include <cosmos/utils.hxx>
 
@@ -315,6 +317,33 @@ std::array<ABI, SUPPORTED_ABIS> get_supported_abis() {
 #else
 	throw cosmos::RuntimeError{"no ABIs supported on this platform?!"};
 #endif
+}
+
+void parse_proc_file(const cosmos::ProcessID pid, const std::string_view subpath,
+		std::function<bool(const std::string&)> parser) {
+	const auto path = cosmos::proc::build_proc_path(pid, subpath);
+
+	std::ifstream fs{path};
+
+	if (!fs) {
+		throw cosmos::RuntimeError{"failed to open proc file"};
+	}
+
+	std::string line;
+
+	while (std::getline(fs, line).good()) {
+		if (parser(line)) {
+			break;
+		}
+	}
+
+	if (fs.fail()) {
+		throw cosmos::RuntimeError{"failed to read proc file"};
+	}
+}
+
+void parse_proc_file(const Tracee &tracee, const std::string_view subpath, std::function<bool(const std::string&)> parser) {
+	return parse_proc_file(tracee.pid(), subpath, parser);
 }
 
 } // end ns
