@@ -26,6 +26,7 @@ public:
 		 * see TraceeCreator for the reason for this.
 		 */
 		cosmos::proc::set_env_var("ASAN_OPTIONS", "verify_asan_link_order=false:detect_leaks=0:detect_odr_violation=0", cosmos::proc::OverwriteEnv{true});
+		cosmos::proc::set_env_var("CLUES_LOGGING", "!error,!warn,!info,!debug", cosmos::proc::OverwriteEnv{true});
 	}
 
 	void shutdown() {
