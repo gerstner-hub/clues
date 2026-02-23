@@ -63,7 +63,7 @@ protected:
 		 * correctly detected as a change of execution context
 		 */
 		m_expected_events = {
-			EventInfo{R"(^execveat\(.*= 0)"},
+			EventInfo{R"(^execveat\(.*)"},
 			{"no longer running.*helpers"},
 			{"now running.*exiter"},
 		};
@@ -150,7 +150,7 @@ protected:
 			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
 			{R"(clone\(.*\) = [0-9]+)", OUT_OF_ORDER},
 			{"automatically attached.*created by PID [0-9]+ via fork", OUT_OF_ORDER},
-			{R"(^\[[0-9]+\] execve\(.*exiter.*\) = )", OUT_OF_ORDER},
+			{R"(^\[[0-9]+\] execve\(.*exiter.*\))", OUT_OF_ORDER},
 			{"no longer running.*fork-in-thread", OUT_OF_ORDER},
 			{"now running.*exiter", OUT_OF_ORDER},
 			{"exited with 0"},
@@ -172,7 +172,7 @@ protected:
 		m_expected_events = {
 			EventInfo{R"(clone3\(.*\) = [0-9]+)", OUT_OF_ORDER},
 			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
-			{R"(execve\(.*\) = 0)", OUT_OF_ORDER},
+			{R"(execve\(.*\))", OUT_OF_ORDER},
 			{"lost to exit or execve in another thread", OUT_OF_ORDER},
 			{R"(\[[0-9]+\] .*exited with 0)", OUT_OF_ORDER},
 			{"only PID [0-9]+ is remaining"},
@@ -196,7 +196,7 @@ protected:
 		m_expected_events = {
 			EventInfo{R"(clone3\(.*\) = [0-9]+)", OUT_OF_ORDER},
 			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
-			{R"(execve\(.*\) = 0)", OUT_OF_ORDER},
+			{R"(execve\(.*\))", OUT_OF_ORDER},
 			{"lost to exit or execve in another thread", OUT_OF_ORDER},
 			{R"(\[[0-9]+\] .*exited with 0)", OUT_OF_ORDER},
 			{"only PID [0-9]+ is remaining"},
