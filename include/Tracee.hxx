@@ -366,6 +366,8 @@ protected: // functions
 
 	void getInitialRegisters();
 
+	void unshareProcessData();
+
 protected: // data
 
 	/// The engine that manages this tracee.

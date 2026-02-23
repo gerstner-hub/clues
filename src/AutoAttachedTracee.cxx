@@ -67,7 +67,7 @@ void AutoAttachedTracee::configure(const cosmos::ProcessID pid, const cosmos::pt
 	m_flags.set(Flag::WAIT_FOR_ATTACH_STOP);
 
 	if (!shares_file_descriptors_with_parent(sc)) {
-		m_process_data = std::make_shared<ProcessData>(*m_process_data);
+		unshareProcessData();
 	}
 }
 

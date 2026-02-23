@@ -933,6 +933,10 @@ void Tracee::getInitialRegisters() {
 	}
 }
 
+void Tracee::unshareProcessData() {
+	m_process_data = std::make_shared<ProcessData>(*m_process_data);
+}
+
 // explicit template instantiations
 template void Tracee::readVector<std::vector<long*>>(const long*, std::vector<long*>&) const;
 
