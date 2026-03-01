@@ -125,6 +125,17 @@ public: // functions
 	/// Returns whether the given system call number is in a valid range.
 	static bool validNr(const SystemCallNr nr);
 
+	/// Access the current SystemCallInfo if currently processing syscall entry/exit.
+	/**
+	 * Access to information is intended for a couple of SystemCallItem
+	 * implementation that are context dependent on parameters that have
+	 * not yet been parsed (e.g. size information follows after pointer to
+	 * buffer/structure during system call entry.
+	 **/
+	const SystemCallInfo* currentInfo() const {
+		return m_info;
+	}
+
 protected: // data
 
 	void fillParameters(const Tracee &proc, const SystemCallInfo &info);
@@ -183,7 +194,9 @@ protected: // data
 	/// The raw system call number of the system call.
 	SystemCallNr m_nr;
 	/// The basic name of the system call.
-	const std::string_view m_name;;
+	const std::string_view m_name;
+	/// Current system call info during entry/exit processing, nullptr otherwise.
+	const SystemCallInfo *m_info = nullptr;
 	/// The return value of the system call.
 	SystemCallItemPtr m_return;
 	/// If the system call fails, this is the error code.

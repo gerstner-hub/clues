@@ -49,6 +49,7 @@ void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) 
 void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
 	m_abi = info.abi();
 	m_error.reset();
+	m_info = &info;
 
 	prepareNewSystemCall();
 
@@ -57,6 +58,8 @@ void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
 	if (check2ndPass()) {
 		fillParameters(proc, info);
 	}
+
+	m_info = nullptr;
 }
 
 bool SystemCall::hasOutParameter() const {
@@ -69,6 +72,7 @@ bool SystemCall::hasOutParameter() const {
 }
 
 void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
+	m_info = &info;
 	const auto exit_info = *info.exitInfo();
 
 	if (exit_info.isValue()) {
@@ -82,6 +86,8 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 			par->updateData(proc);
 		}
 	}
+
+	m_info = nullptr;
 }
 
 void SystemCall::updateOpenFiles(FDInfoMap &mapping) {
