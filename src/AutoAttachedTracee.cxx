@@ -32,11 +32,17 @@ bool shares_file_descriptors_with_parent(const SystemCall &sc) {
 	 */
 
 	switch (sc.callNr()) {
-		/*
-		 * TODO: once we modeled the CLONE3 we need to cover that case
-		 * as well.
-		 */
-		//case SystemCallNr::CLONE3:
+		case SystemCallNr::CLONE3: {
+			auto &clone3_sc = dynamic_cast<const Clone3SystemCall&>(sc);
+			const auto args = clone3_sc.cl_args.args();
+
+			if (args) {
+				return args->flags()[cosmos::CloneFlag::SHARE_FILES];
+			} else {
+				// failes to parse cl_args, what now?
+				return false;
+			}
+		}
 		case SystemCallNr::CLONE: {
 			// this throws if the cast fails, but this should never happen
 			auto &clone_sc = dynamic_cast<const CloneSystemCall&>(sc);
