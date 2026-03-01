@@ -192,7 +192,7 @@ public: // functions
 	 * \return `true` if `out` could be filled, `false` otherwise (e.g.
 	 * nullptr was encouneterd).
 	 **/
-	template <typename T>
+	template <typename T, bool CHECK_TRIVIAL=true>
 	bool readStruct(const Word pointer, T &out) const {
 		// the address of the struct in the tracee's address space
 		const long *addr = reinterpret_cast<long*>(pointer);
@@ -201,7 +201,9 @@ public: // functions
 			// null address specification
 			return false;
 
-		static_assert(std::is_trivial_v<T> == true);
+		if constexpr (CHECK_TRIVIAL) {
+			static_assert(std::is_trivial_v<T> == true);
+		}
 
 		readBlob(addr, reinterpret_cast<char*>(&out), sizeof(T));
 		return true;

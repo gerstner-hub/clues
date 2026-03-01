@@ -523,4 +523,25 @@ std::string buffer(const uint8_t *buffer, const size_t len) {
 	return ss.str();
 }
 
+std::string pointer(const void *ptr) {
+	if (!ptr)
+		return "NULL";
+
+	std::stringstream ss;
+	ss << ptr;
+
+	return ss.str();
+}
+
+std::string pointer(const void *ptr, const std::string_view data) {
+	if (!ptr)
+		return "NULL";
+
+	std::stringstream ss;
+
+	ss << ptr << " → " << "[" << data << "]";
+
+	return ss.str();
+}
+
 } // end ns

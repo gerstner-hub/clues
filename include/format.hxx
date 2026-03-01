@@ -96,6 +96,12 @@ CLUES_API std::string buffer(const uint8_t *buffer, const size_t len);
 /// translates a character like \n into its string representation "\n".
 CLUES_API std::string control_char(const char ch);
 
+/// formats a pointer like "0x1234" or NULL if `!ptr`.
+CLUES_API std::string pointer(const void *ptr);
+
+/// formats a pointer to data in the form of "0x123456 → [<data>]".
+CLUES_API std::string pointer(const void *ptr, const std::string_view data);
+
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);
 

@@ -156,6 +156,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::BRK:             return new_sys<BreakSystemCall>();
 	case SystemCallNr::CLOCK_NANOSLEEP: return new_sys<ClockNanosleepSystemCall>();
 	case SystemCallNr::CLONE:           return new_sys<CloneSystemCall>();
+	case SystemCallNr::CLONE3:          return new_sys<Clone3SystemCall>();
 	case SystemCallNr::CLOSE:           return new_sys<CloseSystemCall>();
 	case SystemCallNr::EXECVE:          return new_sys<ExecveSystemCall>();
 	case SystemCallNr::EXECVEAT:        return new_sys<ExecveAtSystemCall>();

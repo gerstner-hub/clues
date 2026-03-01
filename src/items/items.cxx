@@ -13,6 +13,8 @@
 #include <clues/logger.hxx>
 #include <clues/Tracee.hxx>
 
+using namespace std::string_literals;
+
 namespace clues::item {
 
 namespace {
@@ -68,16 +70,7 @@ std::string PointerToScalar<INT>::str() const {
 		return "NULL";
 	}
 
-	std::stringstream ss;
-
-	ss << (void*)m_ptr << " → ";
-	if (m_val) {
-		ss << "[" << scalarToString() << "]";
-	} else {
-		ss << "???";
-	}
-
-	return ss.str();
+	return format::pointer((void*)m_ptr, m_val ? scalarToString() : "???"s);
 }
 
 template <typename INT>

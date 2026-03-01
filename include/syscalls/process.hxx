@@ -1,5 +1,8 @@
 #pragma once
 
+// cosmos
+#include <cosmos/fs/types.hxx>
+
 // clues
 #include <clues/items/clone.hxx>
 #include <clues/items/creds.hxx>
@@ -58,7 +61,6 @@ struct CloneSystemCall :
 			new_pid{"pid", "child pid"} {
 		setReturnItem(new_pid);
 		setParameters(flags, stack);
-		//parent_tid{"parent tid", "parent thread ID"},
 	}
 
 	/* fixed parameters */
@@ -108,6 +110,24 @@ protected: // functions
 	bool check2ndPass() override;
 
 	void prepareNewSystemCall() override;
+};
+
+struct Clone3SystemCall :
+		public SystemCall {
+	Clone3SystemCall() :
+			SystemCall{SystemCallNr::CLONE3},
+       			size{"size", "cl_args structure size"},
+			pid{ItemType::RETVAL, "child pid"} {
+		setParameters(cl_args, size);
+		setReturnItem(pid);
+	}
+
+	/// Combined clone arguments.
+	item::CloneArgs cl_args;
+	/// Size of the CloneArgs structure argument in `cl_args`.
+	item::ValueInParameter size;
+	/// New child's PID or zero if executing in child context.
+	item::ProcessIDItem pid;
 };
 
 struct ForkSystemCall :

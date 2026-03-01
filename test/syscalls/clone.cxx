@@ -2,8 +2,43 @@
 #include <sys/wait.h>
 #include <sys/resource.h>
 
+#include <cosmos/proc/clone.hxx>
+#include <cosmos/proc/process.hxx>
+
 int child(void *) {
 	return 5;
+}
+
+void testClone3() {
+	cosmos::CloneArgs args;
+	cosmos::PidFD pidfd;
+	using enum cosmos::CloneFlag;
+	args.setFlags(cosmos::CloneFlags{CLEAR_SIGHAND, PIDFD, CHILD_SETTID, PARENT_SETTID});
+	args.setPidFD(&pidfd);
+	cosmos::ThreadID tid;
+	args.setChildTID(&tid);
+	args.setParentTID(&tid);
+
+	if (const auto child = cosmos::proc::clone(args); child) {
+		wait(NULL);
+	} else {
+		cosmos::proc::exit(cosmos::ExitStatus{5});
+	}
+
+	// another test, likely unsucessfuly, using custom TIDs for the child
+	cosmos::ThreadID tids[3] = {cosmos::ThreadID{5}, cosmos::ThreadID{50}, cosmos::ThreadID{500}};
+
+	args.setTIDs(&tids[0], sizeof(tids) / sizeof(cosmos::ThreadID));
+
+	try {
+		if (const auto child = cosmos::proc::clone(args); child) {
+			wait(NULL);
+		} else {
+			cosmos::proc::exit(cosmos::ExitStatus{5});
+		}
+	} catch (const std::exception &) {
+		// to be expected, we're lacking privileges
+	}
 }
 
 int main() {
@@ -52,4 +87,6 @@ int main() {
 	}
 
 	wait(NULL);
+
+	testClone3();
 }

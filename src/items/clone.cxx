@@ -1,15 +1,19 @@
 // clues
 #include <clues/format.hxx>
 #include <clues/items/clone.hxx>
+#include <clues/syscalls/process.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
+#include <clues/Tracee.hxx>
 // private
 #include <clues/private/utils.hxx>
 
 namespace clues::item {
 
-std::string CloneFlagsValue::str() const {
-	BITFLAGS_FORMAT_START(m_flags);
+namespace {
+
+std::string clone_flags_str(const cosmos::CloneFlags flags, const std::optional<cosmos::SignalNr> exit_signal = {}) {
+	BITFLAGS_FORMAT_START(flags);
 
 	BITFLAGS_ADD(CLONE_CHILD_CLEARTID);
 	BITFLAGS_ADD(CLONE_CHILD_SETTID);
@@ -43,7 +47,13 @@ std::string CloneFlagsValue::str() const {
 		BITFLAGS_STREAM() << format::signal(*exit_signal, /*verbose=*/false);
 	}
 
-	return BITFLAGS_STR();;
+	return BITFLAGS_STR();
+}
+
+}
+
+std::string CloneFlagsValue::str() const {
+	return clone_flags_str(m_flags, exit_signal);
 }
 
 void CloneFlagsValue::processValue(const Tracee &) {
@@ -58,6 +68,158 @@ void CloneFlagsValue::processValue(const Tracee &) {
 		m_flags = valueAs<cosmos::CloneFlags>();
 		exit_signal.reset();
 	}
+}
+
+void CloneArgs::resetArgs() {
+	m_pidfd = cosmos::FileNum::INVALID;
+	m_cgroup2_fd = cosmos::FileNum::INVALID;
+	m_child_tid = cosmos::ThreadID::INVALID;
+	m_tid_array.clear();
+	m_args.reset();
+}
+
+void CloneArgs::processValue(const Tracee &proc) {
+
+	resetArgs();
+
+	if (!verifySize())
+		return;
+
+	m_args.emplace(cosmos::CloneArgs{});
+
+	// ignore the check for trivial types, cosmos::CloneArgs has a
+	// constructor to set the whole structure to zero, we can live with that
+	// not happening here.
+	if (!proc.readStruct<cosmos::CloneArgs, /*CHECK_TRIVIAL=*/false>(m_val, *m_args)) {
+		m_args.reset();
+		return;
+	}
+
+	const auto &args = *m_args;
+	const auto raw = args.raw();
+	const auto num_tids = raw->set_tid_size;
+
+	if (num_tids > 0) {
+		m_tid_array.resize(num_tids);
+		try {
+			proc.readBlob(
+					reinterpret_cast<const long*>(raw->set_tid),
+					reinterpret_cast<char*>(m_tid_array.data()), num_tids * sizeof(cosmos::ThreadID));
+		} catch (const std::exception &ex) {
+			// could be an invalid userspace pointer
+			m_tid_array.clear();
+		}
+	}
+
+	if (args.isSet(cosmos::CloneFlag::INTO_CGROUP)) {
+		m_cgroup2_fd = args.cgroup().raw();
+	}
+}
+
+void CloneArgs::updateData(const Tracee &proc) {
+
+	if (!m_args)
+		return;
+
+	const auto &args = *m_args;
+	const auto raw = args.raw();
+	const auto flags = args.flags();
+	using enum cosmos::CloneFlag;
+
+	if (flags[PIDFD]) {
+		// TODO: this needs updating of the open file descriptor tracking
+		// read the assigned PID file descriptor from tracee memory.
+		proc.readStruct(static_cast<Word>(raw->pidfd), m_pidfd);
+	}
+
+	if (flags[PARENT_SETTID]) {
+		proc.readStruct(static_cast<Word>(raw->parent_tid), m_child_tid);
+	}
+}
+
+bool CloneArgs::verifySize() const {
+	if (m_call->callNr() == SystemCallNr::CLONE3) {
+		/* we need to make a forward lookup of the size argument,
+		 * which follows the cl_args parameter */
+		const auto info = *m_call->currentInfo()->entryInfo();
+
+		if (info.args()[1] < sizeof(cosmos::CloneArgs)) {
+			return false;
+		}
+
+		return true;
+	} else {
+		// yet unknown system call?
+		return false;
+	}
+}
+
+std::string CloneArgs::str() const {
+	if (!m_args) {
+		if (isZero())
+			return "NULL";
+		else
+			// verifySize() failed
+			return format::pointer(valueAs<void*>()) + " (size mismatch)";
+	}
+
+	std::stringstream ss;
+	const auto &args = *m_args;
+	const auto flags = args.flags();
+	const auto raw = args.raw();
+	using enum cosmos::CloneFlag;
+
+	ss << "{";
+	ss << "flags=" << clone_flags_str(flags);
+	if (flags[PIDFD]) {
+		const auto ptr = (void*)raw->pidfd;
+		ss << ", pidfd=" << format::pointer(ptr, std::to_string(cosmos::to_integral(m_pidfd)));
+	}
+	if (flags[CHILD_CLEARTID] || flags[CHILD_SETTID]) {
+		ss << ", child_tid=" << reinterpret_cast<const void*>(args.childTID());
+	}
+	if (flags[PARENT_SETTID]) {
+		ss << ", parent_tid=" << format::pointer(
+				reinterpret_cast<const void*>(args.parentTID()),
+				std::to_string(cosmos::to_integral(m_child_tid)));
+	}
+	ss << ", exit_signal=" << format::signal(args.exitSignal().raw(), /*verbose=*/false);
+	ss << ", stack=" << format::pointer(args.stack());
+	ss << ", stack_size=" << args.stackSize();
+	if (flags[SETTLS]) {
+		// this is a architecture dependent value, interpreting it as
+		// a hex pointer should be good enough for now.
+		ss << ", tls=" << format::pointer(reinterpret_cast<const void*>(raw->tls));
+	}
+
+	const auto settid_ptr = reinterpret_cast<void*>(raw->set_tid);
+	if (raw->set_tid_size) {
+		std::stringstream ss2;
+		std::string sep = "";
+		for (const auto tid: m_tid_array) {
+			ss2 << sep;
+			ss2 << cosmos::to_integral(tid);
+			if (sep.empty())
+				sep = ", ";
+		}
+		ss << ", set_tid=" << format::pointer(settid_ptr, ss2.str()); 
+	} else {
+		/*
+		 * don't evaluate the pointed-to data in this case, but it
+		 * could still be interesting to know if some strange value is
+		 * passed here alongside the 0 size.
+		 */
+		ss << ", set_tid=" << format::pointer(settid_ptr);
+	}
+	ss << ", set_tid_size=" << raw->set_tid_size;
+
+	if (flags[INTO_CGROUP]) {
+		ss << ", cgroup=" << cosmos::to_integral(m_cgroup2_fd);
+	}
+
+	ss << "}";
+
+	return ss.str();
 }
 
 } // end ns
