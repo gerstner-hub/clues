@@ -9,7 +9,7 @@
 
 namespace clues {
 
-struct BreakSystemCall :
+struct CLUES_API BreakSystemCall :
 		public SystemCall {
 	BreakSystemCall() :
 			SystemCall{SystemCallNr::BREAK},
@@ -23,7 +23,7 @@ struct BreakSystemCall :
 	item::GenericPointerValue ret_addr;
 };
 
-struct MmapSystemCall :
+struct CLUES_API MmapSystemCall :
 		public SystemCall {
 	MmapSystemCall() :
 			SystemCall{SystemCallNr::MMAP},
@@ -47,7 +47,7 @@ struct MmapSystemCall :
 	item::GenericPointerValue addr;
 };
 
-struct MunmapSystemCall :
+struct CLUES_API MunmapSystemCall :
 		public SystemCall {
 
 	MunmapSystemCall() :
@@ -66,7 +66,7 @@ struct MunmapSystemCall :
 	item::SuccessResult result;
 };
 
-struct MprotectSystemCall :
+struct CLUES_API MprotectSystemCall :
 		public SystemCall {
 	MprotectSystemCall() :
 			SystemCall{SystemCallNr::MPROTECT},

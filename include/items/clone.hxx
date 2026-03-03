@@ -37,7 +37,7 @@ protected: // data
 };
 
 /// Structure used in clone3().
-class CloneArgs :
+class CLUES_API CloneArgs :
 		public SystemCallItem {
 public: // functions
 

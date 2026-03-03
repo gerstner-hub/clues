@@ -9,7 +9,7 @@
 
 namespace clues {
 
-struct AccessSystemCall :
+struct CLUES_API AccessSystemCall :
 		public SystemCall {
 
 	AccessSystemCall() :
@@ -25,7 +25,7 @@ struct AccessSystemCall :
 };
 
 // this is an earlier variant of faccessat() which doesn't take a flags argument
-struct FaccessatSystemCall :
+struct CLUES_API FaccessatSystemCall :
 		public SystemCall {
 
 	explicit FaccessatSystemCall(const SystemCallNr nr = SystemCallNr::FACCESSAT) :
@@ -43,7 +43,7 @@ struct FaccessatSystemCall :
 };
 
 // follow-up variant of faccessat() supporting an additional flags argument, introduced in Linux 5.8
-struct Faccessat2SystemCall :
+struct CLUES_API Faccessat2SystemCall :
 		public FaccessatSystemCall {
 
 	Faccessat2SystemCall() :
@@ -101,7 +101,7 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
-struct FstatSystemCall :
+struct CLUES_API FstatSystemCall :
 		public SystemCall {
 
 	explicit FstatSystemCall(const SystemCallNr nr) :
@@ -115,7 +115,7 @@ struct FstatSystemCall :
 	item::SuccessResult result;
 };
 
-struct FstatAtSystemCall :
+struct CLUES_API FstatAtSystemCall :
 		public SystemCall {
 
 	explicit FstatAtSystemCall(const SystemCallNr nr) :
@@ -151,7 +151,7 @@ struct StatSystemCallT :
 using StatSystemCall = StatSystemCallT;
 using LstatSystemCall = StatSystemCallT;
 
-struct OpenSystemCall :
+struct CLUES_API OpenSystemCall :
 		public SystemCall {
 
 	OpenSystemCall() :
@@ -178,7 +178,7 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
-struct OpenatSystemCall :
+struct CLUES_API OpenatSystemCall :
 		public SystemCall {
 
 	OpenatSystemCall() :
@@ -207,7 +207,7 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
-struct CloseSystemCall :
+struct CLUES_API CloseSystemCall :
 		public SystemCall {
 
 	CloseSystemCall() :
@@ -221,7 +221,7 @@ struct CloseSystemCall :
 	item::SuccessResult result;
 };
 
-struct GetdentsSystemCall :
+struct CLUES_API GetdentsSystemCall :
 		public SystemCall {
 
 	GetdentsSystemCall() :

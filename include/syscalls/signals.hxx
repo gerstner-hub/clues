@@ -8,7 +8,7 @@
 
 namespace clues {
 
-struct AlarmSystemCall :
+struct CLUES_API AlarmSystemCall :
 		public SystemCall {
 
 	AlarmSystemCall() :
@@ -23,7 +23,7 @@ struct AlarmSystemCall :
 	item::ReturnValue old_seconds;
 };
 
-struct SigactionSystemCall :
+struct CLUES_API SigactionSystemCall :
 		public SystemCall {
 
 	SigactionSystemCall() :
@@ -42,7 +42,7 @@ struct SigactionSystemCall :
 	item::SuccessResult result;
 };
 
-struct SigprocmaskSystemCall :
+struct CLUES_API SigprocmaskSystemCall :
 		public SystemCall {
 
 	SigprocmaskSystemCall() :
@@ -64,7 +64,7 @@ struct SigprocmaskSystemCall :
 	item::SuccessResult result;
 };
 
-struct TgKillSystemCall :
+struct CLUES_API TgKillSystemCall :
 		public SystemCall {
 
 	TgKillSystemCall() :

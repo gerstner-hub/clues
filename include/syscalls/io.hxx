@@ -7,7 +7,7 @@
 
 namespace clues {
 
-struct WriteSystemCall :
+struct CLUES_API WriteSystemCall :
 		public SystemCall {
 	WriteSystemCall() :
 			SystemCall{SystemCallNr::WRITE},
@@ -25,7 +25,7 @@ struct WriteSystemCall :
 	item::ReturnValue written;
 };
 
-struct ReadSystemCall :
+struct CLUES_API ReadSystemCall :
 		public SystemCall {
 	ReadSystemCall() :
 			SystemCall{SystemCallNr::READ},
@@ -52,7 +52,7 @@ struct ReadSystemCall :
 // the request integer can be interpreted in a generic way by use of some
 // macros (e.g.: in/out/in-out operation, size of next parameter), but the man
 // page says that this is unreliable, due to legacy APIs.
-struct IoctlSystemCall :
+struct CLUES_API IoctlSystemCall :
 		public SystemCall {
 
 	IoctlSystemCall() :

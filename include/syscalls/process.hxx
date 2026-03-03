@@ -4,6 +4,7 @@
 #include <cosmos/fs/types.hxx>
 
 // clues
+#include <clues/dso_export.h>
 #include <clues/items/clone.hxx>
 #include <clues/items/creds.hxx>
 #include <clues/items/fs.hxx>
@@ -17,7 +18,7 @@
 namespace clues {
 
 /// x86-specific prctl() extension.
-struct ArchPrctlSystemCall :
+struct CLUES_API ArchPrctlSystemCall :
 		public SystemCall {
 
 	ArchPrctlSystemCall() :
@@ -52,7 +53,7 @@ protected: // functions
  * For clone3() a separate wrapper type is used, since the two variants of
  * clone system calls differ too much from each other.
  **/
-struct CloneSystemCall :
+struct CLUES_API CloneSystemCall :
 		public SystemCall {
 
 	CloneSystemCall() :
@@ -112,7 +113,7 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
-struct Clone3SystemCall :
+struct CLUES_API Clone3SystemCall :
 		public SystemCall {
 	Clone3SystemCall() :
 			SystemCall{SystemCallNr::CLONE3},
@@ -130,7 +131,7 @@ struct Clone3SystemCall :
 	item::ProcessIDItem pid;
 };
 
-struct ForkSystemCall :
+struct CLUES_API ForkSystemCall :
 		public SystemCall {
 
 	ForkSystemCall() :
@@ -142,7 +143,7 @@ struct ForkSystemCall :
 	item::ProcessIDItem pid;
 };
 
-struct ExecveSystemCall :
+struct CLUES_API ExecveSystemCall :
 		public SystemCall {
 
 	ExecveSystemCall() :
@@ -160,7 +161,7 @@ struct ExecveSystemCall :
 	item::SuccessResult result;
 };
 
-struct ExecveAtSystemCall :
+struct CLUES_API ExecveAtSystemCall :
 		public SystemCall {
 
 	ExecveAtSystemCall() :
@@ -223,7 +224,7 @@ using GetEuidSystemCall = GetXIdSystemCall<SystemCallNr::GETEUID, item::UserID>;
 using GetGidSystemCall = GetXIdSystemCall<SystemCallNr::GETGID, item::GroupID>;
 using GetEgidSystemCall = GetXIdSystemCall<SystemCallNr::GETEGID, item::GroupID>;
 
-struct Wait4SystemCall :
+struct CLUES_API Wait4SystemCall :
 		public SystemCall {
 	Wait4SystemCall() :
 			SystemCall{SystemCallNr::WAIT4},

@@ -9,7 +9,7 @@
 
 namespace clues {
 
-struct UnknownSystemCall :
+struct CLUES_API UnknownSystemCall :
 		public SystemCall {
 	explicit UnknownSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
@@ -22,7 +22,7 @@ struct UnknownSystemCall :
 
 // This covers both getrlimit() and setrlimit() which use the same data structures
 template <SystemCallNr LIMIT_SYS_NR>
-struct LimitSystemCallT :
+struct CLUES_API LimitSystemCallT :
 		public SystemCall {
 
 	LimitSystemCallT() :
@@ -41,7 +41,7 @@ struct LimitSystemCallT :
 using GetrlimitSystemCall = LimitSystemCallT<SystemCallNr::GETRLIMIT>;
 using SetrlimitSystemCall = LimitSystemCallT<SystemCallNr::SETRLIMIT>;
 
-struct Prlimit64SystemCall :
+struct CLUES_API Prlimit64SystemCall :
 		public SystemCall {
 
 	Prlimit64SystemCall() :
@@ -60,7 +60,7 @@ struct Prlimit64SystemCall :
 	item::SuccessResult result;
 };
 
-struct RestartSystemCall :
+struct CLUES_API RestartSystemCall :
 		public SystemCall {
 
 	RestartSystemCall() :
@@ -71,7 +71,7 @@ struct RestartSystemCall :
 	item::SuccessResult result;
 };
 
-struct ExitGroupSystemCall :
+struct CLUES_API ExitGroupSystemCall :
 		public SystemCall {
 
 	ExitGroupSystemCall() :

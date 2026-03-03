@@ -12,7 +12,7 @@
 
 namespace clues {
 
-struct SetTidAddressSystemCall :
+struct CLUES_API SetTidAddressSystemCall :
 		public SystemCall {
 
 	SetTidAddressSystemCall() :
@@ -35,7 +35,7 @@ struct SetTidAddressSystemCall :
 	item::ThreadIDItem caller_tid;
 };
 
-struct GetRobustListSystemCall :
+struct CLUES_API GetRobustListSystemCall :
 		public SystemCall {
 
 	GetRobustListSystemCall() :
@@ -59,7 +59,7 @@ struct GetRobustListSystemCall :
 	item::SuccessResult result;
 };
 
-struct SetRobustListSystemCall :
+struct CLUES_API SetRobustListSystemCall :
 		public SystemCall {
 
 	SetRobustListSystemCall() :
@@ -79,7 +79,7 @@ struct SetRobustListSystemCall :
 /**
  * This is an `ioctl()` style system call or high complexity.
  **/
-struct FutexSystemCall :
+struct CLUES_API FutexSystemCall :
 		public SystemCall {
 
 	FutexSystemCall() :

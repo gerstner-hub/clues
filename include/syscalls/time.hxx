@@ -7,7 +7,7 @@
 
 namespace clues {
 
-struct NanosleepSystemCall :
+struct CLUES_API NanosleepSystemCall :
 		public SystemCall {
 
 	NanosleepSystemCall() :
@@ -26,7 +26,7 @@ struct NanosleepSystemCall :
 	item::SuccessResult result;
 };
 
-struct ClockNanosleepSystemCall :
+struct CLUES_API ClockNanosleepSystemCall :
 		public SystemCall {
 
 	ClockNanosleepSystemCall() :
