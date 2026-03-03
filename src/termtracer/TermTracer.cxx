@@ -23,10 +23,11 @@
 // clues
 #include <clues/ChildTracee.hxx>
 #include <clues/ForeignTracee.hxx>
-#include <clues/SystemCallItem.hxx>
 #include <clues/format.hxx>
 #include <clues/logger.hxx>
+#include <clues/syscalls/process.hxx>
 #include <clues/sysnrs/generic.hxx>
+#include <clues/SystemCallItem.hxx>
 #include <clues/utils.hxx>
 
 // termtracer
@@ -559,16 +560,7 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 		std::cout << "PID " << parent.pid() << " is " << formatTraceeInvocation(parent) << "\n";
 		follow = ask_yes_no() ? FollowChildMode::YES : FollowChildMode::NO;
 	} else if (follow == FollowChildMode::THREADS) {
-		if (event == cosmos::ptrace::Event::CLONE) {
-			// TODO: inspect the clone system call that caused this and
-			// check whether the CLONE_THREAD flag was specified.
-			// If it isn't set, then the clone() is likely not for
-			// a regular thread but for something else and we
-			// shouldn't follow it (?).
-			follow = FollowChildMode::YES;
-		} else {
-			follow = FollowChildMode::NO;
-		}
+		follow = hasClonedThread(parent) ? FollowChildMode::YES : FollowChildMode::NO;
 	}
 
 	if (follow == FollowChildMode::YES) {
@@ -633,6 +625,17 @@ bool TermTracer::storeUnfinishedSyscallCtx() {
 	m_unfinished_syscalls[pid] = syscall;
 	m_active_syscall.reset();
 	return ret;
+}
+
+const SystemCall* TermTracer::findSyscall(const Tracee &tracee) const {
+	if (const auto syscall = activeSyscall(tracee); syscall)
+		return syscall;
+
+	if (auto it = m_unfinished_syscalls.find(tracee.pid()); it != m_unfinished_syscalls.end()) {
+		return it->second;
+	}
+
+	return nullptr;
 }
 
 bool TermTracer::isExecSyscall(const SystemCall &sc) const {
@@ -756,6 +759,27 @@ void TermTracer::checkABI(const Tracee &tracee, const SystemCallInfo &info) {
 
 	if (report_abi) {
 		traceStream(tracee) << "[system call ABI changed to " << get_abi_label(info.abi()) << "]\n";
+	}
+}
+
+bool TermTracer::hasClonedThread(const Tracee &tracee) const {
+	auto syscall = findSyscall(tracee);
+	if (!syscall) {
+		std::cerr << "Warning: failed to find pending system call for " << tracee.pid() << "\n";
+		return false;
+	}
+
+	switch (syscall->callNr()) {
+		case SystemCallNr::CLONE: {
+			auto &clone_sc = dynamic_cast<const clues::CloneSystemCall&>(*syscall);
+			return clone_sc.flags.flags()[cosmos::CloneFlag::THREAD];
+		} case SystemCallNr::CLONE3: {
+			auto &clone3_sc = dynamic_cast<const clues::Clone3SystemCall&>(*syscall);
+			const auto &args = *clone3_sc.cl_args.args();
+			return args.flags()[cosmos::CloneFlag::THREAD];
+		} default: {
+			return false;
+		}
 	}
 }
 

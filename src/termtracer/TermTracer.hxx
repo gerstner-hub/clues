@@ -121,10 +121,24 @@ protected: // functions
 	}
 
 	bool hasActiveSyscall(const cosmos::ProcessID pid) const {
-		if (!m_active_syscall)
-		       return false;
+		return activeSyscall(pid) != nullptr;
+	}
 
-		return std::get<cosmos::ProcessID>(*m_active_syscall) == pid;
+	const SystemCall* activeSyscall(const cosmos::ProcessID pid) const {
+		if (!m_active_syscall)
+		       return nullptr;
+
+		const auto info = *m_active_syscall;
+
+		if (std::get<cosmos::ProcessID>(info) != pid) {
+			return nullptr;
+		}
+
+		return std::get<const SystemCall*>(info);
+	}
+
+	const SystemCall* activeSyscall(const Tracee &tracee) const {
+		return activeSyscall(tracee.pid());
 	}
 
 	const SystemCall* activeSyscall() const {
@@ -133,6 +147,17 @@ protected: // functions
 
 		return std::get<const SystemCall*>(*m_active_syscall);
 	}
+
+	/// Find any active or unfinished system call for `pid`.
+	/**
+	 * Since system calls can be preempted by other tracees we sometimes
+	 * need to lookup a SystemCall instance in both, the currently active
+	 * system call and the unfinished system calls. This is mostly
+	 * relevant during PTRACE_EVENT stops.
+	 *
+	 * If no entry is found for `pid`, then nullptr is returned.
+	 **/
+	const SystemCall* findSyscall(const Tracee &tracee) const;
 
 	bool isExecSyscall(const SystemCall &sc) const;
 
@@ -165,6 +190,9 @@ protected: // functions
 
 	/// Checks the current system call's ABI and reports ABI changes.
 	void checkABI(const Tracee &tracee, const SystemCallInfo &info);
+
+	/// Checks whether the given Tracee is executing clone() with CLONE_THREAD.
+	bool hasClonedThread(const Tracee &tracee) const;
 
 protected: // EventConsumer interface
 

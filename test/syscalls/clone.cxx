@@ -88,5 +88,12 @@ int main() {
 
 	wait(NULL);
 
+	/* test a clone() for a new thread */
+	if (clone(&child, child_stack, CLONE_THREAD|CLONE_SIGHAND|CLONE_VM, nullptr, nullptr, 0) < 0) {
+		return 1;
+	}
+
+	wait(NULL);
+
 	testClone3();
 }
