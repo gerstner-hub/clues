@@ -20,7 +20,8 @@ if env['sanitizer']:
     run_env['ENV']['ASAN_OPTIONS'] = 'detect_odr_violation=0'
 
 need_helpers = ("execve.cxx", "tracer.cxx")
-need_tracer = ("tracer.cxx")
+need_syscall_tests = ("detach.cxx",)
+need_tracer = ("tracer.cxx",)
 
 for test in tests:
 
@@ -41,6 +42,8 @@ for test in tests:
         run_env.Requires(run_cmd, 'helpers')
     if test in need_tracer:
         run_env.Requires(run_cmd, 'clues')
+    if test in need_syscall_tests:
+        run_env.Requires(run_cmd, 'syscall_tests')
 
     env.Alias(run_test_key, run_cmd)
     env.Alias('run_clues_tests', run_test_key)
