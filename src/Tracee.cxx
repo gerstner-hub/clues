@@ -172,46 +172,64 @@ void Tracee::attach(const FollowChildren follow_children, const AttachThreads at
 	}
 }
 
-void Tracee::detach() {
+bool Tracee::detach() {
 	if (!m_ptrace.valid()) {
-		return;
+		return true;
 	} else if (m_state == State::DEAD || m_state == State::DETACHED) {
-		return;
+		return true;
 	}
 
-	try {
-		if (m_state == State::RUNNING) {
-			m_flags.set(Flag::DETACH_AT_NEXT_STOP);
+	if (m_state != State::RUNNING && m_state != State::UNKNOWN) {
+		// we can detach immediately
+		doDetach();
+		return true;
+	}
 
-			if (!m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
-				// interrupt, if not still pending, for being able to detach
-				interrupt();
-			}
-		} else {
-			m_ptrace.detach();
-			changeState(State::DETACHED);
+	// otherwise we need to indicate that we want to detach at the
+	// next ptrace stop we're seeing
+	m_flags.set(Flag::DETACH_AT_NEXT_STOP);
+
+	if (!m_flags[Flag::WAIT_FOR_ATTACH_STOP]) {
+		// interrupt, if not still pending, for being able to detach
+		try {
+			interrupt();
+		} catch (const cosmos::ApiError &error) {
+			handleError(error);
 		}
+	}
+
+	return false;
+}
+
+void Tracee::doDetach() {
+	try {
+		m_ptrace.detach();
+		changeState(State::DETACHED);
 	} catch (const cosmos::ApiError &error) {
-		if (error.errnum() == cosmos::Errno::SEARCH) {
-			// some execve() scenarios end up without a proper
-			// exit notification. ignore them.
-			if (!m_flags[Flag::WAIT_FOR_EXITED] &&
-					currentSystemCallNr() != SystemCallNr::EXECVE) {
-				LOG_WARN_PID("tracee found to be already dead upon detach()/interrupt()");
-			}
-			// already gone for some reason
-			changeState(State::DEAD);
-		} else {
-			// shouldn't really happen, unless we're not a
-			// tracee for the process at all anyway
-			m_ptrace = cosmos::Tracee{};
-			throw;
-		}
+		handleError(error);
 	}
 
 	m_ptrace = cosmos::Tracee{};
 	m_flags = {};
 	m_initial_attacher.reset();
+}
+
+void Tracee::handleError(const cosmos::ApiError &error) {
+	if (error.errnum() == cosmos::Errno::SEARCH) {
+		// some execve() scenarios end up without a proper
+		// exit notification. ignore them.
+		if (!m_flags[Flag::WAIT_FOR_EXITED] &&
+				currentSystemCallNr() != SystemCallNr::EXECVE) {
+			LOG_WARN_PID("tracee found to be already dead upon detach()/interrupt()");
+		}
+		// already gone for some reason
+		changeState(State::DEAD);
+	} else {
+		// shouldn't really happen, unless we're not a
+		// tracee for the process at all anyway
+		m_ptrace = cosmos::Tracee{};
+		throw;
+	}
 }
 
 void Tracee::updateExecutable() {
@@ -763,7 +781,7 @@ void Tracee::processEvent(const cosmos::ChildState &data) {
 		return;
 	} else if (data.trapped()) {
 		if (m_flags[Flag::DETACH_AT_NEXT_STOP]) {
-			detach();
+			doDetach();
 			return;
 		}
 

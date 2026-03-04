@@ -21,6 +21,10 @@
 #include <clues/SystemCallDB.hxx>
 #include <clues/types.hxx>
 
+namespace cosmos {
+	class ApiError;
+}
+
 namespace clues {
 
 class SystemCall;
@@ -167,8 +171,19 @@ public: // functions
 	virtual void attach(const FollowChildren follow_children,
 			const AttachThreads attach_threads = AttachThreads{false});
 
-	/// Logic to handle detaching from the tracee.
-	void detach();
+	/// Attempt to detach the Tracee.
+	/**
+	 * Detaching is only possible if the tracee is in a stopped state. If
+	 * this is the case then the detach is performed and `true` is
+	 * returned.
+	 *
+	 * Otherwise a future detach will be prepared by adjusting state flags
+	 * and `false` is returned.
+	 *
+	 * If the tracee is already detached then nothing happens and `true`
+	 * is returned.
+	 **/
+	bool detach();
 
 	/// Reads a word of data from the tracee's memory.
 	/**
@@ -374,6 +389,19 @@ protected: // functions
 	void getInitialRegisters();
 
 	void unshareProcessData();
+
+	/// Actually perform a detach without checking tracee state.
+	/**
+	 * This can throw if the current trace state doesn't allow detaching.
+	 **/
+	void doDetach();
+
+	/// Handle ApiErrors raised from ptrace() requests.
+	/**
+	 * This function will potentially clean up object state but can also
+	 * rethrow the exception, thus it must be called from a `catch` block.
+	 **/
+	void handleError(const cosmos::ApiError &error);
 
 protected: // data
 

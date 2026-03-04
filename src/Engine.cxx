@@ -64,7 +64,7 @@ void Engine::checkCleanupTracee(TraceeMap::iterator it) {
 			m_tracees.erase(it);
 		}
 	} else if (tracee.state() == Tracee::State::DEAD) {
-		tracee.detach();
+		tracee.doDetach();
 		m_tracees.erase(it);
 	}
 }
