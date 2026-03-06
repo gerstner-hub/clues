@@ -44,6 +44,8 @@ public: // types
 		LOST_TO_MT_EXIT        = 1 << 2,
 		/// The system call ABI changed since the last observed system call.
 		ABI_CHANGED            = 1 << 3,
+		/// used in newChildProcess() to indicate that a new thread has been created.
+		CLONED_THREAD          = 1 << 4,
 	};
 
 	using StatusFlags = cosmos::BitMask<StatusFlag>;
@@ -214,18 +216,24 @@ protected: // functions
 	 * differentiated via `event`. Note that some forms of `clone()` calls
 	 * will appear as cosmos::ptrace::Event::FORK or
 	 * cosmos::ptrace::Event::VFORK instead of
-	 * cosmos::ptrace::Event::CLONE.
+	 * cosmos::ptrace::Event::CLONE (when the clone() exit signal is set
+	 * to SIGCHILD).
 	 *
 	 * cosmos::ptrace::Event::VFORK_DONE occurs when the child process
 	 * exited or `exec()`'d and can be ignored if there is no need for it.
+	 *
+	 * StatusFlag::CLONED_THREAD will be set in `flags` in case the new
+	 * child process is a thread of `parent`.
 	 **/
 	virtual void newChildProcess(
 			Tracee &parent,
 			Tracee &child,
-			const cosmos::ptrace::Event event) {
+			const cosmos::ptrace::Event event,
+			const StatusFlags flags) {
 		(void)parent;
 		(void)child;
 		(void)event;
+		(void)flags;
 	}
 
 	/// A `vfork()` in `parent` for `child` completed.

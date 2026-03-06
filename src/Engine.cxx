@@ -275,7 +275,11 @@ void Engine::handleAutoAttach(Tracee &parent, const cosmos::ProcessID pid,
 
 		auto [it, _] = m_tracees.insert({pid, tracee});
 
-		m_consumer.newChildProcess(parent, *it->second, event);
+		EventConsumer::StatusFlags flags;
+		if (parent.hasClonedThread()) {
+			flags.set(EventConsumer::StatusFlag::CLONED_THREAD);
+		}
+		m_consumer.newChildProcess(parent, *it->second, event, flags);
 
 		checkCleanupTracee(it);
 	} else {

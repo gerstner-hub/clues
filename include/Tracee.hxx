@@ -403,6 +403,9 @@ protected: // functions
 	 **/
 	void handleError(const cosmos::ApiError &error);
 
+	/// Returns whether the current/last seen system call was a clone() for a thread.
+	bool hasClonedThread() const;
+
 protected: // data
 
 	/// The engine that manages this tracee.

@@ -23,7 +23,7 @@ public:
 	explicit CloneTracer() {
 	}
 
-	void newChildProcess(clues::Tracee &, clues::Tracee &child, const cosmos::ptrace::Event event) override {
+	void newChildProcess(clues::Tracee &, clues::Tracee &child, const cosmos::ptrace::Event event, const clues::EventConsumer::StatusFlags) override {
 		(void)event;
 		child.detach();
 		std::cout << "detaching from new child proc\n";

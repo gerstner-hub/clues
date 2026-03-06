@@ -191,9 +191,6 @@ protected: // functions
 	/// Checks the current system call's ABI and reports ABI changes.
 	void checkABI(const Tracee &tracee, const SystemCallInfo &info);
 
-	/// Checks whether the given Tracee is executing clone() with CLONE_THREAD.
-	bool hasClonedThread(const Tracee &tracee) const;
-
 protected: // EventConsumer interface
 
 	void syscallEntry(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) override;
@@ -214,7 +211,8 @@ protected: // EventConsumer interface
 	void newChildProcess(
 			Tracee &parent,
 			Tracee &child,
-			const cosmos::ptrace::Event event) override;
+			const cosmos::ptrace::Event event,
+			const StatusFlags flags) override;
 
 	void stopped(Tracee &tracee) override;
 

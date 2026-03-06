@@ -552,7 +552,8 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 	}
 }
 
-void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::ptrace::Event event) {
+void TermTracer::newChildProcess(Tracee &parent, Tracee &child,
+		const cosmos::ptrace::Event event, const StatusFlags flags) {
 	auto follow = m_follow_children;
 
 	if (follow == FollowChildMode::ASK) {
@@ -560,7 +561,7 @@ void TermTracer::newChildProcess(Tracee &parent, Tracee &child, const cosmos::pt
 		std::cout << "PID " << parent.pid() << " is " << formatTraceeInvocation(parent) << "\n";
 		follow = ask_yes_no() ? FollowChildMode::YES : FollowChildMode::NO;
 	} else if (follow == FollowChildMode::THREADS) {
-		follow = hasClonedThread(parent) ? FollowChildMode::YES : FollowChildMode::NO;
+		follow = flags[StatusFlag::CLONED_THREAD] ? FollowChildMode::YES : FollowChildMode::NO;
 	}
 
 	if (follow == FollowChildMode::YES) {
@@ -759,27 +760,6 @@ void TermTracer::checkABI(const Tracee &tracee, const SystemCallInfo &info) {
 
 	if (report_abi) {
 		traceStream(tracee) << "[system call ABI changed to " << get_abi_label(info.abi()) << "]\n";
-	}
-}
-
-bool TermTracer::hasClonedThread(const Tracee &tracee) const {
-	auto syscall = findSyscall(tracee);
-	if (!syscall) {
-		std::cerr << "Warning: failed to find pending system call for " << tracee.pid() << "\n";
-		return false;
-	}
-
-	switch (syscall->callNr()) {
-		case SystemCallNr::CLONE: {
-			auto &clone_sc = dynamic_cast<const clues::CloneSystemCall&>(*syscall);
-			return clone_sc.flags.flags()[cosmos::CloneFlag::THREAD];
-		} case SystemCallNr::CLONE3: {
-			auto &clone3_sc = dynamic_cast<const clues::Clone3SystemCall&>(*syscall);
-			const auto &args = *clone3_sc.cl_args.args();
-			return args.flags()[cosmos::CloneFlag::THREAD];
-		} default: {
-			return false;
-		}
 	}
 }
 

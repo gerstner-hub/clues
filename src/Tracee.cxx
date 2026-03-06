@@ -14,8 +14,10 @@
 // clues
 #include <clues/Engine.hxx>
 #include <clues/EventConsumer.hxx>
+#include <clues/items/clone.hxx>
 #include <clues/logger.hxx>
 #include <clues/RegisterSet.hxx>
+#include <clues/syscalls/process.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/Tracee.hxx>
@@ -229,6 +231,26 @@ void Tracee::handleError(const cosmos::ApiError &error) {
 		// tracee for the process at all anyway
 		m_ptrace = cosmos::Tracee{};
 		throw;
+	}
+}
+
+bool Tracee::hasClonedThread() const {
+	if (!m_current_syscall)
+		return false;
+
+	const auto &syscall = *m_current_syscall;
+
+	switch (syscall.callNr()) {
+		case SystemCallNr::CLONE: {
+			auto &clone_sc = dynamic_cast<const CloneSystemCall&>(syscall);
+			return clone_sc.flags.flags()[cosmos::CloneFlag::THREAD];
+		} case SystemCallNr::CLONE3: {
+			auto &clone3_sc = dynamic_cast<const Clone3SystemCall&>(syscall);
+			const auto &args = *clone3_sc.cl_args.args();
+			return args.flags()[cosmos::CloneFlag::THREAD];
+		} default: {
+			return false;
+		}
 	}
 }
 
