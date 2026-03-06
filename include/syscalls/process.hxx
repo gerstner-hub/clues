@@ -129,6 +129,10 @@ struct CLUES_API Clone3SystemCall :
 	item::ValueInParameter size;
 	/// New child's PID or zero if executing in child context.
 	item::ProcessIDItem pid;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &proc) override;
 };
 
 struct CLUES_API ForkSystemCall :

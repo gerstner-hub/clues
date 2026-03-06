@@ -132,4 +132,15 @@ bool CloneSystemCall::check2ndPass()  {
 	return m_pars.size() > 2;
 }
 
+void Clone3SystemCall::updateFDTracking(const Tracee &proc) {
+	const auto args = cl_args.args();
+
+	if (!args) {
+		return;
+	} else if (args->flags()[cosmos::CloneFlag::PIDFD]) {
+		FDInfo info{FDInfo::Type::PID_FD, cl_args.pidfd()};
+		trackFD(proc, std::move(info));
+	}
+}
+
 } // end ns

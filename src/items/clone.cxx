@@ -127,7 +127,6 @@ void CloneArgs::updateData(const Tracee &proc) {
 	using enum cosmos::CloneFlag;
 
 	if (flags[PIDFD]) {
-		// TODO: this needs updating of the open file descriptor tracking
 		// read the assigned PID file descriptor from tracee memory.
 		proc.readStruct(static_cast<Word>(raw->pidfd), m_pidfd);
 	}
