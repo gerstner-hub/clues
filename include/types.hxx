@@ -68,6 +68,10 @@ enum class ABI {
 };
 
 /// Contextual information about a file descriptor in a Tracee.
+/**
+ * \todo For a fully-fledged implementation we will likely need specialized
+ * types e.g. for sockets, carrying additional context-sensitive data.
+ **/
 struct FDInfo {
 public: // types
 
@@ -82,28 +86,36 @@ public: // types
 	enum class Type {
 		INVALID,
 		FS_PATH, ///< a path opened on the file system (this can still be a device special file, named pipe, directory etc.)
-		EVENT_FD,
-		TIMER_FD,
-		SIGNAL_FD,
-		SOCKET,
+		EVENT_FD, ///< created by `eventfd()`
+		TIMER_FD, ///< created by `timerfd()`
+		SIGNAL_FD, ///< created by `signalfd()`
+		SOCKET, ///< created by `socket()`
 		EPOLL, ///< an epoll() file descriptor
-		PIPE,
-		INOTIFY,
-		PID_FD,
+		PIPE, ///< created by `pipe()`
+		INOTIFY, ///< created by `inotify_init()`
+		PID_FD, ///< created by `pidfd_open()`, `clone()`, ...
 		BPF_MAP, ///< refers to a BPF type map
 		BPF_PROG, ///< refers to a BPF program validated and loaded
 		PERF_EVENT,
 		UNKNOWN
 	};
 
+public: // functions
+
+	FDInfo() = default;
+
+	explicit FDInfo(const Type _type, const cosmos::FileNum _fd) :
+		type{_type}, fd{_fd} {
+	}
+
 public: // data
 
-	cosmos::FileNum fd = cosmos::FileNum::INVALID; ///< the actual file descriptor number.
 	Type type = Type::INVALID;
+	cosmos::FileNum fd = cosmos::FileNum::INVALID; ///< the actual file descriptor number.
 	std::string path; ///< path to the file, if applicable
-	cosmos::OpenMode mode;
-	cosmos::OpenFlags flags;
-	std::optional<cosmos::Inode> inode;
+	std::optional<cosmos::OpenMode> mode;
+	std::optional<cosmos::OpenFlags> flags;
+	std::optional<cosmos::Inode> inode; ///< inode of the file, only filled by utils::get_fd_infos().
 };
 
 /// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.

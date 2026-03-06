@@ -19,7 +19,12 @@ public: // data
 	/// Command line used to create the process (/proc/<pid>/cmdline).
 	cosmos::StringVector cmdline;
 	/// Here we store our current knowledge about open file descriptors.
-	FDInfoMap fd_info_map;
+	/**
+	 * This is mutable to allow to keep the Tracee object const in
+	 * `SystemCall::setExitInfo()` and still allow to update file
+	 * descriptor tracking in `SystemCall::updateFDTracking`.
+	 **/
+	mutable FDInfoMap fd_info_map;
 };
 
 } // end ns

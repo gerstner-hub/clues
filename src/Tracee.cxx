@@ -464,7 +464,6 @@ void Tracee::handleSystemCallExit() {
 	auto &syscall = *m_current_syscall;
 
 	syscall.setExitInfo(*this, *m_syscall_info);
-	syscall.updateOpenFiles(m_process_data->fd_info_map);
 
 	if (auto error = syscall.error(); error && error->hasKernelErrorCode()) {
 		// system call was interrupted, remember it for later
@@ -975,6 +974,29 @@ void Tracee::getInitialRegisters() {
 
 void Tracee::unshareProcessData() {
 	m_process_data = std::make_shared<ProcessData>(*m_process_data);
+}
+
+void Tracee::trackFD(FDInfo &&info) const {
+	const auto fd = info.fd;
+	auto res = m_process_data->fd_info_map.insert(
+		std::make_pair(fd, std::move(info))
+	);
+
+	if (!res.second) {
+		LOG_WARN_PID("FD " << cosmos::to_integral(fd) << " was already open?!");
+		// bail out
+		return;
+	}
+
+	LOG_DEBUG_PID("new file descriptor tracking for fd " << cosmos::to_integral(fd));
+}
+
+void Tracee::dropFD(const cosmos::FileNum fd) const {
+	if (m_process_data->fd_info_map.erase(fd) != 0) {
+		LOG_DEBUG_PID("removed fd " << cosmos::to_integral(fd) << " from registered mappings");
+	} else {
+		LOG_WARN_PID("closed fd " << cosmos::to_integral(fd) << " wasn't open before?!");
+	}
 }
 
 // explicit template instantiations

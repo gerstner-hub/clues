@@ -85,8 +85,6 @@ public: // functions
 	 **/
 	void setExitInfo(const Tracee &proc, const SystemCallInfo &info);
 
-	void updateOpenFiles(FDInfoMap &map);
-
 	/// Returns the system call's human readable name.
 	std::string_view name() const { return m_name; }
 	/// Returns the number of parameters for this system call.
@@ -136,7 +134,7 @@ public: // functions
 		return m_info;
 	}
 
-protected: // data
+protected: // functions
 
 	void fillParameters(const Tracee &proc, const SystemCallInfo &info);
 
@@ -189,6 +187,28 @@ protected: // data
 	/// Perform any necessary actions before processing a new system call entry event.
 	virtual void prepareNewSystemCall() {}
 
+	/// Update file descriptor tracking.
+	/**
+	 * This function is called upon successful system call exit to track
+	 * any potential new file descriptors or stop tracking of existing
+	 * file descriptors.
+	 *
+	 * Specializations of SystemCall that create or close file descriptors
+	 * need to overwrite this function and call `proc.trackFD()` or
+	 * `proc.dropFD()` accordingly.
+	 **/
+	virtual void updateFDTracking(const Tracee &proc) { (void)proc; }
+
+	/*
+	 * these are wrappers to make use of SystemCall's friendship towards
+	 * Tracee, since specializations wouldn't be allowed to call
+	 * `Tracee::dropFD` etc.
+	 */
+
+	void dropFD(const Tracee &proc, const cosmos::FileNum num);
+
+	void trackFD(const Tracee &proc, FDInfo &&info);
+
 protected: // data
 
 	/// The raw system call number of the system call.
@@ -203,10 +223,6 @@ protected: // data
 	std::optional<ErrnoResult> m_error;
 	/// The array of system call parameters, if any.
 	ParameterVector m_pars;
-	/// if this is an open-like system call, then this gives the number of the parameter that contains the open identifier.
-	std::optional<size_t> m_open_id_par;
-	/// If this is a close-like system call, then this gives the number of the parameter that contains the open file descriptor.
-	std::optional<size_t> m_close_fd_par;
 	/// The current system call ABI which is in effect.
 	ABI m_abi = ABI::UNKNOWN;
 };

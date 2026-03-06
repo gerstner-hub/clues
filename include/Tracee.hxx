@@ -38,6 +38,7 @@ class Engine;
  **/
 class CLUES_API Tracee {
 	friend class Engine;
+	friend class SystemCall;
 public: // types
 
 	/// Current tracing state for a single tracee.
@@ -405,6 +406,16 @@ protected: // functions
 
 	/// Returns whether the current/last seen system call was a clone() for a thread.
 	bool hasClonedThread() const;
+
+	/// Track a new file descriptor for this Tracee's thread group.
+	/**
+	 * This function is intended in the context of SystemCall exit based
+	 * on the knowledge of concrete SystemCall implementations.
+	 **/
+	void trackFD(FDInfo &&info) const;
+
+	/// Drop a file descriptor from the tracking of the Tracee's thread group.
+	void dropFD(const cosmos::FileNum fd) const;
 
 protected: // data
 

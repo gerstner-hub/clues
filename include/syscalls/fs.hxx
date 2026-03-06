@@ -160,7 +160,6 @@ struct CLUES_API OpenSystemCall :
 			new_fd{ItemType::RETVAL} {
 		setReturnItem(new_fd);
 		setParameters(filename, flags);
-		m_open_id_par = 1; /* filename */
 	}
 
 	/* parameters */
@@ -176,6 +175,8 @@ protected: // functions
 	bool check2ndPass() override;
 
 	void prepareNewSystemCall() override;
+
+	void updateFDTracking(const Tracee &) override;
 };
 
 struct CLUES_API OpenatSystemCall :
@@ -188,7 +189,6 @@ struct CLUES_API OpenatSystemCall :
 			new_fd{ItemType::RETVAL} {
 		setReturnItem(new_fd);
 		setParameters(fd, filename, flags);
-		m_open_id_par = 1; /* filename */
 	}
 
 	/* parameters */
@@ -205,6 +205,8 @@ protected: // functions
 	bool check2ndPass() override;
 
 	void prepareNewSystemCall() override;
+
+	void updateFDTracking(const Tracee &) override;
 };
 
 struct CLUES_API CloseSystemCall :
@@ -214,11 +216,14 @@ struct CLUES_API CloseSystemCall :
 			SystemCall{SystemCallNr::CLOSE} {
 		setReturnItem(result);
 		setParameters(fd);
-		m_close_fd_par = 0; /* fd */
 	}
 
 	item::FileDescriptor fd;
 	item::SuccessResult result;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
 };
 
 struct CLUES_API GetdentsSystemCall :

@@ -13,13 +13,14 @@
 #include <clues/syscalls/other.hxx>
 #include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
-#include <clues/syscalls/time.hxx>
 #include <clues/syscalls/thread.hxx>
+#include <clues/syscalls/time.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
 #include <clues/SystemCallInfo.hxx>
 #include <clues/SystemCallItem.hxx>
+#include <clues/Tracee.hxx>
 #include <clues/types.hxx>
 
 namespace clues {
@@ -87,56 +88,11 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 		}
 	}
 
-	m_info = nullptr;
-}
-
-void SystemCall::updateOpenFiles(FDInfoMap &mapping) {
-	using FileNum = cosmos::FileNum;
-	// TODO: this implementation is not finished / not sane yet.
-
-	if (hasErrorCode()) {
-		return;
-	} else if (m_open_id_par) {
-		const auto new_fd = static_cast<FileNum>(m_return->value());
-
-		if (new_fd <= FileNum::INVALID)
-			return;
-
-		auto res = mapping.insert(
-			std::make_pair(new_fd, FDInfo{})
-		);
-
-		if (!res.second) {
-			LOG_WARN("file descriptor was already open?!");
-			// bail out
-			return;
-		}
-
-		auto &fdinfo = mapping[new_fd];
-		fdinfo.fd = new_fd;
-		// TODO: we need to differentiate the various types
-		// this generally needs a different approach, for system call
-		// specific, likely, since we also need to store the mode and
-		// flags and so on.
-		fdinfo.type = FDInfo::Type::FS_PATH;
-		fdinfo.path = m_pars[*m_open_id_par]->str();
-
-		LOG_DEBUG("new path mapping for fd " << cosmos::to_integral(new_fd) << " with open_id " << fdinfo.path);
-	} else if (m_close_fd_par) {
-		if (m_return->valueAs<cosmos::Errno>() != cosmos::Errno::NO_ERROR)
-			// unsuccessful system call, so don't update anything
-			return;
-
-		const auto closed_fd = static_cast<FileNum>(
-				m_pars[*m_close_fd_par]->value());
-
-		if (mapping.erase(closed_fd) == 0) {
-			LOG_WARN("closed fd wasn't open before?!");
-		}
-
-		LOG_DEBUG("removed fd " << cosmos::to_integral(closed_fd)
-				<< " from registered mappings");
+	if (exit_info.isValue()) {
+		updateFDTracking(proc);
 	}
+
+	m_info = nullptr;
 }
 
 // alias for creating SystemCall instances below
@@ -203,6 +159,14 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::WRITE:           return new_sys<WriteSystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
+}
+
+void SystemCall::dropFD(const Tracee &proc, const cosmos::FileNum num) {
+	proc.dropFD(num);
+}
+
+void SystemCall::trackFD(const Tracee &proc, FDInfo &&info) {
+	proc.trackFD(std::move(info));
 }
 
 } // end ns

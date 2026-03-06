@@ -1,5 +1,6 @@
 // clues
 #include <clues/syscalls/fs.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues {
 
@@ -180,6 +181,14 @@ bool OpenSystemCall::check2ndPass() {
 	return false;
 }
 
+void OpenSystemCall::updateFDTracking(const Tracee &proc) {
+	FDInfo info{FDInfo::Type::FS_PATH, new_fd.fd()};
+	info.path = filename.str();
+	info.mode = flags.mode();
+	info.flags = flags.flags();
+	trackFD(proc, std::move(info));
+}
+
 void OpenatSystemCall::prepareNewSystemCall() {
 	m_pars.erase(m_pars.begin() + 3, m_pars.end());
 	mode.reset();
@@ -195,6 +204,18 @@ bool OpenatSystemCall::check2ndPass() {
 	}
 
 	return false;
+}
+
+void OpenatSystemCall::updateFDTracking(const Tracee &proc) {
+	FDInfo info{FDInfo::Type::FS_PATH, new_fd.fd()};
+	info.path = filename.str();
+	info.mode = flags.mode();
+	info.flags = flags.flags();
+	trackFD(proc, std::move(info));
+}
+
+void CloseSystemCall::updateFDTracking(const Tracee &proc) {
+	dropFD(proc, fd.fd());
 }
 
 } // end ns
