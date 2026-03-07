@@ -1,4 +1,5 @@
 // clues
+#include <clues/logger.hxx>
 #include <clues/syscalls/fs.hxx>
 #include <clues/Tracee.hxx>
 
@@ -161,6 +162,24 @@ bool FcntlSystemCall::check2ndPass() {
 	}
 
 	return true;
+}
+
+void FcntlSystemCall::updateFDTracking(const Tracee &proc) {
+	using enum item::FcntlOperation::Oper;
+
+	if (cosmos::in_list(operation.operation(), {DUPFD, DUPFD_CLOEXEC})) {
+		auto &info_map = proc.fdInfoMap();
+		if (auto it = info_map.find(fd.fd()); it != info_map.end()) {
+			auto info = it->second;
+			info.fd = ret_dupfd->fd();
+			trackFD(proc, std::move(info));
+		} else {
+			LOG_WARN("[" << cosmos::to_integral(proc.pid()) << "]"
+					<< "Couldn't find dup source FD "
+					<< cosmos::to_integral(fd.fd())
+					<< " for tracking");
+		}
+	}
 }
 
 void OpenSystemCall::prepareNewSystemCall() {

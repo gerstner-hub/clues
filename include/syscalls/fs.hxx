@@ -99,6 +99,8 @@ protected: // functions
 	bool check2ndPass() override;
 
 	void prepareNewSystemCall() override;
+
+	void updateFDTracking(const Tracee &proc) override;
 };
 
 struct CLUES_API FstatSystemCall :
