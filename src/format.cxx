@@ -544,4 +544,36 @@ std::string pointer(const void *ptr, const std::string_view data) {
 	return ss.str();
 }
 
+std::string_view fd_type(const FDInfo &info) {
+	using enum FDInfo::Type;
+
+	switch (info.type) {
+		default:
+		CASE_ENUM_TO_STR(INVALID);
+		CASE_ENUM_TO_STR(FS_PATH);
+		CASE_ENUM_TO_STR(EVENT_FD);
+		CASE_ENUM_TO_STR(TIMER_FD);
+		CASE_ENUM_TO_STR(SIGNAL_FD);
+		CASE_ENUM_TO_STR(SOCKET);
+		CASE_ENUM_TO_STR(EPOLL);
+		CASE_ENUM_TO_STR(PIPE);
+		CASE_ENUM_TO_STR(INOTIFY);
+		CASE_ENUM_TO_STR(PID_FD);
+		CASE_ENUM_TO_STR(BPF_MAP);
+		CASE_ENUM_TO_STR(BPF_PROG);
+		CASE_ENUM_TO_STR(PERF_EVENT);
+		CASE_ENUM_TO_STR(UNKNOWN);
+	}
+}
+
+std::string fd_info(const FDInfo &info) {
+	using enum FDInfo::Type;
+
+	if (info.type == FS_PATH) {
+		return cosmos::sprintf("<%s>", info.path.c_str());
+	} else {
+		return cosmos::sprintf("<%s>", &fd_type(info)[0]);
+	}
+}
+
 } // end ns

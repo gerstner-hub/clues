@@ -11,6 +11,7 @@
 
 // clues
 #include <clues/dso_export.h>
+#include <clues/fwd.hxx>
 
 struct timespec;
 
@@ -101,6 +102,12 @@ CLUES_API std::string pointer(const void *ptr);
 
 /// formats a pointer to data in the form of "0x123456 → [<data>]".
 CLUES_API std::string pointer(const void *ptr, const std::string_view data);
+
+/// returns a label for `info.type`.
+CLUES_API std::string_view fd_type(const FDInfo &info);
+
+/// formats the given FDInfo object in a user friendly way.
+CLUES_API std::string fd_info(const FDInfo &info);
 
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);

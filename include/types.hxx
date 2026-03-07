@@ -108,6 +108,10 @@ public: // functions
 		type{_type}, fd{_fd} {
 	}
 
+	bool valid() const {
+		return type != Type::INVALID;
+	}
+
 public: // data
 
 	Type type = Type::INVALID;
