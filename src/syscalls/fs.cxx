@@ -13,7 +13,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	setReturnItem(*result);
 
 	/* args */
-	dup_num.reset();
+	dup_lowest.reset();
 	fd_flags_arg.reset();
 	status_flags_arg.reset();
 	flock_arg.reset();
@@ -50,12 +50,12 @@ bool FcntlSystemCall::check2ndPass() {
 	switch (operation.operation()) {
 		case Oper::DUPFD: [[fallthrough]];
 		case Oper::DUPFD_CLOEXEC: {
-			dup_num.emplace(item::FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{false},
+			dup_lowest.emplace(item::FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{false},
 				"lowest_fd", "lowest dup file descriptor number"});
 			ret_dupfd.emplace(item::FileDescriptor{ItemType::RETVAL, item::AtSemantics{false},
 				"dupfd", "duplicated file descriptor"});
 			setNewReturnItem(*ret_dupfd);
-			setExtraParameter(*dup_num);
+			setExtraParameter(*dup_lowest);
 			break;
 		} case Oper::GETFD: {
 			ret_fd_flags.emplace(item::FileDescFlagsValue{ItemType::RETVAL});
