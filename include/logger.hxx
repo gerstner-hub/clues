@@ -1,5 +1,8 @@
 #pragma once
 
+// cosmos
+#include <cosmos/io/ILogger.hxx>
+
 // clues
 #include <clues/dso_export.h>
 
