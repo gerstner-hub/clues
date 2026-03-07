@@ -129,4 +129,13 @@ bool FutexSystemCall::check2ndPass() {
 	return true;
 }
 
+void FutexSystemCall::updateFDTracking(const Tracee &proc) {
+	if (new_fd) {
+		// we don't even have a type for this, because this feature
+		// was dropped in kernel 2.6.26, so I guess it doesn't make
+		// sense to track anything here.
+		(void)proc;
+	}
+}
+
 } // end ns
