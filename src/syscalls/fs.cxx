@@ -208,12 +208,12 @@ void OpenSystemCall::updateFDTracking(const Tracee &proc) {
 	trackFD(proc, std::move(info));
 }
 
-void OpenatSystemCall::prepareNewSystemCall() {
+void OpenAtSystemCall::prepareNewSystemCall() {
 	m_pars.erase(m_pars.begin() + 3, m_pars.end());
 	mode.reset();
 }
 
-bool OpenatSystemCall::check2ndPass() {
+bool OpenAtSystemCall::check2ndPass() {
 	using enum cosmos::OpenFlag;
 
 	if (const auto _flags = flags.flags(); _flags[CREATE] || _flags[TMPFILE]) {
@@ -225,7 +225,7 @@ bool OpenatSystemCall::check2ndPass() {
 	return false;
 }
 
-void OpenatSystemCall::updateFDTracking(const Tracee &proc) {
+void OpenAtSystemCall::updateFDTracking(const Tracee &proc) {
 	FDInfo info{FDInfo::Type::FS_PATH, new_fd.fd()};
 	info.path = filename.str();
 	info.mode = flags.mode();

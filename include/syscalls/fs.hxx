@@ -25,10 +25,10 @@ struct CLUES_API AccessSystemCall :
 };
 
 // this is an earlier variant of faccessat() which doesn't take a flags argument
-struct CLUES_API FaccessatSystemCall :
+struct CLUES_API FAccessAtSystemCall :
 		public SystemCall {
 
-	explicit FaccessatSystemCall(const SystemCallNr nr = SystemCallNr::FACCESSAT) :
+	explicit FAccessAtSystemCall(const SystemCallNr nr = SystemCallNr::FACCESSAT) :
 			SystemCall{nr},
 			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}},
 			path{"path"} {
@@ -43,11 +43,11 @@ struct CLUES_API FaccessatSystemCall :
 };
 
 // follow-up variant of faccessat() supporting an additional flags argument, introduced in Linux 5.8
-struct CLUES_API Faccessat2SystemCall :
-		public FaccessatSystemCall {
+struct CLUES_API FAccessAt2SystemCall :
+		public FAccessAtSystemCall {
 
-	Faccessat2SystemCall() :
-			FaccessatSystemCall{SystemCallNr::FACCESSAT2} {
+	FAccessAt2SystemCall() :
+			FAccessAtSystemCall{SystemCallNr::FACCESSAT2} {
 		addParameters(flags);
 	}
 
@@ -181,10 +181,10 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
-struct CLUES_API OpenatSystemCall :
+struct CLUES_API OpenAtSystemCall :
 		public SystemCall {
 
-	OpenatSystemCall() :
+	OpenAtSystemCall() :
 			SystemCall{SystemCallNr::OPENAT},
 			fd{ItemType::PARAM_IN, item::AtSemantics{true}},
 			filename{"filename"},
@@ -228,10 +228,10 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
-struct CLUES_API GetdentsSystemCall :
+struct CLUES_API GetDentsSystemCall :
 		public SystemCall {
 
-	GetdentsSystemCall() :
+	GetDentsSystemCall() :
 			SystemCall{SystemCallNr::GETDENTS},
 			size{"size", "dirent size in bytes"},
 			ret_bytes{"bytes", "bytes returned in dirent"} {

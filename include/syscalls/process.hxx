@@ -223,9 +223,9 @@ protected:
 	}
 };
 
-using GetUidSystemCall = GetXIdSystemCall<SystemCallNr::GETUID, item::UserID>;
+using GetUidSystemCall  = GetXIdSystemCall<SystemCallNr::GETUID, item::UserID>;
 using GetEuidSystemCall = GetXIdSystemCall<SystemCallNr::GETEUID, item::UserID>;
-using GetGidSystemCall = GetXIdSystemCall<SystemCallNr::GETGID, item::GroupID>;
+using GetGidSystemCall  = GetXIdSystemCall<SystemCallNr::GETGID, item::GroupID>;
 using GetEgidSystemCall = GetXIdSystemCall<SystemCallNr::GETEGID, item::GroupID>;
 
 struct CLUES_API Wait4SystemCall :

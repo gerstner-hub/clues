@@ -23,10 +23,10 @@ struct CLUES_API AlarmSystemCall :
 	item::ReturnValue old_seconds;
 };
 
-struct CLUES_API SigactionSystemCall :
+struct CLUES_API SigActionSystemCall :
 		public SystemCall {
 
-	SigactionSystemCall() :
+	SigActionSystemCall() :
 			SystemCall{SystemCallNr::RT_SIGACTION},
 			old_action{"old_action"} {
 		setReturnItem(result);
@@ -42,10 +42,10 @@ struct CLUES_API SigactionSystemCall :
 	item::SuccessResult result;
 };
 
-struct CLUES_API SigprocmaskSystemCall :
+struct CLUES_API SigProcMaskSystemCall :
 		public SystemCall {
 
-	SigprocmaskSystemCall() :
+	SigProcMaskSystemCall() :
 			SystemCall{SystemCallNr::RT_SIGPROCMASK},
 			new_mask{ItemType::PARAM_IN, "new mask"},
 			old_mask{ItemType::PARAM_OUT, "old mask"},

@@ -52,10 +52,10 @@ struct CLUES_API ReadSystemCall :
 // the request integer can be interpreted in a generic way by use of some
 // macros (e.g.: in/out/in-out operation, size of next parameter), but the man
 // page says that this is unreliable, due to legacy APIs.
-struct CLUES_API IoctlSystemCall :
+struct CLUES_API IoCtlSystemCall :
 		public SystemCall {
 
-	IoctlSystemCall() :
+	IoCtlSystemCall() :
 			SystemCall{SystemCallNr::IOCTL},
 			request{"request", "ioctl request number"} {
 		setReturnItem(result);

@@ -7,10 +7,10 @@
 
 namespace clues {
 
-struct CLUES_API NanosleepSystemCall :
+struct CLUES_API NanoSleepSystemCall :
 		public SystemCall {
 
-	NanosleepSystemCall() :
+	NanoSleepSystemCall() :
 			SystemCall{SystemCallNr::NANOSLEEP},
 			req_time{"req_time", "requested time"},
 			rem_time{"rem_time", "remaining time", ItemType::PARAM_OUT} {
@@ -26,10 +26,10 @@ struct CLUES_API NanosleepSystemCall :
 	item::SuccessResult result;
 };
 
-struct CLUES_API ClockNanosleepSystemCall :
+struct CLUES_API ClockNanoSleepSystemCall :
 		public SystemCall {
 
-	ClockNanosleepSystemCall() :
+	ClockNanoSleepSystemCall() :
 			SystemCall{SystemCallNr::CLOCK_NANOSLEEP},
 			time{"time", "requested sleep time"},
 			remaining{"rem", "remaining sleep time", ItemType::PARAM_OUT} {

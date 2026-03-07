@@ -12,10 +12,10 @@
 
 namespace clues {
 
-struct CLUES_API SetTidAddressSystemCall :
+struct CLUES_API SetTIDAddressSystemCall :
 		public SystemCall {
 
-	SetTidAddressSystemCall() :
+	SetTIDAddressSystemCall() :
 			SystemCall{SystemCallNr::SET_TID_ADDRESS},
 			address{"addr", "thread ID location"},
 			caller_tid{ItemType::RETVAL, "caller thread ID"} {

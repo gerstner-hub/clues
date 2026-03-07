@@ -38,8 +38,8 @@ struct CLUES_API LimitSystemCallT :
 	item::SuccessResult result;
 };
 
-using GetrlimitSystemCall = LimitSystemCallT<SystemCallNr::GETRLIMIT>;
-using SetrlimitSystemCall = LimitSystemCallT<SystemCallNr::SETRLIMIT>;
+using GetRlimitSystemCall = LimitSystemCallT<SystemCallNr::GETRLIMIT>;
+using SetRlimitSystemCall = LimitSystemCallT<SystemCallNr::SETRLIMIT>;
 
 struct CLUES_API Prlimit64SystemCall :
 		public SystemCall {
