@@ -179,6 +179,10 @@ bool TermTracer::processPars() {
 		}
 	}
 
+	if (m_args.print_fd_info.isSet()) {
+		m_engine.setFormatFlags(Engine::FormatFlag::FD_INFO);
+	}
+
 	return true;
 }
 

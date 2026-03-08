@@ -11,9 +11,10 @@
 #include <cosmos/utils.hxx>
 
 // clues
-#include <clues/SystemCallItem.hxx>
 #include <clues/items/fcntl.hxx>
 #include <clues/items/items.hxx>
+#include <clues/SystemCallItem.hxx>
+#include <clues/types.hxx>
 
 namespace clues::item {
 
@@ -47,13 +48,13 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
-		m_fd = valueAs<cosmos::FileNum>();
-	}
+	void processValue(const Tracee &) override;
 
 protected: // data
 
 	cosmos::FileNum m_fd;
+
+	std::optional<FDInfo> m_info; ///< filled if FormatFlag::FD_INFO is set.
 
 	const AtSemantics m_at_semantics = AtSemantics{false};
 };

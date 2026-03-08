@@ -6,6 +6,7 @@
 #include <optional>
 
 // cosmos
+#include <cosmos/BitMask.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/types.hxx>
 #include <cosmos/string.hxx>
@@ -43,6 +44,14 @@ class SystemCall;
  **/
 class CLUES_API Engine {
 	friend class Tracee;
+public: // types
+
+	enum class FormatFlag : uint64_t {
+		FD_INFO = 1, ///< print detailed file descriptor information
+	};
+
+	using FormatFlags = cosmos::BitMask<FormatFlag>;
+
 public: // functions
 
 	/// Creates a new Engine that reports events to `consumer`.
@@ -142,6 +151,19 @@ public: // functions
 	 **/
 	void stop(const std::optional<cosmos::Signal> signal);
 
+	FormatFlags formatFlags() const {
+		return m_format_flags;
+	}
+
+	/// Change formatting behaviour for system calls.
+	/**
+	 * These flags influences the implementation of SystemCallItem::str().
+	 * See `FormatFlag` for details.
+	 **/
+	void setFormatFlags(const FormatFlags flags) {
+		m_format_flags = flags;
+	}
+
 protected: // types
 
 	using TraceeMap = std::map<cosmos::ProcessID, TraceePtr>;
@@ -199,6 +221,8 @@ protected: // data
 	/// The PID of a newly auto-attached Tracee, if any.
 	cosmos::ProcessID m_newly_attached_pid = cosmos::ProcessID::INVALID;
 	EventConsumer &m_consumer;
+	/// Format settings for all tracees attached to this engine.
+	FormatFlags m_format_flags;
 };
 
 } // end ns

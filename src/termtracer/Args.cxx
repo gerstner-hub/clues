@@ -39,6 +39,10 @@ Args::Args() :
 		"1", "no-initial-threads-attach",
 		"when attaching to a running process, don't attach all of the process's threads, only the one specified via -p, even if --follow-children is set.",
 		false},
+	print_fd_info{
+		"", "fd-info",
+		"Print detailed information about file descriptors (e.g. type, path, etc.)",
+		false},
 	verbose{
 		"v", "verbose",
 		"increase verbosity of tracing output",
@@ -78,6 +82,7 @@ Args::Args() :
 	cmdline.add(follow_threads);
 	cmdline.add(follow_children_switch);
 	cmdline.add(no_initial_threads_attach);
+	cmdline.add(print_fd_info);
 	cmdline.add(verbose);
 	cmdline.add(max_value_len);
 	cmdline.add(list_syscalls);

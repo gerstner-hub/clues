@@ -270,6 +270,10 @@ public: // functions
 		return m_syscall_info;
 	}
 
+	const Engine& engine() const {
+		return m_engine;
+	}
+
 protected: // constants
 
 	/// Array of signals that cause tracee stop.

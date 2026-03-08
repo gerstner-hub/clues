@@ -25,10 +25,12 @@ public:
 	TCLAP::ValueArg<std::string> follow_children;
 	/// controls whether threads within the same process are followed.
 	TCLAP::SwitchArg follow_threads;
-	/// Short form of 'follow_children yes'
+	/// Short form of 'follow_children yes'.
 	TCLAP::SwitchArg follow_children_switch;
 	/// Don't attach all other threads even if `follow_children_switch` is set.
 	TCLAP::SwitchArg no_initial_threads_attach;
+	/// Print additional file descriptor information.
+	TCLAP::SwitchArg print_fd_info;
 	/// Increase verbosity of tracing output.
 	TCLAP::SwitchArg verbose;
 	/// Maximum length of parameter values to print.
@@ -37,7 +39,7 @@ public:
 	TCLAP::SwitchArg list_syscalls;
 	/// List ABI-specific system call names and their numbers.
 	TCLAP::ValueArg<std::string> list_abi_syscalls;
-	/// List supported system call ABIs
+	/// List supported system call ABIs.
 	TCLAP::SwitchArg list_abis;
 	/// Configure system calls which to trace.
 	TCLAP::ValueArg<std::string> syscall_filter;

@@ -9,6 +9,7 @@
 #include <cosmos/string.hxx>
 
 // clues
+#include <clues/Engine.hxx>
 #include <clues/format.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/kernel_structs.hxx>
@@ -23,12 +24,30 @@
 namespace clues::item {
 
 std::string FileDescriptor::str() const {
-	const auto fd = valueAs<cosmos::FileNum>();
-
-	if (m_at_semantics && fd == cosmos::FileNum::AT_CWD)
+	if (m_at_semantics && m_fd == cosmos::FileNum::AT_CWD)
 		return "AT_FDCWD";
-	else
-		return std::to_string(cosmos::to_integral(fd));
+
+	auto ret = std::to_string(cosmos::to_integral(m_fd));
+
+	if (m_info) {
+		ret += format::fd_info(*m_info);
+	}
+
+	return ret;
+}
+
+void FileDescriptor::processValue(const Tracee &proc) {
+	m_fd = valueAs<cosmos::FileNum>();
+
+	if (proc.engine().formatFlags()[Engine::FormatFlag::FD_INFO]) {
+		m_info.reset();
+
+		const auto &map = proc.fdInfoMap();
+
+		if (auto it = map.find(m_fd); it != map.end()) {
+			m_info = it->second;
+		}
+	}
 }
 
 std::string OpenFlagsValue::str() const {
