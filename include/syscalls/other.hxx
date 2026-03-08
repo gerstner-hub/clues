@@ -15,9 +15,11 @@ struct CLUES_API UnknownSystemCall :
 			SystemCall{nr},
 			result{"result", ""} {
 		setReturnItem(result);
+		addParameters(item);
 	}
 
 	item::ReturnValue result;
+	item::UnknownItem item;
 };
 
 // This covers both getrlimit() and setrlimit() which use the same data structures

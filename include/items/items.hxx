@@ -294,4 +294,17 @@ inline bool is_unused_par(const SystemCallItem &item) {
 	return &item == &unused;
 }
 
+/// Item used together with UnknownSystemCall.
+struct UnknownItem :
+		public ValueInParameter {
+
+	UnknownItem() :
+		ValueInParameter{"unknown"} {
+	}
+
+	std::string str() const override {
+		return "<yet unsupported system call>";
+	}
+};
+
 } // end ns
