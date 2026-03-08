@@ -157,6 +157,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::TGKILL:          return new_sys<TgKillSystemCall>();
 	case SystemCallNr::WAIT4:           return new_sys<Wait4SystemCall>();
 	case SystemCallNr::WRITE:           return new_sys<WriteSystemCall>();
+	case SystemCallNr::PIPE:            return new_sys<PipeSystemCall>();
+	case SystemCallNr::PIPE2:           return new_sys<Pipe2SystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }

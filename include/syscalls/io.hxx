@@ -3,6 +3,7 @@
 // clues
 #include <clues/SystemCall.hxx>
 #include <clues/items/fs.hxx>
+#include <clues/items/io.hxx>
 #include <clues/sysnrs/generic.hxx>
 
 namespace clues {
@@ -65,6 +66,41 @@ struct CLUES_API IoCtlSystemCall :
 	item::FileDescriptor fd;
 	item::GenericPointerValue request;
 	item::SuccessResult result;
+};
+
+/// The classic `pipe()` system call without flags.
+struct PipeSystemCall :
+		public SystemCall {
+
+	explicit PipeSystemCall(const SystemCallNr nr = SystemCallNr::PIPE) :
+			SystemCall{nr} {
+		setReturnItem(result);
+		setParameters(ends);
+		/*
+		 * XXX: some architectures like IA64, Alpha, MIPS, Sparc,
+		 * SuperH return the two file descriptors as return values in
+		 * two registers. This still needs to be covered once one of
+		 * the respective ABIs is supported.
+		 */
+	}
+
+	item::PipeEnds ends;
+	item::SuccessResult result;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &proc) override;
+};
+
+struct Pipe2SystemCall :
+		public PipeSystemCall {
+
+	explicit Pipe2SystemCall() :
+			PipeSystemCall{SystemCallNr::PIPE2} {
+		addParameters(flags);
+	}
+
+	item::PipeFlags flags;
 };
 
 } // end ns

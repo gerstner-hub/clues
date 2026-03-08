@@ -20,6 +20,8 @@
 #include <clues/SystemCall.hxx>
 #include <clues/utils.hxx>
 
+using namespace std::string_literals;
+
 namespace clues::format {
 
 std::string signal(const cosmos::SignalNr signal, const bool verbose) {
@@ -569,10 +571,16 @@ std::string_view fd_type(const FDInfo &info) {
 std::string fd_info(const FDInfo &info) {
 	using enum FDInfo::Type;
 
-	if (info.type == FS_PATH) {
-		return cosmos::sprintf("<%s>", info.path.c_str());
-	} else {
-		return cosmos::sprintf("<%s>", &fd_type(info)[0]);
+	std::string extra_info;
+
+	switch (info.type) {
+		case FS_PATH: return cosmos::sprintf("<%s>", info.path.c_str());
+		case PIPE: {
+			const bool read_end = info.mode == cosmos::OpenMode::READ_ONLY;
+			extra_info = ","s + (read_end ? "ro"s : "wronly"s);
+			[[ fallthrough ]];
+		}
+		default: return cosmos::sprintf("<%s%s>", &fd_type(info)[0], extra_info.c_str());
 	}
 }
 
