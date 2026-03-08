@@ -134,6 +134,11 @@ protected: // functions
 	 * The default implementation calls `processValue()` to allow to share
 	 * the same data processing code for input and output for item types
 	 * that support both.
+	 *
+	 * This function is called regardless of system call success or error,
+	 * so it can happen that there is no valid data returned by the kernel
+	 * or pointers in userspace are broken. Implementations should take
+	 * this into consideration when operating on the data.
 	 **/
 	virtual void updateData(const Tracee &t) {
 		processValue(t);
