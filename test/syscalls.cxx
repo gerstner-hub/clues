@@ -21,11 +21,14 @@
 using clues::SystemCall;
 using TraceVerifyCB = std::function<bool (const SystemCall &)>;
 using SyscallInvoker = std::function<void (void)>;
+using clues::SystemCallNr;
 
 class SyscallTracer : public clues::EventConsumer {
 public:
-	explicit SyscallTracer(TraceVerifyCB enter_verify,
+	explicit SyscallTracer(const SystemCallNr nr,
+			TraceVerifyCB enter_verify,
 			TraceVerifyCB exit_verify) :
+				m_call_nr{nr},
 				m_enter_verify{enter_verify},
 				m_exit_verify{exit_verify} {
 
@@ -37,6 +40,11 @@ public:
 		if (m_ran_cbs) {
 			return;
 		} else if (!m_seen_initial_read) {
+			return;
+		}
+
+		if (call.callNr() != m_call_nr) {
+			std::cerr << __FUNCTION__ << "unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
 			return;
 		}
 
@@ -55,6 +63,11 @@ public:
 				 * skip */
 				m_seen_initial_read = true;
 			}
+			return;
+		}
+
+		if (call.callNr() != m_call_nr) {
+			std::cerr << __FUNCTION__ << "unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
 			return;
 		}
 
@@ -84,6 +97,7 @@ public:
 
 protected:
 
+	const SystemCallNr m_call_nr;
 	TraceVerifyCB m_enter_verify;
 	TraceVerifyCB m_exit_verify;
 	bool m_entry_good = false;
@@ -104,12 +118,13 @@ class SyscallTest :
 	void runTests() override;
 
 	void runTrace(
+			const SystemCallNr nr,	
 			const std::string_view name,
 			SyscallInvoker invoker,
 			TraceVerifyCB enter_verify,
 			TraceVerifyCB exit_verify) {
 		START_TEST(cosmos::sprintf("testing system call %s", &name[0]));
-		SyscallTracer tracer{enter_verify, exit_verify};
+		SyscallTracer tracer{nr, enter_verify, exit_verify};
 
 		TraceeCreator creator{std::move(invoker), tracer};
 		tracer.setCreator(creator);
@@ -125,7 +140,7 @@ class SyscallTest :
 };
 
 void SyscallTest::runTests() {
-	runTrace("access()",
+	runTrace(SystemCallNr::ACCESS, "access()",
 		[]() {
 			access("/etc/", R_OK|X_OK);
 		},
