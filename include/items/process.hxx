@@ -108,7 +108,7 @@ protected: // data
 };
 
 /// Pointer to a `struct rusage` to be filled in.
-class ResourceUsageItem :
+class CLUES_API ResourceUsageItem :
 		public PointerOutValue {
 public: // functions
 
@@ -140,7 +140,7 @@ protected: // data
 };
 
 /// Pointer to an int containing wait() status result data.
-class WaitStatusItem :
+class CLUES_API WaitStatusItem :
 		public PointerToScalar<int> {
 public: // functions
 

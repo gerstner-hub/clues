@@ -9,7 +9,7 @@
 namespace clues::item {
 
 /// Memory protection used e.g. in mprotect().
-class MemoryProtectionParameter :
+class CLUES_API MemoryProtectionParameter :
 		public ValueInParameter {
 public: // functions
 
@@ -35,7 +35,7 @@ protected: // data
 };
 
 /// mmap() bitmask.
-class MapFlagsParameter :
+class CLUES_API MapFlagsParameter :
 		public ValueInParameter {
 public: // functions
 

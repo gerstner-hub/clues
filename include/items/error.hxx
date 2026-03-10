@@ -11,7 +11,7 @@ namespace clues::item {
  * a lot of system calls that can otherwise only return 0 as a legit value.
  * This type exists to model this.
  **/
-class SuccessResult :
+class CLUES_API SuccessResult :
 		public ReturnValue {
 public:
 	SuccessResult(

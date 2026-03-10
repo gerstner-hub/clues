@@ -13,7 +13,7 @@
 
 namespace clues::item {
 
-class FcntlOperation :
+class CLUES_API FcntlOperation :
 		public item::ValueInParameter {
 public: // types
 

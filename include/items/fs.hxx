@@ -126,7 +126,7 @@ protected: // data
 };
 
 /// The mode parameter in access().
-class AccessModeParameter :
+class CLUES_API AccessModeParameter :
 		public item::ValueInParameter {
 public:
 	explicit AccessModeParameter() :
@@ -149,7 +149,7 @@ protected: // data
 };
 
 /// File access mode passed e.g. to open(), chmod().
-class FileModeParameter :
+class CLUES_API FileModeParameter :
 		public item::ValueInParameter {
 public:
 
