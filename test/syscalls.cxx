@@ -143,11 +143,11 @@ class SyscallTest :
 
 	void runTrace(
 			const SystemCallNr nr,	
-			const std::string_view name,
 			SyscallInvoker invoker,
 			TraceVerifyCB enter_verify,
 			TraceVerifyCB exit_verify,
 			const size_t ignore_calls = 0) {
+		const auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
 		START_TEST(cosmos::sprintf("testing system call %s", &name[0]));
 		SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
 
@@ -165,7 +165,7 @@ class SyscallTest :
 };
 
 void SyscallTest::runTests() {
-	runTrace(SystemCallNr::ACCESS, "access()",
+	runTrace(SystemCallNr::ACCESS,
 		[]() {
 			access("/etc/", R_OK|X_OK);
 		},
@@ -183,7 +183,7 @@ void SyscallTest::runTests() {
 		}, [](const SystemCall &sc) {
 			return !sc.hasErrorCode();
 		});
-	runTrace(SystemCallNr::FACCESSAT, "faccessat()",
+	runTrace(SystemCallNr::FACCESSAT,
 		[]() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
