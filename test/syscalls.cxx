@@ -132,7 +132,7 @@ protected:
 };
 
 template <typename SC>
-const SC& upcast(const SystemCall &sc) {
+const SC& downcast(const SystemCall &sc) {
 	return dynamic_cast<const SC&>(sc);
 }
 
@@ -170,7 +170,7 @@ void SyscallTest::runTests() {
 			access("/etc/", R_OK|X_OK);
 		},
 		[](const SystemCall &sc) {
-			auto &access_sc = upcast<clues::AccessSystemCall>(sc);
+			auto &access_sc = downcast<clues::AccessSystemCall>(sc);
 			if (access_sc.path.data() != "/etc/")
 				return false;
 			using cosmos::fs::AccessCheck;
@@ -189,7 +189,7 @@ void SyscallTest::runTests() {
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
 		},
 		[](const SystemCall &sc) {
-			auto &access_sc = upcast<clues::FAccessAtSystemCall>(sc);
+			auto &access_sc = downcast<clues::FAccessAtSystemCall>(sc);
 
 			if (access_sc.dirfd.fd() != FIRST_FD) {
 				return false;
