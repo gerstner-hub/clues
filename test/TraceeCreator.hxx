@@ -37,27 +37,39 @@ public:
 		cosmos::proc::set_env_var("ASAN_OPTIONS", "verify_asan_link_order=false:detect_leaks=0", cosmos::proc::OverwriteEnv{true});
 	}
 
-	void run(const clues::FollowChildren follow_children = clues::FollowChildren{false}) {
-		cosmos::EventFile event;
+	void run(const clues::FollowChildren follow_children = clues::FollowChildren{false}, const bool explicit_signal = false) {
 		if (auto pid = cosmos::proc::fork(); pid) {
 			// parent context
 			m_engine.addTracee(*pid,
 					follow_children,
 					clues::AttachThreads{true});
-			event.signal();
+			if (!explicit_signal) {
+				m_event.signal();
+			} else {
+				m_explicit_signal = true;
+			}
 			m_engine.trace();
 		} else {
 			// make sure the parent manages to attach as tracer to
 			// use before continuing
-			event.wait();
+			m_event.wait();
 			// child context
 			m_func();
 			cosmos::proc::exit(cosmos::ExitStatus::SUCCESS);
 		}
 	}
 
+	void signalChild() {
+		if (m_explicit_signal) {
+			m_event.signal();
+			m_explicit_signal = false;
+		}
+	}
+
 protected:
 	const FUNC m_func;
+	bool m_explicit_signal = false;
+	cosmos::EventFile m_event;
 	clues::Engine m_engine;
 	cosmos::StdLogger m_logger;
 };
