@@ -14,13 +14,13 @@ struct CLUES_API AlarmSystemCall :
 	AlarmSystemCall() :
 			SystemCall{SystemCallNr::ALARM},
 			seconds{"seconds"},
-			old_seconds{"old_seconds", "remaining seconds from previous timer"} {
+			old_seconds{"old_seconds", "remaining seconds from previous timer", ItemType::RETVAL} {
 		setReturnItem(old_seconds);
 		setParameters(seconds);
 	}
 
-	item::ValueInParameter seconds;
-	item::ReturnValue old_seconds;
+	item::UintValue seconds;
+	item::UintValue old_seconds;
 };
 
 struct CLUES_API SigActionSystemCall :

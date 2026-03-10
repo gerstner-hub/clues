@@ -278,6 +278,7 @@ protected: // data
 };
 
 using IntValue = IntValueT<int>;
+using UintValue = IntValueT<unsigned int>;
 using Uint32Value = IntValueT<uint32_t>;
 using ULongValue = IntValueT<unsigned long>;
 
