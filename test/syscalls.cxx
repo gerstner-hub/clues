@@ -183,25 +183,51 @@ void SyscallTest::runTests() {
 		}, [](const SystemCall &sc) {
 			return !sc.hasErrorCode();
 		});
+
+	/* shared entry check for faccessat1/2 */
+	auto check_faccessat_entry = [](const auto &access_sc) -> bool {
+		if (access_sc.dirfd.fd() != FIRST_FD) {
+			return false;
+		}
+		if (access_sc.path.data() != "etc")
+			return false;
+		using cosmos::fs::AccessCheck;
+		using cosmos::fs::AccessChecks;
+		const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
+		if ((*access_sc.mode.checks()) != checks) {
+			return false;
+		}
+
+		return true;
+	};
+
 	runTrace(SystemCallNr::FACCESSAT,
 		[]() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
 		},
-		[](const SystemCall &sc) {
+		[check_faccessat_entry](const SystemCall &sc) {
 			auto &access_sc = downcast<clues::FAccessAtSystemCall>(sc);
+			return check_faccessat_entry(access_sc);
+		}, [](const SystemCall &sc) {
+			return !sc.hasErrorCode();
+		},
+		1);
 
-			if (access_sc.dirfd.fd() != FIRST_FD) {
+	runTrace(SystemCallNr::FACCESSAT2,
+		[]() {
+			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
+			syscall(SYS_faccessat2, dirfd, "etc", R_OK|X_OK, AT_EACCESS);
+		},
+		[check_faccessat_entry](const SystemCall &sc) {
+			auto &access_sc = downcast<clues::FAccessAt2SystemCall>(sc);
+			if (!check_faccessat_entry(access_sc))
 				return false;
-			}
-			if (access_sc.path.data() != "etc")
+			using AtFlags = clues::item::AtFlagsValue::AtFlags;
+			using enum clues::item::AtFlagsValue::AtFlag;
+			if (access_sc.flags.flags() != AtFlags{EACCESS})
 				return false;
-			using cosmos::fs::AccessCheck;
-			using cosmos::fs::AccessChecks;
-			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-			if ((*access_sc.mode.checks()) != checks) {
-				return false;
-			}
+
 			return true;
 		}, [](const SystemCall &sc) {
 			return !sc.hasErrorCode();
