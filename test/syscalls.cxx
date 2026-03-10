@@ -7,6 +7,7 @@
 // clues
 #include <clues/Tracee.hxx>
 #include <clues/syscalls/fs.hxx>
+#include <clues/syscalls/signals.hxx>
 
 // Test
 #include "TestBase.hxx"
@@ -56,7 +57,7 @@ public:
 		}
 
 		if (call.callNr() != m_call_nr) {
-			std::cerr << __FUNCTION__ << "unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
+			std::cerr << __FUNCTION__ << ": unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
 			return;
 		}
 
@@ -82,7 +83,7 @@ public:
 		}
 
 		if (call.callNr() != m_call_nr) {
-			std::cerr << __FUNCTION__ << "unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
+			std::cerr << __FUNCTION__ << ": unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
 			return;
 		}
 
@@ -231,6 +232,23 @@ void SyscallTest::runTests() {
 			return true;
 		}, [](const SystemCall &sc) {
 			return !sc.hasErrorCode();
+		},
+		1);
+
+	runTrace(SystemCallNr::ALARM,
+		[]() {
+			/* make two calls so that we get a non-zero return
+			 * value */
+			alarm(1234);
+			alarm(4321);
+		},
+		[](const SystemCall &sc) {
+			auto &alarm_call = downcast<clues::AlarmSystemCall>(sc);
+			return alarm_call.seconds.value() == 4321;
+		},
+		[](const SystemCall &sc) {
+			auto &alarm_call = downcast<clues::AlarmSystemCall>(sc);
+			return alarm_call.old_seconds.value() == 1234;
 		},
 		1);
 }
