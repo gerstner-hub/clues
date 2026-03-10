@@ -1,3 +1,6 @@
+// Linux
+#include <sys/syscall.h>
+
 // C++
 #include <iostream>
 
@@ -22,16 +25,22 @@ using clues::SystemCall;
 using TraceVerifyCB = std::function<bool (const SystemCall &)>;
 using SyscallInvoker = std::function<void (void)>;
 using clues::SystemCallNr;
+/*
+ * the first file descriptor number which will be used in tracee context.
+ * used for comparison of file descriptor values observed.
+ */
+constexpr cosmos::FileNum FIRST_FD{4};
 
 class SyscallTracer : public clues::EventConsumer {
 public:
 	explicit SyscallTracer(const SystemCallNr nr,
 			TraceVerifyCB enter_verify,
-			TraceVerifyCB exit_verify) :
+			TraceVerifyCB exit_verify,
+			const size_t ignore_calls = 0) :
 				m_call_nr{nr},
 				m_enter_verify{enter_verify},
-				m_exit_verify{exit_verify} {
-
+				m_exit_verify{exit_verify},
+				m_ignore_calls{ignore_calls} {
 	}
 
 	void syscallEntry(clues::Tracee &,
@@ -40,6 +49,9 @@ public:
 		if (m_ran_cbs) {
 			return;
 		} else if (!m_seen_initial_read) {
+			return;
+		} else if (m_current_call != m_ignore_calls) {
+			// we haven't reached the system call under test yet
 			return;
 		}
 
@@ -63,6 +75,9 @@ public:
 				 * skip */
 				m_seen_initial_read = true;
 			}
+			return;
+		} else if (m_current_call++ != m_ignore_calls) {
+			// we haven't reached the system call under test yet
 			return;
 		}
 
@@ -104,6 +119,15 @@ protected:
 	bool m_exit_good = false;
 	bool m_seen_initial_read = false;
 	bool m_ran_cbs = false;
+	/*
+	 * some system call tests need more than once system call (e.g.
+	 * opening a file descriptor to operate on first.
+	 *
+	 * this counter determines how many system calls should be ignored
+	 * before calling the verification callbacks.
+	 */
+	size_t m_ignore_calls = 0;
+	size_t m_current_call = 0;
 	TraceeCreator<SyscallInvoker> *m_creator = nullptr;
 };
 
@@ -122,9 +146,10 @@ class SyscallTest :
 			const std::string_view name,
 			SyscallInvoker invoker,
 			TraceVerifyCB enter_verify,
-			TraceVerifyCB exit_verify) {
+			TraceVerifyCB exit_verify,
+			const size_t ignore_calls = 0) {
 		START_TEST(cosmos::sprintf("testing system call %s", &name[0]));
-		SyscallTracer tracer{nr, enter_verify, exit_verify};
+		SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
 
 		TraceeCreator creator{std::move(invoker), tracer};
 		tracer.setCreator(creator);
@@ -158,6 +183,30 @@ void SyscallTest::runTests() {
 		}, [](const SystemCall &sc) {
 			return !sc.hasErrorCode();
 		});
+	runTrace(SystemCallNr::FACCESSAT, "faccessat()",
+		[]() {
+			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
+			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
+		},
+		[](const SystemCall &sc) {
+			auto &access_sc = upcast<clues::FAccessAtSystemCall>(sc);
+
+			if (access_sc.dirfd.fd() != FIRST_FD) {
+				return false;
+			}
+			if (access_sc.path.data() != "etc")
+				return false;
+			using cosmos::fs::AccessCheck;
+			using cosmos::fs::AccessChecks;
+			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
+			if ((*access_sc.mode.checks()) != checks) {
+				return false;
+			}
+			return true;
+		}, [](const SystemCall &sc) {
+			return !sc.hasErrorCode();
+		},
+		1);
 }
 
 int main(const int argc, const char **argv) {
