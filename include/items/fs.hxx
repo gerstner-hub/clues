@@ -8,6 +8,7 @@
 
 // cosmos
 #include <cosmos/fs/FileStatus.hxx>
+#include <cosmos/fs/filesystem.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -133,6 +134,18 @@ public:
 	}
 
 	std::string str() const override;
+
+	std::optional<cosmos::fs::AccessChecks> checks() const {
+		return m_checks;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	std::optional<cosmos::fs::AccessChecks> m_checks;
 };
 
 /// File access mode passed e.g. to open(), chmod().

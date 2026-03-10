@@ -134,13 +134,22 @@ void AtFlagsValue::processValue(const Tracee&) {
 	m_flags = AtFlags{valueAs<int>()};
 }
 
+void AccessModeParameter::processValue(const Tracee&) {
+	m_checks = cosmos::fs::AccessChecks(valueAs<int>());
+}
+
 std::string AccessModeParameter::str() const {
 	using cosmos::fs::AccessCheck;
-	const auto checks = cosmos::fs::AccessChecks{valueAs<int>()};
+
+	if (!m_checks) {
+		return "<invalid>";
+	}
+
+	const auto checks = *m_checks;
 
 	std::stringstream ss;
 
-	if (checks == cosmos::fs::AccessChecks{}) {
+	if (checks.none()) {
 		ss << "F_OK";
 	} else {
 		if (checks[AccessCheck::READ_OK]) {
