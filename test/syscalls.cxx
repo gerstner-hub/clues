@@ -1,5 +1,6 @@
 // Linux
 #include <asm/prctl.h>
+#include <sched.h>
 #include <sys/syscall.h>
 #include <time.h>
 
@@ -39,9 +40,10 @@ using clues::SystemCallNr;
  * used for comparison of file descriptor values observed.
  */
 constexpr cosmos::FileNum FIRST_FD{4};
+constexpr uintptr_t STACK_ADDR = 0x7f0000000000;
 
-#define VERIFY(expr) if (!(expr)) { \
-	std::cerr << "check |" << #expr << "| failed\n"; \
+#define VERIFY(...) if (!(__VA_ARGS__)) { \
+	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
 	return false; \
 }
 
@@ -324,6 +326,40 @@ void SyscallTest::runTests() {
 			/* remain is unused when TIMER_ABSTIME is passed */
 			const auto &remaining = *sc.remaining.spec();
 			VERIFY_RETURN(remaining.tv_sec == 5 && remaining.tv_nsec == 500);
+		}));
+
+	runTrace(SystemCallNr::CLONE,
+		[]() {
+			pid_t child_tid = 9000;
+
+			uint8_t clone_stack[4096*64];
+
+#ifdef COSMOS_X86
+			auto res = syscall(SYS_clone, CLONE_CLEAR_SIGHAND|CLONE_PARENT_SETTID|SIGCHLD, clone_stack, &child_tid);
+#else
+#error "adapt unit test to your ABI"
+#endif
+			if (res == 0) {
+				_exit(123);
+			} else {
+				wait(NULL);
+			}
+		},
+		ENTRY_VERIFY_CB(CloneSystemCall, {
+			using enum cosmos::CloneFlag;
+			VERIFY(sc.flags.flags() == cosmos::CloneFlags{CLEAR_SIGHAND, PARENT_SETTID});
+			VERIFY(*(sc.flags.exitSignal()) == cosmos::SignalNr::CHILD);
+			/* the stack pointer in the child changes
+			 * compared to the pointer we have in the
+			 * parent, but it should still live in the
+			 * stack area */
+			VERIFY(((uintptr_t)sc.stack.ptr() & STACK_ADDR) == STACK_ADDR);
+			const auto parent_tid = *sc.parent_tid;
+			VERIFY_RETURN(((uintptr_t)parent_tid.pointer() & STACK_ADDR) == STACK_ADDR);
+		}), EXIT_VERIFY_CB(CloneSystemCall, {
+			VERIFY(!sc.hasErrorCode());
+			const auto parent_tid = *sc.parent_tid;
+			VERIFY_RETURN(sc.new_pid.pid() == parent_tid.value());
 		}));
 }
 
