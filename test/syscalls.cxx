@@ -359,6 +359,43 @@ void SyscallTest::runTests() {
 			const auto parent_tid = *sc.parent_tid;
 			VERIFY(sc.new_pid.pid() == parent_tid.value());
 		}));
+
+	runTrace(SystemCallNr::CLONE3,
+		[]() {
+			uint8_t clone_stack[4096*64];
+			int pidfd;
+			int child_tid;
+			struct clone_args args;
+			memset(&args, 0, sizeof(args));
+			args.flags = CLONE_CLEAR_SIGHAND|CLONE_PIDFD|CLONE_PARENT_SETTID;
+			args.exit_signal = SIGCHLD;
+			args.pidfd = (uint64_t)&pidfd;
+			args.stack = (uint64_t)clone_stack;
+			args.stack_size = sizeof(clone_stack);
+			args.parent_tid = (uint64_t)&child_tid;
+			if (syscall(SYS_clone3, &args, sizeof(args)) == 0) {
+				_exit(123);
+			} else {
+				wait(NULL);
+			}
+		},
+		ENTRY_VERIFY_CB(Clone3SystemCall, {
+			using enum cosmos::CloneFlag;
+			VERIFY(sc.size.value() == sizeof(clone_args));
+			const auto &args = *sc.cl_args.args();
+			VERIFY(args.flags() == cosmos::CloneFlags{CLEAR_SIGHAND, PIDFD, PARENT_SETTID});
+			VERIFY(args.exitSignal().raw() == cosmos::SignalNr::CHILD);
+			/* the stack pointer in the child changes
+			 * compared to the pointer we have in the
+			 * parent, but it should still live in the
+			 * stack area */
+			VERIFY(((uintptr_t)args.stack() & STACK_ADDR) == STACK_ADDR);
+			VERIFY(args.stackSize() == 4096 * 64);
+		}), EXIT_VERIFY_CB(Clone3SystemCall, {
+			VERIFY(!sc.hasErrorCode());
+			VERIFY(sc.cl_args.pidfd() == FIRST_FD);
+			VERIFY(sc.pid.pid() == static_cast<cosmos::ProcessID>(sc.cl_args.tid()));
+		}));
 }
 
 int main(const int argc, const char **argv) {
