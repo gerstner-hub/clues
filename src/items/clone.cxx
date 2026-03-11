@@ -59,11 +59,12 @@ std::string CloneFlagsValue::str() const {
 void CloneFlagsValue::processValue(const Tracee &) {
 	if (m_call->callNr() == SystemCallNr::CLONE) {
 		// child exit signal is piggy-backed in the low byte of flags
-		const auto raw = valueAs<int>();
+		// although clone(2) shows an `int` here, this is a 64-bit flags typetype
+		const auto raw = valueAs<uint64_t>();
 		// CloneFlags are based on uint64_t (type used in clone3()),
 		// thus cast accordingly.
 		m_flags = cosmos::CloneFlags{static_cast<uint64_t>(raw & (~0xFF))};
-		exit_signal.emplace(cosmos::SignalNr{raw & 0xFF});
+		exit_signal.emplace(cosmos::SignalNr{static_cast<int>(raw) & 0xFF});
 	} else {
 		m_flags = valueAs<cosmos::CloneFlags>();
 		exit_signal.reset();
