@@ -133,6 +133,10 @@ public: // functions
 
 	std::string str() const override;
 
+	void* ptr() const {
+		return valueAs<void*>();
+	}
+
 protected: // functions
 
 	void processValue(const Tracee &) override {}
