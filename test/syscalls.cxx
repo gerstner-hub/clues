@@ -1,13 +1,18 @@
 // Linux
 #include <sys/syscall.h>
+#include <asm/prctl.h>
 
 // C++
 #include <iostream>
 
+// cosmos
+#include <cosmos/compiler.hxx>
+
 // clues
-#include <clues/Tracee.hxx>
 #include <clues/syscalls/fs.hxx>
+#include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
+#include <clues/Tracee.hxx>
 
 // Test
 #include "TestBase.hxx"
@@ -101,6 +106,12 @@ public:
 
 	void attached(clues::Tracee &) override {
 		m_creator->signalChild();
+	}
+
+	void exited(clues::Tracee&, const cosmos::WaitStatus, const StatusFlags) override {
+		if (!m_ran_cbs) {
+			std::cerr << "never seen expected system call!\n";
+		}
 	}
 
 	bool entryGood() const {
@@ -251,6 +262,35 @@ void SyscallTest::runTests() {
 			return alarm_call.old_seconds.value() == 1234;
 		},
 		1);
+
+#ifdef COSMOS_X86
+	runTrace(SystemCallNr::ARCH_PRCTL,
+		[]() {
+			// disable SET_CPUID instruction
+			syscall(SYS_arch_prctl, ARCH_SET_CPUID, 0);
+		},
+		[](const SystemCall &sc) {
+			auto &prctl_call = downcast<clues::ArchPrctlSystemCall>(sc);
+			if (prctl_call.op.operation() != clues::item::ArchOpParameter::Operation::SET_CPUID) {
+				return false;
+			}
+
+			if (prctl_call.set_addr || prctl_call.get_addr || prctl_call.on_off_ret) {
+				return false;
+			}
+
+			if (prctl_call.on_off->value() != 0) {
+				return false;
+			}
+
+			return true;
+		},
+		[](const SystemCall &sc) {
+			/* either success or ENODEV is to be expected for this
+			 * test */
+			return !sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE;
+		});
+#endif
 }
 
 int main(const int argc, const char **argv) {
