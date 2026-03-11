@@ -49,6 +49,21 @@ constexpr cosmos::FileNum FIRST_FD{4};
 
 #define VERIFY_RETURN(expr) VERIFY(expr); return true;
 
+#define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc) { \
+	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
+	__VA_ARGS__ \
+}
+
+#define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](const SystemCall &_sc) { \
+	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
+	__VA_ARGS__ \
+}
+
+#define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc) { \
+	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
+	__VA_ARGS__ \
+}
+
 class SyscallTracer : public clues::EventConsumer {
 public:
 	explicit SyscallTracer(const SystemCallNr nr,
@@ -193,17 +208,16 @@ void SyscallTest::runTests() {
 		[]() {
 			access("/etc/", R_OK|X_OK);
 		},
-		[](const SystemCall &sc) {
-			auto &access_sc = downcast<clues::AccessSystemCall>(sc);
-			VERIFY(access_sc.path.data() == "/etc/");
+		ENTRY_VERIFY_CB(AccessSystemCall, {
+			VERIFY(sc.path.data() == "/etc/");
 			using cosmos::fs::AccessCheck;
 			using cosmos::fs::AccessChecks;
 			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-			VERIFY((*access_sc.mode.checks()) == checks);
+			VERIFY((*sc.mode.checks()) == checks);
 			return true;
-		}, [](const SystemCall &sc) {
+		}), EXIT_VERIFY_CB(AccessSystemCall, {
 			VERIFY_RETURN(!sc.hasErrorCode());
-		});
+		}));
 
 	/* shared entry check for faccessat1/2 */
 	auto check_faccessat_entry = [](const auto &access_sc) -> bool {
@@ -223,12 +237,11 @@ void SyscallTest::runTests() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
 		},
-		[check_faccessat_entry](const SystemCall &sc) {
-			auto &access_sc = downcast<clues::FAccessAtSystemCall>(sc);
-			return check_faccessat_entry(access_sc);
-		}, [](const SystemCall &sc) {
+		ENTRY_VERIFY_CB_CAPTURE(check_faccessat_entry, FAccessAtSystemCall, {
+			return check_faccessat_entry(sc);
+		}), EXIT_VERIFY_CB(FAccessAtSystemCall, {
 			VERIFY_RETURN(!sc.hasErrorCode());
-		},
+		}),
 		1);
 
 	runTrace(SystemCallNr::FACCESSAT2,
@@ -236,7 +249,7 @@ void SyscallTest::runTests() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat2, dirfd, "etc", R_OK|X_OK, AT_EACCESS);
 		},
-		[check_faccessat_entry](const SystemCall &sc) {
+		ENTRY_VERIFY_CB_CAPTURE(check_faccessat_entry, FAccessAt2SystemCall, {
 			auto &access_sc = downcast<clues::FAccessAt2SystemCall>(sc);
 			if (!check_faccessat_entry(access_sc))
 				return false;
@@ -245,9 +258,9 @@ void SyscallTest::runTests() {
 			VERIFY(access_sc.flags.flags() == AtFlags{EACCESS})
 
 			return true;
-		}, [](const SystemCall &sc) {
+		}), EXIT_VERIFY_CB(FAccessAt2SystemCall, {
 			VERIFY_RETURN(!sc.hasErrorCode());
-		},
+		}),
 		1);
 
 	runTrace(SystemCallNr::ALARM,
@@ -257,14 +270,11 @@ void SyscallTest::runTests() {
 			alarm(1234);
 			alarm(4321);
 		},
-		[](const SystemCall &sc) {
-			auto &alarm_call = downcast<clues::AlarmSystemCall>(sc);
-			VERIFY_RETURN(alarm_call.seconds.value() == 4321);
-		},
-		[](const SystemCall &sc) {
-			auto &alarm_call = downcast<clues::AlarmSystemCall>(sc);
-			VERIFY_RETURN(alarm_call.old_seconds.value() == 1234);
-		},
+		ENTRY_VERIFY_CB(AlarmSystemCall, {
+			VERIFY_RETURN(sc.seconds.value() == 4321);
+		}), EXIT_VERIFY_CB(AlarmSystemCall, {
+			VERIFY_RETURN(sc.old_seconds.value() == 1234);
+		}),
 		1);
 
 #ifdef COSMOS_X86
@@ -273,32 +283,27 @@ void SyscallTest::runTests() {
 			// disable SET_CPUID instruction
 			syscall(SYS_arch_prctl, ARCH_SET_CPUID, 0);
 		},
-		[](const SystemCall &sc) {
-			auto &prctl_call = downcast<clues::ArchPrctlSystemCall>(sc);
-			VERIFY(prctl_call.op.operation() == clues::item::ArchOpParameter::Operation::SET_CPUID);
-			VERIFY_FALSE(prctl_call.set_addr || prctl_call.get_addr || prctl_call.on_off_ret);
-			VERIFY_RETURN(prctl_call.on_off->value() == 0);
-		},
-		[](const SystemCall &sc) {
+		ENTRY_VERIFY_CB(ArchPrctlSystemCall, {
+			VERIFY(sc.op.operation() == clues::item::ArchOpParameter::Operation::SET_CPUID);
+			VERIFY_FALSE(sc.set_addr || sc.get_addr || sc.on_off_ret);
+			VERIFY_RETURN(sc.on_off->value() == 0);
+		}), EXIT_VERIFY_CB(ArchPrctlSystemCall, {
 			/* either success or ENODEV is to be expected for this
 			 * test */
 			VERIFY_RETURN(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
-		});
+		}));
 #endif
 
 	runTrace(SystemCallNr::BREAK,
 		[]() {
 			syscall(SYS_brk, 0x4711);
 		},
-		[](const SystemCall &sc) {
-			auto &break_call = downcast<clues::BreakSystemCall>(sc);
-			VERIFY_RETURN(break_call.req_addr.ptr() == (void*)0x4711);
-		},
-		[](const SystemCall &sc) {
-			auto &break_call = downcast<clues::BreakSystemCall>(sc);
+		ENTRY_VERIFY_CB(BreakSystemCall, {
+			VERIFY_RETURN(sc.req_addr.ptr() == (void*)0x4711);
+		}), EXIT_VERIFY_CB(BreakSystemCall, {
 			VERIFY(!sc.hasErrorCode());
-			VERIFY_RETURN(break_call.ret_addr.ptr() != nullptr);
-		});
+			VERIFY_RETURN(sc.ret_addr.ptr() != nullptr);
+		}));
 
 	runTrace(SystemCallNr::CLOCK_NANOSLEEP,
 		[]() {
@@ -307,22 +312,19 @@ void SyscallTest::runTests() {
 			ts.tv_nsec = 500;
 			clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
 		},
-		[](const SystemCall &sc) {
-			auto &sleep_call = downcast<clues::ClockNanoSleepSystemCall>(sc);
-			VERIFY(sleep_call.clockid.type() == cosmos::ClockType::MONOTONIC);
+		ENTRY_VERIFY_CB(ClockNanoSleepSystemCall, {
+			VERIFY(sc.clockid.type() == cosmos::ClockType::MONOTONIC);
 			using enum clues::item::ClockNanoSleepFlags::Flag;
 			using Flags = clues::item::ClockNanoSleepFlags::Flags;
-			VERIFY(sleep_call.flags.flags() == Flags{ABSTIME});
-			const auto &sleep_time = *sleep_call.time.spec();
+			VERIFY(sc.flags.flags() == Flags{ABSTIME});
+			const auto &sleep_time = *sc.time.spec();
 			VERIFY_RETURN(sleep_time.tv_sec == 5 && sleep_time.tv_nsec == 500);
-		},
-		[](const SystemCall &sc) {
+		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
 			VERIFY(!sc.hasErrorCode());
-			auto &sleep_call = downcast<clues::ClockNanoSleepSystemCall>(sc);
 			/* remain is unused when TIMER_ABSTIME is passed */
-			const auto &remaining = *sleep_call.remaining.spec();
+			const auto &remaining = *sc.remaining.spec();
 			VERIFY_RETURN(remaining.tv_sec == 5 && remaining.tv_nsec == 500);
-		});
+		}));
 }
 
 int main(const int argc, const char **argv) {
