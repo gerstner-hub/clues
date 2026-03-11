@@ -9,6 +9,8 @@
 
 namespace clues {
 
+/* note that this is called brk() in man pages and some other spots, while
+ * `man break` refers to an unsupported system call */
 struct CLUES_API BreakSystemCall :
 		public SystemCall {
 	BreakSystemCall() :
