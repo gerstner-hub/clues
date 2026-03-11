@@ -32,7 +32,7 @@
  */
 
 using clues::SystemCall;
-using TraceVerifyCB = std::function<bool (const SystemCall &)>;
+using TraceVerifyCB = std::function<void (const SystemCall &, bool &good)>;
 using SyscallInvoker = std::function<void (void)>;
 using clues::SystemCallNr;
 /*
@@ -44,24 +44,26 @@ constexpr uintptr_t STACK_ADDR = 0x7f0000000000;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
-	return false; \
+	good = false; \
+	return; \
 }
 
 #define VERIFY_FALSE(expr) VERIFY(!(expr))
 
-#define VERIFY_RETURN(expr) VERIFY(expr); return true;
-
-#define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc) { \
+#define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc, bool &good) { \
+	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
 }
 
-#define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](const SystemCall &_sc) { \
+#define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](const SystemCall &_sc, bool &good) { \
+	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
 }
 
-#define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc) { \
+#define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc, bool &good) { \
+	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
 }
@@ -95,7 +97,7 @@ public:
 			return;
 		}
 
-		m_entry_good = m_enter_verify(call);
+		m_enter_verify(call, m_entry_good);
 	}
 
 	void syscallExit(clues::Tracee &,
@@ -121,7 +123,7 @@ public:
 			return;
 		}
 
-		m_exit_good = m_exit_verify(call);
+		m_exit_verify(call, m_exit_good);
 		m_ran_cbs = true;
 	}
 
@@ -216,13 +218,12 @@ void SyscallTest::runTests() {
 			using cosmos::fs::AccessChecks;
 			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
 			VERIFY((*sc.mode.checks()) == checks);
-			return true;
 		}), EXIT_VERIFY_CB(AccessSystemCall, {
-			VERIFY_RETURN(!sc.hasErrorCode());
+			VERIFY(!sc.hasErrorCode());
 		}));
 
 	/* shared entry check for faccessat1/2 */
-	auto check_faccessat_entry = [](const auto &access_sc) -> bool {
+	auto check_faccessat_entry = [](const auto &access_sc, bool &good) {
 		VERIFY(access_sc.dirfd.fd() == FIRST_FD);
 		VERIFY(access_sc.path.data() == "etc");
 
@@ -230,8 +231,6 @@ void SyscallTest::runTests() {
 		using cosmos::fs::AccessChecks;
 		const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
 		VERIFY((*access_sc.mode.checks()) == checks);
-
-		return true;
 	};
 
 	runTrace(SystemCallNr::FACCESSAT,
@@ -240,9 +239,9 @@ void SyscallTest::runTests() {
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
 		},
 		ENTRY_VERIFY_CB_CAPTURE(check_faccessat_entry, FAccessAtSystemCall, {
-			return check_faccessat_entry(sc);
+			check_faccessat_entry(sc, good);
 		}), EXIT_VERIFY_CB(FAccessAtSystemCall, {
-			VERIFY_RETURN(!sc.hasErrorCode());
+			VERIFY(!sc.hasErrorCode());
 		}),
 		1);
 
@@ -253,15 +252,14 @@ void SyscallTest::runTests() {
 		},
 		ENTRY_VERIFY_CB_CAPTURE(check_faccessat_entry, FAccessAt2SystemCall, {
 			auto &access_sc = downcast<clues::FAccessAt2SystemCall>(sc);
-			if (!check_faccessat_entry(access_sc))
-				return false;
+			check_faccessat_entry(access_sc, good);
+			if (!good)
+				return;
 			using AtFlags = clues::item::AtFlagsValue::AtFlags;
 			using enum clues::item::AtFlagsValue::AtFlag;
 			VERIFY(access_sc.flags.flags() == AtFlags{EACCESS})
-
-			return true;
 		}), EXIT_VERIFY_CB(FAccessAt2SystemCall, {
-			VERIFY_RETURN(!sc.hasErrorCode());
+			VERIFY(!sc.hasErrorCode());
 		}),
 		1);
 
@@ -273,9 +271,9 @@ void SyscallTest::runTests() {
 			alarm(4321);
 		},
 		ENTRY_VERIFY_CB(AlarmSystemCall, {
-			VERIFY_RETURN(sc.seconds.value() == 4321);
+			VERIFY(sc.seconds.value() == 4321);
 		}), EXIT_VERIFY_CB(AlarmSystemCall, {
-			VERIFY_RETURN(sc.old_seconds.value() == 1234);
+			VERIFY(sc.old_seconds.value() == 1234);
 		}),
 		1);
 
@@ -288,11 +286,11 @@ void SyscallTest::runTests() {
 		ENTRY_VERIFY_CB(ArchPrctlSystemCall, {
 			VERIFY(sc.op.operation() == clues::item::ArchOpParameter::Operation::SET_CPUID);
 			VERIFY_FALSE(sc.set_addr || sc.get_addr || sc.on_off_ret);
-			VERIFY_RETURN(sc.on_off->value() == 0);
+			VERIFY(sc.on_off->value() == 0);
 		}), EXIT_VERIFY_CB(ArchPrctlSystemCall, {
 			/* either success or ENODEV is to be expected for this
 			 * test */
-			VERIFY_RETURN(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
+			VERIFY(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
 		}));
 #endif
 
@@ -301,10 +299,10 @@ void SyscallTest::runTests() {
 			syscall(SYS_brk, 0x4711);
 		},
 		ENTRY_VERIFY_CB(BreakSystemCall, {
-			VERIFY_RETURN(sc.req_addr.ptr() == (void*)0x4711);
+			VERIFY(sc.req_addr.ptr() == (void*)0x4711);
 		}), EXIT_VERIFY_CB(BreakSystemCall, {
 			VERIFY(!sc.hasErrorCode());
-			VERIFY_RETURN(sc.ret_addr.ptr() != nullptr);
+			VERIFY(sc.ret_addr.ptr() != nullptr);
 		}));
 
 	runTrace(SystemCallNr::CLOCK_NANOSLEEP,
@@ -320,12 +318,12 @@ void SyscallTest::runTests() {
 			using Flags = clues::item::ClockNanoSleepFlags::Flags;
 			VERIFY(sc.flags.flags() == Flags{ABSTIME});
 			const auto &sleep_time = *sc.time.spec();
-			VERIFY_RETURN(sleep_time.tv_sec == 5 && sleep_time.tv_nsec == 500);
+			VERIFY(sleep_time.tv_sec == 5 && sleep_time.tv_nsec == 500);
 		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			/* remain is unused when TIMER_ABSTIME is passed */
 			const auto &remaining = *sc.remaining.spec();
-			VERIFY_RETURN(remaining.tv_sec == 5 && remaining.tv_nsec == 500);
+			VERIFY(remaining.tv_sec == 5 && remaining.tv_nsec == 500);
 		}));
 
 	runTrace(SystemCallNr::CLONE,
@@ -355,11 +353,11 @@ void SyscallTest::runTests() {
 			 * stack area */
 			VERIFY(((uintptr_t)sc.stack.ptr() & STACK_ADDR) == STACK_ADDR);
 			const auto parent_tid = *sc.parent_tid;
-			VERIFY_RETURN(((uintptr_t)parent_tid.pointer() & STACK_ADDR) == STACK_ADDR);
+			VERIFY(((uintptr_t)parent_tid.pointer() & STACK_ADDR) == STACK_ADDR);
 		}), EXIT_VERIFY_CB(CloneSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			const auto parent_tid = *sc.parent_tid;
-			VERIFY_RETURN(sc.new_pid.pid() == parent_tid.value());
+			VERIFY(sc.new_pid.pid() == parent_tid.value());
 		}));
 }
 
