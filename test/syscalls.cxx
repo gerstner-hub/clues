@@ -1,6 +1,7 @@
 // Linux
-#include <sys/syscall.h>
 #include <asm/prctl.h>
+#include <sys/syscall.h>
+#include <time.h>
 
 // C++
 #include <iostream>
@@ -13,6 +14,7 @@
 #include <clues/syscalls/memory.hxx>
 #include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
+#include <clues/syscalls/time.hxx>
 #include <clues/Tracee.hxx>
 
 // Test
@@ -296,6 +298,30 @@ void SyscallTest::runTests() {
 			auto &break_call = downcast<clues::BreakSystemCall>(sc);
 			VERIFY(!sc.hasErrorCode());
 			VERIFY_RETURN(break_call.ret_addr.ptr() != nullptr);
+		});
+
+	runTrace(SystemCallNr::CLOCK_NANOSLEEP,
+		[]() {
+			struct timespec ts;
+			ts.tv_sec = 5;
+			ts.tv_nsec = 500;
+			clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
+		},
+		[](const SystemCall &sc) {
+			auto &sleep_call = downcast<clues::ClockNanoSleepSystemCall>(sc);
+			VERIFY(sleep_call.clockid.type() == cosmos::ClockType::MONOTONIC);
+			using enum clues::item::ClockNanoSleepFlags::Flag;
+			using Flags = clues::item::ClockNanoSleepFlags::Flags;
+			VERIFY(sleep_call.flags.flags() == Flags{ABSTIME});
+			const auto &sleep_time = *sleep_call.time.spec();
+			VERIFY_RETURN(sleep_time.tv_sec == 5 && sleep_time.tv_nsec == 500);
+		},
+		[](const SystemCall &sc) {
+			VERIFY(!sc.hasErrorCode());
+			auto &sleep_call = downcast<clues::ClockNanoSleepSystemCall>(sc);
+			/* remain is unused when TIMER_ABSTIME is passed */
+			const auto &remaining = *sleep_call.remaining.spec();
+			VERIFY_RETURN(remaining.tv_sec == 5 && remaining.tv_nsec == 500);
 		});
 }
 
