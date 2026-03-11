@@ -25,6 +25,10 @@ public: // functions
 		return m_flags;
 	}
 
+	std::optional<cosmos::SignalNr> exitSignal() const {
+		return exit_signal;
+	}
+
 protected: // functions
 
 	void processValue(const Tracee&) override;
