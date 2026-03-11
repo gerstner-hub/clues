@@ -59,7 +59,7 @@ struct CLUES_API CloneSystemCall :
 	CloneSystemCall() :
 			SystemCall{SystemCallNr::CLONE},
 			stack{"stack", "stack address"},
-			new_pid{"pid", "child pid"} {
+			new_pid{ItemType::RETVAL, "child pid"} {
 		setReturnItem(new_pid);
 		setParameters(flags, stack);
 	}
@@ -104,7 +104,7 @@ struct CLUES_API CloneSystemCall :
 	/* return value */
 
 	/// The new child's PID.
-	item::ReturnValue new_pid;
+	item::ProcessIDItem new_pid;
 
 protected: // functions
 
