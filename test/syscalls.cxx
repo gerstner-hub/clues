@@ -37,6 +37,15 @@ using clues::SystemCallNr;
  */
 constexpr cosmos::FileNum FIRST_FD{4};
 
+#define VERIFY(expr) if (!(expr)) { \
+	std::cerr << "check |" << #expr << "| failed\n"; \
+	return false; \
+}
+
+#define VERIFY_FALSE(expr) VERIFY(!(expr))
+
+#define VERIFY_RETURN(expr) VERIFY(expr); return true;
+
 class SyscallTracer : public clues::EventConsumer {
 public:
 	explicit SyscallTracer(const SystemCallNr nr,
@@ -183,32 +192,25 @@ void SyscallTest::runTests() {
 		},
 		[](const SystemCall &sc) {
 			auto &access_sc = downcast<clues::AccessSystemCall>(sc);
-			if (access_sc.path.data() != "/etc/")
-				return false;
+			VERIFY(access_sc.path.data() == "/etc/");
 			using cosmos::fs::AccessCheck;
 			using cosmos::fs::AccessChecks;
 			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-			if ((*access_sc.mode.checks()) != checks) {
-				return false;
-			}
+			VERIFY((*access_sc.mode.checks()) == checks);
 			return true;
 		}, [](const SystemCall &sc) {
-			return !sc.hasErrorCode();
+			VERIFY_RETURN(!sc.hasErrorCode());
 		});
 
 	/* shared entry check for faccessat1/2 */
 	auto check_faccessat_entry = [](const auto &access_sc) -> bool {
-		if (access_sc.dirfd.fd() != FIRST_FD) {
-			return false;
-		}
-		if (access_sc.path.data() != "etc")
-			return false;
+		VERIFY(access_sc.dirfd.fd() == FIRST_FD);
+		VERIFY(access_sc.path.data() == "etc");
+
 		using cosmos::fs::AccessCheck;
 		using cosmos::fs::AccessChecks;
 		const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-		if ((*access_sc.mode.checks()) != checks) {
-			return false;
-		}
+		VERIFY((*access_sc.mode.checks()) == checks);
 
 		return true;
 	};
@@ -222,7 +224,7 @@ void SyscallTest::runTests() {
 			auto &access_sc = downcast<clues::FAccessAtSystemCall>(sc);
 			return check_faccessat_entry(access_sc);
 		}, [](const SystemCall &sc) {
-			return !sc.hasErrorCode();
+			VERIFY_RETURN(!sc.hasErrorCode());
 		},
 		1);
 
@@ -237,12 +239,11 @@ void SyscallTest::runTests() {
 				return false;
 			using AtFlags = clues::item::AtFlagsValue::AtFlags;
 			using enum clues::item::AtFlagsValue::AtFlag;
-			if (access_sc.flags.flags() != AtFlags{EACCESS})
-				return false;
+			VERIFY(access_sc.flags.flags() == AtFlags{EACCESS})
 
 			return true;
 		}, [](const SystemCall &sc) {
-			return !sc.hasErrorCode();
+			VERIFY_RETURN(!sc.hasErrorCode());
 		},
 		1);
 
@@ -255,11 +256,11 @@ void SyscallTest::runTests() {
 		},
 		[](const SystemCall &sc) {
 			auto &alarm_call = downcast<clues::AlarmSystemCall>(sc);
-			return alarm_call.seconds.value() == 4321;
+			VERIFY_RETURN(alarm_call.seconds.value() == 4321);
 		},
 		[](const SystemCall &sc) {
 			auto &alarm_call = downcast<clues::AlarmSystemCall>(sc);
-			return alarm_call.old_seconds.value() == 1234;
+			VERIFY_RETURN(alarm_call.old_seconds.value() == 1234);
 		},
 		1);
 
@@ -271,24 +272,14 @@ void SyscallTest::runTests() {
 		},
 		[](const SystemCall &sc) {
 			auto &prctl_call = downcast<clues::ArchPrctlSystemCall>(sc);
-			if (prctl_call.op.operation() != clues::item::ArchOpParameter::Operation::SET_CPUID) {
-				return false;
-			}
-
-			if (prctl_call.set_addr || prctl_call.get_addr || prctl_call.on_off_ret) {
-				return false;
-			}
-
-			if (prctl_call.on_off->value() != 0) {
-				return false;
-			}
-
-			return true;
+			VERIFY(prctl_call.op.operation() == clues::item::ArchOpParameter::Operation::SET_CPUID);
+			VERIFY_FALSE(prctl_call.set_addr || prctl_call.get_addr || prctl_call.on_off_ret);
+			VERIFY_RETURN(prctl_call.on_off->value() == 0);
 		},
 		[](const SystemCall &sc) {
 			/* either success or ENODEV is to be expected for this
 			 * test */
-			return !sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE;
+			VERIFY_RETURN(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
 		});
 #endif
 }
