@@ -25,10 +25,16 @@ public: // functions
 
 	std::string str() const override;
 
+	const std::optional<struct timespec>& spec() const {
+		return m_timespec;
+	}
+
 protected: // functions
 
 	void processValue(const Tracee &proc) override {
-		if (!this->isOut())
+		if (this->isOut())
+			m_timespec.reset();
+		else
 			fetch(proc);
 	}
 
@@ -82,6 +88,10 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+	auto flags() const {
+		return m_flags;
+	}
 
 protected: // functions
 
