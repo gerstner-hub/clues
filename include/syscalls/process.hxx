@@ -126,7 +126,7 @@ struct CLUES_API Clone3SystemCall :
 	/// Combined clone arguments.
 	item::CloneArgs cl_args;
 	/// Size of the CloneArgs structure argument in `cl_args`.
-	item::ValueInParameter size;
+	item::SizeValue size;
 	/// New child's PID or zero if executing in child context.
 	item::ProcessIDItem pid;
 
