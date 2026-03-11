@@ -10,6 +10,7 @@
 
 // clues
 #include <clues/syscalls/fs.hxx>
+#include <clues/syscalls/memory.hxx>
 #include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
 #include <clues/Tracee.hxx>
@@ -282,6 +283,20 @@ void SyscallTest::runTests() {
 			VERIFY_RETURN(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
 		});
 #endif
+
+	runTrace(SystemCallNr::BREAK,
+		[]() {
+			syscall(SYS_brk, 0x4711);
+		},
+		[](const SystemCall &sc) {
+			auto &break_call = downcast<clues::BreakSystemCall>(sc);
+			VERIFY_RETURN(break_call.req_addr.ptr() == (void*)0x4711);
+		},
+		[](const SystemCall &sc) {
+			auto &break_call = downcast<clues::BreakSystemCall>(sc);
+			VERIFY(!sc.hasErrorCode());
+			VERIFY_RETURN(break_call.ret_addr.ptr() != nullptr);
+		});
 }
 
 int main(const int argc, const char **argv) {
