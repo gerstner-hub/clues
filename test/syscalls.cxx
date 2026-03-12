@@ -400,6 +400,17 @@ void SyscallTest::runTests() {
 			VERIFY(sc.cl_args.pidfd() == FIRST_FD);
 			VERIFY(sc.pid.pid() == static_cast<cosmos::ProcessID>(sc.cl_args.tid()));
 		}));
+
+	runTrace(SystemCallNr::CLOSE,
+		[]() {
+			close(2);
+		},
+		ENTRY_VERIFY_CB(CloseSystemCall, {
+			VERIFY(sc.fd.fd() == cosmos::FileNum{2});
+		}),
+		EXIT_VERIFY_CB(CloseSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}));
 }
 
 int main(const int argc, const char **argv) {
