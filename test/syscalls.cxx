@@ -208,6 +208,30 @@ class SyscallTest :
 };
 
 void SyscallTest::runTests() {
+
+	/*
+	 * the following are per system call unit tests:
+	 *
+	 * - the first callback is a function executed in a child tracee
+	 *   context. system call events will be monitored by SyscallTracer,
+	 *   which will invoked a TraceVerifyCB on entry and exit of the
+	 *   system call under test.
+	 * - the second callback is the TraceVerifyCB which inspects the
+	 *   system call enter event. It should validate any in/in-out
+	 *   parameters. The macros ENTRY_VERIFY_CB and EXIT_VERIFY_CB
+	 *   automatically placed an appropriately typed SystemCall object on
+	 *   the stack to work with.
+	 * - the third callback is the TraceVerifyCB which inspects the system
+	 *   call exit event. It should validate any in-out/out and return
+	 *   parameters as well as system call success indication.
+	 * - The optional last parameter is a system call skip count. Since we
+	 *   want to hit exactly the system call under test and nothing else
+	 *   we need to keep track of any additional system calls that might
+	 *   occur before the system call under test.
+	 * - The VERIFY macro marks a bad test state with an informational
+	 *   error output and stops executing the current callback.
+	 */
+
 	runTrace(SystemCallNr::ACCESS,
 		[]() {
 			access("/etc/", R_OK|X_OK);
