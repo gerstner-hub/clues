@@ -181,7 +181,7 @@ const SC& downcast(const SystemCall &sc) {
 
 class SyscallTest :
 	public cosmos::TestBase {
-
+protected:
 	void runTests() override;
 
 	void runTrace(
@@ -205,9 +205,15 @@ class SyscallTest :
 		RUN_STEP("system call entry good", tracer.entryGood());
 		RUN_STEP("system call exit good", tracer.exitGood());
 	}
+
+protected:
+
+	// helper binary
+	std::string m_exiter;
 };
 
 void SyscallTest::runTests() {
+	m_exiter = findHelper("exiter");
 
 	/*
 	 * the following are per system call unit tests:
@@ -435,6 +441,23 @@ void SyscallTest::runTests() {
 		EXIT_VERIFY_CB(CloseSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}));
+
+	runTrace(SystemCallNr::EXECVE,
+		[this]() {
+			const char* const args[] = {m_exiter.c_str(), "5", NULL};
+			const char* const env[] = {"THIS=THAT", "ME=YOU", NULL};
+			::execve(m_exiter.c_str(), const_cast<char *const*>(args), const_cast<char*const*>(env));
+			_exit(128);
+		},
+		ENTRY_VERIFY_CB_CAPTURE(this, ExecveSystemCall, {
+			VERIFY(sc.pathname.data() == m_exiter);
+			VERIFY(sc.argv.data() == cosmos::StringVector{m_exiter, "5"});
+			VERIFY(sc.envp.data() == cosmos::StringVector{"THIS=THAT", "ME=YOU"});
+		}), EXIT_VERIFY_CB(ExecveSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}));
+
+
 }
 
 int main(const int argc, const char **argv) {
