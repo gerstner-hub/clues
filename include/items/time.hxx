@@ -19,8 +19,10 @@ public: // functions
 	explicit TimespecParameter(
 		const std::string_view short_name,
 		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN) :
-			SystemCallItem{type, short_name, long_name} {
+		const ItemType type = ItemType::PARAM_IN,
+		const bool remain_semantics = false) :
+			SystemCallItem{type, short_name, long_name},
+			m_remain_semantics{remain_semantics} {
 	}
 
 	std::string str() const override;
@@ -38,15 +40,14 @@ protected: // functions
 			fetch(proc);
 	}
 
-	void updateData(const Tracee &proc) override {
-		fetch(proc);
-	}
+	void updateData(const Tracee &proc) override;
 
 	void fetch(const Tracee &proc);
 
 protected: // data
 
 	std::optional<struct timespec> m_timespec;
+	bool m_remain_semantics = false;
 };
 
 class CLUES_API ClockID :

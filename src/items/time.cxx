@@ -12,6 +12,31 @@
 
 namespace clues::item {
 
+void TimespecParameter::updateData(const Tracee &proc) {
+	if (m_remain_semantics) {
+		/*
+		 * special logic for clock_nanosleep remain semantics &
+		 * similar cases:
+		 *
+		 * - on success, remaining time is not updated
+		 * - on special kernel error code, transparent restart will
+		 *   happen
+		 * - otherwise only if EINTR is observed will the time be
+		 *   updated
+		 */
+		if (m_call->hasResultValue())
+		       return;
+
+		const auto &error = *m_call->error();
+
+		if (!error.hasErrorCode() || error.errorCode() != cosmos::Errno::INTERRUPTED) {
+			return;
+		}
+	}
+
+	fetch(proc);
+}
+
 void TimespecParameter::fetch(const Tracee &proc) {
 	if (!m_timespec) {
 		m_timespec = timespec{};
@@ -23,8 +48,14 @@ void TimespecParameter::fetch(const Tracee &proc) {
 }
 
 std::string TimespecParameter::str() const {
-	if (!m_timespec)
-		return "NULL";
+	if (!m_timespec) {
+		if (m_remain_semantics) {
+			/* still show that a pointer was passed */
+			return format::pointer(valueAs<void*>());
+		} else {
+			return "NULL";
+		}
+	}
 
 	return format::timespec(*m_timespec);
 }

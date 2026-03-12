@@ -324,10 +324,8 @@ void SyscallTest::runTests() {
 		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			/* remain is unused when TIMER_ABSTIME is passed or
-			 * no EINTR occurred. Should still point to the same
-			 * input data */
-			const auto &remaining = *sc.remaining.spec();
-			VERIFY(remaining.tv_sec == 5 && remaining.tv_nsec == 500);
+			 * no EINTR occurred. */
+			VERIFY(!sc.remaining.spec());
 		}));
 
 	runTrace(SystemCallNr::CLONE,
