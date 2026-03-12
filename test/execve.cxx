@@ -5,7 +5,6 @@
 // Cosmos
 #include <cosmos/fs/File.hxx>
 #include <cosmos/fs/filesystem.hxx>
-#include <cosmos/fs/path.hxx>
 #include <cosmos/proc/process.hxx>
 #include <cosmos/thread/Condition.hxx>
 #include <cosmos/thread/PosixThread.hxx>
@@ -163,13 +162,6 @@ cosmos::pthread::ExitValue thread_entry_exec(cosmos::pthread::ThreadArg exiter_p
 
 class ExecveTest : public cosmos::TestBase {
 	void runTests() override {
-		findExiter();
-		testRegularExecve();
-		testMainThreadExecve();
-		testOtherThreadExecve();
-	}
-
-	void findExiter() {
 		/*
 		 * we need our own custom helper tool to execute while tracing
 		 * e.g. for the '-m32' build use case, because a 32-bit tracer
@@ -177,15 +169,10 @@ class ExecveTest : public cosmos::TestBase {
 		 * the exiter replaces the true/false binaries and exits with
 		 * the parameter passed to it.
 		 */
-		std::string dir{m_argv.at(0)};
-		dir = dir.substr(0, dir.rfind('/'));
-		auto exiter = dir + "/helpers/exiter";
-		exiter = cosmos::fs::canonicalize_path(exiter);
-		if (!cosmos::fs::exists_file(exiter)) {
-			throw cosmos::RuntimeError{"couldn't find exiter"};
-		}
-
-		m_exiter = exiter;
+		m_exiter = findHelper("exiter");
+		testRegularExecve();
+		testMainThreadExecve();
+		testOtherThreadExecve();
 	}
 
 	void testRegularExecve() {
