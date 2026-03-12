@@ -386,10 +386,10 @@ void SyscallTest::runTests() {
 			memset(&args, 0, sizeof(args));
 			args.flags = CLONE_CLEAR_SIGHAND|CLONE_PIDFD|CLONE_PARENT_SETTID;
 			args.exit_signal = SIGCHLD;
-			args.pidfd = (uint64_t)&pidfd;
-			args.stack = (uint64_t)clone_stack;
+			args.pidfd = (uintptr_t)&pidfd;
+			args.stack = (uintptr_t)clone_stack;
 			args.stack_size = sizeof(clone_stack);
-			args.parent_tid = (uint64_t)&child_tid;
+			args.parent_tid = (uintptr_t)&child_tid;
 			if (syscall(SYS_clone3, &args, sizeof(args)) == 0) {
 				_exit(123);
 			} else {
