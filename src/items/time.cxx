@@ -8,7 +8,10 @@
 #include <clues/format.hxx>
 #include <clues/items/time.hxx>
 #include <clues/macros.h>
+#include <clues/private/kernel/time.hxx>
+#include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
+#include <clues/utils.hxx>
 
 namespace clues::item {
 
@@ -27,7 +30,7 @@ void TimeSpecParameter::updateData(const Tracee &proc) {
 		if (m_call->hasResultValue())
 		       return;
 
-		const auto &error = *m_call->error();
+		const auto error = *m_call->error();
 
 		if (!error.hasErrorCode() || error.errorCode() != cosmos::Errno::INTERRUPTED) {
 			return;
@@ -37,12 +40,34 @@ void TimeSpecParameter::updateData(const Tracee &proc) {
 	fetch(proc);
 }
 
+bool TimeSpecParameter::needTime32Conversion() const {
+	/*
+	 * currently we only cover 32-bit emulation binaries on X86-64.
+	 */
+
+	if (get_default_abi() != ABI::X86_64 || m_call->abi() != ABI::I386) {
+		return false;
+	}
+
+	/* now we need to check which system call we're on */
+	return  cosmos::in_list(m_call->callNr(), {SystemCallNr::CLOCK_NANOSLEEP});
+}
+
 void TimeSpecParameter::fetch(const Tracee &proc) {
 	if (!m_timespec) {
 		m_timespec = timespec{};
 	}
 
-	if (!proc.readStruct(m_val, *m_timespec)) {
+	if (needTime32Conversion()) {
+		struct timespec32 ts32;
+		if (!proc.readStruct(m_val, ts32)) {
+			m_timespec.reset();
+			return;
+		}
+
+		m_timespec->tv_sec = ts32.tv_sec;
+		m_timespec->tv_nsec = ts32.tv_nsec;
+	} else if (!proc.readStruct(m_val, *m_timespec)) {
 		m_timespec.reset();
 	}
 }

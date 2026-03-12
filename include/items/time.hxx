@@ -44,6 +44,9 @@ protected: // functions
 
 	void fetch(const Tracee &proc);
 
+	/// Checks whether the current ABI context requires conversion of 32 bit to 64 bit.
+	bool needTime32Conversion() const;
+
 protected: // data
 
 	std::optional<struct timespec> m_timespec;
