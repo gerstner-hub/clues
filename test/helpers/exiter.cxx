@@ -22,7 +22,7 @@ cosmos::ExitStatus Exiter::main(const std::string_view, const cosmos::StringView
 		auto exit_status = std::stoi(args[0].data());
 		return cosmos::ExitStatus{exit_status};
 	} catch (const std::exception &ex) {
-		std::cerr << ex.what() << std::endl;
+		std::cerr << ex.what() << ": bad exit code value" << std::endl;
 		return cosmos::ExitStatus::FAILURE;
 	}
 }
