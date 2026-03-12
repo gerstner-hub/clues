@@ -332,8 +332,6 @@ void SyscallTest::runTests() {
 		[]() {
 			pid_t child_tid = 9000;
 
-			uint8_t clone_stack[4096*64];
-
 #ifdef COSMOS_X86
 			long flags = CLONE_PARENT_SETTID|SIGCHLD;
 			if (sizeof(long) == 8) {
@@ -344,7 +342,7 @@ void SyscallTest::runTests() {
 				 */
 				flags |= CLONE_CLEAR_SIGHAND;
 			}
-			auto res = syscall(SYS_clone, flags, clone_stack, &child_tid);
+			auto res = syscall(SYS_clone, flags, nullptr, &child_tid);
 #else
 #error "adapt unit test to your ABI"
 #endif
@@ -364,11 +362,7 @@ void SyscallTest::runTests() {
 				VERIFY(sc.flags.flags() == cosmos::CloneFlags{PARENT_SETTID});
 			}
 			VERIFY(*(sc.flags.exitSignal()) == cosmos::SignalNr::CHILD);
-			/* the stack pointer in the child changes
-			 * compared to the pointer we have in the
-			 * parent, but it should still live in the
-			 * stack area */
-			VERIFY(((uintptr_t)sc.stack.ptr() & STACK_ADDR) == STACK_ADDR);
+			VERIFY(sc.stack.ptr() == nullptr);
 			const auto parent_tid = *sc.parent_tid;
 			VERIFY(((uintptr_t)parent_tid.pointer() & STACK_ADDR) == STACK_ADDR);
 		}), EXIT_VERIFY_CB(CloneSystemCall, {
@@ -379,7 +373,6 @@ void SyscallTest::runTests() {
 
 	runTrace(SystemCallNr::CLONE3,
 		[]() {
-			uint8_t clone_stack[4096*64];
 			int pidfd;
 			int child_tid;
 			struct clone_args args;
@@ -387,8 +380,6 @@ void SyscallTest::runTests() {
 			args.flags = CLONE_CLEAR_SIGHAND|CLONE_PIDFD|CLONE_PARENT_SETTID;
 			args.exit_signal = SIGCHLD;
 			args.pidfd = (uintptr_t)&pidfd;
-			args.stack = (uintptr_t)clone_stack;
-			args.stack_size = sizeof(clone_stack);
 			args.parent_tid = (uintptr_t)&child_tid;
 			if (syscall(SYS_clone3, &args, sizeof(args)) == 0) {
 				_exit(123);
@@ -402,12 +393,8 @@ void SyscallTest::runTests() {
 			const auto &args = *sc.cl_args.args();
 			VERIFY(args.flags() == cosmos::CloneFlags{CLEAR_SIGHAND, PIDFD, PARENT_SETTID});
 			VERIFY(args.exitSignal().raw() == cosmos::SignalNr::CHILD);
-			/* the stack pointer in the child changes
-			 * compared to the pointer we have in the
-			 * parent, but it should still live in the
-			 * stack area */
-			VERIFY(((uintptr_t)args.stack() & STACK_ADDR) == STACK_ADDR);
-			VERIFY(args.stackSize() == 4096 * 64);
+			VERIFY(args.stack() == nullptr);
+			VERIFY(args.stackSize() == 0);
 		}), EXIT_VERIFY_CB(Clone3SystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			VERIFY(sc.cl_args.pidfd() == FIRST_FD);
