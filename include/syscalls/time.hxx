@@ -19,8 +19,8 @@ struct CLUES_API NanoSleepSystemCall :
 	}
 
 	/* parameters */
-	item::TimespecParameter req_time;
-	item::TimespecParameter rem_time;
+	item::TimeSpecParameter req_time;
+	item::TimeSpecParameter rem_time;
 
 	/* return value */
 	item::SuccessResult result;
@@ -41,8 +41,8 @@ struct CLUES_API ClockNanoSleepSystemCall :
 	/* parameters */
 	item::ClockID clockid;
 	item::ClockNanoSleepFlags flags;
-	item::TimespecParameter time;
-	item::TimespecParameter remaining;
+	item::TimeSpecParameter time;
+	item::TimeSpecParameter remaining;
 
 	/* return value */
 	item::SuccessResult result;

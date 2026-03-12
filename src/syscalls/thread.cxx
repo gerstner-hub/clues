@@ -47,7 +47,7 @@ bool FutexSystemCall::check2ndPass() {
 	case WAIT: [[fallthrough]];
 	case WAIT_BITSET:
 		value.emplace(item::Uint32Value{"value"});
-		timeout.emplace(item::TimespecParameter{"timeout"});
+		timeout.emplace(item::TimeSpecParameter{"timeout"});
 		if (command == WAIT) {
 			addParameters(*value, *timeout);
 		} else {
@@ -107,7 +107,7 @@ bool FutexSystemCall::check2ndPass() {
 		// absolute timeout measured against CLOCK_REALTIME (or
 		// MONOTONIC in case of LOCK_PI2, if the CLOCK_REALTIME flag
 		// is not passed in `operation`.
-		timeout.emplace(item::TimespecParameter{"timeout"});
+		timeout.emplace(item::TimeSpecParameter{"timeout"});
 		addParameters(item::unused, *timeout);
 		break;
 	case TRYLOCK_PI: [[fallthrough]];
@@ -117,7 +117,7 @@ bool FutexSystemCall::check2ndPass() {
 	case WAIT_REQUEUE_PI:
 		value.emplace(item::Uint32Value{"value"});
 		// absolute timeout
-		timeout.emplace(item::TimespecParameter{"timeout"});
+		timeout.emplace(item::TimeSpecParameter{"timeout"});
 		futex2_addr.emplace(item::GenericPointerValue{"addr2", "requeue address"});
 		addParameters(*value, *timeout, *futex2_addr);
 		break;

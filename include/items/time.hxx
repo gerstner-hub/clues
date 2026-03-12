@@ -13,10 +13,10 @@
 namespace clues::item {
 
 /// The struct timespec used for various timing and timeout operations in system calls.
-class CLUES_API TimespecParameter :
+class CLUES_API TimeSpecParameter :
 		public SystemCallItem {
 public: // functions
-	explicit TimespecParameter(
+	explicit TimeSpecParameter(
 		const std::string_view short_name,
 		const std::string_view long_name = {},
 		const ItemType type = ItemType::PARAM_IN,

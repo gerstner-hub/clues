@@ -12,7 +12,7 @@
 
 namespace clues::item {
 
-void TimespecParameter::updateData(const Tracee &proc) {
+void TimeSpecParameter::updateData(const Tracee &proc) {
 	if (m_remain_semantics) {
 		/*
 		 * special logic for clock_nanosleep remain semantics &
@@ -37,7 +37,7 @@ void TimespecParameter::updateData(const Tracee &proc) {
 	fetch(proc);
 }
 
-void TimespecParameter::fetch(const Tracee &proc) {
+void TimeSpecParameter::fetch(const Tracee &proc) {
 	if (!m_timespec) {
 		m_timespec = timespec{};
 	}
@@ -47,7 +47,7 @@ void TimespecParameter::fetch(const Tracee &proc) {
 	}
 }
 
-std::string TimespecParameter::str() const {
+std::string TimeSpecParameter::str() const {
 	if (!m_timespec) {
 		if (m_remain_semantics) {
 			/* still show that a pointer was passed */

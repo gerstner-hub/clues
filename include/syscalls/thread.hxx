@@ -110,7 +110,7 @@ struct CLUES_API FutexSystemCall :
 	///! signal used for asynchronous notifications (CREATE_FD).
 	std::optional<item::SignalNumber> fd_sig;
 	///! optional relative timeout (WAIT) or absolute timeout (WAIT_BITSET, LOCK_PI, LOCK_PI2).
-	std::optional<item::TimespecParameter> timeout;
+	std::optional<item::TimeSpecParameter> timeout;
 	///! "uaddr2" requeue address (REQUEUE, CMP_REQUEUE, CMP_REQUEUE_PI, WAIT_REQUEUE_PI) or additional futex (WAKE_OP).
 	std::optional<item::GenericPointerValue> futex2_addr;
 	///! "val3" used for comparison in CMP_REQUEUE, CMP_REQUEUE_PI.
