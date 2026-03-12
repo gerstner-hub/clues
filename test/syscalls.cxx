@@ -310,7 +310,9 @@ void SyscallTest::runTests() {
 			struct timespec ts;
 			ts.tv_sec = 5;
 			ts.tv_nsec = 500;
-			clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
+			/* avoid using the glibc wrapper, which does extra
+			 * stuff on 32-bit */
+			syscall(SYS_clock_nanosleep, CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
 		},
 		ENTRY_VERIFY_CB(ClockNanoSleepSystemCall, {
 			VERIFY(sc.clockid.type() == cosmos::ClockType::MONOTONIC);
@@ -321,7 +323,9 @@ void SyscallTest::runTests() {
 			VERIFY(sleep_time.tv_sec == 5 && sleep_time.tv_nsec == 500);
 		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
 			VERIFY(!sc.hasErrorCode());
-			/* remain is unused when TIMER_ABSTIME is passed */
+			/* remain is unused when TIMER_ABSTIME is passed or
+			 * no EINTR occurred. Should still point to the same
+			 * input data */
 			const auto &remaining = *sc.remaining.spec();
 			VERIFY(remaining.tv_sec == 5 && remaining.tv_nsec == 500);
 		}));
