@@ -40,7 +40,7 @@ using clues::SystemCallNr;
  * used for comparison of file descriptor values observed.
  */
 constexpr cosmos::FileNum FIRST_FD{4};
-constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x7f0000000000 : 0x7f000000;
+constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x70000000;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
