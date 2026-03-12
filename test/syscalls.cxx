@@ -335,7 +335,16 @@ void SyscallTest::runTests() {
 			uint8_t clone_stack[4096*64];
 
 #ifdef COSMOS_X86
-			auto res = syscall(SYS_clone, CLONE_CLEAR_SIGHAND|CLONE_PARENT_SETTID|SIGCHLD, clone_stack, &child_tid);
+			long flags = CLONE_PARENT_SETTID|SIGCHLD;
+			if (sizeof(long) == 8) {
+				/*
+				 * this flag requires 64-bit registers, if we
+				 * pass it, then `syscall()` will split it up
+				 * to two registers, breaking our test.
+				 */
+				flags |= CLONE_CLEAR_SIGHAND;
+			}
+			auto res = syscall(SYS_clone, flags, clone_stack, &child_tid);
 #else
 #error "adapt unit test to your ABI"
 #endif
@@ -347,7 +356,13 @@ void SyscallTest::runTests() {
 		},
 		ENTRY_VERIFY_CB(CloneSystemCall, {
 			using enum cosmos::CloneFlag;
-			VERIFY(sc.flags.flags() == cosmos::CloneFlags{CLEAR_SIGHAND, PARENT_SETTID});
+			if (sizeof(long) == 8) {
+				VERIFY(sc.flags.flags() == cosmos::CloneFlags{CLEAR_SIGHAND, PARENT_SETTID});
+			} else {
+				/* on 32-bit ABIs the CLEAR_SIGHAND bit cannot
+				 * be passed in the 32-bit register */
+				VERIFY(sc.flags.flags() == cosmos::CloneFlags{PARENT_SETTID});
+			}
 			VERIFY(*(sc.flags.exitSignal()) == cosmos::SignalNr::CHILD);
 			/* the stack pointer in the child changes
 			 * compared to the pointer we have in the
