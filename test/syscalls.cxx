@@ -1,8 +1,10 @@
 // Linux
 #include <asm/prctl.h>
+#include <fcntl.h>
 #include <sched.h>
 #include <sys/syscall.h>
 #include <time.h>
+#include <unistd.h>
 
 // C++
 #include <iostream>
@@ -457,7 +459,29 @@ void SyscallTest::runTests() {
 			VERIFY(sc.hasResultValue());
 		}));
 
-
+	runTrace(SystemCallNr::EXECVEAT,
+		[this]() {
+			int fd = open(m_exiter.c_str(), O_RDONLY|O_PATH);
+			const char* const args[] = {m_exiter.c_str(), "5", NULL};
+			const char* const env[] = {"THIS=THAT", "ME=YOU", NULL};
+			execveat(fd, "",
+					const_cast<char * const *>(args),
+					const_cast<char * const *>(env),
+					AT_EMPTY_PATH);
+			_exit(128);
+		},
+		ENTRY_VERIFY_CB_CAPTURE(this, ExecveAtSystemCall, {
+			VERIFY(sc.dirfd.fd() == cosmos::FileNum(FIRST_FD));
+			VERIFY(sc.pathname.data() == "");
+			VERIFY(sc.argv.data() == cosmos::StringVector{m_exiter, "5"});
+			VERIFY(sc.envp.data() == cosmos::StringVector{"THIS=THAT", "ME=YOU"});
+			using AtFlags = clues::item::AtFlagsValue::AtFlags;
+			using enum clues::item::AtFlagsValue::AtFlag;
+			VERIFY(sc.flags.flags() == AtFlags{EMPTY_PATH});
+		}), EXIT_VERIFY_CB(ExecveAtSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}),
+		1);
 }
 
 int main(const int argc, const char **argv) {
