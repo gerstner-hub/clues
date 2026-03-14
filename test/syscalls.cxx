@@ -24,6 +24,7 @@
 #include <clues/syscalls/time.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
+#include <clues/private/kernel/time.hxx>
 
 // Test
 #include "TestBase.hxx"
@@ -187,8 +188,13 @@ static T alloc32(size_t bytes) {
 	return reinterpret_cast<T>(ret);
 }
 
+template <typename T>
+static T* alloc_struct32() {
+	return alloc32<T*>(sizeof(T));
+}
+
 static const char* alloc_str32(const char *s) {
-	const auto len = std::strlen(s);
+	const auto len = std::strlen(s) + 1;
 	auto ret = alloc32<char*>(len);
 	std::strcpy(ret, s);
 	return ret;
@@ -426,12 +432,10 @@ const auto TESTS = std::array{
 		}),
 		0,
 		{
-			I386_CROSS_ABI(1,
-				[]() {
-					syscall32(SysCallNr32::ACCESS,
-						alloc_str32("/etc/"), R_OK|X_OK);
-				}
-			)
+			I386_CROSS_ABI(1, []() {
+				syscall32(SysCallNr32::ACCESS,
+					alloc_str32("/etc/"), R_OK|X_OK);
+			})
 		}},
 	TestSpec{SystemCallNr::FACCESSAT,
 		[]() {
@@ -445,12 +449,10 @@ const auto TESTS = std::array{
 		}),
 		1,
 		{
-			I386_CROSS_ABI(2,
-				[]() {
-					auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
-					syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
-				}
-			)
+			I386_CROSS_ABI(2, []() {
+				auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
+				syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
+			})
 		}
 	},
 	TestSpec{SystemCallNr::FACCESSAT2,
@@ -471,12 +473,10 @@ const auto TESTS = std::array{
 		}),
 		1,
 		{
-			I386_CROSS_ABI(2,
-				[]() {
+			I386_CROSS_ABI(2, []() {
 					auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 					syscall32(SysCallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
-				}
-			)
+			})
 		}
 	},
 	TestSpec{SystemCallNr::ALARM,
@@ -491,7 +491,14 @@ const auto TESTS = std::array{
 		}), EXIT_VERIFY_CB(AlarmSystemCall, {
 			VERIFY(sc.old_seconds.value() == 1234);
 		}),
-		1},
+		1,
+		{
+			I386_CROSS_ABI(1, []() {
+				syscall32(SysCallNr32::ALARM, 1234);
+				syscall32(SysCallNr32::ALARM, 4321);
+			})
+		}
+	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL,
 		[]() {
@@ -506,7 +513,14 @@ const auto TESTS = std::array{
 			/* either success or ENODEV is to be expected for this
 			 * test */
 			VERIFY(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
-		})},
+		}),
+		0,
+		{
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::ARCH_PRCTL, ARCH_SET_CPUID, 0);
+			})
+		}
+	},
 #endif
 	TestSpec{SystemCallNr::BREAK,
 		[]() {
@@ -517,7 +531,15 @@ const auto TESTS = std::array{
 		}), EXIT_VERIFY_CB(BreakSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			VERIFY(sc.ret_addr.ptr() != nullptr);
-		})},
+		}),
+		0,
+		{
+			I386_CROSS_ABI(0, []() {
+				/* on i386 BREAK is a different system call */
+				syscall32(SysCallNr32::BRK, 0x4711);
+			})
+		}
+	},
 	TestSpec{SystemCallNr::CLOCK_NANOSLEEP,
 		[]() {
 			struct timespec ts;
@@ -539,7 +561,20 @@ const auto TESTS = std::array{
 			/* remain is unused when TIMER_ABSTIME is passed or
 			 * no EINTR occurred. */
 			VERIFY(!sc.remaining.spec());
-		})},
+		}),
+		0,
+		{
+			I386_CROSS_ABI(1, []() {
+				auto ts32 = alloc_struct32<clues::timespec32>();
+				ts32->tv_sec = 5;
+				ts32->tv_nsec = 500;
+				syscall32(SysCallNr32::CLOCK_NANOSLEEP,
+						CLOCK_MONOTONIC,
+						TIMER_ABSTIME,
+						ts32, ts32);
+			})
+		}
+	},
 	TestSpec{SystemCallNr::CLONE,
 		[]() {
 			pid_t child_tid = 9000;
@@ -566,7 +601,7 @@ const auto TESTS = std::array{
 		},
 		ENTRY_VERIFY_CB(CloneSystemCall, {
 			using enum cosmos::CloneFlag;
-			if (sizeof(long) == 8) {
+			if (sc.abi() != clues::ABI::I386 && sizeof(long) == 8) {
 				VERIFY(sc.flags.flags() == cosmos::CloneFlags{CLEAR_SIGHAND, PARENT_SETTID});
 			} else {
 				/* on 32-bit ABIs the CLEAR_SIGHAND bit cannot
@@ -576,12 +611,31 @@ const auto TESTS = std::array{
 			VERIFY(*(sc.flags.exitSignal()) == cosmos::SignalNr::CHILD);
 			VERIFY(sc.stack.ptr() == nullptr);
 			const auto parent_tid = *sc.parent_tid;
-			VERIFY(((uintptr_t)parent_tid.pointer() & STACK_ADDR) == STACK_ADDR);
+			/* when tracing cross-ABI then there are no stack
+			 * addresses used in the invoker code */
+			VERIFY(((uintptr_t)parent_tid.pointer() & STACK_ADDR) == STACK_ADDR ||
+					!clues::is_default_abi(sc.abi()));
 		}), EXIT_VERIFY_CB(CloneSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			const auto parent_tid = *sc.parent_tid;
 			VERIFY(sc.new_pid.pid() == parent_tid.value());
-		})},
+		}),
+		0,
+		{
+			I386_CROSS_ABI(1, [](){
+				auto child_tid = alloc_struct32<pid_t>();
+				*child_tid = 9000;
+
+				long flags = CLONE_PARENT_SETTID|SIGCHLD;
+				auto res = syscall32(SysCallNr32::CLONE, flags, nullptr, child_tid);
+				if (res == 0) {
+					_exit(123);
+				} else {
+					wait(NULL);
+				}
+			})
+		}
+	},
 	TestSpec{SystemCallNr::CLONE3,
 		[]() {
 			int pidfd;
@@ -610,7 +664,26 @@ const auto TESTS = std::array{
 			VERIFY(!sc.hasErrorCode());
 			VERIFY(sc.cl_args.pidfd() == FIRST_FD);
 			VERIFY(sc.pid.pid() == static_cast<cosmos::ProcessID>(sc.cl_args.tid()));
-		})},
+		}),
+		0,
+		{
+			I386_CROSS_ABI(3, [](){
+				auto pidfd = alloc_struct32<int>();
+				auto child_tid = alloc_struct32<int>();
+				auto args = alloc_struct32<struct clone_args>();
+				memset(args, 0, sizeof(*args));
+				args->flags = CLONE_CLEAR_SIGHAND|CLONE_PIDFD|CLONE_PARENT_SETTID;
+				args->exit_signal = SIGCHLD;
+				args->pidfd = (uintptr_t)pidfd;
+				args->parent_tid = (uintptr_t)child_tid;
+				if (syscall32(SysCallNr32::CLONE3, args, sizeof(*args)) == 0) {
+					_exit(123);
+				} else {
+					wait(NULL);
+				}
+			})
+		}
+	},
 	TestSpec{SystemCallNr::CLOSE,
 		[]() {
 			close(2);
@@ -620,7 +693,14 @@ const auto TESTS = std::array{
 		}),
 		EXIT_VERIFY_CB(CloseSystemCall, {
 			VERIFY(sc.hasResultValue());
-		})},
+		}),
+		0,
+		{
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::CLOSE, 2);
+			})
+		}
+	},
 	TestSpec{SystemCallNr::EXECVE,
 		[]() {
 			const char* const args[] = {exiter.c_str(), "5", NULL};
