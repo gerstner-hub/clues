@@ -344,6 +344,23 @@ protected:
 	std::string m_exiter;
 };
 
+namespace {
+/* check routines shared between multiple system calls*/
+
+/* shared entry check for faccessat1/2 */
+template <typename SC>
+void check_faccessat_entry(const SC &access_sc, bool &good) {
+	VERIFY(access_sc.dirfd.fd() == FIRST_FD);
+	VERIFY(access_sc.path.data() == "etc");
+
+	using cosmos::fs::AccessCheck;
+	using cosmos::fs::AccessChecks;
+	const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
+	VERIFY((*access_sc.mode.checks()) == checks);
+};
+
+} // end anon ns
+
 void SyscallTest::runTests() {
 	m_exiter = findHelper("exiter");
 
@@ -390,23 +407,12 @@ void SyscallTest::runNativeTests() {
 			VERIFY(!sc.hasErrorCode());
 		}));
 
-	/* shared entry check for faccessat1/2 */
-	auto check_faccessat_entry = [](const auto &access_sc, bool &good) {
-		VERIFY(access_sc.dirfd.fd() == FIRST_FD);
-		VERIFY(access_sc.path.data() == "etc");
-
-		using cosmos::fs::AccessCheck;
-		using cosmos::fs::AccessChecks;
-		const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-		VERIFY((*access_sc.mode.checks()) == checks);
-	};
-
 	runTrace(SystemCallNr::FACCESSAT,
 		[]() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
 		},
-		ENTRY_VERIFY_CB_CAPTURE(check_faccessat_entry, FAccessAtSystemCall, {
+		ENTRY_VERIFY_CB(FAccessAtSystemCall, {
 			check_faccessat_entry(sc, good);
 		}), EXIT_VERIFY_CB(FAccessAtSystemCall, {
 			VERIFY(!sc.hasErrorCode());
@@ -418,7 +424,7 @@ void SyscallTest::runNativeTests() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat2, dirfd, "etc", R_OK|X_OK, AT_EACCESS);
 		},
-		ENTRY_VERIFY_CB_CAPTURE(check_faccessat_entry, FAccessAt2SystemCall, {
+		ENTRY_VERIFY_CB(FAccessAt2SystemCall, {
 			auto &access_sc = downcast<clues::FAccessAt2SystemCall>(sc);
 			check_faccessat_entry(access_sc, good);
 			if (!good)
