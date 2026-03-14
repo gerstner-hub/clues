@@ -628,10 +628,10 @@ void SyscallTest::runNativeTests() {
 
 void SyscallTest::run32BitEmuTests() {
 #ifdef TEST_I386_EMU
-	using SysCallNr = clues::SystemCallNrI386;
+	using SysCallNr32 = clues::SystemCallNrI386;
 	runI386Trace(SystemCallNr::ACCESS,
 		[]() {
-			syscall32(SysCallNr::ACCESS, alloc_str32("/etc/"), R_OK|X_OK);
+			syscall32(SysCallNr32::ACCESS, alloc_str32("/etc/"), R_OK|X_OK);
 		},
 		ENTRY_VERIFY_CB(AccessSystemCall, {
 			VERIFY(sc.path.data() == "/etc/");
@@ -644,6 +644,35 @@ void SyscallTest::run32BitEmuTests() {
 		}),
 		1);
 
+	runTrace(SystemCallNr::FACCESSAT,
+		[]() {
+			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
+			syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
+		},
+		ENTRY_VERIFY_CB(FAccessAtSystemCall, {
+			check_faccessat_entry(sc, good);
+		}), EXIT_VERIFY_CB(FAccessAtSystemCall, {
+			VERIFY(!sc.hasErrorCode());
+		}),
+		2);
+
+	runTrace(SystemCallNr::FACCESSAT2,
+		[]() {
+			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
+			syscall32(SysCallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
+		},
+		ENTRY_VERIFY_CB(FAccessAt2SystemCall, {
+			auto &access_sc = downcast<clues::FAccessAt2SystemCall>(sc);
+			check_faccessat_entry(access_sc, good);
+			if (!good)
+				return;
+			using AtFlags = clues::item::AtFlagsValue::AtFlags;
+			using enum clues::item::AtFlagsValue::AtFlag;
+			VERIFY(access_sc.flags.flags() == AtFlags{EACCESS})
+		}), EXIT_VERIFY_CB(FAccessAt2SystemCall, {
+			VERIFY(!sc.hasErrorCode());
+		}),
+		2);
 #endif
 }
 
