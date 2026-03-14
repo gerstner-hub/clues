@@ -55,8 +55,8 @@ using clues::SystemCallNr;
  */
 struct ExtraABI {
 	clues::ABI abi;
-	SyscallInvoker invoker;
 	size_t ignore_calls = 0;
+	SyscallInvoker invoker;
 };
 
 struct TestSpec {
@@ -194,6 +194,16 @@ static const char* alloc_str32(const char *s) {
 	return ret;
 }
 #endif // COSMOS_X86_64
+
+#ifdef TEST_I386_EMU
+#	define I386_CROSS_ABI(IGNORE_COUNT, ...) ExtraABI{ \
+		clues::ABI::I386, \
+		IGNORE_COUNT, \
+		__VA_ARGS__ \
+	},
+#else
+#	define I386_CROSS_ABI(IGNORE_COUNT, ...)
+#endif
 
 class SyscallTracer :
 		public clues::EventConsumer {
@@ -414,19 +424,15 @@ const auto TESTS = std::array{
 		}), EXIT_VERIFY_CB(AccessSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 		}),
-#ifdef TEST_I386_EMU
 		0,
 		{
-			ExtraABI{
-				clues::ABI::I386,
+			I386_CROSS_ABI(1,
 				[]() {
 					syscall32(SysCallNr32::ACCESS,
 						alloc_str32("/etc/"), R_OK|X_OK);
-				},
-				1}
-		}
-#endif
-		},
+				}
+			)
+		}},
 	TestSpec{SystemCallNr::FACCESSAT,
 		[]() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
@@ -438,18 +444,14 @@ const auto TESTS = std::array{
 			VERIFY(!sc.hasErrorCode());
 		}),
 		1,
-#ifdef TEST_I386_EMU
 		{
-			ExtraABI{
-				clues::ABI::I386,
+			I386_CROSS_ABI(2,
 				[]() {
 					auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 					syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
-				},
-				2
-			},
+				}
+			)
 		}
-#endif
 	},
 	TestSpec{SystemCallNr::FACCESSAT2,
 		[]() {
@@ -468,18 +470,14 @@ const auto TESTS = std::array{
 			VERIFY(!sc.hasErrorCode());
 		}),
 		1,
-#ifdef TEST_I386_EMU
 		{
-			ExtraABI{
-				clues::ABI::I386,
+			I386_CROSS_ABI(2,
 				[]() {
 					auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 					syscall32(SysCallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
-				},
-				2
-			},
+				}
+			)
 		}
-#endif
 	},
 	TestSpec{SystemCallNr::ALARM,
 		[]() {
