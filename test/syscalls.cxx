@@ -7,10 +7,13 @@
 #include <unistd.h>
 
 // C++
+#include <cstring>
 #include <iostream>
+#include <type_traits>
 
 // cosmos
 #include <cosmos/compiler.hxx>
+#include <cosmos/error/RuntimeError.hxx>
 
 // clues
 #include <clues/syscalls/fs.hxx>
@@ -28,9 +31,9 @@
  * This is a collective unit test for every single system call.
  *
  * This is a test purely on library API level. We're setting up a child
- * process which executes a lambda function which executes one or more target
- * system call variants, for which system call enter and exit callbacks are
- * expected, again running lambda functions to verify the observed data.
+ * process which executes a lambda function which executes a system call under
+ * test, for which system call enter and exit callbacks are expected, again
+ * running lambda functions, to verify the observed data.
  */
 
 using clues::SystemCall;
@@ -70,7 +73,102 @@ constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x7000000
 	__VA_ARGS__ \
 }
 
-class SyscallTracer : public clues::EventConsumer {
+#ifdef COSMOS_X86_64
+#	define TEST_I386_EMU
+
+/*
+ * syscall() like wrapper for explicitly calling 32-bit emulation system calls
+ * in x86-64 context.
+ *
+ * For testing tracing of 32-bit emulation Tracee's we'd ideally need separate
+ * binaries compiled with `-m32`, but this would bloat the unit testing
+ * approach massively.
+ *
+ * Instead we go for a bit of a hacky solution by explicitly invoking 32-bit
+ * system calls from our 64-bit child processes. This has a couple of
+ * complications as well:
+ *
+ * - parameters to system calls must not be larger than 32 bits. We verify
+ *   this in the wrapper and throw an exception should this happen. We verify
+ *   this in the wrapper and throw an exception should this happen.
+ * - this also goes for pointers, which means that we need to specially
+ *   manager 32-bit memory allocations using `alloc32()`.
+ *
+ * NOTE: testing the X32 ABI can be done in a similar way. In modern kernels
+ * the ABI is disabled by default, however and requires an explicit boot
+ * parameter to work. Since this ABI is highly exotic these days it probably
+ * doesn't make sense to invest a lot of work into it at the moment.
+ */
+template <class T1=long, class T2=long, class T3=long, class T4=long, class T5=long, class T6=long>
+static int syscall32(const clues::SystemCallNrI386 nr,
+		T1 t1=0, T2 t2=0, T3 t3=0, T4 t4=0, T5 t5=0, T6 t6=0) {
+
+	auto fits_in32 = [](long x) -> bool {
+		return (long)(int32_t)x == x;
+	};
+
+	auto cast_to_long = [](auto in) -> long {
+		if constexpr (std::is_arithmetic_v<decltype(in)>) {
+			return static_cast<long>(in);
+		}
+
+		if constexpr (!std::is_arithmetic_v<decltype(in)>) {
+			return reinterpret_cast<long>(in);
+		}
+	};
+
+	long _1 = cast_to_long(t1);
+	long _2 = cast_to_long(t2);
+	long _3 = cast_to_long(t3);
+	long _4 = cast_to_long(t4);
+	long _5 = cast_to_long(t5);
+	long _6 = cast_to_long(t6);
+
+	register long eax asm("eax") = cosmos::to_integral(nr);
+	register long ebx asm("ebx") = _1;
+	register long ecx asm("ecx") = _2;
+	register long edx asm("edx") = _3;
+	register long esi asm("esi") = _4;
+	register long edi asm("edi") = _5;
+
+	if (!fits_in32(_1) || !fits_in32(_2) || !fits_in32(_3) || !fits_in32(_4) || !fits_in32(_5) || !fits_in32(_6)) {
+		throw cosmos::RuntimeError{"too large syscall32 parameters"};
+	}
+
+	asm volatile(
+			"push %%rbp\n\t"
+			"mov %[_6], %%rbp\n\t"
+			"int $0x80\n\t"
+			"pop %%rbp"
+			: "+r"(eax)
+			: "r"(ebx), "r"(ecx), "r"(edx),
+			"r"(esi), "r"(edi), [_6]"r"(_6)
+			: "memory"
+	);
+
+	return eax;
+}
+
+template <typename T>
+static T alloc32(size_t bytes) {
+	auto ret = mmap(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_32BIT|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	if (ret == MAP_FAILED) {
+		throw cosmos::ApiError{"mmap()[32]"};
+	}
+
+	return reinterpret_cast<T>(ret);
+}
+
+static const char* alloc_str32(const char *s) {
+	const auto len = std::strlen(s);
+	auto ret = alloc32<char*>(len);
+	std::strcpy(ret, s);
+	return ret;
+}
+#endif // COSMOS_X86_64
+
+class SyscallTracer :
+		public clues::EventConsumer {
 public:
 	explicit SyscallTracer(const SystemCallNr nr,
 			TraceVerifyCB enter_verify,
@@ -81,6 +179,8 @@ public:
 				m_exit_verify{exit_verify},
 				m_ignore_calls{ignore_calls} {
 	}
+
+protected:
 
 	void syscallEntry(clues::Tracee &,
 			const SystemCall &call,
@@ -96,6 +196,9 @@ public:
 
 		if (call.callNr() != m_call_nr) {
 			std::cerr << __FUNCTION__ << ": unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
+			return;
+		} else if (m_abi != clues::ABI::UNKNOWN && call.abi() != m_abi) {
+			std::cerr << __FUNCTION__ << ": ABI mismatch for system call\n";
 			return;
 		}
 
@@ -129,6 +232,19 @@ public:
 		m_ran_cbs = true;
 	}
 
+	void attached(clues::Tracee &) override {
+		m_creator->signalChild();
+	}
+
+	void exited(clues::Tracee&, const cosmos::WaitStatus,
+			const StatusFlags) override {
+		if (!m_ran_cbs) {
+			std::cerr << "never seen expected system call!\n";
+		}
+	}
+
+public:
+
 	void setCreator(TraceeCreator<SyscallInvoker> &creator) {
 		/*
 		 * we need this to synchronize exactly to the eventfd read()
@@ -137,14 +253,8 @@ public:
 		m_creator = &creator;
 	}
 
-	void attached(clues::Tracee &) override {
-		m_creator->signalChild();
-	}
-
-	void exited(clues::Tracee&, const cosmos::WaitStatus, const StatusFlags) override {
-		if (!m_ran_cbs) {
-			std::cerr << "never seen expected system call!\n";
-		}
+	void setABI(const clues::ABI abi) {
+		m_abi = abi;
 	}
 
 	bool entryGood() const {
@@ -174,6 +284,8 @@ protected:
 	size_t m_ignore_calls = 0;
 	size_t m_current_call = 0;
 	TraceeCreator<SyscallInvoker> *m_creator = nullptr;
+	// for emulation targets this is set to the expected ABI
+	clues::ABI m_abi = clues::ABI::UNKNOWN;
 };
 
 template <typename SC>
@@ -186,18 +298,24 @@ class SyscallTest :
 protected:
 	void runTests() override;
 
+	void runNativeTests();
+
+	void run32BitEmuTests();
+
 	void runTrace(
 			const SystemCallNr nr,	
 			SyscallInvoker invoker,
 			TraceVerifyCB enter_verify,
 			TraceVerifyCB exit_verify,
-			const size_t ignore_calls = 0) {
+			const size_t ignore_calls = 0,
+			const clues::ABI abi = clues::ABI::UNKNOWN) {
 		const auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
 		START_TEST(cosmos::sprintf("testing system call %s", &name[0]));
 		SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
 
 		TraceeCreator creator{std::move(invoker), tracer};
 		tracer.setCreator(creator);
+		tracer.setABI(abi);
 		try {
 			creator.run(clues::FollowChildren{false},
 					/*explicit_signal=*/true);
@@ -208,6 +326,18 @@ protected:
 		RUN_STEP("system call exit good", tracer.exitGood());
 	}
 
+#ifdef TEST_I386_EMU
+	void runI386Trace(
+			const SystemCallNr nr,
+			SyscallInvoker invoker,
+			TraceVerifyCB enter_verify,
+			TraceVerifyCB exit_verify,
+			const size_t ignore_calls = 0) {
+		runTrace(nr, invoker, enter_verify, exit_verify,
+				ignore_calls, clues::ABI::I386);
+	}
+#endif
+
 protected:
 
 	// helper binary
@@ -216,6 +346,12 @@ protected:
 
 void SyscallTest::runTests() {
 	m_exiter = findHelper("exiter");
+
+	runNativeTests();
+	run32BitEmuTests();
+}
+
+void SyscallTest::runNativeTests() {
 
 	/*
 	 * the following are per system call unit tests:
@@ -482,6 +618,27 @@ void SyscallTest::runTests() {
 			VERIFY(sc.hasResultValue());
 		}),
 		1);
+}
+
+void SyscallTest::run32BitEmuTests() {
+#ifdef TEST_I386_EMU
+	using SysCallNr = clues::SystemCallNrI386;
+	runI386Trace(SystemCallNr::ACCESS,
+		[]() {
+			syscall32(SysCallNr::ACCESS, alloc_str32("/etc/"), R_OK|X_OK);
+		},
+		ENTRY_VERIFY_CB(AccessSystemCall, {
+			VERIFY(sc.path.data() == "/etc/");
+			using cosmos::fs::AccessCheck;
+			using cosmos::fs::AccessChecks;
+			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
+			VERIFY((*sc.mode.checks()) == checks);
+		}), EXIT_VERIFY_CB(AccessSystemCall, {
+			VERIFY(!sc.hasErrorCode());
+		}),
+		1);
+
+#endif
 }
 
 int main(const int argc, const char **argv) {
