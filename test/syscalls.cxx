@@ -10,6 +10,7 @@
 #include <cstring>
 #include <iostream>
 #include <type_traits>
+#include <vector>
 
 // cosmos
 #include <cosmos/compiler.hxx>
@@ -22,10 +23,13 @@
 #include <clues/syscalls/signals.hxx>
 #include <clues/syscalls/time.hxx>
 #include <clues/Tracee.hxx>
+#include <clues/utils.hxx>
 
 // Test
 #include "TestBase.hxx"
 #include "TraceeCreator.hxx"
+
+using namespace std::string_literals;
 
 /*
  * This is a collective unit test for every single system call.
@@ -40,6 +44,30 @@ using clues::SystemCall;
 using TraceVerifyCB = std::function<void (const SystemCall &, bool &good)>;
 using SyscallInvoker = std::function<void (void)>;
 using clues::SystemCallNr;
+
+/*
+ * for cross-ABI tracing tests like 32-bit emulation on x86-64, this specifies
+ * the extra ingredients:
+ * - the cross-target ABI
+ * - the ABI specific system call invoker
+ * - the ignore call counter
+ * the rest of the TestSpec will stay the same.
+ */
+struct ExtraABI {
+	clues::ABI abi;
+	SyscallInvoker invoker;
+	size_t ignore_calls = 0;
+};
+
+struct TestSpec {
+	clues::SystemCallNr nr;
+	SyscallInvoker invoker;
+	TraceVerifyCB enter_verify;
+	TraceVerifyCB exit_verify;
+	size_t ignore_calls = 0;
+	std::vector<ExtraABI> extra_abi_tests = {};
+};
+
 /*
  * the first file descriptor number which will be used in tracee context.
  * used for comparison of file descriptor values observed.
@@ -298,10 +326,6 @@ class SyscallTest :
 protected:
 	void runTests() override;
 
-	void runNativeTests();
-
-	void run32BitEmuTests();
-
 	void runTrace(
 			const SystemCallNr nr,	
 			SyscallInvoker invoker,
@@ -310,7 +334,10 @@ protected:
 			const size_t ignore_calls = 0,
 			const clues::ABI abi = clues::ABI::UNKNOWN) {
 		const auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
-		START_TEST(cosmos::sprintf("testing system call %s", &name[0]));
+		const auto abi_text = abi == clues::ABI::UNKNOWN ?
+			""s :
+			" ["s + clues::get_abi_label(abi) + "]"s;
+		START_TEST(cosmos::sprintf("testing system call %s%s", &name[0], abi_text.c_str()));
 		SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
 
 		TraceeCreator creator{std::move(invoker), tracer};
@@ -325,23 +352,6 @@ protected:
 		RUN_STEP("system call entry good", tracer.entryGood());
 		RUN_STEP("system call exit good", tracer.exitGood());
 	}
-
-#ifdef TEST_I386_EMU
-	void runI386Trace(
-			const SystemCallNr nr,
-			SyscallInvoker invoker,
-			TraceVerifyCB enter_verify,
-			TraceVerifyCB exit_verify,
-			const size_t ignore_calls = 0) {
-		runTrace(nr, invoker, enter_verify, exit_verify,
-				ignore_calls, clues::ABI::I386);
-	}
-#endif
-
-protected:
-
-	// helper binary
-	std::string m_exiter;
 };
 
 namespace {
@@ -359,41 +369,39 @@ void check_faccessat_entry(const SC &access_sc, bool &good) {
 	VERIFY((*access_sc.mode.checks()) == checks);
 };
 
-} // end anon ns
 
-void SyscallTest::runTests() {
-	m_exiter = findHelper("exiter");
+/// path to the exiter helper
+std::string exiter;
 
-	runNativeTests();
-	run32BitEmuTests();
-}
+#ifdef TEST_I386_EMU
+using SysCallNr32 = clues::SystemCallNrI386;
+#endif
 
-void SyscallTest::runNativeTests() {
-
-	/*
-	 * the following are per system call unit tests:
-	 *
-	 * - the first callback is a function executed in a child tracee
-	 *   context. system call events will be monitored by SyscallTracer,
-	 *   which will invoked a TraceVerifyCB on entry and exit of the
-	 *   system call under test.
-	 * - the second callback is the TraceVerifyCB which inspects the
-	 *   system call enter event. It should validate any in/in-out
-	 *   parameters. The macros ENTRY_VERIFY_CB and EXIT_VERIFY_CB
-	 *   automatically placed an appropriately typed SystemCall object on
-	 *   the stack to work with.
-	 * - the third callback is the TraceVerifyCB which inspects the system
-	 *   call exit event. It should validate any in-out/out and return
-	 *   parameters as well as system call success indication.
-	 * - The optional last parameter is a system call skip count. Since we
-	 *   want to hit exactly the system call under test and nothing else
-	 *   we need to keep track of any additional system calls that might
-	 *   occur before the system call under test.
-	 * - The VERIFY macro marks a bad test state with an informational
-	 *   error output and stops executing the current callback.
-	 */
-
-	runTrace(SystemCallNr::ACCESS,
+/*
+ * the following are per system call unit tests specifications:
+ *
+ * - the first callback (`SyscallInvoker`) is a function executed in a child
+ *   tracee context. system call events will be monitored by SyscallTracer,
+ *   which will invoked a TraceVerifyCB on entry and exit of the system call
+ *   under test.
+ * - the second  callback (`TraceVerifyCB`) inspects the system call enter
+ *   event.  It should validate any in/in-out parameters.  The macros
+ *   ENTRY_VERIFY_CB and EXIT_VERIFY_CB automatically placed an appropriately
+ *   typed SystemCall object on the stack to work with.
+ * - the third callback (`TraceVerifyCB`) inspects the system call exit event.
+ *   It should validate any in-out/out and return parameters as well as system
+ *   call success indication.
+ * - The optional size_t is a system call skip count. Since we want to hit
+ *   exactly the system call under test and nothing else we need to keep track
+ *   of any additional system calls that might occur before the system call
+ *   under test.
+ * - The VERIFY macro marks a bad test state with an informational
+ *   error output and stops executing the current TraceVerifyCB callback.
+ * - The optional ExtraABI vector contains additional emulation target test
+ *   specification for the same system call.
+ */
+const auto TESTS = std::array{
+	TestSpec{SystemCallNr::ACCESS,
 		[]() {
 			access("/etc/", R_OK|X_OK);
 		},
@@ -405,9 +413,21 @@ void SyscallTest::runNativeTests() {
 			VERIFY((*sc.mode.checks()) == checks);
 		}), EXIT_VERIFY_CB(AccessSystemCall, {
 			VERIFY(!sc.hasErrorCode());
-		}));
-
-	runTrace(SystemCallNr::FACCESSAT,
+		}),
+#ifdef TEST_I386_EMU
+		0,
+		{
+			ExtraABI{
+				clues::ABI::I386,
+				[]() {
+					syscall32(SysCallNr32::ACCESS,
+						alloc_str32("/etc/"), R_OK|X_OK);
+				},
+				1}
+		}
+#endif
+		},
+	TestSpec{SystemCallNr::FACCESSAT,
 		[]() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
@@ -417,9 +437,21 @@ void SyscallTest::runNativeTests() {
 		}), EXIT_VERIFY_CB(FAccessAtSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 		}),
-		1);
-
-	runTrace(SystemCallNr::FACCESSAT2,
+		1,
+#ifdef TEST_I386_EMU
+		{
+			ExtraABI{
+				clues::ABI::I386,
+				[]() {
+					auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
+					syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
+				},
+				2
+			},
+		}
+#endif
+	},
+	TestSpec{SystemCallNr::FACCESSAT2,
 		[]() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat2, dirfd, "etc", R_OK|X_OK, AT_EACCESS);
@@ -435,9 +467,21 @@ void SyscallTest::runNativeTests() {
 		}), EXIT_VERIFY_CB(FAccessAt2SystemCall, {
 			VERIFY(!sc.hasErrorCode());
 		}),
-		1);
-
-	runTrace(SystemCallNr::ALARM,
+		1,
+#ifdef TEST_I386_EMU
+		{
+			ExtraABI{
+				clues::ABI::I386,
+				[]() {
+					auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
+					syscall32(SysCallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
+				},
+				2
+			},
+		}
+#endif
+	},
+	TestSpec{SystemCallNr::ALARM,
 		[]() {
 			/* make two calls so that we get a non-zero return
 			 * value */
@@ -449,10 +493,9 @@ void SyscallTest::runNativeTests() {
 		}), EXIT_VERIFY_CB(AlarmSystemCall, {
 			VERIFY(sc.old_seconds.value() == 1234);
 		}),
-		1);
-
+		1},
 #ifdef COSMOS_X86
-	runTrace(SystemCallNr::ARCH_PRCTL,
+	TestSpec{SystemCallNr::ARCH_PRCTL,
 		[]() {
 			// disable SET_CPUID instruction
 			syscall(SYS_arch_prctl, ARCH_SET_CPUID, 0);
@@ -465,10 +508,9 @@ void SyscallTest::runNativeTests() {
 			/* either success or ENODEV is to be expected for this
 			 * test */
 			VERIFY(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
-		}));
+		})},
 #endif
-
-	runTrace(SystemCallNr::BREAK,
+	TestSpec{SystemCallNr::BREAK,
 		[]() {
 			syscall(SYS_brk, 0x4711);
 		},
@@ -477,9 +519,8 @@ void SyscallTest::runNativeTests() {
 		}), EXIT_VERIFY_CB(BreakSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			VERIFY(sc.ret_addr.ptr() != nullptr);
-		}));
-
-	runTrace(SystemCallNr::CLOCK_NANOSLEEP,
+		})},
+	TestSpec{SystemCallNr::CLOCK_NANOSLEEP,
 		[]() {
 			struct timespec ts;
 			ts.tv_sec = 5;
@@ -500,9 +541,8 @@ void SyscallTest::runNativeTests() {
 			/* remain is unused when TIMER_ABSTIME is passed or
 			 * no EINTR occurred. */
 			VERIFY(!sc.remaining.spec());
-		}));
-
-	runTrace(SystemCallNr::CLONE,
+		})},
+	TestSpec{SystemCallNr::CLONE,
 		[]() {
 			pid_t child_tid = 9000;
 
@@ -543,9 +583,8 @@ void SyscallTest::runNativeTests() {
 			VERIFY(!sc.hasErrorCode());
 			const auto parent_tid = *sc.parent_tid;
 			VERIFY(sc.new_pid.pid() == parent_tid.value());
-		}));
-
-	runTrace(SystemCallNr::CLONE3,
+		})},
+	TestSpec{SystemCallNr::CLONE3,
 		[]() {
 			int pidfd;
 			int child_tid;
@@ -573,9 +612,8 @@ void SyscallTest::runNativeTests() {
 			VERIFY(!sc.hasErrorCode());
 			VERIFY(sc.cl_args.pidfd() == FIRST_FD);
 			VERIFY(sc.pid.pid() == static_cast<cosmos::ProcessID>(sc.cl_args.tid()));
-		}));
-
-	runTrace(SystemCallNr::CLOSE,
+		})},
+	TestSpec{SystemCallNr::CLOSE,
 		[]() {
 			close(2);
 		},
@@ -584,27 +622,25 @@ void SyscallTest::runNativeTests() {
 		}),
 		EXIT_VERIFY_CB(CloseSystemCall, {
 			VERIFY(sc.hasResultValue());
-		}));
-
-	runTrace(SystemCallNr::EXECVE,
-		[this]() {
-			const char* const args[] = {m_exiter.c_str(), "5", NULL};
+		})},
+	TestSpec{SystemCallNr::EXECVE,
+		[]() {
+			const char* const args[] = {exiter.c_str(), "5", NULL};
 			const char* const env[] = {"THIS=THAT", "ME=YOU", NULL};
-			::execve(m_exiter.c_str(), const_cast<char *const*>(args), const_cast<char*const*>(env));
+			::execve(exiter.c_str(), const_cast<char *const*>(args), const_cast<char*const*>(env));
 			_exit(128);
 		},
-		ENTRY_VERIFY_CB_CAPTURE(this, ExecveSystemCall, {
-			VERIFY(sc.pathname.data() == m_exiter);
-			VERIFY(sc.argv.data() == cosmos::StringVector{m_exiter, "5"});
+		ENTRY_VERIFY_CB(ExecveSystemCall, {
+			VERIFY(sc.pathname.data() == exiter);
+			VERIFY(sc.argv.data() == cosmos::StringVector{exiter, "5"});
 			VERIFY(sc.envp.data() == cosmos::StringVector{"THIS=THAT", "ME=YOU"});
 		}), EXIT_VERIFY_CB(ExecveSystemCall, {
 			VERIFY(sc.hasResultValue());
-		}));
-
-	runTrace(SystemCallNr::EXECVEAT,
-		[this]() {
-			int fd = open(m_exiter.c_str(), O_RDONLY|O_PATH);
-			const char* const args[] = {m_exiter.c_str(), "5", NULL};
+		})},
+	TestSpec{SystemCallNr::EXECVEAT,
+		[]() {
+			int fd = open(exiter.c_str(), O_RDONLY|O_PATH);
+			const char* const args[] = {exiter.c_str(), "5", NULL};
 			const char* const env[] = {"THIS=THAT", "ME=YOU", NULL};
 			execveat(fd, "",
 					const_cast<char * const *>(args),
@@ -612,10 +648,10 @@ void SyscallTest::runNativeTests() {
 					AT_EMPTY_PATH);
 			_exit(128);
 		},
-		ENTRY_VERIFY_CB_CAPTURE(this, ExecveAtSystemCall, {
+		ENTRY_VERIFY_CB(ExecveAtSystemCall, {
 			VERIFY(sc.dirfd.fd() == cosmos::FileNum(FIRST_FD));
 			VERIFY(sc.pathname.data() == "");
-			VERIFY(sc.argv.data() == cosmos::StringVector{m_exiter, "5"});
+			VERIFY(sc.argv.data() == cosmos::StringVector{exiter, "5"});
 			VERIFY(sc.envp.data() == cosmos::StringVector{"THIS=THAT", "ME=YOU"});
 			using AtFlags = clues::item::AtFlagsValue::AtFlags;
 			using enum clues::item::AtFlagsValue::AtFlag;
@@ -623,57 +659,28 @@ void SyscallTest::runNativeTests() {
 		}), EXIT_VERIFY_CB(ExecveAtSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}),
-		1);
-}
+		1},
+};
 
-void SyscallTest::run32BitEmuTests() {
-#ifdef TEST_I386_EMU
-	using SysCallNr32 = clues::SystemCallNrI386;
-	runI386Trace(SystemCallNr::ACCESS,
-		[]() {
-			syscall32(SysCallNr32::ACCESS, alloc_str32("/etc/"), R_OK|X_OK);
-		},
-		ENTRY_VERIFY_CB(AccessSystemCall, {
-			VERIFY(sc.path.data() == "/etc/");
-			using cosmos::fs::AccessCheck;
-			using cosmos::fs::AccessChecks;
-			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-			VERIFY((*sc.mode.checks()) == checks);
-		}), EXIT_VERIFY_CB(AccessSystemCall, {
-			VERIFY(!sc.hasErrorCode());
-		}),
-		1);
+} // end anon ns
 
-	runTrace(SystemCallNr::FACCESSAT,
-		[]() {
-			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
-			syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
-		},
-		ENTRY_VERIFY_CB(FAccessAtSystemCall, {
-			check_faccessat_entry(sc, good);
-		}), EXIT_VERIFY_CB(FAccessAtSystemCall, {
-			VERIFY(!sc.hasErrorCode());
-		}),
-		2);
+void SyscallTest::runTests() {
+	exiter = findHelper("exiter");
 
-	runTrace(SystemCallNr::FACCESSAT2,
-		[]() {
-			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
-			syscall32(SysCallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
-		},
-		ENTRY_VERIFY_CB(FAccessAt2SystemCall, {
-			auto &access_sc = downcast<clues::FAccessAt2SystemCall>(sc);
-			check_faccessat_entry(access_sc, good);
-			if (!good)
-				return;
-			using AtFlags = clues::item::AtFlagsValue::AtFlags;
-			using enum clues::item::AtFlagsValue::AtFlag;
-			VERIFY(access_sc.flags.flags() == AtFlags{EACCESS})
-		}), EXIT_VERIFY_CB(FAccessAt2SystemCall, {
-			VERIFY(!sc.hasErrorCode());
-		}),
-		2);
-#endif
+	for (const auto &spec: TESTS) {
+		runTrace(spec.nr, spec.invoker,
+				spec.enter_verify,
+				spec.exit_verify,
+				spec.ignore_calls);
+
+		for (const auto &extra_abi: spec.extra_abi_tests) {
+			runTrace(spec.nr, extra_abi.invoker,
+				spec.enter_verify,
+				spec.exit_verify,
+				extra_abi.ignore_calls,
+				extra_abi.abi);
+		}
+	}
 }
 
 int main(const int argc, const char **argv) {
