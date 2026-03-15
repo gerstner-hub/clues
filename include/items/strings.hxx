@@ -69,6 +69,9 @@ protected: // functions
 
 	void processValue(const Tracee &proc) override;
 
+	template <typename PTR>
+	void fetchPointers(const Tracee &proc);
+
 protected: // functions
 
 	std::vector<std::string> m_strs;

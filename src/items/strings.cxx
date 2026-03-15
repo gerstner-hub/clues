@@ -18,8 +18,19 @@ void StringData::fetch(const Tracee &proc) {
 }
 
 void StringArrayData::processValue(const Tracee &proc) {
+	if (m_call->is32BitEmulationABI()) {
+		/* in this case we have to be careful, the Tracee uses 4-byte
+		 * pointers, while we are using 8-byte pointers */
+		fetchPointers<uint32_t>(proc);
+	} else {
+		fetchPointers<long*>(proc);
+	}
+}
+
+template <typename PTR>
+void StringArrayData::fetchPointers(const Tracee &proc) {
 	const auto array_start = valueAs<long*>();
-	std::vector<long*> string_addrs;
+	std::vector<PTR> string_addrs;
 	m_strs.clear();
 
 	if (!array_start)
@@ -30,7 +41,7 @@ void StringArrayData::processValue(const Tracee &proc) {
 
 	for (const auto &addr: string_addrs) {
 		m_strs.push_back(std::string{});
-		proc.readString(addr, m_strs.back());
+		proc.readString(reinterpret_cast<long*>(addr), m_strs.back());
 	}
 }
 

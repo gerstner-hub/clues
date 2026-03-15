@@ -1001,6 +1001,8 @@ void Tracee::dropFD(const cosmos::FileNum fd) const {
 
 // explicit template instantiations
 template void Tracee::readVector<std::vector<long*>>(const long*, std::vector<long*>&) const;
+/* for 32-bit emulation */
+template void Tracee::readVector<std::vector<uint32_t>>(const long*, std::vector<uint32_t>&) const;
 
 } // end ns
 
