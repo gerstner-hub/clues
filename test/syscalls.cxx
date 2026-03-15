@@ -453,13 +453,12 @@ const auto TESTS = std::array{
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat2, dirfd, "etc", R_OK|X_OK, AT_EACCESS);
 		}, ENTRY_VERIFY_CB(FAccessAt2SystemCall, {
-			auto &access_sc = downcast<clues::FAccessAt2SystemCall>(sc);
-			check_faccessat_entry(access_sc, good);
+			check_faccessat_entry(sc, good);
 			if (!good)
 				return;
 			using AtFlags = clues::item::AtFlagsValue::AtFlags;
 			using enum clues::item::AtFlagsValue::AtFlag;
-			VERIFY(access_sc.flags.flags() == AtFlags{EACCESS})
+			VERIFY(sc.flags.flags() == AtFlags{EACCESS})
 		}), EXIT_VERIFY_CB(FAccessAt2SystemCall, {
 			VERIFY(!sc.hasErrorCode());
 		}), 1, {
