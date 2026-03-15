@@ -17,12 +17,7 @@
 #include <cosmos/error/RuntimeError.hxx>
 
 // clues
-#include <clues/syscalls/fs.hxx>
-#include <clues/syscalls/memory.hxx>
-#include <clues/syscalls/other.hxx>
-#include <clues/syscalls/process.hxx>
-#include <clues/syscalls/signals.hxx>
-#include <clues/syscalls/time.hxx>
+#include <clues/syscalls/all.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
 #include <clues/private/kernel/time.hxx>
