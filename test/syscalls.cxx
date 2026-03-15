@@ -721,7 +721,30 @@ const auto TESTS = std::array{
 			VERIFY(sc.envp.data() == cosmos::StringVector{"THIS=THAT", "ME=YOU"});
 		}), EXIT_VERIFY_CB(ExecveSystemCall, {
 			VERIFY(sc.hasResultValue());
-		})},
+		}),
+		0,
+		{
+			I386_CROSS_ABI(6, [](){
+				/*
+				 * setting up pointers to pointers is
+				 * especially awkward when having to limit
+				 * everything to a 32-bit address space.
+				 */
+				constexpr auto PTR_SIZE32 = sizeof(uint32_t);
+				auto args = alloc32<uint32_t* const>(PTR_SIZE32*3);
+				auto env = alloc32<uint32_t* const>(PTR_SIZE32*3);
+				auto exiter32 = alloc_str32(exiter.c_str());
+				args[0] = (uintptr_t)exiter32;
+				args[1] = (uintptr_t)alloc_str32("5");
+				args[2] = 0;
+				env[0] = (uintptr_t)alloc_str32("THIS=THAT");
+				env[1] = (uintptr_t)alloc_str32("ME=YOU");
+				env[2] = 0;
+				syscall32(SysCallNr32::EXECVE, exiter32, args, env);
+				_exit(128);
+			})
+		}
+	},
 	TestSpec{SystemCallNr::EXECVEAT,
 		[]() {
 			int fd = open(exiter.c_str(), O_RDONLY|O_PATH);
