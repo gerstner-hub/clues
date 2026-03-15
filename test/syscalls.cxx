@@ -19,6 +19,7 @@
 // clues
 #include <clues/syscalls/fs.hxx>
 #include <clues/syscalls/memory.hxx>
+#include <clues/syscalls/other.hxx>
 #include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
 #include <clues/syscalls/time.hxx>
@@ -283,7 +284,13 @@ protected:
 	void exited(clues::Tracee&, const cosmos::WaitStatus,
 			const StatusFlags) override {
 		if (!m_ran_cbs) {
-			std::cerr << "never seen expected system call!\n";
+			if (m_entry_good && cosmos::in_list(m_call_nr, {clues::SystemCallNr::EXIT_GROUP})) {
+				/* for exit system calls system-call-exit will
+				 * never be observed */
+				m_exit_good = true;
+			} else {
+				std::cerr << "never seen expected system call!\n";
+			}
 		}
 	}
 
@@ -738,6 +745,16 @@ const auto TESTS = std::array{
 			VERIFY(sc.hasResultValue());
 		}),
 		1},
+	TestSpec{SystemCallNr::EXIT_GROUP,
+		[]() {
+			syscall(SYS_exit_group, 99);
+		}, ENTRY_VERIFY_CB(ExitGroupSystemCall, {
+			VERIFY(sc.status.status() == cosmos::ExitStatus{99});
+		}), EXIT_VERIFY_CB(ExitGroupSystemCall, {
+			/* there will be no syscall return event for exit
+			 * system calls */
+			(void)sc;
+		})},
 };
 
 } // end anon ns
