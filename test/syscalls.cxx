@@ -749,6 +749,21 @@ const auto TESTS = std::array{
 			})
 		}
 	},
+	/* TODO: cover more operations from fcntl */
+	TestSpec{SystemCallNr::FCNTL, []() {
+			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+			fcntl(fd, F_GETFD);
+		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
+			using Oper = clues::item::FcntlOperation::Oper;
+			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.operation.operation() == Oper::GETFD);
+		}), EXIT_VERIFY_CB(FcntlSystemCall, {
+			using DescFlags = cosmos::FileDescriptor::DescFlags;
+			using enum cosmos::FileDescriptor::DescFlag;
+			VERIFY(sc.ret_fd_flags->flags() == DescFlags{CLOEXEC});
+		}), 1, {
+		}
+	},
 };
 
 } // end anon ns
