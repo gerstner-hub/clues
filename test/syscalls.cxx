@@ -767,7 +767,31 @@ const auto TESTS = std::array{
 		}), EXIT_VERIFY_CB(ExecveAtSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}),
-		1},
+		1,
+		{
+			I386_CROSS_ABI(8, [](){
+				int fd = open(exiter.c_str(), O_RDONLY|O_PATH);
+				/*
+				 * setting up pointers to pointers is
+				 * especially awkward when having to limit
+				 * everything to a 32-bit address space.
+				 */
+				constexpr auto PTR_SIZE32 = sizeof(uint32_t);
+				auto args = alloc32<uint32_t* const>(PTR_SIZE32*3);
+				auto env = alloc32<uint32_t* const>(PTR_SIZE32*3);
+				auto exiter32 = alloc_str32(exiter.c_str());
+				auto empty = alloc_str32("");
+				args[0] = (uintptr_t)exiter32;
+				args[1] = (uintptr_t)alloc_str32("5");
+				args[2] = 0;
+				env[0] = (uintptr_t)alloc_str32("THIS=THAT");
+				env[1] = (uintptr_t)alloc_str32("ME=YOU");
+				env[2] = 0;
+				syscall32(SysCallNr32::EXECVEAT, fd, empty, args, env, AT_EMPTY_PATH);
+				_exit(128);
+			})
+		}
+	},
 	TestSpec{SystemCallNr::EXIT_GROUP,
 		[]() {
 			syscall(SYS_exit_group, 99);
