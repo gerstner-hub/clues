@@ -801,7 +801,13 @@ const auto TESTS = std::array{
 			/* there will be no syscall return event for exit
 			 * system calls */
 			(void)sc;
-		})},
+		}),
+		0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::EXIT_GROUP, 99);
+			})
+		}
+	},
 };
 
 } // end anon ns
