@@ -35,8 +35,14 @@ void StringArrayData::processValue(const Tracee &proc) {
 }
 
 std::string StringArrayData::str() const {
+
 	if (m_strs.empty()) {
-		return "NULL";
+		if (isZero()) {
+			return "NULL";
+		} else {
+			// pointer to no arguments
+			return "[]";
+		}
 	}
 
 	std::string ret;
