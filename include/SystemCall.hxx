@@ -16,6 +16,7 @@
 #include <clues/items/error.hxx>
 #include <clues/sysnrs/fwd.hxx>
 #include <clues/types.hxx>
+#include <clues/utils.hxx>
 
 namespace clues {
 	class SystemCall;
@@ -112,6 +113,10 @@ public: // functions
 	/// Returns the system call ABi seen during system call entry.
 	ABI abi() const {
 		return m_abi;
+	}
+
+	bool is32BitEmulationABI() const {
+		return get_default_abi() == ABI::X86_64 && abi() == ABI::I386;
 	}
 
 	/// Returns the name of the given system call or "<unknown>" if unknown.

@@ -45,7 +45,7 @@ bool TimeSpecParameter::needTime32Conversion() const {
 	 * currently we only cover 32-bit emulation binaries on X86-64.
 	 */
 
-	if (get_default_abi() != ABI::X86_64 || m_call->abi() != ABI::I386) {
+	if (!m_call->is32BitEmulationABI()) {
 		return false;
 	}
 
