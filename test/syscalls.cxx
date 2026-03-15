@@ -154,16 +154,16 @@ static int syscall32(const clues::SystemCallNrI386 nr,
 	long _5 = cast_to_long(t5);
 	long _6 = cast_to_long(t6);
 
+	if (!fits_in32(_1) || !fits_in32(_2) || !fits_in32(_3) || !fits_in32(_4) || !fits_in32(_5) || !fits_in32(_6)) {
+		throw cosmos::RuntimeError{"too large syscall32 parameters"};
+	}
+
 	register long eax asm("eax") = cosmos::to_integral(nr);
 	register long ebx asm("ebx") = _1;
 	register long ecx asm("ecx") = _2;
 	register long edx asm("edx") = _3;
 	register long esi asm("esi") = _4;
 	register long edi asm("edi") = _5;
-
-	if (!fits_in32(_1) || !fits_in32(_2) || !fits_in32(_3) || !fits_in32(_4) || !fits_in32(_5) || !fits_in32(_6)) {
-		throw cosmos::RuntimeError{"too large syscall32 parameters"};
-	}
 
 	asm volatile(
 			"push %%rbp\n\t"
