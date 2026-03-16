@@ -24,7 +24,7 @@ int main() {
 	ts.tv_sec = 1;
 	ts.tv_nsec = 100;
 
-	futex(&myfux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1);
+	futex(&myfux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, &ts);
 	futex(&myfux, FUTEX_WAIT|FUTEX_PRIVATE_FLAG, 1, &ts);
 	futex(&myfux, FUTEX_WAKE, 5);
 	futex(&myfux, FUTEX_FD, SIGIO);
