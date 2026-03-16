@@ -928,6 +928,39 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+	   /* TODO cover more operations of futex() */
+	}, TestSpec{SystemCallNr::FUTEX, []() {
+			uint32_t fux = 123;
+			struct timespec ts;
+			ts.tv_sec = 5;
+			ts.tv_nsec = 500;
+			syscall(SYS_futex, &fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, &ts);
+		}, ENTRY_VERIFY_CB(FutexSystemCall, {
+			using FuxOp = clues::item::FutexOperation;
+			VERIFY(sc.operation.command() == FuxOp::Command::WAIT);
+			using enum FuxOp::Flag;
+			using Flags = FuxOp::Flags;
+			VERIFY(sc.operation.flags() == Flags{REALTIME});
+			VERIFY(sc.value->value() == 1);
+			VERIFY(sc.timeout.has_value() == 1);
+			VERIFY(sc.timeout.has_value() == 1);
+			const auto &ts = *sc.timeout->spec();
+			VERIFY(ts.tv_sec == 5);
+			VERIFY(ts.tv_nsec == 500);
+		}), EXIT_VERIFY_CB(FutexSystemCall, {
+			/* contrary to what the man page says, CLOCK_REALTIME
+			 * is _not_ supported (or not anymore) with
+			 * FUTEX_WAIT. Thus is returns ENOSYS. */
+			VERIFY(sc.hasErrorCode());
+		}), 0, {
+			I386_CROSS_ABI(2, []() {
+				auto fux = alloc_struct32<uint32_t>();
+				auto ts = alloc_struct32<clues::timespec32>();
+				ts->tv_sec = 5;
+				ts->tv_nsec = 500;
+				syscall32(SysCallNr32::FUTEX, fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, ts);
+			})
+		},
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
