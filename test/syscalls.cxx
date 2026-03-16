@@ -768,7 +768,7 @@ const auto TESTS = std::array{
 			})
 		}
 	   /* TODO: cover more operations from fcntl */
-	}, TestSpec{SystemCallNr::FCNTL, []() {
+	}, TestSpec{SystemCallNr::FCNTL, []() { /* F_GETFD test */
 			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
 			fcntl(fd, F_GETFD);
 		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
@@ -785,7 +785,27 @@ const auto TESTS = std::array{
 				int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
 				syscall32(SysCallNr32::FCNTL, fd, F_GETFD);
 			})
-		}
+		},
+		"GETFD"
+	}, TestSpec{SystemCallNr::FCNTL, []() { /* F_SETFD test */
+			int fd = open("/", O_RDONLY|O_DIRECTORY);
+			fcntl(fd, F_SETFD, FD_CLOEXEC);
+		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
+			using Oper = clues::item::FcntlOperation::Oper;
+			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.operation.operation() == Oper::SETFD);
+			using DescFlags = cosmos::FileDescriptor::DescFlags;
+			using enum cosmos::FileDescriptor::DescFlag;
+			VERIFY(sc.fd_flags_arg->flags() == DescFlags{CLOEXEC});
+		}), EXIT_VERIFY_CB(FcntlSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 1, {
+			I386_CROSS_ABI(1, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+				syscall32(SysCallNr32::FCNTL, fd, F_SETFD, FD_CLOEXEC);
+			})
+		},
+		"SETFD"
 	}, TestSpec{SystemCallNr::FCNTL64, []() {
 #ifdef COSMOS_I386
 			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
