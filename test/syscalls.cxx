@@ -850,6 +850,30 @@ const auto TESTS = std::array{
 				}
 			})
 		},
+	}, TestSpec{SystemCallNr::FSTAT, []() {
+			int fd = open("/", O_RDONLY|O_DIRECTORY);
+			struct stat st;
+			syscall(SYS_fstat, fd, &st);
+		}, ENTRY_VERIFY_CB(FstatSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+		}), EXIT_VERIFY_CB(FstatSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto &sb = sc.statbuf.status();
+			VERIFY(sb.valid());
+			VERIFY(sb.mode().mask().raw() == 0755);
+			VERIFY(sb.type().isDirectory());
+			VERIFY(sb.uid() == cosmos::UserID::ROOT);
+			VERIFY(sb.gid() == cosmos::GroupID::ROOT);
+		}), 1, {
+			I386_CROSS_ABI(2, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY);
+				/* the size of this struct stat is too big,
+				 * but it doesn't matter as long as we don't
+				 * interpret it in this callback */
+				auto st = alloc_struct32<struct stat>();
+				syscall32(SysCallNr32::FSTAT, fd, st);
+			})
+		},
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
