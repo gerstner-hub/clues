@@ -479,8 +479,8 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::ACCESS,
 					alloc_str32("/etc/"), R_OK|X_OK);
 			})
-		}},
-	TestSpec{SystemCallNr::FACCESSAT, []() {
+		}
+	}, TestSpec{SystemCallNr::FACCESSAT, []() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
 		}, ENTRY_VERIFY_CB(FAccessAtSystemCall, {
@@ -493,8 +493,7 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::FACCESSAT2, []() {
+	}, TestSpec{SystemCallNr::FACCESSAT2, []() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat2, dirfd, "etc", R_OK|X_OK, AT_EACCESS);
 		}, ENTRY_VERIFY_CB(FAccessAt2SystemCall, {
@@ -512,8 +511,7 @@ const auto TESTS = std::array{
 					syscall32(SysCallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::ALARM, []() {
+	}, TestSpec{SystemCallNr::ALARM, []() {
 			/* make two calls so that we get a non-zero return
 			 * value */
 			alarm(1234);
@@ -529,25 +527,6 @@ const auto TESTS = std::array{
 			})
 		}
 	},
-#ifdef COSMOS_X86
-	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
-			// disable SET_CPUID instruction
-			syscall(SYS_arch_prctl, ARCH_SET_CPUID, 0);
-		}, ENTRY_VERIFY_CB(ArchPrctlSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ArchOpParameter::Operation::SET_CPUID);
-			VERIFY_FALSE(sc.set_addr || sc.get_addr || sc.on_off_ret);
-			VERIFY(sc.on_off->value() == 0);
-		}), EXIT_VERIFY_CB(ArchPrctlSystemCall, {
-			/* either success or ENODEV is to be expected for this
-			 * test */
-			VERIFY(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
-		}), 0, {
-			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::ARCH_PRCTL, ARCH_SET_CPUID, 0);
-			})
-		}
-	},
-#endif
 	TestSpec{SystemCallNr::BREAK, []() {
 			syscall(SYS_brk, 0x4711);
 		}, ENTRY_VERIFY_CB(BreakSystemCall, {
@@ -561,8 +540,7 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::BRK, 0x4711);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::CLOCK_NANOSLEEP, []() {
+	}, TestSpec{SystemCallNr::CLOCK_NANOSLEEP, []() {
 			struct timespec ts;
 			ts.tv_sec = 5;
 			ts.tv_nsec = 500;
@@ -592,8 +570,7 @@ const auto TESTS = std::array{
 						ts32, ts32);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::CLONE, []() {
+	}, TestSpec{SystemCallNr::CLONE, []() {
 			pid_t child_tid = 9000;
 
 #ifdef COSMOS_X86
@@ -649,8 +626,7 @@ const auto TESTS = std::array{
 				}
 			})
 		}
-	},
-	TestSpec{SystemCallNr::CLONE3, []() {
+	}, TestSpec{SystemCallNr::CLONE3, []() {
 			int pidfd;
 			int child_tid;
 			struct clone_args args;
@@ -736,8 +712,7 @@ const auto TESTS = std::array{
 				_exit(128);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::EXECVEAT, []() {
+	}, TestSpec{SystemCallNr::EXECVEAT, []() {
 			int fd = open(exiter.c_str(), O_RDONLY|O_PATH);
 			const char* const args[] = {exiter.c_str(), "5", NULL};
 			const char* const env[] = {"THIS=THAT", "ME=YOU", NULL};
@@ -779,8 +754,7 @@ const auto TESTS = std::array{
 				_exit(128);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::EXIT_GROUP, []() {
+	}, TestSpec{SystemCallNr::EXIT_GROUP, []() {
 			syscall(SYS_exit_group, 99);
 		}, ENTRY_VERIFY_CB(ExitGroupSystemCall, {
 			VERIFY(sc.status.status() == cosmos::ExitStatus{99});
@@ -793,9 +767,8 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::EXIT_GROUP, 99);
 			})
 		}
-	},
-	/* TODO: cover more operations from fcntl */
-	TestSpec{SystemCallNr::FCNTL, []() {
+	   /* TODO: cover more operations from fcntl */
+	}, TestSpec{SystemCallNr::FCNTL, []() {
 			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
 			fcntl(fd, F_GETFD);
 		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
@@ -812,8 +785,7 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::FCNTL, fd, F_GETFD);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::FCNTL64, []() {
+	}, TestSpec{SystemCallNr::FCNTL64, []() {
 #ifdef COSMOS_I386
 			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
 			syscall(SYS_fcntl64, fd, F_GETFD);
@@ -834,6 +806,25 @@ const auto TESTS = std::array{
 		},
 		{clues::ABI::I386}
 	},
+#ifdef COSMOS_X86
+	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
+			// disable SET_CPUID instruction
+			syscall(SYS_arch_prctl, ARCH_SET_CPUID, 0);
+		}, ENTRY_VERIFY_CB(ArchPrctlSystemCall, {
+			VERIFY(sc.op.operation() == clues::item::ArchOpParameter::Operation::SET_CPUID);
+			VERIFY_FALSE(sc.set_addr || sc.get_addr || sc.on_off_ret);
+			VERIFY(sc.on_off->value() == 0);
+		}), EXIT_VERIFY_CB(ArchPrctlSystemCall, {
+			/* either success or ENODEV is to be expected for this
+			 * test */
+			VERIFY(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::ARCH_PRCTL, ARCH_SET_CPUID, 0);
+			})
+		}
+	},
+#endif
 };
 
 } // end anon ns
