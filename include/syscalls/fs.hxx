@@ -69,8 +69,8 @@ struct CLUES_API FcntlSystemCall :
 
 	/* context dependent parameters */
 	std::optional<item::FileDescriptor> dup_lowest; ///< for DUPFD, DUPFD_CLOEXEC
-	std::optional<item::FileDescFlagsValue> fd_flags_arg; ///< for GETFD, SETFD
-	std::optional<item::OpenFlagsValue> status_flags_arg; ///< for GETFL, SETFL
+	std::optional<item::FileDescFlagsValue> fd_flags_arg; ///< for SETFD
+	std::optional<item::OpenFlagsValue> status_flags_arg; ///< for SETFL
 	std::optional<item::FLockParameter> flock_arg; ///< for F_SETLK, F_SETLKW, F_GETLK
 	std::optional<item::FileDescOwner> owner_arg; ///< for SETOWN
 	std::optional<item::ExtFileDescOwner> ext_owner_arg; ///< for SETOWN_EX, GETOWN_EX
