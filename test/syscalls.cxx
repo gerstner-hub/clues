@@ -63,12 +63,12 @@ struct TestSpec {
 	TraceVerifyCB exit_verify;
 	size_t ignore_calls = 0;
 	std::vector<ExtraABI> extra_abi_tests = {};
-	// if empty then the test is for all ABIs, otherwise only for the
-	// contained ABIs.
-	std::vector<clues::ABI> abis = {};
 	// a label to differentiate different test variant of the same system
 	// call, can be empty
 	std::string_view variant = {};
+	// if empty then the test is for all ABIs, otherwise only for the
+	// contained ABIs.
+	std::vector<clues::ABI> abis = {};
 
 	bool isSupportedABI() const {
 		if (abis.empty()) {
@@ -804,6 +804,7 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::FCNTL64, fd, F_GETFD);
 			})
 		},
+		"",
 		{clues::ABI::I386}
 	},
 #ifdef COSMOS_X86
