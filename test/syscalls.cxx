@@ -776,6 +776,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
 			VERIFY(sc.operation.operation() == Oper::GETFD);
 		}), EXIT_VERIFY_CB(FcntlSystemCall, {
+			VERIFY(sc.hasResultValue());
 			using DescFlags = cosmos::FileDescriptor::DescFlags;
 			using enum cosmos::FileDescriptor::DescFlag;
 			VERIFY(sc.ret_fd_flags->flags() == DescFlags{CLOEXEC});
@@ -797,6 +798,7 @@ const auto TESTS = std::array{
 		}), EXIT_VERIFY_CB(FcntlSystemCall, {
 			using DescFlags = cosmos::FileDescriptor::DescFlags;
 			using enum cosmos::FileDescriptor::DescFlag;
+			VERIFY(sc.hasResultValue());
 			VERIFY(sc.ret_fd_flags->flags() == DescFlags{CLOEXEC});
 		}), 1, {
 			I386_CROSS_ABI(1, []() {
