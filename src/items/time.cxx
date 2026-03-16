@@ -50,7 +50,7 @@ bool TimeSpecParameter::needTime32Conversion() const {
 	}
 
 	/* now we need to check which system call we're on */
-	return  cosmos::in_list(m_call->callNr(), {SystemCallNr::CLOCK_NANOSLEEP});
+	return cosmos::in_list(m_call->callNr(), {SystemCallNr::CLOCK_NANOSLEEP, SystemCallNr::FUTEX});
 }
 
 void TimeSpecParameter::fetch(const Tracee &proc) {
