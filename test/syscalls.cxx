@@ -66,6 +66,9 @@ struct TestSpec {
 	// if empty then the test is for all ABIs, otherwise only for the
 	// contained ABIs.
 	std::vector<clues::ABI> abis = {};
+	// a label to differentiate different test variant of the same system
+	// call, can be empty
+	std::string_view variant = {};
 
 	bool isSupportedABI() const {
 		if (abis.empty()) {
@@ -366,12 +369,38 @@ protected:
 			TraceVerifyCB enter_verify,
 			TraceVerifyCB exit_verify,
 			const size_t ignore_calls = 0,
-			const clues::ABI abi = clues::ABI::UNKNOWN) {
+			const clues::ABI abi = clues::ABI::UNKNOWN,
+			const std::string_view variant = "") {
 		const auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
-		const auto abi_text = abi == clues::ABI::UNKNOWN ?
-			""s :
-			" ["s + clues::get_abi_label(abi) + "]"s;
-		START_TEST(cosmos::sprintf("testing system call %s%s", &name[0], abi_text.c_str()));
+
+		std::vector<std::string_view> extra_labels;
+		if (abi != clues::ABI::UNKNOWN) {
+			extra_labels.push_back(clues::get_abi_label(abi));
+		}
+		if (!variant.empty()) {
+			extra_labels.push_back(variant);
+		}
+
+		std::string extra_label;
+
+		if (!extra_labels.empty()) {
+			extra_label += " [";
+			std::string comma;
+			for (const auto label: extra_labels) {
+				if (!comma.empty()) {
+					extra_label += comma;
+				} else {
+					comma = ", ";
+				}
+				extra_label += label;
+			}
+			extra_label += "]";
+		}
+
+		START_TEST(cosmos::sprintf("testing system call %s%s",
+					&name[0],
+					extra_label.c_str()
+		));
 		SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
 
 		TraceeCreator creator{std::move(invoker), tracer};
@@ -817,7 +846,9 @@ void SyscallTest::runTests() {
 			runTrace(spec.nr, spec.invoker,
 					spec.enter_verify,
 					spec.exit_verify,
-					spec.ignore_calls);
+					spec.ignore_calls,
+					clues::ABI::UNKNOWN,
+					spec.variant);
 		}
 
 		/*
@@ -831,7 +862,8 @@ void SyscallTest::runTests() {
 				spec.enter_verify,
 				spec.exit_verify,
 				extra_abi.ignore_calls,
-				extra_abi.abi);
+				extra_abi.abi,
+				spec.variant);
 		}
 	}
 }
