@@ -103,7 +103,7 @@ struct CLUES_API FutexSystemCall :
 
 	/* context-dependent parameters */
 
-	///! the value expected as `futex_addr` (WAIT, WAIT_REQUEUE_PI).
+	///! the value expected at `futex_addr` (WAIT, WAIT_REQUEUE_PI).
 	std::optional<item::Uint32Value> value;
 	///! number of waiters to wake up (WAKE, REQUEUE, CMP_REQUEUE, WAKE_OP, CMD_REQUEUE_PI).
 	std::optional<item::Uint32Value> wake_count;

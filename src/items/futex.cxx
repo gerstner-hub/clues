@@ -2,8 +2,9 @@
 #include <cosmos/formatting.hxx>
 
 // clues
-#include <clues/macros.h>
 #include <clues/items/futex.hxx>
+#include <clues/macros.h>
+#include <clues/private/utils.hxx>
 
 namespace clues::item {
 
@@ -16,28 +17,43 @@ std::string FutexOperation::str() const {
 	 * understands all the "private" stuff that can also be found in the
 	 * header.
 	 */
-	switch (valueAs<int>() & FUTEX_CMD_MASK) {
-		CASE_ENUM_TO_STR(FUTEX_CMP_REQUEUE);
-		CASE_ENUM_TO_STR(FUTEX_CMP_REQUEUE_PI);
-		CASE_ENUM_TO_STR(FUTEX_FD);
-		CASE_ENUM_TO_STR(FUTEX_LOCK_PI);
-		CASE_ENUM_TO_STR(FUTEX_LOCK_PI2);
-		CASE_ENUM_TO_STR(FUTEX_REQUEUE);
-		CASE_ENUM_TO_STR(FUTEX_TRYLOCK_PI);
-		CASE_ENUM_TO_STR(FUTEX_UNLOCK_PI);
-		CASE_ENUM_TO_STR(FUTEX_WAIT);
-		CASE_ENUM_TO_STR(FUTEX_WAIT_BITSET);
-		CASE_ENUM_TO_STR(FUTEX_WAIT_REQUEUE_PI);
-		CASE_ENUM_TO_STR(FUTEX_WAKE);
-		CASE_ENUM_TO_STR(FUTEX_WAKE_BITSET);
-		CASE_ENUM_TO_STR(FUTEX_WAKE_OP);
+	auto format_op = [](int val) -> std::string {
+		switch (val & FUTEX_CMD_MASK) {
+			CASE_ENUM_TO_STR(FUTEX_CMP_REQUEUE);
+			CASE_ENUM_TO_STR(FUTEX_CMP_REQUEUE_PI);
+			CASE_ENUM_TO_STR(FUTEX_FD);
+			CASE_ENUM_TO_STR(FUTEX_LOCK_PI);
+			CASE_ENUM_TO_STR(FUTEX_LOCK_PI2);
+			CASE_ENUM_TO_STR(FUTEX_REQUEUE);
+			CASE_ENUM_TO_STR(FUTEX_TRYLOCK_PI);
+			CASE_ENUM_TO_STR(FUTEX_UNLOCK_PI);
+			CASE_ENUM_TO_STR(FUTEX_WAIT);
+			CASE_ENUM_TO_STR(FUTEX_WAIT_BITSET);
+			CASE_ENUM_TO_STR(FUTEX_WAIT_REQUEUE_PI);
+			CASE_ENUM_TO_STR(FUTEX_WAKE);
+			CASE_ENUM_TO_STR(FUTEX_WAKE_BITSET);
+			CASE_ENUM_TO_STR(FUTEX_WAKE_OP);
+			default: return cosmos::sprintf("unknown (%d)", val);
+		}
+	};
 
-		default: return cosmos::sprintf("unknown (%d)", valueAs<int>());
+	const auto val = valueAs<int>();
+	BITFLAGS_FORMAT_START_COMBINED(m_flags, val);
+
+	BITFLAGS_STREAM() << format_op(val);
+
+	if (!m_flags.none()) {
+		BITFLAGS_STREAM() << '|';
+		BITFLAGS_ADD(FUTEX_PRIVATE_FLAG);
+		BITFLAGS_ADD(FUTEX_CLOCK_REALTIME);
 	}
+
+	return BITFLAGS_STR();
 }
 
 void FutexOperation::processValue(const Tracee &) {
-	m_cmd = Command{valueAs<int>()};
+	m_cmd = Command{valueAs<int>() & FUTEX_CMD_MASK};
+	m_flags = Flags{valueAs<int>() xor cosmos::to_integral(m_cmd)};
 }
 
 namespace {
