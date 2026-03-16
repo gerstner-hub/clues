@@ -770,7 +770,7 @@ const auto TESTS = std::array{
 	   /* TODO: cover more operations from fcntl */
 	}, TestSpec{SystemCallNr::FCNTL, []() { /* F_GETFD test */
 			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
-			fcntl(fd, F_GETFD);
+			syscall(SYS_fcntl, fd, F_GETFD);
 		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
 			using Oper = clues::item::FcntlOperation::Oper;
 			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
@@ -789,7 +789,7 @@ const auto TESTS = std::array{
 		"GETFD"
 	}, TestSpec{SystemCallNr::FCNTL, []() { /* F_SETFD test */
 			int fd = open("/", O_RDONLY|O_DIRECTORY);
-			fcntl(fd, F_SETFD, FD_CLOEXEC);
+			syscall(SYS_fcntl, fd, F_SETFD, FD_CLOEXEC);
 		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
 			using Oper = clues::item::FcntlOperation::Oper;
 			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
