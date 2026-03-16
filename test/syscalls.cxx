@@ -899,6 +899,35 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::OLDFSTAT, []() {
+#ifdef COSMOS_I386
+			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+			/* the struct will be too big, bug that should be no
+			 * matter as long as we don't touch it here */
+			struct stat st;
+			syscall(SYS_oldfstat, fd, &st);
+#endif
+		}, ENTRY_VERIFY_CB(FstatSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+		}), EXIT_VERIFY_CB(FstatSystemCall, {
+			/* NOTE: this call could fail if some of the metadata
+			 * doesn't fit in the old stat structure */
+			VERIFY(sc.hasResultValue());
+			const auto &sb = sc.statbuf.status();
+			VERIFY(sb.valid());
+			VERIFY(sb.mode().mask().raw() == 0755);
+			VERIFY(sb.type().isDirectory());
+			VERIFY(sb.uid() == cosmos::UserID::ROOT);
+			VERIFY(sb.gid() == cosmos::GroupID::ROOT);
+		}), 1, {
+			I386_CROSS_ABI(2, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY);
+				auto st = alloc_struct32<struct stat>();
+				syscall32(SysCallNr32::OLDFSTAT, fd, st);
+			})
+		},
+		"",
+		{clues::ABI::I386}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
