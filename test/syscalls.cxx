@@ -828,6 +828,27 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::FORK, []() {
+			/* the fork() wrapper may invoke SYS_clone instead */
+			if (syscall(SYS_fork) == 0) {
+				_exit(0);
+			} else {
+				wait(NULL);
+			}
+		}, ENTRY_VERIFY_CB(ForkSystemCall, {
+			/* input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(ForkSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				if (syscall32(SysCallNr32::FORK) == 0) {
+					_exit(0);
+				} else {
+					wait(NULL);
+				}
+			})
+		},
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
