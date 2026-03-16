@@ -63,6 +63,22 @@ struct TestSpec {
 	TraceVerifyCB exit_verify;
 	size_t ignore_calls = 0;
 	std::vector<ExtraABI> extra_abi_tests = {};
+	// if empty then the test is for all ABIs, otherwise only for the
+	// contained ABIs.
+	std::vector<clues::ABI> abis = {};
+
+	bool isSupportedABI() const {
+		if (abis.empty()) {
+			return true;
+		}
+
+		for (const auto abi: abis) {
+			if (abi == clues::get_default_abi())
+				return true;
+		}
+
+		return false;
+	}
 };
 
 /*
@@ -202,7 +218,7 @@ static const char* alloc_str32(const char *s) {
 		clues::ABI::I386, \
 		IGNORE_COUNT, \
 		__VA_ARGS__ \
-	},
+	}
 #else
 #	define I386_CROSS_ABI(IGNORE_COUNT, ...)
 #endif
@@ -762,7 +778,32 @@ const auto TESTS = std::array{
 			using enum cosmos::FileDescriptor::DescFlag;
 			VERIFY(sc.ret_fd_flags->flags() == DescFlags{CLOEXEC});
 		}), 1, {
+			I386_CROSS_ABI(1, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+				syscall32(SysCallNr32::FCNTL, fd, F_GETFD);
+			})
 		}
+	},
+	TestSpec{SystemCallNr::FCNTL64, []() {
+#ifdef COSMOS_I386
+			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+			syscall(SYS_fcntl64, fd, F_GETFD);
+#endif
+		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
+			using Oper = clues::item::FcntlOperation::Oper;
+			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.operation.operation() == Oper::GETFD);
+		}), EXIT_VERIFY_CB(FcntlSystemCall, {
+			using DescFlags = cosmos::FileDescriptor::DescFlags;
+			using enum cosmos::FileDescriptor::DescFlag;
+			VERIFY(sc.ret_fd_flags->flags() == DescFlags{CLOEXEC});
+		}), 1, {
+			I386_CROSS_ABI(1, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+				syscall32(SysCallNr32::FCNTL64, fd, F_GETFD);
+			})
+		},
+		{clues::ABI::I386}
 	},
 };
 
@@ -772,11 +813,19 @@ void SyscallTest::runTests() {
 	exiter = findHelper("exiter");
 
 	for (const auto &spec: TESTS) {
-		runTrace(spec.nr, spec.invoker,
-				spec.enter_verify,
-				spec.exit_verify,
-				spec.ignore_calls);
+		if (spec.isSupportedABI()) {
+			runTrace(spec.nr, spec.invoker,
+					spec.enter_verify,
+					spec.exit_verify,
+					spec.ignore_calls);
+		}
 
+		/*
+		 * extra ABIs can also be supported if the system call is not
+		 * otherwise not natively supported on this ABI, e.g.
+		 * fcntl64() is used in 32-bit emulation for I386 only, when
+		 * running a x86_64 tracer.
+		 */
 		for (const auto &extra_abi: spec.extra_abi_tests) {
 			runTrace(spec.nr, extra_abi.invoker,
 				spec.enter_verify,
