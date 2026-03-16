@@ -874,6 +874,31 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::FSTAT, fd, st);
 			})
 		},
+	}, TestSpec{SystemCallNr::FSTAT64, []() {
+#ifdef COSMOS_I386
+			int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
+			struct stat st;
+			syscall(SYS_fstat64, fd, &st);
+#endif
+		}, ENTRY_VERIFY_CB(FstatSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+		}), EXIT_VERIFY_CB(FstatSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto &sb = sc.statbuf.status();
+			VERIFY(sb.valid());
+			VERIFY(sb.mode().mask().raw() == 0755);
+			VERIFY(sb.type().isDirectory());
+			VERIFY(sb.uid() == cosmos::UserID::ROOT);
+			VERIFY(sb.gid() == cosmos::GroupID::ROOT);
+		}), 1, {
+			I386_CROSS_ABI(2, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY);
+				auto st = alloc_struct32<struct stat>();
+				syscall32(SysCallNr32::FSTAT64, fd, st);
+			})
+		},
+		"",
+		{clues::ABI::I386}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
