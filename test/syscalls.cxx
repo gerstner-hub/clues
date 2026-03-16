@@ -254,7 +254,8 @@ protected:
 		}
 
 		if (call.callNr() != m_call_nr) {
-			std::cerr << __FUNCTION__ << ": unexpected system call nr " << cosmos::to_integral(call.callNr()) << "\n";
+			const auto sys_name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(call.callNr())];
+			std::cerr << __FUNCTION__ << ": unexpected system call nr " << cosmos::to_integral(call.callNr()) << " (" << sys_name << ")\n";
 			return;
 		} else if (m_abi != clues::ABI::UNKNOWN && call.abi() != m_abi) {
 			std::cerr << __FUNCTION__ << ": ABI mismatch for system call\n";
