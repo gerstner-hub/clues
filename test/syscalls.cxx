@@ -998,6 +998,43 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::GETDENTS, fd, buffer, 65535);
 			})
 		}
+	}, TestSpec{SystemCallNr::GETDENTS64, []() {
+			int fd = open("/", O_RDONLY|O_DIRECTORY);
+			char buffer[65535];
+			syscall(SYS_getdents64, fd, buffer, sizeof(buffer));
+		}, ENTRY_VERIFY_CB(GetDentsSystemCall, {
+			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.size.value() == 65535);
+		}), EXIT_VERIFY_CB(GetDentsSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto bytes = sc.ret_bytes.valueAs<unsigned int>();
+			VERIFY(bytes > 0 && bytes < 65535);
+			const auto &entries = sc.dirent.entries();
+			// a least ".", ".."
+			VERIFY(entries.size() > 2);
+			bool found_tmp = false;
+			bool found_root = false;
+
+			using enum cosmos::DirEntry::Type;
+
+			for (const auto &entry: entries) {
+				if (entry.name == "tmp") {
+					found_tmp = true;
+					VERIFY(entry.type == DIRECTORY);
+				} else if (entry.name == "root") {
+					found_root = true;
+					VERIFY(entry.type == DIRECTORY);
+				}
+			}
+
+			VERIFY(found_tmp && found_root);
+		}), 1, {
+			I386_CROSS_ABI(2, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY);
+				char *buffer = alloc32<char*>(65535);
+				syscall32(SysCallNr32::GETDENTS64, fd, buffer, 65535);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
