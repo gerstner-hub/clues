@@ -412,7 +412,7 @@ void DirEntries::updateData(const Tracee &proc) {
 	/*
 	 * first copy over all the necessary data from the tracee
 	 */
-	m_buffer = std::unique_ptr<char>(new char[bytes]);
+	m_buffer = std::unique_ptr<char[]>(new char[bytes]);
 	proc.readBlob(valueAs<long*>(), m_buffer.get(), bytes);
 
 	if (m_call->callNr() == SystemCallNr::GETDENTS64) {
