@@ -153,11 +153,11 @@ static int syscall32(const clues::SystemCallNrI386 nr,
 	};
 
 	auto cast_to_long = [](auto in) -> long {
-		if constexpr (std::is_arithmetic_v<decltype(in)>) {
+		if constexpr (std::is_arithmetic_v<decltype(in)> || std::is_enum_v<decltype(in)>) {
 			return static_cast<long>(in);
 		}
 
-		if constexpr (!std::is_arithmetic_v<decltype(in)>) {
+		if constexpr (!std::is_arithmetic_v<decltype(in)> && !std::is_enum_v<decltype(in)>) {
 			return reinterpret_cast<long>(in);
 		}
 	};
