@@ -992,6 +992,11 @@ const auto TESTS = std::array{
 
 			VERIFY(found_tmp && found_root);
 		}), 1, {
+			I386_CROSS_ABI(2, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY);
+				char *buffer = alloc32<char*>(65535);
+				syscall32(SysCallNr32::GETDENTS, fd, buffer, 65535);
+			})
 		}
 	},
 #ifdef COSMOS_X86
