@@ -409,18 +409,28 @@ void DirEntries::updateData(const Tracee &proc) {
 		// empty
 		return;
 
+	if (m_call->is32BitEmulationABI()) {
+		fetchEntries<struct linux_dirent32>(proc, bytes);
+	} else {
+		fetchEntries<struct linux_dirent>(proc, bytes);
+	}
+}
+
+template <typename DIRENT>
+void DirEntries::fetchEntries(const Tracee &proc, const size_t bytes) {
+
 	/*
 	 * first copy over all the necessary data from the tracee
 	 */
 	m_buffer = std::unique_ptr<char>(new char[bytes]);
 	proc.readBlob(valueAs<long*>(), m_buffer.get(), bytes);
 
-	struct linux_dirent *cur = nullptr;
+	DIRENT *cur = nullptr;
 	size_t pos = 0;
-	constexpr auto NAME_OFFSET = offsetof(struct linux_dirent, d_name);
+	constexpr auto NAME_OFFSET = offsetof(DIRENT, d_name);
 
 	while (pos < bytes) {
-		cur = (struct linux_dirent*)(m_buffer.get() + pos);
+		cur = (DIRENT*)(m_buffer.get() + pos);
 		auto namelen = cur->d_reclen - NAME_OFFSET - 2;
 		/*
 		 * the length can still include padding, thus look from the

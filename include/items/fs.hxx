@@ -236,6 +236,14 @@ protected: // functions
 
 	void updateData(const Tracee &proc) override;
 
+	/// Fetches the actual dirent structures from the Tracee.
+	/**
+	 * to make up for differently sized structures when dealing with
+	 * 32-bit emulation we need a template type here.
+	 **/
+	template <typename DIRENT>
+	void fetchEntries(const Tracee &proc, const size_t bytes);
+
 protected: // data
 
 	std::vector<Entry> m_entries;
