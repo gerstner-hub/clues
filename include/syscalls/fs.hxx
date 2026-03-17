@@ -231,8 +231,8 @@ protected: // functions
 struct CLUES_API GetDentsSystemCall :
 		public SystemCall {
 
-	GetDentsSystemCall() :
-			SystemCall{SystemCallNr::GETDENTS},
+	GetDentsSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
 			size{"size", "dirent size in bytes"},
 			ret_bytes{"bytes", "bytes returned in dirent"} {
 		setReturnItem(ret_bytes);

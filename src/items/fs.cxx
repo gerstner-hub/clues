@@ -409,21 +409,25 @@ void DirEntries::updateData(const Tracee &proc) {
 		// empty
 		return;
 
-	if (m_call->is32BitEmulationABI()) {
-		fetchEntries<struct linux_dirent32>(proc, bytes);
-	} else {
-		fetchEntries<struct linux_dirent>(proc, bytes);
-	}
-}
-
-template <typename DIRENT>
-void DirEntries::fetchEntries(const Tracee &proc, const size_t bytes) {
-
 	/*
 	 * first copy over all the necessary data from the tracee
 	 */
 	m_buffer = std::unique_ptr<char>(new char[bytes]);
 	proc.readBlob(valueAs<long*>(), m_buffer.get(), bytes);
+
+	if (m_call->callNr() == SystemCallNr::GETDENTS64) {
+		parseEntries64(bytes);
+	} else {
+		if (m_call->is32BitEmulationABI()) {
+			parseEntries32<struct linux_dirent32>(bytes);
+		} else {
+			parseEntries32<struct linux_dirent>(bytes);
+		}
+	}
+}
+
+template <typename DIRENT>
+void DirEntries::parseEntries32(const size_t bytes) {
 
 	DIRENT *cur = nullptr;
 	size_t pos = 0;
@@ -443,12 +447,36 @@ void DirEntries::fetchEntries(const Tracee &proc, const size_t bytes) {
 
 		m_entries.emplace_back(Entry{
 			cur->d_ino,
-			cur->d_off,
+			static_cast<int64_t>(cur->d_off),
 			// to avoid copying we only keep a string_view in
 			// Entry pointing to the raw buffer data.
 			std::string_view{cur->d_name, namelen},
 			cosmos::DirEntry::Type{static_cast<unsigned char>(type)}
 		});
+		pos += cur->d_reclen;
+	}
+}
+
+void DirEntries::parseEntries64(const size_t bytes) {
+	struct linux_dirent64 *cur = nullptr;
+	size_t pos = 0;
+	constexpr auto NAME_OFFSET = offsetof(linux_dirent64, d_name);
+
+	while (pos < bytes) {
+		cur = (linux_dirent64*)(m_buffer.get() + pos);
+		auto namelen = cur->d_reclen - NAME_OFFSET;
+		/*
+		 * remove padding from length
+		 */
+		for (char *last = cur->d_name + namelen - 1; last > cur->d_name && *last == '\0'; last--, namelen--);
+
+		m_entries.emplace_back(Entry{
+			cur->d_ino,
+			cur->d_off,
+			std::string_view{cur->d_name, namelen},
+			cosmos::DirEntry::Type{static_cast<unsigned char>(cur->d_type)}
+		});
+
 		pos += cur->d_reclen;
 	}
 }

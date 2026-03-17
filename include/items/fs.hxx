@@ -215,7 +215,10 @@ public: // types
 
 	struct Entry {
 		uint64_t inode;
-		uint64_t offset;
+		/* for getdents() this is an unsigned type, for getdents64()
+		 * it is a signed type. I guess using a signed type (off_t)
+		 * makes sense. */
+		int64_t offset;
 		std::string_view name;
 		cosmos::DirEntry::Type type;
 	};
@@ -236,13 +239,16 @@ protected: // functions
 
 	void updateData(const Tracee &proc) override;
 
-	/// Fetches the actual dirent structures from the Tracee.
+	/// Parses the dirent structures from m_buffer.
 	/**
 	 * to make up for differently sized structures when dealing with
 	 * 32-bit emulation we need a template type here.
 	 **/
 	template <typename DIRENT>
-	void fetchEntries(const Tracee &proc, const size_t bytes);
+	void parseEntries32(const size_t bytes);
+
+	/// Parses the dirent structures for getdents64().
+	void parseEntries64(const size_t bytes);
 
 protected: // data
 

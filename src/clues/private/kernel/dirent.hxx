@@ -32,6 +32,15 @@ struct linux_dirent32 {
 	char d_name[];
 };
 
+/// 64-bit entries used with getdents64() on both 32-bit and 64-bit ABIs
+struct linux_dirent64 {
+	ino64_t d_ino;
+	off64_t d_off;
+	unsigned short d_reclen;
+	unsigned char d_type;
+	char d_name[];
+};
+
 } // end extern "C"
 
 } // end ns
