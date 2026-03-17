@@ -6,6 +6,9 @@
 // C++
 #include <optional>
 
+// cosmos
+#include <cosmos/proc/limits.hxx>
+
 // clues
 #include <clues/items/items.hxx>
 
@@ -20,6 +23,18 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+	std::optional<cosmos::LimitType> type() const {
+		return m_limit;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<cosmos::LimitType> m_limit;
 };
 
 class CLUES_API ResourceLimit :
@@ -30,6 +45,10 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+	std::optional<cosmos::LimitSpec> limit() const {
+		return m_limit;
+	}
 
 protected: // functions
 
@@ -50,7 +69,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<struct rlimit> m_limit;
+	std::optional<cosmos::LimitSpec> m_limit;
 };
 
 } // end ns

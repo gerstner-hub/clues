@@ -14,7 +14,10 @@
 namespace clues::item {
 
 std::string ResourceType::str() const {
-	switch (valueAs<int>()) {
+	if (!m_limit)
+		return "<invalid>";
+
+	switch (cosmos::to_integral(*m_limit)) {
 		CASE_ENUM_TO_STR(RLIMIT_AS);
 		CASE_ENUM_TO_STR(RLIMIT_CORE);
 		CASE_ENUM_TO_STR(RLIMIT_CPU);
@@ -33,6 +36,10 @@ std::string ResourceType::str() const {
 		CASE_ENUM_TO_STR(RLIMIT_STACK);
 		default: return "unknown";
 	}
+}
+
+void ResourceType::processValue(const Tracee &) {
+	m_limit = cosmos::LimitType{valueAs<int>()};
 }
 
 std::string ResourceLimit::str() const {
@@ -57,7 +64,7 @@ void ResourceLimit::updateData(const Tracee &proc) {
 			return;
 		}
 
-		m_limit = rlimit{};
+		m_limit = cosmos::LimitSpec{};
 
 		/*
 		 * RLIM_INFINITY is simply the maximum of unsigned long, thus
