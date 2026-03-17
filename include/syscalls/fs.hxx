@@ -241,7 +241,7 @@ struct CLUES_API GetDentsSystemCall :
 
 	item::FileDescriptor fd; ///< directory FD.
 	item::DirEntries dirent; ///< struct linux_dirent*.
-	item::ValueInParameter size; ///< size of `dirent` buffer provided by tracee.
+	item::UintValue size; ///< size of `dirent` buffer provided by tracee.
 	item::ReturnValue ret_bytes; ///< number of bytes filled in `dirent` buffer.
 };
 
