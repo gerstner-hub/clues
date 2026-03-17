@@ -417,12 +417,20 @@ void DirEntries::updateData(const Tracee &proc) {
 
 	struct linux_dirent *cur = nullptr;
 	size_t pos = 0;
+	constexpr auto NAME_OFFSET = offsetof(struct linux_dirent, d_name);
 
 	while (pos < bytes) {
 		cur = (struct linux_dirent*)(m_buffer.get() + pos);
-		const auto namelen = cur->d_reclen - 2
-			- offsetof(struct linux_dirent, d_name);
+		auto namelen = cur->d_reclen - NAME_OFFSET - 2;
+		/*
+		 * the length can still include padding, thus look from the
+		 * back for the first non-zero byte at the end to correct the
+		 * length.
+		 */
+		for (char *last = cur->d_name + namelen - 1; last > cur->d_name && *last == '\0'; last--, namelen--);
+
 		const auto type = *(m_buffer.get() + pos + cur->d_reclen - 1);
+
 		m_entries.emplace_back(Entry{
 			cur->d_ino,
 			cur->d_off,
