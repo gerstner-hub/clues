@@ -961,6 +961,38 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::FUTEX, fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, ts);
 			})
 		},
+	}, TestSpec{SystemCallNr::GETDENTS, []() {
+			int fd = open("/", O_RDONLY|O_DIRECTORY);
+			char buffer[65535];
+			syscall(SYS_getdents, fd, buffer, sizeof(buffer));
+		}, ENTRY_VERIFY_CB(GetDentsSystemCall, {
+			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.size.value() == 65535);
+		}), EXIT_VERIFY_CB(GetDentsSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto bytes = sc.ret_bytes.valueAs<unsigned int>();
+			VERIFY(bytes > 0 && bytes < 65535);
+			const auto &entries = sc.dirent.entries();
+			// a least ".", ".."
+			VERIFY(entries.size() > 2);
+			bool found_tmp = false;
+			bool found_root = false;
+
+			using enum cosmos::DirEntry::Type;
+
+			for (const auto &entry: entries) {
+				if (entry.name == "tmp") {
+					found_tmp = true;
+					VERIFY(entry.type == DIRECTORY);
+				} else if (entry.name == "root") {
+					found_root = true;
+					VERIFY(entry.type == DIRECTORY);
+				}
+			}
+
+			VERIFY(found_tmp && found_root);
+		}), 1, {
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
