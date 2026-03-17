@@ -128,10 +128,14 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::FUTEX:           return new_sys<FutexSystemCall>();
 	case SystemCallNr::GETDENTS:        [[fallthrough]];
 	case SystemCallNr::GETDENTS64:      return new_sys<GetDentsSystemCall>(nr);
-	case SystemCallNr::GETUID:          return new_sys<GetUidSystemCall>();
-	case SystemCallNr::GETEGID:         return new_sys<GetEgidSystemCall>();
-	case SystemCallNr::GETEUID:         return new_sys<GetEuidSystemCall>();
-	case SystemCallNr::GETGID:          return new_sys<GetGidSystemCall>();
+	case SystemCallNr::GETUID:          [[fallthrough]];
+	case SystemCallNr::GETUID32:        return new_sys<GetUidSystemCall>(nr);
+	case SystemCallNr::GETEGID32:       [[fallthrough]];
+	case SystemCallNr::GETEGID:         return new_sys<GetEgidSystemCall>(nr);
+	case SystemCallNr::GETEUID32:       [[fallthrough]];
+	case SystemCallNr::GETEUID:         return new_sys<GetEuidSystemCall>(nr);
+	case SystemCallNr::GETGID32:        [[fallthrough]];
+	case SystemCallNr::GETGID:          return new_sys<GetGidSystemCall>(nr);
 	case SystemCallNr::GETRLIMIT:       return new_sys<GetRlimitSystemCall>();
 	case SystemCallNr::SETRLIMIT:       return new_sys<SetRlimitSystemCall>();
 	case SystemCallNr::PRLIMIT64:       return new_sys<Prlimit64SystemCall>();

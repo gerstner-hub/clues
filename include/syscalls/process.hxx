@@ -186,47 +186,54 @@ struct CLUES_API ExecveAtSystemCall :
 	item::SuccessResult result;
 };
 
-template <SystemCallNr GETXID_SYS_NR, typename ID_T>
+template <typename ID_T>
 struct GetXIdSystemCall :
 		public SystemCall {
 
-	GetXIdSystemCall() :
-			SystemCall{GETXID_SYS_NR},
+	GetXIdSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
 			id{ItemType::RETVAL, getShortLabel(), getLongLabel()} {
 		setReturnItem(id);
 	}
-
 
 	/// the UserID or GroupID
 	ID_T id;
 
 protected:
 
-	static const char* getShortLabel() {
-		switch (GETXID_SYS_NR) {
-			case SystemCallNr::GETUID: return "uid";
-			case SystemCallNr::GETEUID: return "euid";
-			case SystemCallNr::GETGID: return "gid";
-			case SystemCallNr::GETEGID: return "egid";
+	const char* getShortLabel() {
+		switch (callNr()) {
+			case SystemCallNr::GETUID32:  [[fallthrough]];
+			case SystemCallNr::GETUID:    return "uid";
+			case SystemCallNr::GETEUID32: [[fallthrough]];
+			case SystemCallNr::GETEUID:   return "euid";
+			case SystemCallNr::GETGID32:  [[fallthrough]];
+			case SystemCallNr::GETGID:    return "gid";
+			case SystemCallNr::GETEGID32: [[fallthrough]];
+			case SystemCallNr::GETEGID:   return "egid";
 			default: return "???";
 		}
 	}
 
-	static const char* getLongLabel() {
-		switch (GETXID_SYS_NR) {
-			case SystemCallNr::GETUID: return "real user ID";
-			case SystemCallNr::GETEUID: return "effective user ID";
-			case SystemCallNr::GETGID: return "real group ID";
-			case SystemCallNr::GETEGID: return "effective group ID";
+	const char* getLongLabel() {
+		switch (callNr()) {
+			case SystemCallNr::GETUID32:  [[fallthrough]];
+			case SystemCallNr::GETUID:    return "real user ID";
+			case SystemCallNr::GETEUID32: [[fallthrough]];
+			case SystemCallNr::GETEUID:   return "effective user ID";
+			case SystemCallNr::GETGID32:  [[fallthrough]];
+			case SystemCallNr::GETGID:    return "real group ID";
+			case SystemCallNr::GETEGID32: [[fallthrough]];
+			case SystemCallNr::GETEGID:   return "effective group ID";
 			default: return "???";
 		}
 	}
 };
 
-using GetUidSystemCall  = GetXIdSystemCall<SystemCallNr::GETUID, item::UserID>;
-using GetEuidSystemCall = GetXIdSystemCall<SystemCallNr::GETEUID, item::UserID>;
-using GetGidSystemCall  = GetXIdSystemCall<SystemCallNr::GETGID, item::GroupID>;
-using GetEgidSystemCall = GetXIdSystemCall<SystemCallNr::GETEGID, item::GroupID>;
+using GetUidSystemCall  = GetXIdSystemCall<item::UserID>;
+using GetEuidSystemCall = GetXIdSystemCall<item::UserID>;
+using GetGidSystemCall  = GetXIdSystemCall<item::GroupID>;
+using GetEgidSystemCall = GetXIdSystemCall<item::GroupID>;
 
 struct CLUES_API Wait4SystemCall :
 		public SystemCall {
