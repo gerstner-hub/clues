@@ -2,6 +2,7 @@
 #include <asm/prctl.h>
 #include <fcntl.h>
 #include <sched.h>
+#include <sys/resource.h>
 #include <sys/syscall.h>
 #include <time.h>
 #include <unistd.h>
@@ -1156,6 +1157,21 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::GETRLIMIT, []() {
+			struct rlimit lim;
+			syscall(SYS_getrlimit, RLIMIT_CORE, &lim);
+		}, ENTRY_VERIFY_CB(GetRlimitSystemCall, {
+			VERIFY(*sc.type.type() == cosmos::LimitType::CORE);
+			VERIFY(sc.limit.limit().has_value());
+		}), EXIT_VERIFY_CB(GetRlimitSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(1, []() {
+				auto lim = alloc_struct32<struct rlimit>();
+				syscall32(SysCallNr32::GETRLIMIT, RLIMIT_CORE, lim);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
