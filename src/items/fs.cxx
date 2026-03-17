@@ -12,13 +12,13 @@
 #include <clues/Engine.hxx>
 #include <clues/format.hxx>
 #include <clues/items/fs.hxx>
-#include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
 #include <clues/syscalls/fs.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 // private
 #include <clues/private/kernel/stat.hxx>
+#include <clues/private/kernel/dirent.hxx>
 #include <clues/private/utils.hxx>
 
 namespace clues::item {
@@ -349,19 +349,44 @@ void StatParameter::updateData(const Tracee &proc) {
 	}
 }
 
+static std::string_view entry_type_label(const cosmos::DirEntry::Type type) {
+	switch (cosmos::to_integral(type)) {
+		CASE_ENUM_TO_STR(DT_BLK);
+		CASE_ENUM_TO_STR(DT_CHR);
+		CASE_ENUM_TO_STR(DT_DIR);
+		CASE_ENUM_TO_STR(DT_FIFO);
+		CASE_ENUM_TO_STR(DT_LNK);
+		CASE_ENUM_TO_STR(DT_REG);
+		CASE_ENUM_TO_STR(DT_SOCK);
+		CASE_ENUM_TO_STR(DT_UNKNOWN);
+		default: return "???";
+	}
+}
+
 std::string DirEntries::str() const {
 	std::stringstream ss;
 	auto result = m_call->result();
 
 	if (!result) {
 		ss << "undefined";
-	} else if (const auto size = result->valueAs<int>(); size == 0) {
+	} else if (m_entries.empty()) {
 		ss << "empty";
 	} else {
 		ss << m_entries.size() << " entries: ";
 
+		std::string comma;
+
 		for (const auto &entry: m_entries) {
-			ss << entry << ", ";
+			ss << comma << "{d_ino=" << entry.inode
+				<< ", d_off=" << entry.offset
+				<< ", d_reclen=" << offsetof(struct linux_dirent, d_name) + entry.name.length() + 2
+				<< ", d_name=\"" << entry.name
+				<< "\", d_type=" << entry_type_label(entry.type)
+				<< "}";
+
+			if (comma.empty()) {
+				comma = ", ";
+			}
 		}
 	}
 
@@ -370,8 +395,10 @@ std::string DirEntries::str() const {
 
 void DirEntries::updateData(const Tracee &proc) {
 	m_entries.clear();
+	m_buffer.reset();
 
-	// the amount of data stored at the DirEntries location depends on the system call result value.
+	// the amount of data stored at the DirEntries location depends on the
+	// system call result value.
 	auto result = m_call->result();
 	if (!result)
 		// error occurred
@@ -385,19 +412,25 @@ void DirEntries::updateData(const Tracee &proc) {
 	/*
 	 * first copy over all the necessary data from the tracee
 	 */
-	std::unique_ptr<char> buffer(new char[bytes]);
-	proc.readBlob(valueAs<long*>(), buffer.get(), bytes);
+	m_buffer = std::unique_ptr<char>(new char[bytes]);
+	proc.readBlob(valueAs<long*>(), m_buffer.get(), bytes);
 
 	struct linux_dirent *cur = nullptr;
 	size_t pos = 0;
 
-	// NOTE: to avoid copying here we could simply store a linux_dirent in
-	// the object and keep only a vector of string_view
-
 	while (pos < bytes) {
-		cur = (struct linux_dirent*)(buffer.get() + pos);
-		const auto namelen = cur->d_reclen - 2 - offsetof(struct linux_dirent, d_name);
-		m_entries.emplace_back(std::string{cur->d_name, namelen});
+		cur = (struct linux_dirent*)(m_buffer.get() + pos);
+		const auto namelen = cur->d_reclen - 2
+			- offsetof(struct linux_dirent, d_name);
+		const auto type = *(m_buffer.get() + pos + cur->d_reclen - 1);
+		m_entries.emplace_back(Entry{
+			cur->d_ino,
+			cur->d_off,
+			// to avoid copying we only keep a string_view in
+			// Entry pointing to the raw buffer data.
+			std::string_view{cur->d_name, namelen},
+			cosmos::DirEntry::Type{static_cast<unsigned char>(type)}
+		});
 		pos += cur->d_reclen;
 	}
 }

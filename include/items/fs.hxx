@@ -2,11 +2,13 @@
 
 // C++
 #include <optional>
+#include <string_view>
 
 // Linux
 #include <sys/stat.h>
 
 // cosmos
+#include <cosmos/fs/DirEntry.hxx>
 #include <cosmos/fs/FileStatus.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/utils.hxx>
@@ -209,6 +211,15 @@ protected: // data
 /// A range of directory entries from getdents().
 class CLUES_API DirEntries :
 		public PointerOutValue {
+public: // types
+
+	struct Entry {
+		uint64_t inode;
+		uint64_t offset;
+		std::string_view name;
+		cosmos::DirEntry::Type type;
+	};
+
 public: // functions
 
 	explicit DirEntries() :
@@ -227,7 +238,9 @@ protected: // functions
 
 protected: // data
 
-	std::vector<std::string> m_entries;
+	std::vector<Entry> m_entries;
+	///! the raw buffer backing m_entries
+	std::unique_ptr<char> m_buffer;
 };
 
 } // end ns
