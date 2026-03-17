@@ -15,6 +15,7 @@
 // cosmos
 #include <cosmos/compiler.hxx>
 #include <cosmos/error/RuntimeError.hxx>
+#include <cosmos/proc/process.hxx>
 
 // clues
 #include <clues/syscalls/all.hxx>
@@ -837,7 +838,7 @@ const auto TESTS = std::array{
 				wait(NULL);
 			}
 		}, ENTRY_VERIFY_CB(ForkSystemCall, {
-			/* input parameters */
+			/* no input parameters */
 			(void)sc;
 		}), EXIT_VERIFY_CB(ForkSystemCall, {
 			VERIFY(sc.hasResultValue());
@@ -1035,6 +1036,126 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::GETDENTS64, fd, buffer, 65535);
 			})
 		}
+	}, TestSpec{SystemCallNr::GETUID, []() {
+			syscall(SYS_getuid);
+		}, ENTRY_VERIFY_CB(GetUidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetUidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.uid() == cosmos::proc::get_real_user_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETUID);
+			})
+		},
+	}, TestSpec{SystemCallNr::GETUID32, []() {
+#ifdef COSMOS_I386
+			syscall(SYS_getuid32);
+#endif
+		}, ENTRY_VERIFY_CB(GetUidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetUidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.uid() == cosmos::proc::get_real_user_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETUID32);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::GETEUID, []() {
+			syscall(SYS_geteuid);
+		}, ENTRY_VERIFY_CB(GetEuidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetEuidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.uid() == cosmos::proc::get_effective_user_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETEUID);
+			})
+		},
+	}, TestSpec{SystemCallNr::GETEUID32, []() {
+#ifdef COSMOS_I386
+			syscall(SYS_geteuid32);
+#endif
+		}, ENTRY_VERIFY_CB(GetEuidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetEuidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.uid() == cosmos::proc::get_effective_user_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETEUID32);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::GETGID, []() {
+			syscall(SYS_getgid);
+		}, ENTRY_VERIFY_CB(GetGidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetGidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.gid() == cosmos::proc::get_real_group_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETGID);
+			})
+		},
+	}, TestSpec{SystemCallNr::GETGID32, []() {
+#ifdef COSMOS_I386
+			syscall(SYS_getgid32);
+#endif
+		}, ENTRY_VERIFY_CB(GetGidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetGidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.gid() == cosmos::proc::get_real_group_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETGID32);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::GETEGID, []() {
+			syscall(SYS_getegid);
+		}, ENTRY_VERIFY_CB(GetEgidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetEgidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.gid() == cosmos::proc::get_effective_group_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETEGID);
+			})
+		},
+	}, TestSpec{SystemCallNr::GETEGID32, []() {
+#ifdef COSMOS_I386
+			syscall(SYS_getegid32);
+#endif
+		}, ENTRY_VERIFY_CB(GetEgidSystemCall, {
+			/* no input parameters */
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetEgidSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.gid() == cosmos::proc::get_effective_group_id());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SysCallNr32::GETEGID32);
+			})
+		},
+		"",
+		{clues::ABI::I386}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
