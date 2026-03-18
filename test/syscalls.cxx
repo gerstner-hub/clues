@@ -1197,6 +1197,31 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::SETRLIMIT, RLIMIT_CORE, lim);
 			})
 		}
+	}, TestSpec{SystemCallNr::PRLIMIT64, []() {
+			struct rlimit old_lim;
+			struct rlimit new_lim;
+			new_lim.rlim_cur = 1000;
+			new_lim.rlim_max = 10000;
+			prlimit(0, RLIMIT_CORE, &new_lim, &old_lim);
+		}, ENTRY_VERIFY_CB(Prlimit64SystemCall, {
+			VERIFY(sc.pid.pid() == cosmos::ProcessID::SELF);
+			VERIFY(sc.type.type() == cosmos::LimitType::CORE);
+			VERIFY(sc.limit.limit().has_value());
+			const auto newlim = *sc.limit.limit();
+			VERIFY(newlim.getSoftLimit() == 1000);
+			VERIFY(newlim.getHardLimit() == 10000);
+			VERIFY(sc.old_limit.limit().has_value());
+		}), EXIT_VERIFY_CB(Prlimit64SystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(2, []() {
+				auto lim = alloc_struct32<struct rlimit>();
+				lim->rlim_cur = 1000;
+				lim->rlim_max = 10000;
+				auto old_lim = alloc_struct32<struct rlimit>();
+				syscall32(SysCallNr32::PRLIMIT64, 0, RLIMIT_CORE, lim, old_lim);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
