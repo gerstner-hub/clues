@@ -1222,6 +1222,26 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::PRLIMIT64, 0, RLIMIT_CORE, lim, old_lim);
 			})
 		}
+	}, TestSpec{SystemCallNr::GET_ROBUST_LIST, []() {
+			char buffer[65535];
+			size_t sizep = sizeof(buffer);
+			syscall(SYS_get_robust_list, 0, buffer, &sizep);
+		}, ENTRY_VERIFY_CB(GetRobustListSystemCall, {
+			VERIFY(sc.thread_id.tid() == cosmos::ThreadID::SELF);
+			using TraceePtr = decltype(sc.list_head.pointer());
+			VERIFY(sc.list_head.pointer() != TraceePtr::NO_POINTER);
+			VERIFY(sc.size_ptr.value() == 65535);
+		}), EXIT_VERIFY_CB(GetRobustListSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.size_ptr.value() != 65535);
+		}), 0, {
+			I386_CROSS_ABI(2, []() {
+				auto buffer = alloc32<char*>(65535);
+				auto sizep = alloc_struct32<size_t>();
+				*sizep = 65535;
+				syscall32(SysCallNr32::GET_ROBUST_LIST, 0, buffer, sizep);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
