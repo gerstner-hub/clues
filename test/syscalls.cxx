@@ -23,6 +23,7 @@
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
 #include <clues/private/kernel/time.hxx>
+#include <clues/private/kernel/other.hxx>
 
 // Test
 #include "TestBase.hxx"
@@ -1157,8 +1158,7 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
-	},
-	TestSpec{SystemCallNr::GETRLIMIT, []() {
+	}, TestSpec{SystemCallNr::GETRLIMIT, []() {
 			struct rlimit lim;
 			syscall(SYS_getrlimit, RLIMIT_CORE, &lim);
 		}, ENTRY_VERIFY_CB(GetRlimitSystemCall, {
@@ -1168,8 +1168,33 @@ const auto TESTS = std::array{
 			VERIFY(sc.hasResultValue());
 		}), 0, {
 			I386_CROSS_ABI(1, []() {
-				auto lim = alloc_struct32<struct rlimit>();
+				auto lim = alloc_struct32<clues::rlimit32>();
 				syscall32(SysCallNr32::GETRLIMIT, RLIMIT_CORE, lim);
+			})
+		}
+	}, TestSpec{SystemCallNr::SETRLIMIT, []() {
+#ifdef COSMOS_X86_64
+			struct rlimit lim;
+#else
+			clues::rlimit32 lim;
+#endif
+			lim.rlim_cur = 1000;
+			lim.rlim_max = 10000;
+			syscall(SYS_setrlimit, RLIMIT_CORE, &lim);
+		}, ENTRY_VERIFY_CB(SetRlimitSystemCall, {
+			VERIFY(*sc.type.type() == cosmos::LimitType::CORE);
+			VERIFY(sc.limit.limit().has_value());
+			const auto limspec = *sc.limit.limit();
+			VERIFY(limspec.getSoftLimit() == 1000);
+			VERIFY(limspec.getHardLimit() == 10000);
+		}), EXIT_VERIFY_CB(SetRlimitSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(1, []() {
+				auto lim = alloc_struct32<clues::rlimit32>();
+				lim->rlim_cur = 1000;
+				lim->rlim_max = 10000;
+				syscall32(SysCallNr32::SETRLIMIT, RLIMIT_CORE, lim);
 			})
 		}
 	},
