@@ -72,7 +72,7 @@ struct CLUES_API SetRobustListSystemCall :
 	}
 
 	item::GenericPointerValue list_head;
-	item::ValueInParameter size;
+	item::SizeValue size;
 	item::SuccessResult result;
 };
 
