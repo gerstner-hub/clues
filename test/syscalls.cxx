@@ -1242,6 +1242,22 @@ const auto TESTS = std::array{
 				syscall32(SysCallNr32::GET_ROBUST_LIST, 0, buffer, sizep);
 			})
 		}
+	}, TestSpec{SystemCallNr::SET_ROBUST_LIST, []() {
+			char ch;
+			syscall(SYS_set_robust_list, &ch, 0);
+		}, ENTRY_VERIFY_CB(SetRobustListSystemCall, {
+			VERIFY(sc.list_head.ptr() != nullptr);
+			VERIFY(sc.size.value() == 0);
+		}), EXIT_VERIFY_CB(SetRobustListSystemCall, {
+			/* since we're applying a zero-size buffer here it
+			 * will fail with EINVAL */
+			VERIFY(sc.hasErrorCode());
+		}), 0, {
+			I386_CROSS_ABI(1, []() {
+				auto ch = alloc32<char*>(8);
+				syscall32(SysCallNr32::SET_ROBUST_LIST, ch, 0);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
