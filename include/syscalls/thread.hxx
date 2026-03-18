@@ -42,7 +42,8 @@ struct CLUES_API GetRobustListSystemCall :
 			SystemCall{SystemCallNr::GET_ROBUST_LIST},
 			thread_id{ItemType::PARAM_IN, "thread ID"},
 			list_head{"head", "pointer to robust list head"},
-			size_ptr{"sizep", "pointer to robust list head size"} {
+			size_ptr{"sizep", "pointer to robust list head size",
+				ItemType::PARAM_IN_OUT} {
 		setReturnItem(result);
 		setParameters(thread_id, list_head, size_ptr);
 		list_head.setBase(Base::HEX);
