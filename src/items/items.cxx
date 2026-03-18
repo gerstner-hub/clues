@@ -47,7 +47,7 @@ std::string IntValueT<INT>::str() const {
 }
 
 template <typename INT>
-void PointerToScalar<INT>::updateData(const Tracee &tracee) {
+void PointerToScalar<INT>::fetchValue(const Tracee &tracee) {
 	INT val;
 
 	m_val.reset();

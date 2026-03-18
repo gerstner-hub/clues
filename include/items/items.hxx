@@ -231,11 +231,21 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processValue(const Tracee &tracee) override {
 		m_ptr = valueAs<TraceePtr>();
+
+		if (isIn() || isInOut()) {
+			fetchValue(tracee);
+		}
 	}
 
-	void updateData(const Tracee &tracee) override;
+	void updateData(const Tracee &tracee) override {
+		if (needsUpdate()) {
+			fetchValue(tracee);
+		}
+	}
+
+	void fetchValue(const Tracee &tracee);
 
 	virtual std::string scalarToString() const;
 
