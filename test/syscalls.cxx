@@ -1,7 +1,9 @@
 // Linux
 #include <asm/prctl.h>
 #include <fcntl.h>
+#include <linux/fs.h>
 #include <sched.h>
+#include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/syscall.h>
 #include <time.h>
@@ -1256,6 +1258,26 @@ const auto TESTS = std::array{
 			I386_CROSS_ABI(1, []() {
 				auto ch = alloc32<char*>(8);
 				syscall32(SysCallNr32::SET_ROBUST_LIST, ch, 0);
+			})
+		}
+	}, TestSpec{SystemCallNr::IOCTL, []() {
+			int fd = open("/", O_RDONLY|O_DIRECTORY);
+			int attr;
+			ioctl(fd, FS_IOC_GETFLAGS, &attr);
+		}, ENTRY_VERIFY_CB(IoCtlSystemCall, {
+			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.request.value() == FS_IOC_GETFLAGS);
+		}), EXIT_VERIFY_CB(IoCtlSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 1, {
+			I386_CROSS_ABI(2, []() {
+				int fd = open("/", O_RDONLY|O_DIRECTORY);
+				auto attr = alloc32<int*>(sizeof(int));
+				/* this has the highest bit set, avoid any
+				 * surprises by explicitly forcing it into an
+				 * int32_t */
+				constexpr int32_t flags = FS_IOC_GETFLAGS;
+				syscall32(SysCallNr32::IOCTL, fd, flags, attr);
 			})
 		}
 	},
