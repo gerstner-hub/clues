@@ -1238,6 +1238,24 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::IOCTL, fd, flags, attr);
 			})
 		}
+	}, TestSpec{SystemCallNr::LSTAT, []() {
+			struct stat st;
+			syscall(SYS_lstat, "/", &st);
+		}, ENTRY_VERIFY_CB(LstatSystemCall, {
+			VERIFY(sc.path.data() == "/");
+		}), EXIT_VERIFY_CB(LstatSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto &st = sc.statbuf.status();
+			VERIFY(st.uid() == cosmos::UserID::ROOT);
+			VERIFY(st.gid() == cosmos::GroupID::ROOT);
+			VERIFY(st.type().isDirectory());
+		}), 0, {
+			I386_CROSS_ABI(2, []() {
+				auto st = alloc_struct32<struct stat>();
+				auto path = alloc_str32("/");
+				syscall32(SyscallNr32::LSTAT, path, st);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
