@@ -377,6 +377,8 @@ protected:
 		const size_t ignore_calls = 0,
 		const clues::ABI abi = clues::ABI::UNKNOWN,
 		const std::string_view variant = "");
+protected:
+	std::string m_syscall_filter;
 };
 
 namespace {
@@ -1263,6 +1265,10 @@ const auto TESTS = std::array{
 void SyscallTest::runTests() {
 	exiter = findHelper("exiter");
 
+	if (m_argv.size() == 2) {
+		m_syscall_filter = m_argv[1];
+	}
+
 	for (const auto &spec: TESTS) {
 		if (spec.isSupportedABI()) {
 			runTrace(spec.nr, spec.invoker,
@@ -1299,6 +1305,12 @@ void SyscallTest::runTrace(
 		const clues::ABI abi,
 		const std::string_view variant) {
 	const auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
+
+	if (!m_syscall_filter.empty()) {
+		if (m_syscall_filter != name) {
+			return;
+		}
+	}
 
 	std::vector<std::string_view> extra_labels;
 	if (abi != clues::ABI::UNKNOWN) {
