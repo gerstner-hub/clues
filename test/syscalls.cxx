@@ -370,57 +370,13 @@ protected:
 	void runTests() override;
 
 	void runTrace(
-			const SystemCallNr nr,	
-			SyscallInvoker invoker,
-			TraceVerifyCB enter_verify,
-			TraceVerifyCB exit_verify,
-			const size_t ignore_calls = 0,
-			const clues::ABI abi = clues::ABI::UNKNOWN,
-			const std::string_view variant = "") {
-		const auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
-
-		std::vector<std::string_view> extra_labels;
-		if (abi != clues::ABI::UNKNOWN) {
-			extra_labels.push_back(clues::get_abi_label(abi));
-		}
-		if (!variant.empty()) {
-			extra_labels.push_back(variant);
-		}
-
-		std::string extra_label;
-
-		if (!extra_labels.empty()) {
-			extra_label += " [";
-			std::string comma;
-			for (const auto label: extra_labels) {
-				if (!comma.empty()) {
-					extra_label += comma;
-				} else {
-					comma = ", ";
-				}
-				extra_label += label;
-			}
-			extra_label += "]";
-		}
-
-		START_TEST(cosmos::sprintf("testing system call %s%s",
-					&name[0],
-					extra_label.c_str()
-		));
-		SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
-
-		TraceeCreator creator{std::move(invoker), tracer};
-		tracer.setCreator(creator);
-		tracer.setABI(abi);
-		try {
-			creator.run(clues::FollowChildren{false},
-					/*explicit_signal=*/true);
-		} catch (const std::exception &ex) {
-			std::cerr << "test failed: " << ex.what() << std::endl;
-		}
-		RUN_STEP("system call entry good", tracer.entryGood());
-		RUN_STEP("system call exit good", tracer.exitGood());
-	}
+		const SystemCallNr nr,
+		SyscallInvoker invoker,
+		TraceVerifyCB enter_verify,
+		TraceVerifyCB exit_verify,
+		const size_t ignore_calls = 0,
+		const clues::ABI abi = clues::ABI::UNKNOWN,
+		const std::string_view variant = "");
 };
 
 namespace {
@@ -443,7 +399,7 @@ void check_faccessat_entry(const SC &access_sc, bool &good) {
 std::string exiter;
 
 #ifdef TEST_I386_EMU
-using SysCallNr32 = clues::SystemCallNrI386;
+using SyscallNr32 = clues::SystemCallNrI386;
 #endif
 
 /*
@@ -482,7 +438,7 @@ const auto TESTS = std::array{
 			VERIFY(!sc.hasErrorCode());
 		}), 0, {
 			I386_CROSS_ABI(1, []() {
-				syscall32(SysCallNr32::ACCESS,
+				syscall32(SyscallNr32::ACCESS,
 					alloc_str32("/etc/"), R_OK|X_OK);
 			})
 		}
@@ -496,7 +452,7 @@ const auto TESTS = std::array{
 		}), 1, {
 			I386_CROSS_ABI(2, []() {
 				auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
-				syscall32(SysCallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
+				syscall32(SyscallNr32::FACCESSAT, dirfd, alloc_str32("etc"), R_OK|X_OK);
 			})
 		}
 	}, TestSpec{SystemCallNr::FACCESSAT2, []() {
@@ -514,7 +470,7 @@ const auto TESTS = std::array{
 		}), 1, {
 			I386_CROSS_ABI(2, []() {
 					auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
-					syscall32(SysCallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
+					syscall32(SyscallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
 			})
 		}
 	}, TestSpec{SystemCallNr::ALARM, []() {
@@ -528,8 +484,8 @@ const auto TESTS = std::array{
 			VERIFY(sc.old_seconds.value() == 1234);
 		}), 1, {
 			I386_CROSS_ABI(1, []() {
-				syscall32(SysCallNr32::ALARM, 1234);
-				syscall32(SysCallNr32::ALARM, 4321);
+				syscall32(SyscallNr32::ALARM, 1234);
+				syscall32(SyscallNr32::ALARM, 4321);
 			})
 		}
 	},
@@ -543,7 +499,7 @@ const auto TESTS = std::array{
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
 				/* on i386 BREAK is a different system call */
-				syscall32(SysCallNr32::BRK, 0x4711);
+				syscall32(SyscallNr32::BRK, 0x4711);
 			})
 		}
 	}, TestSpec{SystemCallNr::CLOCK_NANOSLEEP, []() {
@@ -570,7 +526,7 @@ const auto TESTS = std::array{
 				auto ts32 = alloc_struct32<clues::timespec32>();
 				ts32->tv_sec = 5;
 				ts32->tv_nsec = 500;
-				syscall32(SysCallNr32::CLOCK_NANOSLEEP,
+				syscall32(SyscallNr32::CLOCK_NANOSLEEP,
 						CLOCK_MONOTONIC,
 						TIMER_ABSTIME,
 						ts32, ts32);
@@ -624,7 +580,7 @@ const auto TESTS = std::array{
 				*child_tid = 9000;
 
 				long flags = CLONE_PARENT_SETTID|SIGCHLD;
-				auto res = syscall32(SysCallNr32::CLONE, flags, nullptr, child_tid);
+				auto res = syscall32(SyscallNr32::CLONE, flags, nullptr, child_tid);
 				if (res == 0) {
 					_exit(123);
 				} else {
@@ -668,7 +624,7 @@ const auto TESTS = std::array{
 				args->exit_signal = SIGCHLD;
 				args->pidfd = (uintptr_t)pidfd;
 				args->parent_tid = (uintptr_t)child_tid;
-				if (syscall32(SysCallNr32::CLONE3, args, sizeof(*args)) == 0) {
+				if (syscall32(SyscallNr32::CLONE3, args, sizeof(*args)) == 0) {
 					_exit(123);
 				} else {
 					wait(NULL);
@@ -683,7 +639,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.hasResultValue());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::CLOSE, 2);
+				syscall32(SyscallNr32::CLOSE, 2);
 			})
 		}
 	}, TestSpec{SystemCallNr::EXECVE, []() {
@@ -714,7 +670,7 @@ const auto TESTS = std::array{
 				env[0] = (uintptr_t)alloc_str32("THIS=THAT");
 				env[1] = (uintptr_t)alloc_str32("ME=YOU");
 				env[2] = 0;
-				syscall32(SysCallNr32::EXECVE, exiter32, args, env);
+				syscall32(SyscallNr32::EXECVE, exiter32, args, env);
 				_exit(128);
 			})
 		}
@@ -756,7 +712,7 @@ const auto TESTS = std::array{
 				env[0] = (uintptr_t)alloc_str32("THIS=THAT");
 				env[1] = (uintptr_t)alloc_str32("ME=YOU");
 				env[2] = 0;
-				syscall32(SysCallNr32::EXECVEAT, fd, empty, args, env, AT_EMPTY_PATH);
+				syscall32(SyscallNr32::EXECVEAT, fd, empty, args, env, AT_EMPTY_PATH);
 				_exit(128);
 			})
 		}
@@ -770,7 +726,7 @@ const auto TESTS = std::array{
 			(void)sc;
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::EXIT_GROUP, 99);
+				syscall32(SyscallNr32::EXIT_GROUP, 99);
 			})
 		}
 	   /* TODO: cover more operations from fcntl */
@@ -789,7 +745,7 @@ const auto TESTS = std::array{
 		}), 1, {
 			I386_CROSS_ABI(1, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
-				syscall32(SysCallNr32::FCNTL, fd, F_GETFD);
+				syscall32(SyscallNr32::FCNTL, fd, F_GETFD);
 			})
 		},
 		"GETFD"
@@ -808,7 +764,7 @@ const auto TESTS = std::array{
 		}), 1, {
 			I386_CROSS_ABI(1, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
-				syscall32(SysCallNr32::FCNTL, fd, F_SETFD, FD_CLOEXEC);
+				syscall32(SyscallNr32::FCNTL, fd, F_SETFD, FD_CLOEXEC);
 			})
 		},
 		"SETFD"
@@ -829,7 +785,7 @@ const auto TESTS = std::array{
 		}), 1, {
 			I386_CROSS_ABI(1, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC);
-				syscall32(SysCallNr32::FCNTL64, fd, F_GETFD);
+				syscall32(SyscallNr32::FCNTL64, fd, F_GETFD);
 			})
 		},
 		"",
@@ -848,7 +804,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.hasResultValue());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				if (syscall32(SysCallNr32::FORK) == 0) {
+				if (syscall32(SyscallNr32::FORK) == 0) {
 					_exit(0);
 				} else {
 					wait(NULL);
@@ -876,7 +832,7 @@ const auto TESTS = std::array{
 				 * but it doesn't matter as long as we don't
 				 * interpret it in this callback */
 				auto st = alloc_struct32<struct stat>();
-				syscall32(SysCallNr32::FSTAT, fd, st);
+				syscall32(SyscallNr32::FSTAT, fd, st);
 			})
 		},
 	}, TestSpec{SystemCallNr::FSTAT64, []() {
@@ -899,7 +855,7 @@ const auto TESTS = std::array{
 			I386_CROSS_ABI(2, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY);
 				auto st = alloc_struct32<struct stat>();
-				syscall32(SysCallNr32::FSTAT64, fd, st);
+				syscall32(SyscallNr32::FSTAT64, fd, st);
 			})
 		},
 		"",
@@ -928,7 +884,7 @@ const auto TESTS = std::array{
 			I386_CROSS_ABI(2, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY);
 				auto st = alloc_struct32<struct stat>();
-				syscall32(SysCallNr32::OLDFSTAT, fd, st);
+				syscall32(SyscallNr32::OLDFSTAT, fd, st);
 			})
 		},
 		"",
@@ -963,7 +919,7 @@ const auto TESTS = std::array{
 				auto ts = alloc_struct32<clues::timespec32>();
 				ts->tv_sec = 5;
 				ts->tv_nsec = 500;
-				syscall32(SysCallNr32::FUTEX, fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, ts);
+				syscall32(SyscallNr32::FUTEX, fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, ts);
 			})
 		},
 	}, TestSpec{SystemCallNr::GETDENTS, []() {
@@ -1000,7 +956,7 @@ const auto TESTS = std::array{
 			I386_CROSS_ABI(2, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY);
 				char *buffer = alloc32<char*>(65535);
-				syscall32(SysCallNr32::GETDENTS, fd, buffer, 65535);
+				syscall32(SyscallNr32::GETDENTS, fd, buffer, 65535);
 			})
 		}
 	}, TestSpec{SystemCallNr::GETDENTS64, []() {
@@ -1037,7 +993,7 @@ const auto TESTS = std::array{
 			I386_CROSS_ABI(2, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY);
 				char *buffer = alloc32<char*>(65535);
-				syscall32(SysCallNr32::GETDENTS64, fd, buffer, 65535);
+				syscall32(SyscallNr32::GETDENTS64, fd, buffer, 65535);
 			})
 		}
 	}, TestSpec{SystemCallNr::GETUID, []() {
@@ -1050,7 +1006,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.uid() == cosmos::proc::get_real_user_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETUID);
+				syscall32(SyscallNr32::GETUID);
 			})
 		},
 	}, TestSpec{SystemCallNr::GETUID32, []() {
@@ -1065,7 +1021,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.uid() == cosmos::proc::get_real_user_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETUID32);
+				syscall32(SyscallNr32::GETUID32);
 			})
 		},
 		"",
@@ -1080,7 +1036,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.uid() == cosmos::proc::get_effective_user_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETEUID);
+				syscall32(SyscallNr32::GETEUID);
 			})
 		},
 	}, TestSpec{SystemCallNr::GETEUID32, []() {
@@ -1095,7 +1051,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.uid() == cosmos::proc::get_effective_user_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETEUID32);
+				syscall32(SyscallNr32::GETEUID32);
 			})
 		},
 		"",
@@ -1110,7 +1066,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.gid() == cosmos::proc::get_real_group_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETGID);
+				syscall32(SyscallNr32::GETGID);
 			})
 		},
 	}, TestSpec{SystemCallNr::GETGID32, []() {
@@ -1125,7 +1081,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.gid() == cosmos::proc::get_real_group_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETGID32);
+				syscall32(SyscallNr32::GETGID32);
 			})
 		},
 		"",
@@ -1140,7 +1096,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.gid() == cosmos::proc::get_effective_group_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETEGID);
+				syscall32(SyscallNr32::GETEGID);
 			})
 		},
 	}, TestSpec{SystemCallNr::GETEGID32, []() {
@@ -1155,7 +1111,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.id.gid() == cosmos::proc::get_effective_group_id());
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::GETEGID32);
+				syscall32(SyscallNr32::GETEGID32);
 			})
 		},
 		"",
@@ -1171,7 +1127,7 @@ const auto TESTS = std::array{
 		}), 0, {
 			I386_CROSS_ABI(1, []() {
 				auto lim = alloc_struct32<clues::rlimit32>();
-				syscall32(SysCallNr32::GETRLIMIT, RLIMIT_CORE, lim);
+				syscall32(SyscallNr32::GETRLIMIT, RLIMIT_CORE, lim);
 			})
 		}
 	}, TestSpec{SystemCallNr::SETRLIMIT, []() {
@@ -1196,7 +1152,7 @@ const auto TESTS = std::array{
 				auto lim = alloc_struct32<clues::rlimit32>();
 				lim->rlim_cur = 1000;
 				lim->rlim_max = 10000;
-				syscall32(SysCallNr32::SETRLIMIT, RLIMIT_CORE, lim);
+				syscall32(SyscallNr32::SETRLIMIT, RLIMIT_CORE, lim);
 			})
 		}
 	}, TestSpec{SystemCallNr::PRLIMIT64, []() {
@@ -1221,7 +1177,7 @@ const auto TESTS = std::array{
 				lim->rlim_cur = 1000;
 				lim->rlim_max = 10000;
 				auto old_lim = alloc_struct32<struct rlimit>();
-				syscall32(SysCallNr32::PRLIMIT64, 0, RLIMIT_CORE, lim, old_lim);
+				syscall32(SyscallNr32::PRLIMIT64, 0, RLIMIT_CORE, lim, old_lim);
 			})
 		}
 	}, TestSpec{SystemCallNr::GET_ROBUST_LIST, []() {
@@ -1241,7 +1197,7 @@ const auto TESTS = std::array{
 				auto buffer = alloc32<char*>(65535);
 				auto sizep = alloc_struct32<size_t>();
 				*sizep = 65535;
-				syscall32(SysCallNr32::GET_ROBUST_LIST, 0, buffer, sizep);
+				syscall32(SyscallNr32::GET_ROBUST_LIST, 0, buffer, sizep);
 			})
 		}
 	}, TestSpec{SystemCallNr::SET_ROBUST_LIST, []() {
@@ -1257,7 +1213,7 @@ const auto TESTS = std::array{
 		}), 0, {
 			I386_CROSS_ABI(1, []() {
 				auto ch = alloc32<char*>(8);
-				syscall32(SysCallNr32::SET_ROBUST_LIST, ch, 0);
+				syscall32(SyscallNr32::SET_ROBUST_LIST, ch, 0);
 			})
 		}
 	}, TestSpec{SystemCallNr::IOCTL, []() {
@@ -1277,7 +1233,7 @@ const auto TESTS = std::array{
 				 * surprises by explicitly forcing it into an
 				 * int32_t */
 				constexpr int32_t flags = FS_IOC_GETFLAGS;
-				syscall32(SysCallNr32::IOCTL, fd, flags, attr);
+				syscall32(SyscallNr32::IOCTL, fd, flags, attr);
 			})
 		}
 	},
@@ -1295,7 +1251,7 @@ const auto TESTS = std::array{
 			VERIFY(!sc.hasErrorCode() || *sc.error()->errorCode() == cosmos::Errno::NO_DEVICE);
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
-				syscall32(SysCallNr32::ARCH_PRCTL, ARCH_SET_CPUID, 0);
+				syscall32(SyscallNr32::ARCH_PRCTL, ARCH_SET_CPUID, 0);
 			})
 		}
 	},
@@ -1332,6 +1288,59 @@ void SyscallTest::runTests() {
 				spec.variant);
 		}
 	}
+}
+
+void SyscallTest::runTrace(
+		const SystemCallNr nr,
+		SyscallInvoker invoker,
+		TraceVerifyCB enter_verify,
+		TraceVerifyCB exit_verify,
+		const size_t ignore_calls,
+		const clues::ABI abi,
+		const std::string_view variant) {
+	const auto name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(nr)];
+
+	std::vector<std::string_view> extra_labels;
+	if (abi != clues::ABI::UNKNOWN) {
+		extra_labels.push_back(clues::get_abi_label(abi));
+	}
+	if (!variant.empty()) {
+		extra_labels.push_back(variant);
+	}
+
+	std::string extra_label;
+
+	if (!extra_labels.empty()) {
+		extra_label += " [";
+		std::string comma;
+		for (const auto label: extra_labels) {
+			if (!comma.empty()) {
+				extra_label += comma;
+			} else {
+				comma = ", ";
+			}
+			extra_label += label;
+		}
+		extra_label += "]";
+	}
+
+	START_TEST(cosmos::sprintf("testing system call %s%s",
+				&name[0],
+				extra_label.c_str()
+	));
+	SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
+
+	TraceeCreator creator{std::move(invoker), tracer};
+	tracer.setCreator(creator);
+	tracer.setABI(abi);
+	try {
+		creator.run(clues::FollowChildren{false},
+				/*explicit_signal=*/true);
+	} catch (const std::exception &ex) {
+		std::cerr << "test failed: " << ex.what() << std::endl;
+	}
+	RUN_STEP("system call entry good", tracer.entryGood());
+	RUN_STEP("system call exit good", tracer.exitGood());
 }
 
 int main(const int argc, const char **argv) {
