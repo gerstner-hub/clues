@@ -53,6 +53,10 @@ struct CLUES_API ReadSystemCall :
 // the request integer can be interpreted in a generic way by use of some
 // macros (e.g.: in/out/in-out operation, size of next parameter), but the man
 // page says that this is unreliable, due to legacy APIs.
+//
+// combined with file descriptor tracking we could route to specializations
+// for file descriptor specific operations. But this might not always work
+// perfectly (e.g. when attaching to a ForeignTracee).
 struct CLUES_API IoCtlSystemCall :
 		public SystemCall {
 
@@ -64,7 +68,13 @@ struct CLUES_API IoCtlSystemCall :
 	}
 
 	item::FileDescriptor fd;
-	item::GenericPointerValue request;
+	// this should be a 32-bit `int`, but many request codes set the
+	// highest bit, making it signed, causing comparison against
+	// preproessor defines to fail. Thus make it unsigned.
+	item::UintValue request;
+	/*
+	 * operation-specific parameters to be done
+	 */
 	item::SuccessResult result;
 };
 
