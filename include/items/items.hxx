@@ -200,12 +200,6 @@ protected: // data
 template <typename INT>
 class CLUES_API PointerToScalar :
 		public PointerValue {
-public: // types
-
-	enum class TraceePtr : uintptr_t {
-		NO_POINTER = 0
-	};
-
 public: // functions
 
 	explicit PointerToScalar(
@@ -215,7 +209,7 @@ public: // functions
 			PointerValue{type, short_name, long_name} {
 	}
 
-	TraceePtr pointer() const {
+	ForeignPtr pointer() const {
 		return m_ptr;
 	}
 
@@ -232,7 +226,7 @@ public: // functions
 protected: // functions
 
 	void processValue(const Tracee &tracee) override {
-		m_ptr = valueAs<TraceePtr>();
+		m_ptr = valueAs<ForeignPtr>();
 
 		if (isIn() || isInOut()) {
 			fetchValue(tracee);
@@ -251,7 +245,7 @@ protected: // functions
 
 protected: // data
 
-	TraceePtr m_ptr = TraceePtr{};
+	ForeignPtr m_ptr = ForeignPtr{};
 	std::optional<INT> m_val;
 	Base m_base = Base::DEC;
 };

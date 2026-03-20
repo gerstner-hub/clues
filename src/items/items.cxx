@@ -52,7 +52,7 @@ void PointerToScalar<INT>::fetchValue(const Tracee &tracee) {
 
 	m_val.reset();
 
-	if (m_ptr == TraceePtr::NO_POINTER)
+	if (m_ptr == ForeignPtr::NO_POINTER)
 		return;
 
 	try {
@@ -66,7 +66,7 @@ void PointerToScalar<INT>::fetchValue(const Tracee &tracee) {
 
 template <typename INT>
 std::string PointerToScalar<INT>::str() const {
-	if (m_ptr == TraceePtr::NO_POINTER) {
+	if (m_ptr == ForeignPtr::NO_POINTER) {
 		return "NULL";
 	}
 

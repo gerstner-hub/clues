@@ -132,4 +132,13 @@ enum class Base {
 	HEX
 };
 
+/// Strongly typed opaque pointer to tracee memory.
+/**
+ * This type is used to prevent pointers related to tracee memory from being
+ * mistaken for proper pointers in tracer context.
+ **/
+enum class ForeignPtr : uintptr_t {
+	NO_POINTER = 0
+};
+
 } // end ns
