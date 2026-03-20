@@ -686,7 +686,7 @@ const auto TESTS = std::array{
 					AT_EMPTY_PATH);
 			_exit(128);
 		}, ENTRY_VERIFY_CB(ExecveAtSystemCall, {
-			VERIFY(sc.dirfd.fd() == cosmos::FileNum(FIRST_FD));
+			VERIFY(sc.dirfd.fd() == FIRST_FD);
 			VERIFY(sc.pathname.data() == "");
 			VERIFY(sc.argv.data() == cosmos::StringVector{exiter, "5"});
 			VERIFY(sc.envp.data() == cosmos::StringVector{"THIS=THAT", "ME=YOU"});
@@ -737,7 +737,7 @@ const auto TESTS = std::array{
 			syscall(SYS_fcntl, fd, F_GETFD);
 		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
 			using Oper = clues::item::FcntlOperation::Oper;
-			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.fd.fd() == FIRST_FD);
 			VERIFY(sc.operation.operation() == Oper::GETFD);
 		}), EXIT_VERIFY_CB(FcntlSystemCall, {
 			VERIFY(sc.hasResultValue());
@@ -756,7 +756,7 @@ const auto TESTS = std::array{
 			syscall(SYS_fcntl, fd, F_SETFD, FD_CLOEXEC);
 		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
 			using Oper = clues::item::FcntlOperation::Oper;
-			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.fd.fd() == FIRST_FD);
 			VERIFY(sc.operation.operation() == Oper::SETFD);
 			using DescFlags = cosmos::FileDescriptor::DescFlags;
 			using enum cosmos::FileDescriptor::DescFlag;
@@ -777,7 +777,7 @@ const auto TESTS = std::array{
 #endif
 		}, ENTRY_VERIFY_CB(FcntlSystemCall, {
 			using Oper = clues::item::FcntlOperation::Oper;
-			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.fd.fd() == FIRST_FD);
 			VERIFY(sc.operation.operation() == Oper::GETFD);
 		}), EXIT_VERIFY_CB(FcntlSystemCall, {
 			using DescFlags = cosmos::FileDescriptor::DescFlags;
