@@ -1305,6 +1305,67 @@ const auto TESTS = std::array{
 		"",
 		{clues::ABI::I386}
 	},
+	/*
+	 * mmap() and mmap2() are especially problematic cases, because mmap()
+	 * on i386 is completely different from mmap() on other ABIs, while
+	 * mmap2() on i386 matches mmap() on other ABIs.
+	 *
+	 * This doesn't match our modeling very well. We need to create
+	 * dedicated TestSpecs for all possible variants to avoid conflicts.
+	 */
+	TestSpec{SystemCallNr::MMAP, []() {
+			syscall(SYS_mmap, nullptr, 1234,
+					PROT_READ|PROT_WRITE,
+					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+		}, ENTRY_VERIFY_CB(MmapSystemCall, {
+			VERIFY(sc.hint.ptr() == nullptr);
+			VERIFY(sc.length.value() == 1234);
+			using enum cosmos::mem::AccessFlag;
+			using AccessFlags = cosmos::mem::AccessFlags;
+			VERIFY(sc.protection.prot() == AccessFlags{READ, WRITE});
+			VERIFY(sc.flags.type() == cosmos::mem::MapType::PRIVATE);
+			using enum cosmos::mem::MapFlag;
+			using MapFlags = cosmos::mem::MapFlags;
+			VERIFY(sc.flags.flags() == MapFlags{ANONYMOUS});
+			VERIFY(sc.fd.fd() == cosmos::FileNum::INVALID);
+			VERIFY(sc.offset.valueAs<off_t>() == 0);
+		}), EXIT_VERIFY_CB(MmapSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+		},
+		"",
+		{clues::ABI::X86_64, clues::ABI::AARCH64}
+	},
+	TestSpec{SystemCallNr::MMAP2, []() {
+#ifdef COSMOS_I386
+			syscall(SYS_mmap2, nullptr, 1234,
+					PROT_READ|PROT_WRITE,
+					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+#endif
+		}, ENTRY_VERIFY_CB(MmapSystemCall, {
+			VERIFY(sc.hint.ptr() == nullptr);
+			VERIFY(sc.length.value() == 1234);
+			using enum cosmos::mem::AccessFlag;
+			using AccessFlags = cosmos::mem::AccessFlags;
+			VERIFY(sc.protection.prot() == AccessFlags{READ, WRITE});
+			VERIFY(sc.flags.type() == cosmos::mem::MapType::PRIVATE);
+			using enum cosmos::mem::MapFlag;
+			using MapFlags = cosmos::mem::MapFlags;
+			VERIFY(sc.flags.flags() == MapFlags{ANONYMOUS});
+			VERIFY(sc.fd.fd() == cosmos::FileNum::INVALID);
+			VERIFY(sc.offset.valueAs<off_t>() == 0);
+		}), EXIT_VERIFY_CB(MmapSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(0, []() {
+				syscall32(SyscallNr32::MMAP2, nullptr,
+					1234, PROT_READ|PROT_WRITE,
+					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
 			// disable SET_CPUID instruction
