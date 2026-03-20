@@ -28,7 +28,7 @@ void FutexSystemCall::prepareNewSystemCall() {
 	setReturnItem(*result);
 }
 
-bool FutexSystemCall::check2ndPass() {
+bool FutexSystemCall::check2ndPass(const Tracee &) {
 	using enum item::FutexOperation::Command;
 
 	auto setNewReturnItem = [this](auto &new_ret) {

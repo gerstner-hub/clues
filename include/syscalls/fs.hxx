@@ -96,7 +96,7 @@ protected: // functions
 
 	void clear();
 
-	bool check2ndPass() override;
+	bool check2ndPass(const Tracee&) override;
 
 	void prepareNewSystemCall() override;
 
@@ -174,7 +174,7 @@ struct CLUES_API OpenSystemCall :
 
 protected: // functions
 
-	bool check2ndPass() override;
+	bool check2ndPass(const Tracee&) override;
 
 	void prepareNewSystemCall() override;
 
@@ -204,7 +204,7 @@ struct CLUES_API OpenAtSystemCall :
 
 protected: // functions
 
-	bool check2ndPass() override;
+	bool check2ndPass(const Tracee&) override;
 
 	void prepareNewSystemCall() override;
 

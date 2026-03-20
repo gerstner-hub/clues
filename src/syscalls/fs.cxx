@@ -38,7 +38,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	ret_seals.reset();
 }
 
-bool FcntlSystemCall::check2ndPass() {
+bool FcntlSystemCall::check2ndPass(const Tracee &) {
 	auto setExtraParameter = [this](auto &extra_par) {
 		addParameters(extra_par);
 	};
@@ -188,7 +188,7 @@ void OpenSystemCall::prepareNewSystemCall() {
 	mode.reset();
 }
 
-bool OpenSystemCall::check2ndPass() {
+bool OpenSystemCall::check2ndPass(const Tracee &) {
 	using enum cosmos::OpenFlag;
 
 	if (const auto _flags = flags.flags(); _flags[CREATE] || _flags[TMPFILE]) {
@@ -213,7 +213,7 @@ void OpenAtSystemCall::prepareNewSystemCall() {
 	mode.reset();
 }
 
-bool OpenAtSystemCall::check2ndPass() {
+bool OpenAtSystemCall::check2ndPass(const Tracee &) {
 	using enum cosmos::OpenFlag;
 
 	if (const auto _flags = flags.flags(); _flags[CREATE] || _flags[TMPFILE]) {

@@ -56,7 +56,7 @@ void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
 
 	fillParameters(proc, info);
 
-	if (check2ndPass()) {
+	if (check2ndPass(proc)) {
 		fillParameters(proc, info);
 	}
 

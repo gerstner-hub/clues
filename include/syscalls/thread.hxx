@@ -136,7 +136,7 @@ struct CLUES_API FutexSystemCall :
 
 protected: // functions
 
-	bool check2ndPass() override;
+	bool check2ndPass(const Tracee&) override;
 
 	void prepareNewSystemCall() override;
 

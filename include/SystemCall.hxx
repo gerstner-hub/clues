@@ -187,7 +187,7 @@ protected: // functions
 	 * case `true` must be returned to let the base class implementation
 	 * reevaluate all system call parameters.
 	 **/
-	virtual bool check2ndPass() { return false; };
+	virtual bool check2ndPass(const Tracee &) { return false; };
 
 	/// Perform any necessary actions before processing a new system call entry event.
 	virtual void prepareNewSystemCall() {}

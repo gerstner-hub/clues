@@ -43,7 +43,7 @@ struct CLUES_API ArchPrctlSystemCall :
 
 protected: // functions
 
-	bool check2ndPass() override;
+	bool check2ndPass(const Tracee&) override;
 
 	void prepareNewSystemCall() override;
 };
@@ -108,7 +108,7 @@ struct CLUES_API CloneSystemCall :
 
 protected: // functions
 
-	bool check2ndPass() override;
+	bool check2ndPass(const Tracee&) override;
 
 	void prepareNewSystemCall() override;
 };

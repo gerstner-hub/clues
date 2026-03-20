@@ -16,7 +16,7 @@ void ArchPrctlSystemCall::prepareNewSystemCall() {
 	setReturnItem(*result);
 }
 
-bool ArchPrctlSystemCall::check2ndPass() {
+bool ArchPrctlSystemCall::check2ndPass(const Tracee &) {
 
 	using enum item::ArchOpParameter::Operation;
 
@@ -60,7 +60,7 @@ void CloneSystemCall::prepareNewSystemCall() {
 	tls.reset();
 }
 
-bool CloneSystemCall::check2ndPass()  {
+bool CloneSystemCall::check2ndPass(const Tracee &)  {
 	// we need these two sizes to match, since a `pid_t*` is used in
 	// clone() to store either the child pid or a pidfd at.
 	static_assert( sizeof(int) == sizeof(pid_t), "sizeof(int) != sizeof(pid_t)" );
