@@ -145,7 +145,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::LSTAT:           [[fallthrough]];
 	case SystemCallNr::LSTAT64:         [[fallthrough]];
 	case SystemCallNr::OLDLSTAT:        return new_sys<LstatSystemCall>(nr);
-	case SystemCallNr::MMAP:            return new_sys<MmapSystemCall>();
+	case SystemCallNr::MMAP:            [[fallthrough]];
+	case SystemCallNr::MMAP2:           return new_sys<MmapSystemCall>(nr);
 	case SystemCallNr::MPROTECT:        return new_sys<MprotectSystemCall>();
 	case SystemCallNr::MUNMAP:          return new_sys<MunmapSystemCall>();
 	case SystemCallNr::NANOSLEEP:       return new_sys<NanoSleepSystemCall>();

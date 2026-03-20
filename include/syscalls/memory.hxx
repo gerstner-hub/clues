@@ -27,8 +27,8 @@ struct CLUES_API BreakSystemCall :
 
 struct CLUES_API MmapSystemCall :
 		public SystemCall {
-	MmapSystemCall() :
-			SystemCall{SystemCallNr::MMAP},
+	explicit MmapSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
 			hint{"hint", "address placement hint"},
 			length{"len", "length"},
 			offset{"offset"},
