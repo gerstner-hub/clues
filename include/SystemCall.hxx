@@ -180,7 +180,7 @@ protected: // functions
 	 * This function can be overridden by the actual system call
 	 * implementation to perform context-sensitive evaluation of system
 	 * call parameters (e.g. for `ioctl()` style system calls) upon system
-	 * call entry..
+	 * call entry.
 	 *
 	 * The implementation of this function is allowed to modify the amount
 	 * and types of system call parameters and return parameter. In this

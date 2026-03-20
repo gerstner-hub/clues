@@ -6,8 +6,9 @@
 
 // clues
 #include <clues/items/mmap.hxx>
-// private
+#include <clues/private/kernel/mmap.hxx>
 #include <clues/private/utils.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues::item {
 
@@ -64,6 +65,26 @@ std::string MapFlagsParameter::str() const {
 	}
 
 	return BITFLAGS_STR();
+}
+
+void OldMmapArgs::processValue(const Tracee &proc) {
+	struct mmap_arg_struct args;
+
+	if (!proc.readStruct(value(), args)) {
+		m_valid = false;
+		return;
+	}
+
+	m_addr = ForeignPtr{static_cast<uintptr_t>(args.addr)};
+	m_length = args.len;
+	m_offset = args.offset;
+	m_prot = cosmos::mem::AccessFlags{static_cast<int>(args.prot)};
+	m_fd = cosmos::FileDescriptor{cosmos::FileNum{static_cast<int>(args.fd)}};
+	const auto raw_flags = static_cast<int>(args.flags);
+	m_flags = cosmos::mem::MapFlags{raw_flags & ~0x3};
+	m_type = cosmos::mem::MapType{raw_flags & 0x3};
+
+	m_valid = true;
 }
 
 } // end ns

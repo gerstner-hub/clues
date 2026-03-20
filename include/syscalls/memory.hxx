@@ -25,8 +25,31 @@ struct CLUES_API BreakSystemCall :
 	item::GenericPointerValue ret_addr;
 };
 
+/// Type for mmap() / mmap2() system calls.
+/**
+ * SYS_mmap and SYS_mmap2 are unfortunate with regards to tracing. SYS_mmap
+ * can refer to two different variants of mmap() depending on ABI.
+ *
+ * The well-known modern mmap() call taking six parameters is found in
+ * SYS_mmap on modern systems and in SYS_mmap2 on older ABIs.
+ *
+ * SYS_mmap on older ABIs like I386 takes a single `struct mmap_args`
+ * parameter. Thus when SYS_mmap occurs during tracing, in an abstract
+ * application not considering the ABI, it can be either the modern mmap() or
+ * the legacy mmap(). To ease handling these difference this type covers both
+ * SYS_mmap and SYS_mmap2 on all ABIs. Even on older ABIs the six member
+ * corresponding to the modern mmap() system call will be filled. This way
+ * applications can process both types of mmap system calls in a unified way.
+ *
+ * For completeness, in case of the legacy SYS_mmap() the `isOldMmap()` member
+ * function will return `true` and the original data structure passed to the
+ * kernel is available in `old_args`.
+ **/
 struct CLUES_API MmapSystemCall :
 		public SystemCall {
+
+public: // functions
+
 	explicit MmapSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
 			hint{"hint", "address placement hint"},
@@ -34,16 +57,30 @@ struct CLUES_API MmapSystemCall :
 			offset{"offset"},
 			addr{"addr", "mapped memory address", ItemType::RETVAL} {
 		setReturnItem(addr);
-		setParameters(hint, length, protection, flags, fd, offset);
 	}
 
-	/* parameters */
+	bool isOldMmap() const {
+		return old_args.has_value();
+	}
+
+protected: // functions
+
+	void prepareNewSystemCall() override;
+
+	bool implementsOldMmap() const;
+
+public: // data
+
+	/* parameters for new mmap() / mmap2() */
 	item::GenericPointerValue hint;
 	item::SizeValue length;
 	item::MemoryProtectionParameter protection;
 	item::MapFlagsParameter flags;
 	item::FileDescriptor fd;
 	item::ValueInParameter offset;
+
+	/* parameters for old mmap() */
+	std::optional<item::OldMmapArgs> old_args;
 
 	/* return value */
 	item::GenericPointerValue addr;

@@ -71,4 +71,61 @@ protected: // data
 	cosmos::mem::MapFlags m_flags;
 };
 
+/// Combined mmap() arguments for the old variant of mmap() on 32-bit ABIs like I386.
+class CLUES_API OldMmapArgs :
+		public PointerInValue {
+public:
+
+	explicit OldMmapArgs() :
+			PointerInValue{"args"} {
+	}
+
+	bool valid() const {
+		return m_valid;
+	}
+
+	ForeignPtr addr() const {
+		return m_addr;
+	}
+
+	size_t length() const {
+		return m_length;
+	}
+
+	size_t offset() const {
+		return m_offset;
+	}
+
+	cosmos::mem::MapType type() const {
+		return m_type;
+	}
+
+	cosmos::mem::MapFlags flags() const {
+		return m_flags;
+	}
+
+	cosmos::mem::AccessFlags prot() const {
+		return m_prot;
+	}
+
+	cosmos::FileDescriptor fd() const {
+		return m_fd;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	bool m_valid = false;
+	ForeignPtr m_addr = ForeignPtr::NO_POINTER;
+	size_t m_length = 0;
+	size_t m_offset = 0;
+	cosmos::mem::MapType m_type{0};
+	cosmos::mem::MapFlags m_flags;
+	cosmos::mem::AccessFlags m_prot;
+	cosmos::FileDescriptor m_fd;
+};
+
 } // end ns
