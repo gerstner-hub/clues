@@ -45,6 +45,14 @@ public: // functions
 
 	std::string str() const override;
 
+	cosmos::mem::MapType type() const {
+		return m_type;
+	}
+
+	cosmos::mem::MapFlags flags() const {
+		return m_flags;
+	}
+
 protected: // functions
 
 	void processValue(const Tracee&) override {
