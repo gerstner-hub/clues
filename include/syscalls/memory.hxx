@@ -39,7 +39,7 @@ struct CLUES_API MmapSystemCall :
 
 	/* parameters */
 	item::GenericPointerValue hint;
-	item::ValueInParameter length;
+	item::SizeValue length;
 	item::MemoryProtectionParameter protection;
 	item::MapFlagsParameter flags;
 	item::FileDescriptor fd;
