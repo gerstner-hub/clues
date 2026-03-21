@@ -49,6 +49,15 @@ public: // functions
 		return m_fd;
 	}
 
+	/// Returns optional extended file descriptor metadata.
+	/**
+	 * This data is available if FormatFlag::FD_INFO is set at the Engine
+	 * object associated with this system call item.
+	 **/
+	const std::optional<FDInfo>& info() const {
+		return m_info;
+	}
+
 protected: // functions
 
 	void processValue(const Tracee &) override;
