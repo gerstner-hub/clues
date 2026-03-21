@@ -1315,9 +1315,13 @@ const auto TESTS = std::array{
 	 * dedicated TestSpecs for all possible variants to avoid conflicts.
 	 */
 	TestSpec{SystemCallNr::MMAP, []() {
+			/* pass offset explicitly as ULL literal constant,
+			 * otherwise I've observed garbage left over in the
+			 * upper 4 bytes of the argument in the clang static
+			 * build config */
 			syscall(SYS_mmap, nullptr, 1234,
 					PROT_READ|PROT_WRITE,
-					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0ULL);
 		}, ENTRY_VERIFY_CB(MmapSystemCall, {
 			VERIFY(sc.hint.ptr() == nullptr);
 			VERIFY(sc.length.value() == 1234);
