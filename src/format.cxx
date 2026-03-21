@@ -525,23 +525,23 @@ std::string buffer(const uint8_t *buffer, const size_t len) {
 	return ss.str();
 }
 
-std::string pointer(const void *ptr) {
-	if (!ptr)
+std::string pointer(const ForeignPtr ptr) {
+	if (ptr == ForeignPtr::NO_POINTER)
 		return "NULL";
 
 	std::stringstream ss;
-	ss << ptr;
+	ss << reinterpret_cast<void*>(cosmos::to_integral(ptr));
 
 	return ss.str();
 }
 
-std::string pointer(const void *ptr, const std::string_view data) {
-	if (!ptr)
+std::string pointer(const ForeignPtr ptr, const std::string_view data) {
+	if (ptr == ForeignPtr::NO_POINTER)
 		return "NULL";
 
 	std::stringstream ss;
 
-	ss << ptr << " → " << "[" << data << "]";
+	ss << reinterpret_cast<void*>(cosmos::to_integral(ptr)) << " → " << "[" << data << "]";
 
 	return ss.str();
 }

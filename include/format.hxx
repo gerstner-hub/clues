@@ -19,6 +19,10 @@ namespace cosmos {
 	class SigInfo;
 }
 
+namespace clues {
+	enum class ForeignPtr : uintptr_t;
+}
+
 namespace clues::format {
 
 /// Returns a string like "SIGINT (Interrupted)" for the given signal number.
@@ -98,10 +102,10 @@ CLUES_API std::string buffer(const uint8_t *buffer, const size_t len);
 CLUES_API std::string control_char(const char ch);
 
 /// formats a pointer like "0x1234" or NULL if `!ptr`.
-CLUES_API std::string pointer(const void *ptr);
+CLUES_API std::string pointer(const ForeignPtr ptr);
 
 /// formats a pointer to data in the form of "0x123456 → [<data>]".
-CLUES_API std::string pointer(const void *ptr, const std::string_view data);
+CLUES_API std::string pointer(const ForeignPtr ptr, const std::string_view data);
 
 /// returns a label for `info.type`.
 CLUES_API std::string_view fd_type(const FDInfo &info);

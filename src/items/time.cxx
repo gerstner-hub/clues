@@ -76,7 +76,7 @@ std::string TimeSpecParameter::str() const {
 	if (!m_timespec) {
 		if (m_remain_semantics) {
 			/* still show that a pointer was passed */
-			return format::pointer(valueAs<void*>());
+			return format::pointer(asPtr());
 		} else {
 			return "NULL";
 		}

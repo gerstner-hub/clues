@@ -28,9 +28,9 @@ std::string PipeEnds::str() const {
 		const auto ends_array = cosmos::sprintf("%d, %d",
 				cosmos::to_integral(m_read_end),
 				cosmos::to_integral(m_write_end));
-		return clues::format::pointer(valueAs<const void*>(), ends_array);
+		return clues::format::pointer(asPtr(), ends_array);
 	} else {
-		return clues::format::pointer(valueAs<const void*>());
+		return clues::format::pointer(asPtr());
 	}
 }
 

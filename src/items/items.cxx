@@ -70,7 +70,7 @@ std::string PointerToScalar<INT>::str() const {
 		return "NULL";
 	}
 
-	return format::pointer((void*)m_ptr, m_val ? scalarToString() : "???"s);
+	return format::pointer(m_ptr, m_val ? scalarToString() : "???"s);
 }
 
 template <typename INT>

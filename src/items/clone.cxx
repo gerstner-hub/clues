@@ -160,8 +160,12 @@ std::string CloneArgs::str() const {
 			return "NULL";
 		else
 			// verifySize() failed
-			return format::pointer(valueAs<void*>()) + " (size mismatch)";
+			return format::pointer(asPtr()) + " (size mismatch)";
 	}
+
+	auto uint2ptr = [](uint64_t val) -> ForeignPtr {
+		return ForeignPtr{static_cast<uintptr_t>(val)};
+	};
 
 	std::stringstream ss;
 	const auto &args = *m_args;
@@ -172,27 +176,28 @@ std::string CloneArgs::str() const {
 	ss << "{";
 	ss << "flags=" << clone_flags_str(flags);
 	if (flags[PIDFD]) {
-		const auto ptr = (void*)raw->pidfd;
-		ss << ", pidfd=" << format::pointer(ptr, std::to_string(cosmos::to_integral(m_pidfd)));
+		ss << ", pidfd=" << format::pointer(uint2ptr(raw->pidfd), std::to_string(cosmos::to_integral(m_pidfd)));
 	}
 	if (flags[CHILD_CLEARTID] || flags[CHILD_SETTID]) {
-		ss << ", child_tid=" << reinterpret_cast<const void*>(args.childTID());
+		const auto child_tid_ptr = ForeignPtr{reinterpret_cast<uintptr_t>(args.childTID())};
+		ss << ", child_tid=" << format::pointer(child_tid_ptr);
 	}
 	if (flags[PARENT_SETTID]) {
-		ss << ", parent_tid=" << format::pointer(
-				reinterpret_cast<const void*>(args.parentTID()),
+		const auto parent_tid_ptr = ForeignPtr{reinterpret_cast<uintptr_t>(args.parentTID())};
+		ss << ", parent_tid=" << format::pointer(parent_tid_ptr,
 				std::to_string(cosmos::to_integral(m_child_tid)));
 	}
 	ss << ", exit_signal=" << format::signal(args.exitSignal().raw(), /*verbose=*/false);
-	ss << ", stack=" << format::pointer(args.stack());
+	const auto stack_ptr = ForeignPtr{reinterpret_cast<uintptr_t>(args.stack())};
+	ss << ", stack=" << format::pointer(stack_ptr);
 	ss << ", stack_size=" << args.stackSize();
 	if (flags[SETTLS]) {
 		// this is a architecture dependent value, interpreting it as
 		// a hex pointer should be good enough for now.
-		ss << ", tls=" << format::pointer(reinterpret_cast<const void*>(raw->tls));
+		ss << ", tls=" << format::pointer(uint2ptr(raw->tls));
 	}
 
-	const auto settid_ptr = reinterpret_cast<void*>(raw->set_tid);
+	const auto settid_ptr = uint2ptr(raw->set_tid);
 	if (raw->set_tid_size) {
 		std::stringstream ss2;
 		std::string sep = "";
