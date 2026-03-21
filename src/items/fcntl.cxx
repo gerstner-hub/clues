@@ -274,7 +274,7 @@ static std::string_view lock_type_to_str(INT type) {
 		CASE_ENUM_TO_STR(F_RDLCK);
 		CASE_ENUM_TO_STR(F_WRLCK);
 		CASE_ENUM_TO_STR(F_UNLCK);
-		default: return "???";
+		default: return "F_???";
 	}
 }
 
@@ -356,7 +356,7 @@ void LeaseType::processValue(const Tracee &) {
 }
 
 std::string LeaseType::str() const {
-	return std::string{lock_type_to_str(cosmos::to_integral(*m_lease))};
+	return std::string{lock_type_to_str(cosmos::to_integral(m_lease))};
 }
 
 void DNotifySettings::processValue(const Tracee &) {

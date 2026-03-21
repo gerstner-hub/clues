@@ -220,7 +220,7 @@ public: // functions
 
 	std::string str() const override;
 
-	const auto& lease() const {
+	auto& lease() const {
 		return m_lease;
 	}
 
@@ -230,7 +230,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<cosmos::FileDescriptor::LeaseType> m_lease;
+	cosmos::FileDescriptor::LeaseType m_lease{std::numeric_limits<int>::max()};
 };
 
 /// The value used with F_NOTIFY `fcntl()` operations.
