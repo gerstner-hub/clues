@@ -124,6 +124,15 @@ public: // functions
 
 	std::string str() const override;
 
+	/// Access to the extracted FileLock data.
+	/**
+	 * This can be unassigned in case no system call was yet executed, or
+	 * if fetching the data from the Tracee failed for some reason.
+	 **/
+	const std::optional<cosmos::FileLock>& lock() const {
+		return m_lock;
+	}
+
 protected: // functions
 
 	void processValue(const Tracee &proc) override;

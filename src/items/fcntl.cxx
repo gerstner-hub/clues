@@ -279,6 +279,10 @@ static std::string_view lock_type_to_str(INT type) {
 }
 
 std::string FLockParameter::str() const {
+	if (!m_lock) {
+		return "<invalid>";
+	}
+
 	auto whence_str = [](short whence) {
 		switch (whence) {
 			CASE_ENUM_TO_STR(SEEK_SET);
