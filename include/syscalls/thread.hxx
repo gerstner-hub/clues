@@ -55,7 +55,7 @@ struct CLUES_API GetRobustListSystemCall :
 	 * could be fully modeled, but since this is so low-level and exotic I
 	 * believe there is little value in this at this point.
 	 */
-	item::PointerToScalar<void*> list_head;
+	item::PointerToScalar<ForeignPtr> list_head;
 	item::PointerToScalar<size_t> size_ptr;
 	item::SuccessResult result;
 };

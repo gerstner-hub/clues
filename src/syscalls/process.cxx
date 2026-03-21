@@ -32,8 +32,7 @@ bool ArchPrctlSystemCall::check2ndPass(const Tracee &) {
 		break;
 	case SET_FS: [[fallthrough]];
 	case SET_GS:
-		set_addr.emplace(item::ULongValue{"base"});
-		set_addr->setBase(Base::HEX);
+		set_addr.emplace(item::GenericPointerValue{"base"});
 		addParameters(*set_addr);
 		break;
 	case GET_FS: [[fallthrough]];

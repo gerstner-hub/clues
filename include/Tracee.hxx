@@ -191,17 +191,17 @@ public: // functions
 	 * The word found at `addr` is returned from this function on
 	 * success. On error an exception is thrown.
 	 **/
-	long getData(const long *addr) const;
+	long getData(const ForeignPtr addr) const;
 
 	/// Reads a zero-terminated C-string from the tracee.
 	/**
 	 * Read from the tracee's address space starting at `addr` into the
 	 * C++ string object `out`.
 	 **/
-	void readString(const long *addr, std::string &out) const;
+	void readString(const ForeignPtr addr, std::string &out) const;
 
 	/// Reads an arbitrary binary blob of fixed length from the tracee.
-	void readBlob(const long *addr, char *buffer, const size_t bytes) const;
+	void readBlob(const ForeignPtr addr, char *buffer, const size_t bytes) const;
 
 	/// Reads a system call struct from the tracee's address space into `out`.
 	/**
@@ -209,11 +209,9 @@ public: // functions
 	 * nullptr was encouneterd).
 	 **/
 	template <typename T, bool CHECK_TRIVIAL=true>
-	bool readStruct(const Word pointer, T &out) const {
+	bool readStruct(const ForeignPtr addr, T &out) const {
 		// the address of the struct in the tracee's address space
-		const long *addr = reinterpret_cast<long*>(pointer);
-
-		if (!addr)
+		if (addr == ForeignPtr::NO_POINTER)
 			// null address specification
 			return false;
 
@@ -227,7 +225,7 @@ public: // functions
 
 	/// Reads in a zero terminated array of data items into the STL-vector like parameter `out`.
 	template <typename VECTOR>
-	void readVector(const long *addr, VECTOR &out) const;
+	void readVector(const ForeignPtr pointer, VECTOR &out) const;
 
 	/// Returns whether the tracee is a child process created by us.
 	/**
@@ -381,7 +379,7 @@ protected: // functions
 
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
 	template <typename FILLER>
-	void fillData(const long *addr, FILLER &filler) const;
+	void fillData(const ForeignPtr addr, FILLER &filler) const;
 
 	virtual void cleanupChild() {}
 

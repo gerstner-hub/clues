@@ -253,7 +253,7 @@ protected: // functions
 protected: // data
 
 	std::vector<Entry> m_entries;
-	///! the raw buffer backing m_entries
+	/// the raw buffer backing m_entries
 	std::unique_ptr<char[]> m_buffer;
 };
 

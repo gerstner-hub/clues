@@ -133,8 +133,8 @@ public: // functions
 
 	std::string str() const override;
 
-	void* ptr() const {
-		return valueAs<void*>();
+	ForeignPtr ptr() const {
+		return ForeignPtr{valueAs<uintptr_t>()};
 	}
 
 protected: // functions

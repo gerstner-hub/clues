@@ -33,7 +33,7 @@ struct CLUES_API ArchPrctlSystemCall :
 	/// On/off value for SET_CPUID.
 	std::optional<item::ULongValue> on_off;
 	/// new FS/GS base for SET_FS/SET_GS
-	std::optional<item::ULongValue> set_addr;
+	std::optional<item::GenericPointerValue> set_addr;
 	/// pointer to base for GET_FS/GET_GS
 	std::optional<item::PointerToScalar<unsigned long>> get_addr;
 	/* return values */

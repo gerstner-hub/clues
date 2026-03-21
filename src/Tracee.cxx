@@ -870,13 +870,14 @@ void Tracee::getRegisters(RegisterSet<abi> &rs) {
 	rs.iovFilled(iovec);
 }
 
-long Tracee::getData(const long *addr) const {
-	return m_ptrace.peekData(addr);
+long Tracee::getData(const ForeignPtr addr) const {
+	return m_ptrace.peekData(reinterpret_cast<const long*>(
+				cosmos::to_integral(addr)));
 }
 
 /// Reads data from the Tracee and feeds it to `filler` until it's saturated.
 template <typename FILLER>
-void Tracee::fillData(const long *addr, FILLER &filler) const {
+void Tracee::fillData(const ForeignPtr addr, FILLER &filler) const {
 	long word;
 
 	do {
@@ -887,12 +888,12 @@ void Tracee::fillData(const long *addr, FILLER &filler) const {
 	} while (filler(word));
 }
 
-void Tracee::readString(const long *addr, std::string &out) const {
+void Tracee::readString(const ForeignPoiter addr, std::string &out) const {
 	return readVector(addr, out);
 }
 
 template <typename VECTOR>
-void Tracee::readVector(const long *addr, VECTOR &out) const {
+void Tracee::readVector(const ForeignPtr addr, VECTOR &out) const {
 	out.clear();
 
 	ContainerFiller<VECTOR> filler{out};

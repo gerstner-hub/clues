@@ -47,6 +47,7 @@ using clues::SystemCall;
 using TraceVerifyCB = std::function<void (const SystemCall &, bool &good)>;
 using SyscallInvoker = std::function<void (void)>;
 using clues::SystemCallNr;
+using clues::ForeignPtr;
 
 /*
  * for cross-ABI tracing tests like 32-bit emulation on x86-64, this specifies
@@ -495,10 +496,10 @@ const auto TESTS = std::array{
 	TestSpec{SystemCallNr::BREAK, []() {
 			syscall(SYS_brk, 0x4711);
 		}, ENTRY_VERIFY_CB(BreakSystemCall, {
-			VERIFY(sc.req_addr.ptr() == (void*)0x4711);
+			VERIFY(sc.req_addr.ptr() == ForeignPtr{0x4711});
 		}), EXIT_VERIFY_CB(BreakSystemCall, {
 			VERIFY(!sc.hasErrorCode());
-			VERIFY(sc.ret_addr.ptr() != nullptr);
+			VERIFY(sc.ret_addr.ptr() != ForeignPtr::NO_POINTER);
 		}), 0, {
 			I386_CROSS_ABI(0, []() {
 				/* on i386 BREAK is a different system call */
@@ -567,7 +568,7 @@ const auto TESTS = std::array{
 				VERIFY(sc.flags.flags() == cosmos::CloneFlags{PARENT_SETTID});
 			}
 			VERIFY(*(sc.flags.exitSignal()) == cosmos::SignalNr::CHILD);
-			VERIFY(sc.stack.ptr() == nullptr);
+			VERIFY(sc.stack.ptr() == ForeignPtr::NO_POINTER);
 			const auto parent_tid = *sc.parent_tid;
 			/* when tracing cross-ABI then there are no stack
 			 * addresses used in the invoker code */
@@ -1207,7 +1208,7 @@ const auto TESTS = std::array{
 			char ch;
 			syscall(SYS_set_robust_list, &ch, 0);
 		}, ENTRY_VERIFY_CB(SetRobustListSystemCall, {
-			VERIFY(sc.list_head.ptr() != nullptr);
+			VERIFY(sc.list_head.ptr() != ForeignPtr::NO_POINTER);
 			VERIFY(sc.size.value() == 0);
 		}), EXIT_VERIFY_CB(SetRobustListSystemCall, {
 			/* since we're applying a zero-size buffer here it
@@ -1323,7 +1324,7 @@ const auto TESTS = std::array{
 					PROT_READ|PROT_WRITE,
 					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0ULL);
 		}, ENTRY_VERIFY_CB(MmapSystemCall, {
-			VERIFY(sc.hint.ptr() == nullptr);
+			VERIFY(sc.hint.ptr() == ForeignPtr::NO_POINTER);
 			VERIFY(sc.length.value() == 1234);
 			using enum cosmos::mem::AccessFlag;
 			using AccessFlags = cosmos::mem::AccessFlags;
@@ -1371,7 +1372,7 @@ const auto TESTS = std::array{
 			 * and now do the same more the non-legacy arguments
 			 * which should be synced with the legacy data.
 			 */
-			VERIFY(sc.hint.ptr() == nullptr);
+			VERIFY(sc.hint.ptr() == ForeignPtr::NO_POINTER);
 			VERIFY(sc.length.value() == 1234);
 			VERIFY(sc.protection.prot() == AccessFlags{READ, WRITE});
 			VERIFY(sc.flags.type() == cosmos::mem::MapType::PRIVATE);
@@ -1401,7 +1402,7 @@ const auto TESTS = std::array{
 #endif
 		}, ENTRY_VERIFY_CB(MmapSystemCall, {
 			VERIFY(!sc.isOldMmap());
-			VERIFY(sc.hint.ptr() == nullptr);
+			VERIFY(sc.hint.ptr() == ForeignPtr::NO_POINTER);
 			VERIFY(sc.length.value() == 1234);
 			using enum cosmos::mem::AccessFlag;
 			using AccessFlags = cosmos::mem::AccessFlags;

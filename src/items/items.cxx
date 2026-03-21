@@ -146,6 +146,7 @@ template class CLUES_API PointerToScalar<int>;
 template class CLUES_API PointerToScalar<cosmos::ProcessID>;
 template class CLUES_API PointerToScalar<cosmos::FileNum>;
 template class CLUES_API PointerToScalar<void*>;
+template class CLUES_API PointerToScalar<ForeignPtr>;
 template class CLUES_API IntValueT<int>;
 template class CLUES_API IntValueT<uint32_t>;
 template class CLUES_API IntValueT<unsigned long>;
