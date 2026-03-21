@@ -4,6 +4,7 @@
 #include <sys/resource.h>
 
 // C++
+#include <limits>
 #include <optional>
 
 // cosmos
@@ -24,7 +25,7 @@ public: // functions
 
 	std::string str() const override;
 
-	std::optional<cosmos::LimitType> type() const {
+	cosmos::LimitType type() const {
 		return m_limit;
 	}
 
@@ -34,7 +35,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<cosmos::LimitType> m_limit;
+	cosmos::LimitType m_limit = cosmos::LimitType{std::numeric_limits<int>::max()};
 };
 
 class CLUES_API ResourceLimit :

@@ -1124,7 +1124,7 @@ const auto TESTS = std::array{
 			struct rlimit lim;
 			syscall(SYS_getrlimit, RLIMIT_CORE, &lim);
 		}, ENTRY_VERIFY_CB(GetRlimitSystemCall, {
-			VERIFY(*sc.type.type() == cosmos::LimitType::CORE);
+			VERIFY(sc.type.type() == cosmos::LimitType::CORE);
 			VERIFY(sc.limit.limit().has_value());
 		}), EXIT_VERIFY_CB(GetRlimitSystemCall, {
 			VERIFY(sc.hasResultValue());
@@ -1144,7 +1144,7 @@ const auto TESTS = std::array{
 			lim.rlim_max = 10000;
 			syscall(SYS_setrlimit, RLIMIT_CORE, &lim);
 		}, ENTRY_VERIFY_CB(SetRlimitSystemCall, {
-			VERIFY(*sc.type.type() == cosmos::LimitType::CORE);
+			VERIFY(sc.type.type() == cosmos::LimitType::CORE);
 			VERIFY(sc.limit.limit().has_value());
 			const auto limspec = *sc.limit.limit();
 			VERIFY(limspec.getSoftLimit() == 1000);

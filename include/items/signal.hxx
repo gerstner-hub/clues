@@ -82,7 +82,7 @@ public: // functions
 
 	std::string str() const override;
 
-	auto& action() const {
+	const std::optional<struct kernel_sigaction>& action() const {
 		return m_sigaction;
 	}
 
@@ -107,7 +107,7 @@ public: // functions
 
 	std::string str() const override;
 
-	auto& sigset() const {
+	const std::optional<sigset_t>& sigset() const {
 		return m_sigset;
 	}
 

@@ -148,7 +148,7 @@ public: // functions
 			PointerToScalar{"wstatus", "wait status"} {
 	}
 
-	auto& status() const {
+	const std::optional<cosmos::WaitStatus>& status() const {
 		return m_status;
 	}
 

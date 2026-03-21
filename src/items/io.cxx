@@ -35,11 +35,7 @@ std::string PipeEnds::str() const {
 }
 
 std::string PipeFlags::str() const {
-	if (!m_flags) {
-		return "N/A";
-	}
-	const auto flags = *m_flags;
-	BITFLAGS_FORMAT_START(flags);
+	BITFLAGS_FORMAT_START(m_flags);
 
 #define O_NOTIFICATION_PIPE O_EXCL
 

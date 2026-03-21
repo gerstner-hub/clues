@@ -8,6 +8,9 @@
 namespace clues::item {
 
 std::string StringData::str() const {
+	if (m_str.empty() && !isZero()) {
+		return "<invalid>";
+	}
 	return cosmos::sprintf("\"%s\"", m_str.c_str());
 }
 

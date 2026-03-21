@@ -14,10 +14,7 @@
 namespace clues::item {
 
 std::string ResourceType::str() const {
-	if (!m_limit)
-		return "<invalid>";
-
-	switch (cosmos::to_integral(*m_limit)) {
+	switch (cosmos::to_integral(m_limit)) {
 		CASE_ENUM_TO_STR(RLIMIT_AS);
 		CASE_ENUM_TO_STR(RLIMIT_CORE);
 		CASE_ENUM_TO_STR(RLIMIT_CPU);
@@ -43,9 +40,9 @@ void ResourceType::processValue(const Tracee &) {
 }
 
 std::string ResourceLimit::str() const {
-	if (!m_limit)
-		return "NULL";
-
+	if (!m_limit) {
+		return "<invalid>";
+	}
 	std::stringstream ss;
 
 	ss

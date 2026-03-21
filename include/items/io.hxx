@@ -82,7 +82,7 @@ public: // functions
 			ValueInParameter{"flags"} {
 	}
 
-	std::optional<Flags> flags() const {
+	Flags flags() const {
 		return m_flags;
 	}
 
@@ -94,7 +94,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<Flags> m_flags;
+	Flags m_flags;
 };
 
 } // end ns
