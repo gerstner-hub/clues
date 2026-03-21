@@ -32,9 +32,6 @@ void FcntlOperation::processValue(const Tracee &) {
 }
 
 std::string FcntlOperation::str() const {
-	if (!m_op) {
-		throw cosmos::RuntimeError{"no operation stored"};
-	}
 	/*
 	 * the F_*LK definitions exported by userspace headers are not helpful
 	 * for our tracer context at all. They have different values on 64-bit
@@ -65,7 +62,7 @@ std::string FcntlOperation::str() const {
 	constexpr int F_SETLKW   = cosmos::to_integral(Oper::SETLKW);
 	constexpr int F_SETLKW64 = cosmos::to_integral(Oper::SETLKW64);
 
-	switch (cosmos::to_integral(*m_op)) {
+	switch (cosmos::to_integral(m_op)) {
 		CASE_ENUM_TO_STR(F_DUPFD);
 		CASE_ENUM_TO_STR(F_DUPFD_CLOEXEC);
 		CASE_ENUM_TO_STR(F_GETFD);
@@ -98,7 +95,7 @@ std::string FcntlOperation::str() const {
 		CASE_ENUM_TO_STR(F_SET_RW_HINT);
 		CASE_ENUM_TO_STR(F_GET_FILE_RW_HINT);
 		CASE_ENUM_TO_STR(F_SET_FILE_RW_HINT);
-		default: return "???";
+		default: return "F_???";
 	}
 #pragma pop_macro("F_GETLK")
 #pragma pop_macro("F_GETLK64")

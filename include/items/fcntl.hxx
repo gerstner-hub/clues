@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <limits>
 #include <optional>
 
 // cosmos
@@ -60,7 +61,9 @@ public: // types
 		GET_RW_HINT   = F_GET_RW_HINT,
 		SET_RW_HINT   = F_SET_RW_HINT,
 		GET_FILE_RW_HINT = F_GET_FILE_RW_HINT,
-		SET_FILE_RW_HINT = F_SET_FILE_RW_HINT
+		SET_FILE_RW_HINT = F_SET_FILE_RW_HINT,
+		// DUPFD is already 0, thus we need a different invalid value
+		INVALID       = std::numeric_limits<int>::max()
 	};
 
 	using enum Oper;
@@ -70,12 +73,12 @@ public: // functions
 	std::string str() const override;
 
 	Oper operation() const {
-		return *m_op;
+		return m_op;
 	}
 
 	/// Returns whether the operation is one of the LK64 operations.
 	bool isLock64() const {
-		return cosmos::in_list(*m_op, {Oper::GETLK64, Oper::SETLK64, Oper::SETLKW64});
+		return cosmos::in_list(m_op, {Oper::GETLK64, Oper::SETLK64, Oper::SETLKW64});
 	}
 
 protected: // functions
@@ -84,7 +87,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<Oper> m_op;
+	Oper m_op = INVALID;
 };
 
 /// Flags used with `fcntl()` to set and get file descriptor flags.
