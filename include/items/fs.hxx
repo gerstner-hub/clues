@@ -195,8 +195,13 @@ public: // functions
 
 	std::string str() const override;
 
-	const auto& status() const {
-		return *m_stat;
+	/// Access to full FileStatus information.
+	/**
+	 * This optional can be unset if the system call never occurred or if
+	 * reading the data from the Tracee failed.
+	 **/
+	const std::optional<cosmos::FileStatus>& status() const {
+		return m_stat;
 	}
 
 protected: // functions

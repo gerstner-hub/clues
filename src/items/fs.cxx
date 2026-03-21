@@ -173,7 +173,11 @@ std::string FileModeParameter::str() const {
 
 std::string StatParameter::str() const {
 	if (!m_stat) {
-		return "NULL";
+		if (isZero()) {
+			return "NULL";
+		} else {
+			return "<invalid>";
+		}
 	}
 
 	std::stringstream ss;

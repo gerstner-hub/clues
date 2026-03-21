@@ -823,7 +823,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.fd.fd() == FIRST_FD);
 		}), EXIT_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.hasResultValue());
-			const auto &sb = sc.statbuf.status();
+			const auto &sb = *sc.statbuf.status();
 			VERIFY(sb.valid());
 			VERIFY(sb.mode().mask().raw() == 0755);
 			VERIFY(sb.type().isDirectory());
@@ -849,7 +849,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.fd.fd() == FIRST_FD);
 		}), EXIT_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.hasResultValue());
-			const auto &sb = sc.statbuf.status();
+			const auto &sb = *sc.statbuf.status();
 			VERIFY(sb.valid());
 			VERIFY(sb.mode().mask().raw() == 0755);
 			VERIFY(sb.type().isDirectory());
@@ -878,7 +878,7 @@ const auto TESTS = std::array{
 			/* NOTE: this call could fail if some of the metadata
 			 * doesn't fit in the old stat structure */
 			VERIFY(sc.hasResultValue());
-			const auto &sb = sc.statbuf.status();
+			const auto &sb = *sc.statbuf.status();
 			VERIFY(sb.valid());
 			VERIFY(sb.mode().mask().raw() == 0755);
 			VERIFY(sb.type().isDirectory());
@@ -1247,7 +1247,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.path.data() == "/");
 		}), EXIT_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.hasResultValue());
-			const auto &st = sc.statbuf.status();
+			const auto &st = *sc.statbuf.status();
 			VERIFY(st.uid() == cosmos::UserID::ROOT);
 			VERIFY(st.gid() == cosmos::GroupID::ROOT);
 			VERIFY(st.type().isDirectory());
@@ -1269,7 +1269,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.path.data() == "/");
 		}), EXIT_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.hasResultValue());
-			const auto &st = sc.statbuf.status();
+			const auto &st = *sc.statbuf.status();
 			VERIFY(st.uid() == cosmos::UserID::ROOT);
 			VERIFY(st.gid() == cosmos::GroupID::ROOT);
 			VERIFY(st.type().isDirectory());
@@ -1293,7 +1293,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.path.data() == "/");
 		}), EXIT_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.hasResultValue());
-			const auto &st = sc.statbuf.status();
+			const auto &st = *sc.statbuf.status();
 			VERIFY(st.uid() == cosmos::UserID::ROOT);
 			VERIFY(st.gid() == cosmos::GroupID::ROOT);
 			VERIFY(st.type().isDirectory());
