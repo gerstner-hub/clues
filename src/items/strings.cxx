@@ -12,9 +12,8 @@ std::string StringData::str() const {
 }
 
 void StringData::fetch(const Tracee &proc) {
-	// the address of the string in the userspace address space
-	const auto addr = valueAs<long*>();
-	proc.readString(addr, m_str);
+	// fetch the the string from the Tracee's address space.
+	proc.readString(asPtr(), m_str);
 }
 
 void StringArrayData::processValue(const Tracee &proc) {
@@ -22,18 +21,19 @@ void StringArrayData::processValue(const Tracee &proc) {
 		/* in this case we have to be careful, the Tracee uses 4-byte
 		 * pointers, while we are using 8-byte pointers */
 		fetchPointers<uint32_t>(proc);
-	} else {
-		fetchPointers<long*>(proc);
+		return;
 	}
+
+	fetchPointers<uintptr_t>(proc);
 }
 
 template <typename PTR>
 void StringArrayData::fetchPointers(const Tracee &proc) {
-	const auto array_start = valueAs<long*>();
+	const auto array_start = asPtr();
 	std::vector<PTR> string_addrs;
 	m_strs.clear();
 
-	if (!array_start)
+	if (array_start == ForeignPtr::NO_POINTER)
 		return;
 
 	// first read in all start adresses of the c-strings for the string array
@@ -41,7 +41,7 @@ void StringArrayData::fetchPointers(const Tracee &proc) {
 
 	for (const auto &addr: string_addrs) {
 		m_strs.push_back(std::string{});
-		proc.readString(reinterpret_cast<long*>(addr), m_strs.back());
+		proc.readString(ForeignPtr{addr}, m_strs.back());
 	}
 }
 

@@ -211,7 +211,7 @@ void FLockParameter::processValue(const Tracee &proc) {
 
 	auto fetch_lock = [this, assign_data, &proc]<typename FLOCK>() {
 		FLOCK lock;
-		if (proc.readStruct(m_val, lock)) {
+		if (proc.readStruct(asPtr(), lock)) {
 			assign_data(lock);
 		}
 	};
@@ -341,7 +341,7 @@ std::string ExtFileDescOwner::str() const {
 void ExtFileDescOwner::processValue(const Tracee &proc) {
 	m_owner = cosmos::FileDescriptor::Owner{};
 
-	if (!proc.readStruct(m_val, *m_owner->raw())) {
+	if (!proc.readStruct(asPtr(), *m_owner->raw())) {
 		m_owner.reset();
 	}
 }
@@ -393,7 +393,7 @@ void ReadWriteHint::processValue(const Tracee &proc) {
 	 * this is used for both input and output parameter variants
 	 */
 	uint64_t native_hint;
-	if (proc.readStruct(m_val, native_hint)) {
+	if (proc.readStruct(asPtr(), native_hint)) {
 		m_hint = Hint{native_hint};
 	} else {
 		m_hint = Hint::LIFE_NOT_SET;

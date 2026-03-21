@@ -59,7 +59,7 @@ void ResourceLimit::updateData(const Tracee &proc) {
 	auto update_rlimit = [this, &proc]<typename RLIM_T>() {
 		RLIM_T rlim;
 
-		if (!proc.readStruct(m_val, rlim)) {
+		if (!proc.readStruct(asPtr(), rlim)) {
 			m_limit.reset();
 			return;
 		}

@@ -379,7 +379,7 @@ protected: // functions
 
 	/// Reads data from the Tracee starting at `addr` and feeds it to `filler` until it's saturated.
 	template <typename FILLER>
-	void fillData(const ForeignPtr addr, FILLER &filler) const;
+	void fillData(ForeignPtr addr, FILLER &filler) const;
 
 	virtual void cleanupChild() {}
 

@@ -877,7 +877,7 @@ long Tracee::getData(const ForeignPtr addr) const {
 
 /// Reads data from the Tracee and feeds it to `filler` until it's saturated.
 template <typename FILLER>
-void Tracee::fillData(const ForeignPtr addr, FILLER &filler) const {
+void Tracee::fillData(ForeignPtr addr, FILLER &filler) const {
 	long word;
 
 	do {
@@ -888,7 +888,7 @@ void Tracee::fillData(const ForeignPtr addr, FILLER &filler) const {
 	} while (filler(word));
 }
 
-void Tracee::readString(const ForeignPoiter addr, std::string &out) const {
+void Tracee::readString(const ForeignPtr addr, std::string &out) const {
 	return readVector(addr, out);
 }
 
@@ -934,7 +934,7 @@ std::optional<SystemCallNr> Tracee::currentSystemCallNr() const {
 	return m_current_syscall->callNr();
 }
 
-void Tracee::readBlob(const long *addr, char *buffer, const size_t bytes) const {
+void Tracee::readBlob(const ForeignPtr addr, char *buffer, const size_t bytes) const {
 	BlobFiller filler{bytes, buffer};
 	fillData(addr, filler);
 }
@@ -1001,9 +1001,11 @@ void Tracee::dropFD(const cosmos::FileNum fd) const {
 }
 
 // explicit template instantiations
-template void Tracee::readVector<std::vector<long*>>(const long*, std::vector<long*>&) const;
+#ifndef COSMOS_I386
+template void Tracee::readVector<std::vector<uintptr_t>>(const ForeignPtr, std::vector<uintptr_t>&) const;
+#endif
 /* for 32-bit emulation */
-template void Tracee::readVector<std::vector<uint32_t>>(const long*, std::vector<uint32_t>&) const;
+template void Tracee::readVector<std::vector<uint32_t>>(const ForeignPtr, std::vector<uint32_t>&) const;
 
 } // end ns
 

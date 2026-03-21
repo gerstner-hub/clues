@@ -23,7 +23,7 @@ std::string WaitOptionsItem::str() const {
 void ResourceUsageItem::processValue(const Tracee &proc) {
 	m_rusage.emplace(ResourceUsage{});
 
-	if (!proc.readStruct(m_val, m_rusage->raw())) {
+	if (!proc.readStruct(asPtr(), m_rusage->raw())) {
 		m_rusage.reset();
 	}
 }

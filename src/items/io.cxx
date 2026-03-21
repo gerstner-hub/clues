@@ -13,7 +13,7 @@ namespace clues::item {
 void PipeEnds::processValue(const Tracee &proc) {
 	int ends[2];
 
-	if (!proc.readStruct(valueAs<Word>(), ends)) {
+	if (!proc.readStruct(asPtr(), ends)) {
 		// probably bad userspace address or Tracee died
 		reset();
 		return;

@@ -142,3 +142,10 @@ enum class ForeignPtr : uintptr_t {
 };
 
 } // end ns
+
+/// Support for increment of ForeignPtr to the next word boundary.
+inline clues::ForeignPtr operator++(clues::ForeignPtr &p, int) {
+	auto ret = p;
+	p = clues::ForeignPtr{static_cast<uintptr_t>(p) + sizeof(void*)};
+	return ret;
+}

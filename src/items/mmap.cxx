@@ -70,7 +70,7 @@ std::string MapFlagsParameter::str() const {
 void OldMmapArgs::processValue(const Tracee &proc) {
 	struct mmap_arg_struct args;
 
-	if (!proc.readStruct(value(), args)) {
+	if (!proc.readStruct(asPtr(), args)) {
 		m_valid = false;
 		return;
 	}

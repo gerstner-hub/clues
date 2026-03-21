@@ -60,7 +60,7 @@ void SigactionParameter::processValue(const Tracee &proc) {
 		m_sigaction = kernel_sigaction{};
 	}
 
-	if (!proc.readStruct(m_val, *m_sigaction)) {
+	if (!proc.readStruct(asPtr(), *m_sigaction)) {
 		m_sigaction.reset();
 	}
 }
@@ -70,7 +70,7 @@ void SigSetParameter::processValue(const Tracee &proc) {
 		m_sigset = sigset_t{};
 	}
 
-	if (!proc.readStruct(m_val, *m_sigset)) {
+	if (!proc.readStruct(asPtr(), *m_sigset)) {
 		m_sigset.reset();
 	}
 }

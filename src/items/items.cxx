@@ -56,7 +56,7 @@ void PointerToScalar<INT>::fetchValue(const Tracee &tracee) {
 		return;
 
 	try {
-		if (tracee.readStruct(Word{static_cast<uintptr_t>(m_ptr)}, val)) {
+		if (tracee.readStruct(m_ptr, val)) {
 			m_val = val;
 		}
 	} catch (const std::exception &) {
@@ -112,7 +112,7 @@ void BufferPointer::fillBuffer(const Tracee &tracee) {
 	m_data.resize(to_fetch);
 
 	try {
-		tracee.readBlob(valueAs<const long*>(), reinterpret_cast<char*>(m_data.data()), to_fetch);
+		tracee.readBlob(asPtr(), reinterpret_cast<char*>(m_data.data()), to_fetch);
 	} catch (const cosmos::CosmosError &e) {
 		LOG_ERROR("Failed to fetch buffer data from Tracee: " << e.what());
 		m_data.clear();

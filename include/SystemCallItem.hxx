@@ -115,6 +115,10 @@ public: // functions
 		}
 	}
 
+	ForeignPtr asPtr() const {
+		return valueAs<ForeignPtr>();
+	}
+
 protected: // functions
 
 	/// Processes the value stored in m_val acc. to the actual item type.

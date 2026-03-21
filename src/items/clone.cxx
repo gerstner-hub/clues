@@ -91,7 +91,7 @@ void CloneArgs::processValue(const Tracee &proc) {
 	// ignore the check for trivial types, cosmos::CloneArgs has a
 	// constructor to set the whole structure to zero, we can live with that
 	// not happening here.
-	if (!proc.readStruct<cosmos::CloneArgs, /*CHECK_TRIVIAL=*/false>(m_val, *m_args)) {
+	if (!proc.readStruct<cosmos::CloneArgs, /*CHECK_TRIVIAL=*/false>(asPtr(), *m_args)) {
 		m_args.reset();
 		return;
 	}
@@ -104,7 +104,7 @@ void CloneArgs::processValue(const Tracee &proc) {
 		m_tid_array.resize(num_tids);
 		try {
 			proc.readBlob(
-					reinterpret_cast<const long*>(raw->set_tid),
+					ForeignPtr{static_cast<uintptr_t>(raw->set_tid)},
 					reinterpret_cast<char*>(m_tid_array.data()), num_tids * sizeof(cosmos::ThreadID));
 		} catch (const std::exception &ex) {
 			// could be an invalid userspace pointer
@@ -129,11 +129,11 @@ void CloneArgs::updateData(const Tracee &proc) {
 
 	if (flags[PIDFD]) {
 		// read the assigned PID file descriptor from tracee memory.
-		proc.readStruct(static_cast<Word>(raw->pidfd), m_pidfd);
+		proc.readStruct(ForeignPtr{static_cast<uintptr_t>(raw->pidfd)}, m_pidfd);
 	}
 
 	if (flags[PARENT_SETTID]) {
-		proc.readStruct(static_cast<Word>(raw->parent_tid), m_child_tid);
+		proc.readStruct(ForeignPtr{static_cast<uintptr_t>(raw->parent_tid)}, m_child_tid);
 	}
 }
 

@@ -60,14 +60,14 @@ void TimeSpecParameter::fetch(const Tracee &proc) {
 
 	if (needTime32Conversion()) {
 		struct timespec32 ts32;
-		if (!proc.readStruct(m_val, ts32)) {
+		if (!proc.readStruct(asPtr(), ts32)) {
 			m_timespec.reset();
 			return;
 		}
 
 		m_timespec->tv_sec = ts32.tv_sec;
 		m_timespec->tv_nsec = ts32.tv_nsec;
-	} else if (!proc.readStruct(m_val, *m_timespec)) {
+	} else if (!proc.readStruct(asPtr(), *m_timespec)) {
 		m_timespec.reset();
 	}
 }

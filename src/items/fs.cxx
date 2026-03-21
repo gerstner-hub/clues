@@ -274,7 +274,7 @@ void StatParameter::updateData(const Tracee &proc) {
 
 	auto fetch_and_copy = [this, &proc]<typename STAT>() {
 		STAT st;
-		if (!proc.readStruct(m_val, st)) {
+		if (!proc.readStruct(asPtr(), st)) {
 			m_stat.reset();
 			return;
 		}
@@ -324,7 +324,7 @@ void StatParameter::updateData(const Tracee &proc) {
 			 * there's only one type of stat
 			 * directly read into libcosmos's FileStatus
 			 */
-			if (!proc.readStruct(m_val, *m_stat->raw())) {
+			if (!proc.readStruct(asPtr(), *m_stat->raw())) {
 				m_stat.reset();
 			}
 			break;
@@ -413,7 +413,7 @@ void DirEntries::updateData(const Tracee &proc) {
 	 * first copy over all the necessary data from the tracee
 	 */
 	m_buffer = std::unique_ptr<char[]>(new char[bytes]);
-	proc.readBlob(valueAs<long*>(), m_buffer.get(), bytes);
+	proc.readBlob(asPtr(), m_buffer.get(), bytes);
 
 	if (m_call->callNr() == SystemCallNr::GETDENTS64) {
 		parseEntries64(bytes);
