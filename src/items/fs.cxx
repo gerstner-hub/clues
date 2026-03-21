@@ -141,24 +141,18 @@ void AccessModeParameter::processValue(const Tracee&) {
 std::string AccessModeParameter::str() const {
 	using cosmos::fs::AccessCheck;
 
-	if (!m_checks) {
-		return "<invalid>";
-	}
-
-	const auto checks = *m_checks;
-
 	std::stringstream ss;
 
-	if (checks.none()) {
+	if (m_checks.none()) {
 		ss << "F_OK";
 	} else {
-		if (checks[AccessCheck::READ_OK]) {
+		if (m_checks[AccessCheck::READ_OK]) {
 			ss << "R_OK|";
 		}
-		if (checks[AccessCheck::WRITE_OK]) {
+		if (m_checks[AccessCheck::WRITE_OK]) {
 			ss << "W_OK|";
 		}
-		if (checks[AccessCheck::EXEC_OK]) {
+		if (m_checks[AccessCheck::EXEC_OK]) {
 			ss << "X_OK";
 		}
 	}

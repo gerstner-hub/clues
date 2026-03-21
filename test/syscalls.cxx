@@ -395,7 +395,7 @@ void check_faccessat_entry(const SC &access_sc, bool &good) {
 	using cosmos::fs::AccessCheck;
 	using cosmos::fs::AccessChecks;
 	const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-	VERIFY((*access_sc.mode.checks()) == checks);
+	VERIFY(access_sc.mode.checks() == checks);
 };
 
 
@@ -437,7 +437,7 @@ const auto TESTS = std::array{
 			using cosmos::fs::AccessCheck;
 			using cosmos::fs::AccessChecks;
 			const AccessChecks checks{AccessCheck::READ_OK, AccessCheck::EXEC_OK};
-			VERIFY((*sc.mode.checks()) == checks);
+			VERIFY(sc.mode.checks() == checks);
 		}), EXIT_VERIFY_CB(AccessSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 		}), 0, {

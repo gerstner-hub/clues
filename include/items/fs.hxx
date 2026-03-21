@@ -146,7 +146,7 @@ public:
 
 	std::string str() const override;
 
-	std::optional<cosmos::fs::AccessChecks> checks() const {
+	cosmos::fs::AccessChecks checks() const {
 		return m_checks;
 	}
 
@@ -156,7 +156,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<cosmos::fs::AccessChecks> m_checks;
+	cosmos::fs::AccessChecks m_checks;
 };
 
 /// File access mode passed e.g. to open(), chmod().
