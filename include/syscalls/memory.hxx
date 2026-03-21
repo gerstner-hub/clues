@@ -69,6 +69,8 @@ protected: // functions
 
 	bool implementsOldMmap() const;
 
+	bool check2ndPass(const Tracee&) override;
+
 public: // data
 
 	/* parameters for new mmap() / mmap2() */

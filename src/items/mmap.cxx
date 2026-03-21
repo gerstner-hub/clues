@@ -79,7 +79,7 @@ void OldMmapArgs::processValue(const Tracee &proc) {
 	m_length = args.len;
 	m_offset = args.offset;
 	m_prot = cosmos::mem::AccessFlags{static_cast<int>(args.prot)};
-	m_fd = cosmos::FileDescriptor{cosmos::FileNum{static_cast<int>(args.fd)}};
+	m_fd = cosmos::FileNum{static_cast<int>(args.fd)};
 	const auto raw_flags = static_cast<int>(args.flags);
 	m_flags = cosmos::mem::MapFlags{raw_flags & ~0x3};
 	m_type = cosmos::mem::MapType{raw_flags & 0x3};

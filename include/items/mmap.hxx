@@ -108,7 +108,7 @@ public:
 		return m_prot;
 	}
 
-	cosmos::FileDescriptor fd() const {
+	cosmos::FileNum fd() const {
 		return m_fd;
 	}
 
@@ -125,7 +125,7 @@ protected: // data
 	cosmos::mem::MapType m_type{0};
 	cosmos::mem::MapFlags m_flags;
 	cosmos::mem::AccessFlags m_prot;
-	cosmos::FileDescriptor m_fd;
+	cosmos::FileNum m_fd;
 };
 
 } // end ns

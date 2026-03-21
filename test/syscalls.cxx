@@ -21,11 +21,12 @@
 #include <cosmos/proc/process.hxx>
 
 // clues
+#include <clues/private/kernel/mmap.hxx>
+#include <clues/private/kernel/other.hxx>
+#include <clues/private/kernel/time.hxx>
 #include <clues/syscalls/all.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
-#include <clues/private/kernel/time.hxx>
-#include <clues/private/kernel/other.hxx>
 
 // Test
 #include "TestBase.hxx"
@@ -1329,20 +1330,73 @@ const auto TESTS = std::array{
 			VERIFY(sc.flags.flags() == MapFlags{ANONYMOUS});
 			VERIFY(sc.fd.fd() == cosmos::FileNum::INVALID);
 			VERIFY(sc.offset.valueAs<off_t>() == 0);
+			VERIFY(!sc.isOldMmap());
 		}), EXIT_VERIFY_CB(MmapSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}), 0, {
 		},
 		"",
 		{clues::ABI::X86_64, clues::ABI::AARCH64}
-	},
-	TestSpec{SystemCallNr::MMAP2, []() {
+	}, TestSpec{SystemCallNr::MMAP, []() {
+#ifdef COSMOS_I386
+			clues::mmap_arg_struct args;
+			std::memset(&args, 0, sizeof(args));
+			args.len = 1234;
+			args.prot = PROT_READ|PROT_WRITE;
+			args.flags = MAP_PRIVATE|MAP_ANONYMOUS;
+			args.fd = -1;
+			syscall(SYS_mmap, &args);
+#endif
+		}, ENTRY_VERIFY_CB(MmapSystemCall, {
+			VERIFY(sc.isOldMmap());
+			const auto &args = *sc.old_args;
+			VERIFY(args.valid());
+			VERIFY(args.addr() == clues::ForeignPtr::NO_POINTER);
+			VERIFY(args.length() == 1234);
+			VERIFY(args.offset() == 0);
+			VERIFY(args.type() == cosmos::mem::MapType::PRIVATE);
+			using enum cosmos::mem::MapFlag;
+			using MapFlags = cosmos::mem::MapFlags;
+			VERIFY(args.flags() == MapFlags{ANONYMOUS});
+			using enum cosmos::mem::AccessFlag;
+			using AccessFlags = cosmos::mem::AccessFlags;
+			VERIFY(args.prot() == AccessFlags{READ, WRITE});
+			VERIFY(args.fd() == cosmos::FileNum::INVALID);
+
+			/*
+			 * and now do the same more the non-legacy arguments
+			 * which should be synced with the legacy data.
+			 */
+			VERIFY(sc.hint.ptr() == nullptr);
+			VERIFY(sc.length.value() == 1234);
+			VERIFY(sc.protection.prot() == AccessFlags{READ, WRITE});
+			VERIFY(sc.flags.type() == cosmos::mem::MapType::PRIVATE);
+			VERIFY(sc.flags.flags() == MapFlags{ANONYMOUS});
+			VERIFY(sc.fd.fd() == cosmos::FileNum::INVALID);
+			VERIFY(sc.offset.valueAs<off_t>() == 0);
+		}), EXIT_VERIFY_CB(MmapSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(1, []() {
+				auto args = alloc_struct32<clues::mmap_arg_struct>();
+				std::memset(args, 0, sizeof(*args));
+				args->len = 1234;
+				args->prot = PROT_READ|PROT_WRITE;
+				args->flags = MAP_PRIVATE|MAP_ANONYMOUS;
+				args->fd = -1;
+				syscall32(SyscallNr32::MMAP, args);
+			})
+		},
+		"legacy",
+		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::MMAP2, []() {
 #ifdef COSMOS_I386
 			syscall(SYS_mmap2, nullptr, 1234,
 					PROT_READ|PROT_WRITE,
 					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 #endif
 		}, ENTRY_VERIFY_CB(MmapSystemCall, {
+			VERIFY(!sc.isOldMmap());
 			VERIFY(sc.hint.ptr() == nullptr);
 			VERIFY(sc.length.value() == 1234);
 			using enum cosmos::mem::AccessFlag;
