@@ -196,7 +196,7 @@ public: // functions
 
 	std::string str() const override;
 
-	const auto& owner() const {
+	const std::optional<cosmos::FileDescriptor::Owner>& owner() const {
 		return m_owner;
 	}
 

@@ -325,6 +325,10 @@ std::string FileDescOwner::str() const {
 }
 
 std::string ExtFileDescOwner::str() const {
+	if (!m_owner) {
+		return "<invalid>";
+	}
+
 	auto type_str = [](cosmos::FileDescriptor::Owner::Type type) {
 		switch (cosmos::to_integral(type)) {
 			CASE_ENUM_TO_STR(F_OWNER_TID);
