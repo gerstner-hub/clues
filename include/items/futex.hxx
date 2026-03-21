@@ -101,7 +101,7 @@ public: // types
 
 	enum class Comparator : uint32_t {
 		EQUAL         = FUTEX_OP_CMP_EQ,  ///< `oldval == cmparg`
-		UNEQUAL       = FUTEX_OP_CMP_NE, ///< `oldval != cmparg`
+		UNEQUAL       = FUTEX_OP_CMP_NE,  ///< `oldval != cmparg`
 		LESS_THAN     = FUTEX_OP_CMP_LT,  ///< `oldval < cmparg`
 		LESS_EQUAL    = FUTEX_OP_CMP_LE,  ///< `oldval <= cmparg`
 		GREATER_THAN  = FUTEX_OP_CMP_GT,  ///< `oldval > cmparg`
