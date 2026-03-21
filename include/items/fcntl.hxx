@@ -160,12 +160,20 @@ public: // functions
 
 	std::string str() const override;
 
-	auto pid() const {
+	std::optional<cosmos::ProcessID> pid() const {
 		return m_pid;
 	}
 
-	auto pgid() const {
+	std::optional<cosmos::ProcessGroupID> pgid() const {
 		return m_pgid;
+	}
+
+	bool isPid() const {
+		return m_pid.has_value();
+	}
+
+	bool isPgid() const {
+		return m_pgid.has_value();
 	}
 
 protected: // functions
