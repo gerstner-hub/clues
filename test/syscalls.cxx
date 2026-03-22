@@ -1444,6 +1444,21 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::MPROTECT, mem, 1024, PROT_READ|PROT_WRITE);
 			})
 		}
+	}, TestSpec{SystemCallNr::MUNMAP, []() {
+			auto mem = mmap(nullptr, 1024, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+			munmap(mem, 1024);
+		},  ENTRY_VERIFY_CB(MunmapSystemCall, {
+			VERIFY(sc.addr.ptr() != ForeignPtr::NO_POINTER);
+			VERIFY(sc.length.value() == 1024);
+		}), EXIT_VERIFY_CB(MunmapSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 1, {
+			I386_CROSS_ABI(1, []() {
+				auto mem = syscall32(SyscallNr32::MMAP2, nullptr,
+					1024, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+				syscall32(SyscallNr32::MUNMAP, mem, 1024);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
