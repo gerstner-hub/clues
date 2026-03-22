@@ -1424,6 +1424,26 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::MPROTECT, []() {
+			auto mem = mmap(nullptr, 1024, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+			mprotect(mem, 1024, PROT_READ|PROT_WRITE);
+		}, ENTRY_VERIFY_CB(MprotectSystemCall, {
+			VERIFY(sc.addr.ptr() != ForeignPtr::NO_POINTER);
+			VERIFY(sc.length.value() == 1024);
+			using enum cosmos::mem::AccessFlag;
+			using AccessFlags = cosmos::mem::AccessFlags;
+			VERIFY(sc.protection.prot() == AccessFlags{READ, WRITE});
+			VERIFY(sc.protection.prot() ==  AccessFlags{READ, WRITE});
+		}), EXIT_VERIFY_CB(MprotectSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 1, {
+			I386_CROSS_ABI(1, []() {
+				auto mem = syscall32(SyscallNr32::MMAP2, nullptr,
+					1024, PROT_READ,
+					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+				syscall32(SyscallNr32::MPROTECT, mem, 1024, PROT_READ|PROT_WRITE);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
