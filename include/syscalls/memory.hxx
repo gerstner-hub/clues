@@ -101,7 +101,7 @@ struct CLUES_API MunmapSystemCall :
 
 	/* parameters */
 	item::GenericPointerValue addr;
-	item::ValueInParameter length;
+	item::SizeValue length;
 
 	/* return value */
 	item::SuccessResult result;
