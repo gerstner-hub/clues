@@ -109,6 +109,7 @@ struct CLUES_API MunmapSystemCall :
 
 struct CLUES_API MprotectSystemCall :
 		public SystemCall {
+
 	MprotectSystemCall() :
 			SystemCall{SystemCallNr::MPROTECT},
 			addr{"addr"},
@@ -119,7 +120,7 @@ struct CLUES_API MprotectSystemCall :
 
 	/* parameters */
 	item::GenericPointerValue addr;
-	item::ValueInParameter length;
+	item::SizeValue length;
 	item::MemoryProtectionParameter protection;
 
 	/* return value */
