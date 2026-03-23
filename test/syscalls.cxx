@@ -1479,6 +1479,47 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::NANOSLEEP, ts32, ts32);
 			})
 		}
+	}, TestSpec{SystemCallNr::OPEN, []() {
+			syscall(SYS_open, "/etc/fstab", O_RDONLY|O_CLOEXEC);
+		}, ENTRY_VERIFY_CB(OpenSystemCall, {
+			VERIFY(sc.filename.data() == "/etc/fstab");
+			using enum cosmos::OpenMode;
+			using enum cosmos::OpenFlag;
+			using OpenFlags = cosmos::OpenFlags;
+			VERIFY(sc.flags.flags() == OpenFlags{CLOEXEC});
+			VERIFY(sc.flags.mode() == READ_ONLY);
+			VERIFY(!sc.mode.has_value());
+		}), EXIT_VERIFY_CB(OpenSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), 0, {
+			I386_CROSS_ABI(1, []() {
+				auto path = alloc_str32("/etc/fstab");
+				syscall32(SyscallNr32::OPEN, path, O_RDONLY|O_CLOEXEC);
+			})
+		}
+	}, TestSpec{SystemCallNr::OPEN, []() {
+			syscall(SYS_open, "/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+		}, ENTRY_VERIFY_CB(OpenSystemCall, {
+			VERIFY(sc.filename.data() == "/tmp");
+			using enum cosmos::OpenMode;
+			using enum cosmos::OpenFlag;
+			using OpenFlags = cosmos::OpenFlags;
+			VERIFY(sc.flags.flags() == OpenFlags{CLOEXEC,TMPFILE});
+			VERIFY(sc.flags.mode() == WRITE_ONLY);
+			VERIFY(sc.mode.has_value());
+			const auto &mode_par = *sc.mode;
+			VERIFY(mode_par.mode() == cosmos::FileMode{cosmos::FileModeBit{0755}});
+		}), EXIT_VERIFY_CB(OpenSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), 0, {
+			I386_CROSS_ABI(1, []() {
+				auto path = alloc_str32("/tmp");
+				syscall32(SyscallNr32::OPEN, path, O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+			})
+		},
+		"CREAT"
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
