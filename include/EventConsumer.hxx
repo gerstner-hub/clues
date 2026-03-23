@@ -135,7 +135,7 @@ protected: // functions
 	 * tracee relationship is lost.
 	 *
 	 * If the exit happens due to an execve in a multi-threaded
-	 * process then Status::LOST_TO_EXECVE is set in `flags`.
+	 * process then Status::LOST_TO_MT_EXIT is set in `flags`.
 	 **/
 	virtual void exited(Tracee &tracee, const cosmos::WaitStatus status, const StatusFlags flags) {
 		(void)tracee;
