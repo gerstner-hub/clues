@@ -96,6 +96,7 @@ struct TestSpec {
  * used for comparison of file descriptor values observed.
  */
 constexpr cosmos::FileNum FIRST_FD{4};
+constexpr cosmos::FileNum SECOND_FD{5};
 constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x70000000;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
@@ -1517,6 +1518,55 @@ const auto TESTS = std::array{
 			I386_CROSS_ABI(1, []() {
 				auto path = alloc_str32("/tmp");
 				syscall32(SyscallNr32::OPEN, path, O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+			})
+		},
+		"CREAT"
+	}, TestSpec{SystemCallNr::OPENAT, []() {
+			auto fd = open("/etc", O_RDONLY|O_DIRECTORY);
+			syscall(SYS_openat, fd, "fstab", O_RDONLY|O_CLOEXEC);
+		}, ENTRY_VERIFY_CB(OpenAtSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD)
+			VERIFY(sc.filename.data() == "fstab");
+			using enum cosmos::OpenMode;
+			using enum cosmos::OpenFlag;
+			using OpenFlags = cosmos::OpenFlags;
+			VERIFY(sc.flags.flags() == OpenFlags{CLOEXEC});
+			VERIFY(sc.flags.mode() == READ_ONLY);
+			VERIFY(!sc.mode.has_value());
+		}), EXIT_VERIFY_CB(OpenAtSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == SECOND_FD);
+		}), 1, {
+			I386_CROSS_ABI(3, []() {
+				auto dirpath = alloc_str32("/etc");
+				auto filepath = alloc_str32("fstab");
+				auto fd = open(dirpath, O_RDONLY|O_DIRECTORY);
+				syscall32(SyscallNr32::OPENAT, fd, filepath, O_RDONLY|O_CLOEXEC);
+			})
+		},
+	}, TestSpec{SystemCallNr::OPENAT, []() {
+			auto fd = open("/tmp", O_RDONLY|O_DIRECTORY);
+			syscall(SYS_openat, fd, ".", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+		}, ENTRY_VERIFY_CB(OpenAtSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD)
+			VERIFY(sc.filename.data() == ".");
+			using enum cosmos::OpenMode;
+			using enum cosmos::OpenFlag;
+			using OpenFlags = cosmos::OpenFlags;
+			VERIFY(sc.flags.flags() == OpenFlags{CLOEXEC,TMPFILE});
+			VERIFY(sc.flags.mode() == WRITE_ONLY);
+			VERIFY(sc.mode.has_value());
+			const auto &mode_par = *sc.mode;
+			VERIFY(mode_par.mode() == cosmos::FileMode{cosmos::FileModeBit{0755}});
+		}), EXIT_VERIFY_CB(OpenAtSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == SECOND_FD);
+		}), 1, {
+			I386_CROSS_ABI(3, []() {
+				auto dirpath = alloc_str32("/tmp");
+				auto filepath = alloc_str32(".");
+				auto fd = open(dirpath, O_RDONLY|O_DIRECTORY);
+				syscall32(SyscallNr32::OPENAT, fd, filepath, O_WRONLY|O_CLOEXEC|O_TMPFILE, 0755);
 			})
 		},
 		"CREAT"
