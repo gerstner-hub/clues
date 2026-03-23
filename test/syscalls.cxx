@@ -1459,6 +1459,26 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::MUNMAP, mem, 1024);
 			})
 		}
+	}, TestSpec{SystemCallNr::NANOSLEEP, []() {
+			struct timespec ts;
+			ts.tv_sec = 0;
+			ts.tv_nsec = 500;
+			syscall(SYS_nanosleep, &ts, &ts);
+		}, ENTRY_VERIFY_CB(NanoSleepSystemCall, {
+			VERIFY(sc.req_time.asPtr() == sc.rem_time.asPtr());
+			const auto &ts = *sc.req_time.spec();
+			VERIFY(ts.tv_sec == 0);
+			VERIFY(ts.tv_nsec == 500);
+		}), EXIT_VERIFY_CB(NanoSleepSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(1, []() {
+				auto ts32 = alloc_struct32<clues::timespec32>();
+				ts32->tv_sec = 0;
+				ts32->tv_nsec = 500;
+				syscall32(SyscallNr32::NANOSLEEP, ts32, ts32);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
