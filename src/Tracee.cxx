@@ -424,6 +424,7 @@ void Tracee::handleSystemCallEntry() {
 	if (nr == SystemCallNr::RESTART_SYSCALL) {
 		if (m_interrupted_syscall) {
 			m_current_syscall = m_interrupted_syscall;
+			m_interrupted_syscall = nullptr;
 			flags.set(EventConsumer::StatusFlag::RESUMED);
 		} else if (m_syscall_ctr != 0) {
 			// explicit restart_syscall done by user space?
@@ -453,7 +454,21 @@ void Tracee::handleSystemCallEntry() {
 				flags.set(EventConsumer::StatusFlag::RESUMED);
 			}
 		}
+	} else if (m_interrupted_syscall && m_flags[Flag::SEEN_SIGRETURN]) {
+		if (m_interrupted_syscall->callNr() == m_current_syscall->callNr()) {
+			/*
+			 * no restart_syscall is used in this case, but we can
+			 * still set the flag and cleanup state.
+			 */
+			flags.set(EventConsumer::StatusFlag::RESUMED);
+		} else {
+			LOG_WARN_PID("unknown system call is resumed after sigreturn");
+		}
+
+		m_flags.reset(Flag::SEEN_SIGRETURN);
+		m_interrupted_syscall = nullptr;
 	}
+
 	m_current_syscall->setEntryInfo(*this, *m_syscall_info);
 	m_syscall_ctr++;
 	m_consumer.syscallEntry(*this, *m_current_syscall, flags);
@@ -469,11 +484,19 @@ void Tracee::handleSystemCallExit() {
 		// system call was interrupted, remember it for later
 		m_interrupted_syscall = m_current_syscall;
 		flags.set(EventConsumer::StatusFlag::INTERRUPTED);
-	} else {
-		m_interrupted_syscall = nullptr;
 	}
 
 	m_consumer.syscallExit(*this, syscall, flags);
+
+	if (m_interrupted_syscall) {
+		switch (m_current_syscall->callNr()) {
+			case SystemCallNr::RT_SIGRETURN: [[fallthrough]];
+			// although this looks legacy it is still used on the I386 ABI
+			case SystemCallNr::SIGRETURN: m_flags.set(Flag::SEEN_SIGRETURN); break;
+			default: break;
+		}
+	}
+
 	m_current_syscall = nullptr;
 }
 

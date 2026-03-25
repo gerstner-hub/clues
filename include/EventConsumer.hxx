@@ -74,6 +74,38 @@ protected: // functions
 	 * and any system call parameters of ItemType::PARAM_OUT or
 	 * ItemType::PARAM_IN_OUT should have been updated by the kernel and
 	 * can be updated and processed by the implementation.
+	 *
+	 * If `flags[StatusFlag::INTERRUPTED]` is set, then the system call
+	 * was interrupted by a signal and aborted by the kernel. Whether this
+	 * happens depends on various factors, e.g. if the `SA_RESTART` flag
+	 * is set in the Tracee for the signal which was received and also on
+	 * the type of system call which is executed. If automatic system call
+	 * restarting is not active then a regular EINTR error return will be
+	 * observed and the Tracee has to actively deal with the situation.
+	 *
+	 * libclues tries to keep track of when an automatically restarted
+	 * system call will be resumed and will set `flags[StatusFlag::RESUMED]`
+	 * during syscallEntry() accordingly. There are two different
+	 * scenarios to take into account here:
+	 *
+	 * - restart_syscall() is injected by the kernel. This is the case
+	 *   when the signal was SIGSTOP and the system call was time-related,
+	 *   like `clock_nanosleep()`, to give userspace (libc) the chance to
+	 *   adjust times before resuming the system call.
+	 *
+	 *   libclues looks up the original system call and will not report
+	 *   SystemCallNr::RESTART_SYSCALL, but the resumed system call and
+	 *   will set `StatusFlag::RESUMED` accordingly.
+	 *
+	 * - the system call is transparently restarted by the kernel. In this
+	 *   case the system call entry is not easily distinguishable from a
+	 *   completely new system call. The Tracee might have executed
+	 *   additional system calls in-between when an asynchronous signal
+	 *   handler was executed. libclues is looking for the `rt_sigreturn()`
+	 *   system call to appear to make out the end of the interruption and
+	 *   then looks for the next system call of the same type as the
+	 *   interrupted system call. When this situation is detected then
+	 *   `StatusFlag::RESUMED` is set as well.
 	 **/
 	virtual void syscallExit(Tracee &tracee, const SystemCall &sc, const StatusFlags flags) {
 		(void)tracee;

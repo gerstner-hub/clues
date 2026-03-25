@@ -66,6 +66,7 @@ public: // types
 		SYSCALL_ENTERED      = 1 << 4, ///< we've seen a syscall-enter-stop and are waiting for the corresponding exit-stop.
 		WAIT_FOR_EXITED      = 1 << 5, ///< we've already seen PTHREAD_EVENT_EXIT but are still waiting for CLD_EXITED.
 		ATTACH_THREADS_PENDING = 1 << 6, ///< attach all threads of the process as soon as the initial event stop happens.
+		SEEN_SIGRETURN       = 1 << 7, ///< a sigreturn with a pending interrupted system call has been observed.
 	};
 
 	using Flags = cosmos::BitMask<Flag>;
