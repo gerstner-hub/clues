@@ -1570,6 +1570,28 @@ const auto TESTS = std::array{
 			})
 		},
 		"CREAT"
+	}, TestSpec{SystemCallNr::READ, []() {
+			int fd = open("/etc/fstab", O_RDONLY);
+			char buffer[1024];
+			if (read(fd, buffer, sizeof(buffer)) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(ReadSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.count.value() == 1024);
+		}), EXIT_VERIFY_CB(ReadSystemCall, {
+			VERIFY(sc.buf.availableBytes() > 0);
+			VERIFY(sc.buf.data().size() <= sc.buf.availableBytes());
+			VERIFY(sc.read.value() == sc.buf.availableBytes());
+		}), 1, {
+			I386_CROSS_ABI(3, []() {
+				auto path = alloc_str32("/etc/fstab");
+				int fd = open(path, O_RDONLY);
+				auto buffer = alloc32<char*>(1024);
+				if (syscall32(SyscallNr32::READ, fd, buffer, 1024) < 0) {
+				}
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
