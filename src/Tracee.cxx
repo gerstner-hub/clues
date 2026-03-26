@@ -488,12 +488,33 @@ void Tracee::handleSystemCallExit() {
 
 	m_consumer.syscallExit(*this, syscall, flags);
 
-	if (m_interrupted_syscall) {
-		switch (m_current_syscall->callNr()) {
+	auto is_sigreturn = [](const SystemCall &call) -> bool {
+		switch (call.callNr()) {
 			case SystemCallNr::RT_SIGRETURN: [[fallthrough]];
 			// although this looks legacy it is still used on the I386 ABI
-			case SystemCallNr::SIGRETURN: m_flags.set(Flag::SEEN_SIGRETURN); break;
-			default: break;
+			case SystemCallNr::SIGRETURN: return true;
+			default: return false;
+		}
+	};
+
+	/*
+	 * check if this is a sigreturn() system calling marking the end of
+	 * asynchronous signal handler execution and thus the end of the
+	 * interruption.
+	 */
+	if (m_interrupted_syscall && is_sigreturn(syscall)) {
+		/*
+		 * to differentiate transparent restart and visible EINTR
+		 * returns we need to check this syscall's return value. If it
+		 * succeeds then it is a transparent restart, otherwise a
+		 * visible EINTR.
+		 */
+		if (const auto error = syscall.error(); error &&
+				error->hasErrorCode() &&
+				error->errorCode() == cosmos::Errno::INTERRUPTED) {
+			m_interrupted_syscall = nullptr;
+		} else {
+			m_flags.set(Flag::SEEN_SIGRETURN); 
 		}
 	}
 
