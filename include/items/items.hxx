@@ -166,7 +166,7 @@ public: // functions
 		return m_data;
 	}
 
-	/// Returns the actual buffer size in the Tracee.
+	/// Returns the actual number of input bytes available in the Tracee.
 	/**
 	 * Depending on configuration libclues only fetches part of the
 	 * tracee's buffer data. This function returns the actual amount of
@@ -175,7 +175,7 @@ public: // functions
 	 * The amount of pre-fetched data can be controlled per tracee via
 	 * Tracee::setMaxBufferPrefetch().
 	 **/
-	size_t actualBufferSize() const;
+	size_t availableBytes() const;
 
 	std::string str() const override;
 

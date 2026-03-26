@@ -108,7 +108,7 @@ void BufferPointer::updateData(const Tracee &tracee) {
 }
 
 void BufferPointer::fillBuffer(const Tracee &tracee) {
-	const auto to_fetch = std::min(tracee.maxBufferPrefetch(), actualBufferSize());
+	const auto to_fetch = std::min(tracee.maxBufferPrefetch(), availableBytes());
 	m_data.resize(to_fetch);
 
 	try {
@@ -119,12 +119,12 @@ void BufferPointer::fillBuffer(const Tracee &tracee) {
 	}
 }
 
-size_t BufferPointer::actualBufferSize() const {
+size_t BufferPointer::availableBytes() const {
 	return m_size_par.valueAs<size_t>();
 }
 
 std::string BufferPointer::str() const {
-	const auto is_cut_off = actualBufferSize() != m_data.size();
+	const auto is_cut_off = availableBytes() != m_data.size();
 	auto ret = format::buffer(m_data.data(), m_data.size());
 
 	if (is_cut_off) {
