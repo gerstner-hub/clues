@@ -6,8 +6,9 @@
 #include <sys/syscall.h>
 
 // C++
-#include <iostream>
 #include <cstring>
+#include <functional>
+#include <iostream>
 
 // Clues
 #include <clues/SystemCall.hxx>
@@ -85,6 +86,8 @@ public:
 	}
 };
 
+using AttachedCB = std::function<void()>;
+
 /*
  * This tests another variant of resuming, where restart_syscall() is not
  * invoked, e.g. when a read() system call is interrupted by signal.
@@ -131,10 +134,17 @@ protected:
 		}
 	}
 
+	void attached(clues::Tracee &) override {
+		m_attached_cb();
+	}
+
 	size_t m_num_reads_seen = 0;
 	bool m_sent_sig = false;
 	bool m_seen_interrupted = false;
 	bool m_seen_resumed = false;
+	AttachedCB m_attached_cb;
+
+
 public:
 	bool seenInterrupted() const {
 		return m_seen_interrupted;
@@ -142,6 +152,10 @@ public:
 
 	bool seenResumed() const {
 		return m_seen_resumed;
+	}
+
+	void setAttachedCB(AttachedCB cb) {
+		m_attached_cb = cb;
 	}
 };
 
@@ -204,7 +218,8 @@ class RestartSyscallTest : public cosmos::TestBase {
 					std::cerr << "read() failed\n";
 				}
 			}, tracer};
-		creator.run();
+		tracer.setAttachedCB([&creator]() { creator.signalChild(); });
+		creator.run(clues::FollowChildren{false}, /*explicit_signal=*/true);
 
 		RUN_STEP("seen-interrupted", tracer.seenInterrupted());
 		RUN_STEP("seen-resumed", tracer.seenResumed());
