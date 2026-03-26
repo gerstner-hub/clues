@@ -33,15 +33,15 @@ struct CLUES_API ReadSystemCall :
 			fd{},
 			buf{read, ItemType::PARAM_OUT, "buf", "target buffer"},
 			count{"count", "buffer length"},
-			read{"bytes", "bytes read"} {
+			read{"bytes", "bytes read", ItemType::RETVAL} {
 		setReturnItem(read);
 		setParameters(fd, buf, count);
 	}
 
 	item::FileDescriptor fd;
 	item::BufferPointer buf;
-	item::ValueInParameter count;
-	item::ReturnValue read;
+	item::SizeValue count;
+	item::SizeValue read;
 };
 
 // TODO: the number of parameters can vary here.
