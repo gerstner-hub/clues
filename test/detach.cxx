@@ -43,7 +43,7 @@ class DetachTest : public cosmos::TestBase {
 	void findCloneTest() {
 		std::string dir{m_argv.at(0)};
 		dir = dir.substr(0, dir.rfind('/'));
-		auto cloner = dir + "/syscalls/clone";
+		auto cloner = dir + "/samples/clone";
 		cloner = cosmos::fs::canonicalize_path(cloner);
 		if (!cosmos::fs::exists_file(cloner)) {
 			throw cosmos::RuntimeError{"couldn't find 'clone' syscall test helper"};

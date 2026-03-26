@@ -13,7 +13,7 @@ test_env.ConfigureForLibOrPackage('libclues', static_lib_sources)
 test_env.ConfigureForLibOrPackage('libcosmos', static_lib_sources)
 
 env.SConscript(test_env['buildroot'] + 'test/helpers/SConstruct')
-env.SConscript(test_env['buildroot'] + 'test/syscalls/SConstruct')
+env.SConscript(test_env['buildroot'] + 'test/samples/SConstruct')
 
 run_env = test_env.Clone()
 if not env['use_system_pkgs']:
@@ -23,7 +23,7 @@ if env['sanitizer']:
     run_env['ENV']['ASAN_OPTIONS'] = 'detect_odr_violation=0'
 
 need_helpers = ("execve.cxx", "tracer.cxx", "syscalls.cxx")
-need_syscall_tests = ("detach.cxx",)
+need_samples = ("detach.cxx",)
 need_tracer = ("tracer.cxx",)
 
 for test in tests:
@@ -45,8 +45,8 @@ for test in tests:
         run_env.Requires(run_cmd, 'helpers')
     if test in need_tracer:
         run_env.Requires(run_cmd, 'clues')
-    if test in need_syscall_tests:
-        run_env.Requires(run_cmd, 'syscall_tests')
+    if test in need_samples:
+        run_env.Requires(run_cmd, 'samples')
 
     env.Alias(run_test_key, run_cmd)
     env.Alias('run_clues_tests', run_test_key)

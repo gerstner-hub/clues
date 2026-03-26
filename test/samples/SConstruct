@@ -13,6 +13,6 @@ for sys_test in env.GatherSources(suffixes=['.cxx']):
     node = env.Program(exe, [sys_test] + static_sources)
 
     # key = f'syscall_test_{label}'
-    env.Alias("syscall_tests", node)
+    env.Alias("samples", node)
 
 Return('env')
