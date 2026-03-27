@@ -104,6 +104,10 @@ std::string saflags(const int flags) {
 	ss << #FLAG;\
 }
 
+	if (flags == 0) {
+		return "0";
+	}
+
 	std::stringstream ss;
 	bool first = true;
 
