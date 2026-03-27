@@ -1592,6 +1592,38 @@ const auto TESTS = std::array{
 				}
 			})
 		}
+	}, TestSpec{SystemCallNr::RT_SIGACTION, []() {
+			using sig_handler_t = void(*)(int);
+			struct sigaction act, oldact;
+			memset(&act, 0, sizeof(act));
+			act.sa_handler = (sig_handler_t)0x1234;
+			sigaddset(&act.sa_mask, SIGCHLD);
+			act.sa_flags = SA_RESTART|SA_RESETHAND;
+			::sigaction(SIGUSR1, &act, &oldact);
+		}, ENTRY_VERIFY_CB(SigActionSystemCall, {
+			VERIFY(sc.signum.nr() == cosmos::signal::USR1.raw());
+			auto action = *sc.action.action();
+			VERIFY(action.handler == (void*)0x1234);
+			VERIFY(action.flags = SA_RESTART|SA_RESETHAND);
+			VERIFY(sigismember(&action.mask, SIGCHLD));
+			VERIFY(sc.old_action.action().has_value());
+		}), EXIT_VERIFY_CB(SigActionSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+#if 0
+			I386_CROSS_ABI(2, []() {
+				auto act = alloc_struct32<struct sigaction>();
+				auto oldact = alloc_struct32<struct sigaction>();
+				memset(act, 0, sizeof(struct sigaction));
+				using sig_handler_t = void(*)(int);
+				act->sa_handler = (sig_handler_t)(0x1234);
+				sigaddset(&act->sa_mask, SIGCHLD);
+				act->sa_flags = SA_RESTART|SA_RESETHAND;
+				auto err = syscall32(SyscallNr32::RT_SIGACTION, SIGUSR1, act, oldact);
+				std::cerr << strerror(-err) << "\n";
+			})
+#endif
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
