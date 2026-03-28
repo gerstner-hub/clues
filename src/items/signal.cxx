@@ -47,11 +47,11 @@ std::string SigActionParameter::str() const {
 	else if (m_sigaction->isDefaultAction())
 		ss << "SIG_DFL";
 	else
-		ss << (void*)m_sigaction->raw()->sa_handler;
+		ss << format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(m_sigaction->raw()->sa_handler)});
 
 	ss << ", sa_mask=" << format::signal_set(*(m_sigaction->mask().raw())) << ", sa_flags="
 		<< format::saflags(m_sigaction->getFlags().raw()) << ", sa_restorer="
-		<< (void*)m_sigaction->raw()->sa_restorer << ")";
+		<< format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(m_sigaction->raw()->sa_restorer)}) << ")";
 
 	return ss.str();
 }
