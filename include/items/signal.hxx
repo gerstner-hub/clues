@@ -5,9 +5,9 @@
 
 // cosmos
 #include <cosmos/proc/types.hxx>
+#include <cosmos/proc/SigAction.hxx>
 
 // clues
-#include <clues/kernel_structs.hxx>
 #include <clues/items/items.hxx>
 
 namespace clues::item {
@@ -71,18 +71,19 @@ protected: // data
 };
 
 /// The struct sigaction used in various signal related system calls.
-class CLUES_API SigactionParameter :
-		public PointerInValue {
+class CLUES_API SigActionParameter :
+		public PointerValue {
 public: // functions
-	explicit SigactionParameter(
+	explicit SigActionParameter(
 		const std::string_view short_name = "sigaction",
-		const std::string_view long_name = "struct sigaction") :
-			PointerInValue{short_name, long_name} {
+		const std::string_view long_name = "struct sigaction",
+		const ItemType type = ItemType::PARAM_IN) :
+			PointerValue{type, short_name, long_name} {
 	}
 
 	std::string str() const override;
 
-	const std::optional<struct kernel_sigaction>& action() const {
+	const std::optional<cosmos::SigAction>& action() const {
 		return m_sigaction;
 	}
 
@@ -92,7 +93,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<struct kernel_sigaction> m_sigaction;
+	std::optional<cosmos::SigAction> m_sigaction;
 };
 
 /// A set of POSIX signals for setting or masking in the context of various system calls.

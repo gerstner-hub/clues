@@ -1602,10 +1602,15 @@ const auto TESTS = std::array{
 			::sigaction(SIGUSR1, &act, &oldact);
 		}, ENTRY_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.signum.nr() == cosmos::signal::USR1.raw());
-			auto action = *sc.action.action();
-			VERIFY(action.handler == (void*)0x1234);
-			VERIFY(action.flags = SA_RESTART|SA_RESETHAND);
-			VERIFY(sigismember(&action.mask, SIGCHLD));
+			const auto &action = *sc.action.action();
+			VERIFY(action.raw()->sa_handler == (void*)0x1234);
+			using enum cosmos::SigAction::Flag;
+			using Flags = cosmos::SigAction::Flags;
+			const auto flags = Flags{{RESTART, RESET_HANDLER}};
+			/* libc adds SA_RESTORER implicitly, so be prepared
+			 * for that */
+			VERIFY(action.getFlags() == flags || action.getFlags() == flags + Flags{RESTORER});
+			VERIFY(action.mask().isSet(cosmos::signal::CHILD));
 			VERIFY(sc.old_action.action().has_value());
 		}), EXIT_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.hasResultValue());

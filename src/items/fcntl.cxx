@@ -8,7 +8,6 @@
 // clues
 #include <clues/Tracee.hxx>
 #include <clues/items/fcntl.hxx>
-#include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
 #include <clues/private/utils.hxx>
 #include <clues/syscalls/fs.hxx>

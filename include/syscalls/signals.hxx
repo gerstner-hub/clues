@@ -28,15 +28,15 @@ struct CLUES_API SigActionSystemCall :
 
 	SigActionSystemCall() :
 			SystemCall{SystemCallNr::RT_SIGACTION},
-			old_action{"old_action"} {
+			old_action{"old_action", "struct sigaction", ItemType::PARAM_OUT} {
 		setReturnItem(result);
 		setParameters(signum, action, old_action);
 	}
 
 	/* parameters */
 	item::SignalNumber signum;
-	item::SigactionParameter action;
-	item::SigactionParameter old_action;
+	item::SigActionParameter action;
+	item::SigActionParameter old_action;
 
 	/* return value */
 	item::SuccessResult result;

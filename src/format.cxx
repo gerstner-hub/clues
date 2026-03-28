@@ -15,10 +15,10 @@
 
 // clues
 #include <clues/format.hxx>
-#include <clues/kernel_structs.hxx>
 #include <clues/macros.h>
 #include <clues/SystemCall.hxx>
 #include <clues/utils.hxx>
+#include <clues/private/kernel/sigaction.hxx>
 
 using namespace std::string_literals;
 

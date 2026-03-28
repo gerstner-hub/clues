@@ -2,6 +2,7 @@
 #include <clues/format.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/macros.h>
+#include <clues/private/kernel/sigaction.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
@@ -31,7 +32,7 @@ std::string SignalNumber::str() const {
 	return format::signal(valueAs<cosmos::SignalNr>());
 }
 
-std::string SigactionParameter::str() const {
+std::string SigActionParameter::str() const {
 	if (!m_sigaction)
 		return "NULL";
 
@@ -41,28 +42,41 @@ std::string SigactionParameter::str() const {
 		<< "{"
 		<< "handler=";
 
-	if (m_sigaction->handler == SIG_IGN)
+	if (m_sigaction->isIgnored())
 		ss << "SIG_IGN";
-	else if (m_sigaction->handler == SIG_DFL)
+	else if (m_sigaction->isDefaultAction())
 		ss << "SIG_DFL";
 	else
-		ss << (void*)m_sigaction->handler;
+		ss << (void*)m_sigaction->raw()->sa_handler;
 
-	ss << ", sa_mask=" << format::signal_set(m_sigaction->mask) << ", sa_flags="
-		<< format::saflags(m_sigaction->flags) << ", sa_restorer="
-		<< (void*)m_sigaction->restorer << ")";
+	ss << ", sa_mask=" << format::signal_set(*(m_sigaction->mask().raw())) << ", sa_flags="
+		<< format::saflags(m_sigaction->getFlags().raw()) << ", sa_restorer="
+		<< (void*)m_sigaction->raw()->sa_restorer << ")";
 
 	return ss.str();
 }
 
-void SigactionParameter::processValue(const Tracee &proc) {
+void SigActionParameter::processValue(const Tracee &proc) {
+	using SigAction = cosmos::SigAction;
+
 	if (!m_sigaction) {
-		m_sigaction = kernel_sigaction{};
+		m_sigaction = SigAction{};
 	}
 
-	if (!proc.readStruct(asPtr(), *m_sigaction)) {
+	clues::kernel_sigaction kern_act;
+
+	if (!proc.readStruct(asPtr(), kern_act)) {
 		m_sigaction.reset();
 	}
+
+	auto &clues_act = *m_sigaction;
+	auto raw_act = const_cast<struct sigaction*>(
+			static_cast<const SigAction&>(clues_act).raw());
+	auto &mask = clues_act.mask();
+	*mask.raw() = kern_act.mask;
+	raw_act->sa_restorer = kern_act.restorer;
+	raw_act->sa_handler = kern_act.handler;
+	raw_act->sa_flags = static_cast<int>(kern_act.flags);
 }
 
 void SigSetParameter::processValue(const Tracee &proc) {

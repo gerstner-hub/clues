@@ -1,15 +1,7 @@
 #pragma once
 
-// C++
-#include <cstdint>
-
 // Linux
 #include <signal.h>
-
-/*
- * this header contains special data structures used in the kernel for system
- * calls and not exposed to user space (usually dealt with in glibc)
- */
 
 namespace clues {
 
@@ -20,17 +12,20 @@ extern "C" {
 #	define SA_RESTORER 0x04000000
 #endif
 
+using RestorerCB = void (*)();
+using SignalCB = void (*)(int);
+
 /// This is the sigaction structure used by the kernel for e.g. rt_sigaction.
 /**
  * Found in kernel_sigaction.h of glibc
  **/
 struct kernel_sigaction {
 	/// The signal handling function be it the old or the new signature.
-	void *handler;
+	SignalCB handler;
 	/// The sigaction flags.
 	unsigned long flags;
 	/// The restorer function (deprecated).
-	void *restorer;
+	RestorerCB restorer;
 	/// The signal mask.
 	sigset_t mask;
 };
