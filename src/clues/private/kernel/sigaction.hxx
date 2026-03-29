@@ -38,6 +38,15 @@ struct kernel_sigaction32 {
 	sigset_t mask;
 } __attribute__((packed));
 
+/// Variant of sigaction used for the old sigaction() system call.
+struct kernel_old_sigaction {
+	uint32_t handler;
+	// old sigset_t consisting of only 4 bytes.
+	uint32_t mask;
+	uint32_t flags;
+	uint32_t restorer;
+};
+
 } // end extern "C"
 
 } // end ns

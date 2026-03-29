@@ -1,6 +1,7 @@
 // clues
 #include <clues/format.hxx>
 #include <clues/items/signal.hxx>
+#include <clues/logger.hxx>
 #include <clues/macros.h>
 #include <clues/private/kernel/sigaction.hxx>
 #include <clues/sysnrs/generic.hxx>
@@ -68,7 +69,20 @@ template <typename KERN_SIGACTION>
 void convert_to(const KERN_SIGACTION &kern_act, cosmos::SigAction &action) {
 	auto raw_act = const_cast<struct sigaction*>(static_cast<const cosmos::SigAction&>(action).raw());
 	auto &mask = action.mask();
-	*mask.raw() = kern_act.mask;
+	mask.clear();
+
+	if constexpr (sizeof(kern_act.mask) > 4) {
+		*mask.raw() = kern_act.mask;
+	}
+
+	if constexpr (sizeof(kern_act.mask) == 4) {
+		/*
+		 * old sigaction struct, only assign the first word of the
+		 * sigset. For this we need to fiddle in the private data
+		 * portion of libc's sigset_t...
+		 */
+		mask.raw()->__val[0] = kern_act.mask;
+	}
 
 	using RestorerPtr = void (*)();
 	using HandlerPtr = void (*)(int);
@@ -107,10 +121,22 @@ void SigActionParameter::processValue(const Tracee &proc) {
 		m_sigaction = cosmos::SigAction{};
 	}
 
-	if (m_call->is32BitEmulationABI()) {
-		fetch_sigaction<kernel_sigaction32>(asPtr(), proc, m_sigaction);
-	} else {
-		fetch_sigaction<kernel_sigaction>(asPtr(), proc, m_sigaction);
+	switch (m_call->callNr()) {
+		case SystemCallNr::RT_SIGACTION: {
+			if (m_call->is32BitEmulationABI()) {
+				fetch_sigaction<kernel_sigaction32>(asPtr(), proc, m_sigaction);
+			} else {
+				fetch_sigaction<kernel_sigaction>(asPtr(), proc, m_sigaction);
+			}
+			break;
+		} case SystemCallNr::SIGACTION: {
+			fetch_sigaction<kernel_old_sigaction>(asPtr(), proc, m_sigaction);
+			break;
+		} default: {
+			m_sigaction.reset();
+			LOG_WARN("Unexpected system call encountered in SigActionParameter");
+			break;
+		}
 	}
 }
 

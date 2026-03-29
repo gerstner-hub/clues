@@ -18,6 +18,7 @@
 // cosmos
 #include <cosmos/compiler.hxx>
 #include <cosmos/error/RuntimeError.hxx>
+#include <cosmos/memory.hxx>
 #include <cosmos/proc/process.hxx>
 
 // clues
@@ -1628,6 +1629,42 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::RT_SIGACTION, SIGUSR1, act, oldact, 8);
 			})
 		}
+	}, TestSpec{SystemCallNr::SIGACTION, []() {
+#ifdef COSMOS_I386
+			clues::kernel_old_sigaction act, oldact;
+			cosmos::zero_object(act);
+			act.handler = 0x1234;
+			act.mask |= 1 << (SIGCHLD - 1);
+			act.flags = SA_RESTART|SA_RESETHAND;
+			::syscall(SYS_sigaction, SIGUSR1, &act, &oldact);
+#endif
+		}, ENTRY_VERIFY_CB(SigActionSystemCall, {
+			VERIFY(sc.signum.nr() == cosmos::signal::USR1.raw());
+			const auto &action = *sc.action.action();
+			VERIFY(action.raw()->sa_handler == (void*)0x1234);
+			using enum cosmos::SigAction::Flag;
+			using Flags = cosmos::SigAction::Flags;
+			const auto flags = Flags{{RESTART, RESET_HANDLER}};
+			/* libc adds SA_RESTORER implicitly, so be prepared
+			 * for that */
+			VERIFY(action.getFlags() == flags || action.getFlags() == flags + Flags{RESTORER});
+			VERIFY(action.mask().isSet(cosmos::signal::CHILD));
+			VERIFY(sc.old_action.action().has_value());
+		}), EXIT_VERIFY_CB(SigActionSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(2, []() {
+				auto act = alloc_struct32<clues::kernel_old_sigaction>();
+				auto oldact = alloc_struct32<clues::kernel_old_sigaction>();
+				memset(act, 0, sizeof(*act));
+				act->handler = (uint32_t)(0x1234);
+				act->mask |= 1 << (SIGCHLD - 1);
+				act->flags = SA_RESTART|SA_RESETHAND;
+				syscall32(SyscallNr32::SIGACTION, SIGUSR1, act, oldact);
+			})
+		},
+		"",
+		{clues::ABI::I386}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
