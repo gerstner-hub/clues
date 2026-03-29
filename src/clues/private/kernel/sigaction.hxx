@@ -30,6 +30,14 @@ struct kernel_sigaction {
 	sigset_t mask;
 };
 
+/// Variant of sigaction for 64-bit <-> 32-bit cross ABI tracing.
+struct kernel_sigaction32 {
+	uint32_t handler;
+	uint32_t flags;
+	uint32_t restorer;
+	sigset_t mask;
+} __attribute__((packed));
+
 } // end extern "C"
 
 } // end ns

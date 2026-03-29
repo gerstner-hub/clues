@@ -62,27 +62,56 @@ std::string SigActionParameter::str() const {
 	return ss.str();
 }
 
-void SigActionParameter::processValue(const Tracee &proc) {
-	using SigAction = cosmos::SigAction;
+namespace {
 
-	if (!m_sigaction) {
-		m_sigaction = SigAction{};
-	}
-
-	clues::kernel_sigaction kern_act;
-
-	if (!proc.readStruct(asPtr(), kern_act)) {
-		m_sigaction.reset();
-	}
-
-	auto &clues_act = *m_sigaction;
-	auto raw_act = const_cast<struct sigaction*>(
-			static_cast<const SigAction&>(clues_act).raw());
-	auto &mask = clues_act.mask();
+template <typename KERN_SIGACTION>
+void convert_to(const KERN_SIGACTION &kern_act, cosmos::SigAction &action) {
+	auto raw_act = const_cast<struct sigaction*>(static_cast<const cosmos::SigAction&>(action).raw());
+	auto &mask = action.mask();
 	*mask.raw() = kern_act.mask;
-	raw_act->sa_restorer = kern_act.restorer;
-	raw_act->sa_handler = kern_act.handler;
+
+	using RestorerPtr = void (*)();
+	using HandlerPtr = void (*)(int);
+
+	/*
+	 * TODO: the cosmos::SigAction object is applying some magic to the
+	 * signal handler callback which doesn't fit our tracing scenario
+	 * well.
+	 *
+	 * The type assumes that the information is always for the current
+	 * process, thus it won't reflect properly our situation. We'd need a
+	 * dedicated, maybe at least derived type to fix this.
+	 */
+	raw_act->sa_restorer = (RestorerPtr)(uintptr_t)kern_act.restorer;
+	raw_act->sa_handler = (HandlerPtr)(uintptr_t)kern_act.handler;
 	raw_act->sa_flags = static_cast<int>(kern_act.flags);
+
+}
+
+template <typename KERN_SIGACTION>
+void fetch_sigaction(const ForeignPtr ptr, const Tracee &proc, std::optional<cosmos::SigAction> &action) {
+	KERN_SIGACTION kern_act;
+
+	if (!proc.readStruct(ptr, kern_act)) {
+		action.reset();
+		return;
+	}
+
+	convert_to(kern_act, *action);
+}
+
+} // end anon ns
+
+void SigActionParameter::processValue(const Tracee &proc) {
+	if (!m_sigaction) {
+		m_sigaction = cosmos::SigAction{};
+	}
+
+	if (m_call->is32BitEmulationABI()) {
+		fetch_sigaction<kernel_sigaction32>(asPtr(), proc, m_sigaction);
+	} else {
+		fetch_sigaction<kernel_sigaction>(asPtr(), proc, m_sigaction);
+	}
 }
 
 void SigSetParameter::processValue(const Tracee &proc) {
