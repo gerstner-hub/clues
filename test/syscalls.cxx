@@ -24,6 +24,7 @@
 #include <clues/private/kernel/mmap.hxx>
 #include <clues/private/kernel/other.hxx>
 #include <clues/private/kernel/time.hxx>
+#include <clues/private/kernel/sigaction.hxx>
 #include <clues/syscalls/all.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
@@ -1615,19 +1616,17 @@ const auto TESTS = std::array{
 		}), EXIT_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}), 0, {
-#if 0
 			I386_CROSS_ABI(2, []() {
-				auto act = alloc_struct32<struct sigaction>();
-				auto oldact = alloc_struct32<struct sigaction>();
-				memset(act, 0, sizeof(struct sigaction));
-				using sig_handler_t = void(*)(int);
-				act->sa_handler = (sig_handler_t)(0x1234);
-				sigaddset(&act->sa_mask, SIGCHLD);
-				act->sa_flags = SA_RESTART|SA_RESETHAND;
-				auto err = syscall32(SyscallNr32::RT_SIGACTION, SIGUSR1, act, oldact);
-				std::cerr << strerror(-err) << "\n";
+				auto act = alloc_struct32<clues::kernel_sigaction32>();
+				auto oldact = alloc_struct32<clues::kernel_sigaction32>();
+				memset(act, 0, sizeof(*act));
+				act->handler = (uint32_t)(0x1234);
+				sigset_t ss;
+				sigaddset(&ss, SIGCHLD);
+				memcpy(&act->mask, &ss, sizeof(act->mask));
+				act->flags = SA_RESTART|SA_RESETHAND;
+				syscall32(SyscallNr32::RT_SIGACTION, SIGUSR1, act, oldact, 8);
 			})
-#endif
 		}
 	},
 #ifdef COSMOS_X86
