@@ -28,15 +28,23 @@ struct CLUES_API SigActionSystemCall :
 
 	SigActionSystemCall() :
 			SystemCall{SystemCallNr::RT_SIGACTION},
-			old_action{"old_action", "struct sigaction", ItemType::PARAM_OUT} {
+			old_action{"old_action", "struct sigaction", ItemType::PARAM_OUT},
+			sigset_size{"sigset_size", "sizeof(sigset_t)"} {
 		setReturnItem(result);
-		setParameters(signum, action, old_action);
+		setParameters(signum, action, old_action, sigset_size);
 	}
 
 	/* parameters */
 	item::SignalNumber signum;
 	item::SigActionParameter action;
 	item::SigActionParameter old_action;
+	/// Provides `sizeof(sigset_t)` as found in the sigaction struct.
+	/**
+	 * Actually this is even more confusing, it is not the actual
+	 * `sizeof()`, it is rather the amount of bytes in `sigset_t` actually
+	 * used for signals, which is 8, hard-codedly, at the moment.
+	 **/
+	item::SizeValue sigset_size;
 
 	/* return value */
 	item::SuccessResult result;
