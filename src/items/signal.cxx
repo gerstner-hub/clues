@@ -36,22 +36,28 @@ std::string SigActionParameter::str() const {
 	if (!m_sigaction)
 		return "NULL";
 
+	const auto raw = m_sigaction->raw();
+
 	std::stringstream ss;
 
 	ss
 		<< "{"
 		<< "handler=";
 
-	if (m_sigaction->isIgnored())
-		ss << "SIG_IGN";
-	else if (m_sigaction->isDefaultAction())
-		ss << "SIG_DFL";
-	else
-		ss << format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(m_sigaction->raw()->sa_handler)});
+	if (m_sigaction->getFlags()[cosmos::SigAction::Flag::SIGINFO]) {
+		ss << format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(raw->sa_sigaction)});
+	} else {
+		if (raw->sa_handler == SIG_IGN)
+			ss << "SIG_IGN";
+		else if (raw->sa_handler == SIG_DFL)
+			ss << "SIG_DFL";
+		else
+			ss << format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(raw->sa_handler)});
+	}
 
-	ss << ", sa_mask=" << format::signal_set(*(m_sigaction->mask().raw())) << ", sa_flags="
-		<< format::saflags(m_sigaction->getFlags().raw()) << ", sa_restorer="
-		<< format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(m_sigaction->raw()->sa_restorer)}) << ")";
+	ss << ", mask=" << format::signal_set(*(m_sigaction->mask().raw())) << ", flags="
+		<< format::saflags(m_sigaction->getFlags().raw()) << ", restorer="
+		<< format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(raw->sa_restorer)}) << ")";
 
 	return ss.str();
 }
