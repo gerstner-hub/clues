@@ -206,6 +206,10 @@ public: // functions
 
 protected: // functions
 
+	void processValue(const Tracee &) override {
+		m_stat.reset();
+	}
+
 	void updateData(const Tracee &proc) override;
 
 	/// Whether this is related to one of the OLDSTAT family of system calls.
@@ -250,6 +254,11 @@ public: // functions
 	}
 
 protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_entries.clear();
+		m_buffer.reset();
+	}
 
 	void updateData(const Tracee &proc) override;
 

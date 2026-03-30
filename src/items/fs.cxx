@@ -392,9 +392,6 @@ std::string DirEntries::str() const {
 }
 
 void DirEntries::updateData(const Tracee &proc) {
-	m_entries.clear();
-	m_buffer.reset();
-
 	// the amount of data stored at the DirEntries location depends on the
 	// system call result value.
 	auto result = m_call->result();

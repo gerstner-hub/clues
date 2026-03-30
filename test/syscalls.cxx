@@ -824,6 +824,7 @@ const auto TESTS = std::array{
 			syscall(SYS_fstat, fd, &st);
 		}, ENTRY_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.statbuf.status() == std::nullopt);
 		}), EXIT_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.hasResultValue());
 			const auto &sb = *sc.statbuf.status();
@@ -850,6 +851,7 @@ const auto TESTS = std::array{
 #endif
 		}, ENTRY_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.statbuf.status() == std::nullopt);
 		}), EXIT_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.hasResultValue());
 			const auto &sb = *sc.statbuf.status();
@@ -873,10 +875,13 @@ const auto TESTS = std::array{
 			/* the struct will be too big, bug that should be no
 			 * matter as long as we don't touch it here */
 			struct stat st;
+			// do it twice, see above
+			syscall(SYS_oldfstat, fd, &st);
 			syscall(SYS_oldfstat, fd, &st);
 #endif
 		}, ENTRY_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.statbuf.status() == std::nullopt);
 		}), EXIT_VERIFY_CB(FstatSystemCall, {
 			/* NOTE: this call could fail if some of the metadata
 			 * doesn't fit in the old stat structure */
@@ -887,7 +892,7 @@ const auto TESTS = std::array{
 			VERIFY(sb.type().isDirectory());
 			VERIFY(sb.uid() == cosmos::UserID::ROOT);
 			VERIFY(sb.gid() == cosmos::GroupID::ROOT);
-		}), 1, {
+		}), 2, {
 			I386_CROSS_ABI(2, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY);
 				auto st = alloc_struct32<struct stat>();
@@ -932,13 +937,18 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::GETDENTS, []() {
 			int fd = open("/", O_RDONLY|O_DIRECTORY);
 			char buffer[65535];
+			// do it twice to catch potentially missing cleanup in
+			// the system call object
+			syscall(SYS_getdents, fd, buffer, sizeof(buffer));
+			lseek(fd, 0, SEEK_SET);
 			syscall(SYS_getdents, fd, buffer, sizeof(buffer));
 		}, ENTRY_VERIFY_CB(GetDentsSystemCall, {
 			VERIFY(sc.fd.fd() == cosmos::FileNum{FIRST_FD});
+			VERIFY(sc.dirent.entries().size() == 0);
 			VERIFY(sc.size.value() == 65535);
 		}), EXIT_VERIFY_CB(GetDentsSystemCall, {
 			VERIFY(sc.hasResultValue());
-			const auto bytes = sc.ret_bytes.valueAs<unsigned int>();
+			const auto bytes = sc.ret_bytes.value();
 			VERIFY(bytes > 0 && bytes < 65535);
 			const auto &entries = sc.dirent.entries();
 			// a least ".", ".."
@@ -959,7 +969,7 @@ const auto TESTS = std::array{
 			}
 
 			VERIFY(found_tmp && found_root);
-		}), 1, {
+		}), 3, {
 			I386_CROSS_ABI(2, []() {
 				int fd = open("/", O_RDONLY|O_DIRECTORY);
 				char *buffer = alloc32<char*>(65535);
@@ -1245,16 +1255,20 @@ const auto TESTS = std::array{
 		}
 	}, TestSpec{SystemCallNr::LSTAT, []() {
 			struct stat st;
+			// do it twice to re-use the same system call object
+			// and catch potentially unclean state
+			syscall(SYS_lstat, "/", &st);
 			syscall(SYS_lstat, "/", &st);
 		}, ENTRY_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.path.data() == "/");
+			VERIFY(sc.statbuf.status() == std::nullopt);
 		}), EXIT_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.hasResultValue());
 			const auto &st = *sc.statbuf.status();
 			VERIFY(st.uid() == cosmos::UserID::ROOT);
 			VERIFY(st.gid() == cosmos::GroupID::ROOT);
 			VERIFY(st.type().isDirectory());
-		}), 0, {
+		}), 1, {
 			I386_CROSS_ABI(2, []() {
 				/* struct will be too big, but that doesn't
 				 * matter for testing */
@@ -1266,6 +1280,8 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::LSTAT64, []() {
 #ifdef COSMOS_I386
 			struct stat st;
+			// do it twice, see above
+			syscall(SYS_lstat64, "/", &st);
 			syscall(SYS_lstat64, "/", &st);
 #endif
 		}, ENTRY_VERIFY_CB(LstatSystemCall, {
@@ -1276,7 +1292,7 @@ const auto TESTS = std::array{
 			VERIFY(st.uid() == cosmos::UserID::ROOT);
 			VERIFY(st.gid() == cosmos::GroupID::ROOT);
 			VERIFY(st.type().isDirectory());
-		}), 0, {
+		}), 1, {
 			I386_CROSS_ABI(2, []() {
 				auto st = alloc_struct32<struct stat>();
 				auto path = alloc_str32("/");
@@ -1290,10 +1306,13 @@ const auto TESTS = std::array{
 			/* the struct will be too big, bug that should be no
 			 * matter as long as we don't touch it here */
 			struct stat st;
+			// do it twice, see above
+			syscall(SYS_oldlstat, "/", &st);
 			syscall(SYS_oldlstat, "/", &st);
 #endif
 		}, ENTRY_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.path.data() == "/");
+			VERIFY(sc.statbuf.status() == std::nullopt);
 		}), EXIT_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.hasResultValue());
 			const auto &st = *sc.statbuf.status();
