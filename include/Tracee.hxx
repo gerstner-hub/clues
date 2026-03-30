@@ -148,6 +148,14 @@ public: // functions
 		return m_prev_state;
 	}
 
+	bool isEnterStop() const {
+		return state() == State::SYSCALL_ENTER_STOP;
+	}
+
+	bool isExitStop() const {
+		return state() == State::SYSCALL_EXIT_STOP;
+	}
+
 	Flags flags() const {
 		return m_flags;
 	}
