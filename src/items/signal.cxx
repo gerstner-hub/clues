@@ -145,8 +145,15 @@ void SigSetParameter::processValue(const Tracee &proc) {
 		m_sigset = sigset_t{};
 	}
 
-	if (!proc.readStruct(asPtr(), *m_sigset)) {
-		m_sigset.reset();
+	if (m_call->callNr() == SystemCallNr::SIGPROCMASK) {
+		/* legacy i386 sigprocmask() using a 32-bit sigset_t */
+		if (!proc.readStruct(asPtr(), m_sigset->__val[0])) {
+			m_sigset.reset();
+		}
+	} else {
+		if (!proc.readStruct(asPtr(), *m_sigset)) {
+			m_sigset.reset();
+		}
 	}
 }
 
