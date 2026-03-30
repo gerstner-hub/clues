@@ -58,20 +58,24 @@ struct CLUES_API SigActionSystemCall :
 struct CLUES_API SigProcMaskSystemCall :
 		public SystemCall {
 
-	SigProcMaskSystemCall() :
-			SystemCall{SystemCallNr::RT_SIGPROCMASK},
+	explicit SigProcMaskSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
 			new_mask{ItemType::PARAM_IN, "new mask"},
-			old_mask{ItemType::PARAM_OUT, "old mask"},
-			size{"size", "size of signal sets in bytes"} {
+			old_mask{ItemType::PARAM_OUT, "old mask"} {
 		setReturnItem(result);
-		setParameters(operation, new_mask, old_mask, size);
+		setParameters(operation, new_mask, old_mask);
+
+		if (nr == SystemCallNr::RT_SIGPROCMASK) {
+			sigset_size.emplace(item::SizeValue{"sigset_size", "sizeof(sigset_t)"});
+			addParameters(*sigset_size);
+		}
 	}
 
 	/* parameters */
 	item::SigSetOperation operation;
 	item::SigSetParameter new_mask;
 	item::SigSetParameter old_mask;
-	item::ValueInParameter size;
+	std::optional<item::SizeValue> sigset_size;
 
 	/* return value */
 	item::SuccessResult result;
