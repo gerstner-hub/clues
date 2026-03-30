@@ -123,17 +123,20 @@ protected: // functions
 
 	/// Processes the value stored in m_val acc. to the actual item type.
 	/**
-	 * This function is called for parameters of ItemType::PARAM_IN and
-	 * ItemType::PARAM_IN_OUT upon system call entry to fetch the initial
-	 * system call values.
+	 * This function is called for all parameter types upon entry to a
+	 * system call, and for ItemType::RETVAL upon exit from a system call.
+	 *
+	 * For parameters of ItemType::PARAM_OUT this callback can be used to
+	 * reset any stored data to be filled in later when updateData() is
+	 * called.
 	 **/
 	virtual void processValue(const Tracee &) {}
 
 	/// Called upon exit of the system call to update possible out parameters.
 	/**
-	 * This function is called for parameters of ItemType::PARAM_OUT,
-	 * ItemType::PARAM_IN_OUT and ItemType::RETVAL upon system call exit
-	 * to update the data from the values returned from the system call.
+	 * This function is called for parameters of ItemType::PARAM_OUT and
+	 * ItemType::PARAM_IN_OUT upon system call exit to update the data
+	 * from the values returned from the system call.
 	 *
 	 * The default implementation calls `processValue()` to allow to share
 	 * the same data processing code for input and output for item types
