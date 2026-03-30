@@ -20,7 +20,8 @@ public: // types
 	enum class Op : int {
 		BLOCK   = SIG_BLOCK,   ///< additionally block.
 		UNBLOCK = SIG_UNBLOCK, ///< unblock the given signals.
-		SETMASK = SIG_SETMASK  ///< replace the whole mask.
+		SETMASK = SIG_SETMASK, ///< replace the whole mask.
+		INVALID
 	};
 
 public:
@@ -42,7 +43,7 @@ protected: // functions
 
 protected: // data
 
-	Op m_op;
+	Op m_op = Op::INVALID;
 };
 
 /// A signal number specification.
@@ -100,6 +101,7 @@ protected: // data
 class CLUES_API SigSetParameter :
 		public PointerValue {
 public: // functions
+
 	explicit SigSetParameter(
 		const ItemType type = ItemType::PARAM_IN,
 		const std::string_view short_name = "sigset", const std::string_view name = "signal set") :
