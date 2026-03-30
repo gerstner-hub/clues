@@ -234,7 +234,7 @@ struct CLUES_API GetDentsSystemCall :
 	GetDentsSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
 			size{"size", "dirent size in bytes"},
-			ret_bytes{"bytes", "bytes returned in dirent"} {
+			ret_bytes{"bytes", "bytes returned in dirent", ItemType::RETVAL} {
 		setReturnItem(ret_bytes);
 		setParameters(fd, dirent, size);
 	}
@@ -242,7 +242,7 @@ struct CLUES_API GetDentsSystemCall :
 	item::FileDescriptor fd; ///< directory FD.
 	item::DirEntries dirent; ///< struct linux_dirent*.
 	item::UintValue size; ///< size of `dirent` buffer provided by tracee.
-	item::ReturnValue ret_bytes; ///< number of bytes filled in `dirent` buffer.
+	item::SizeValue ret_bytes; ///< number of bytes filled in `dirent` buffer.
 };
 
 } // end ns
