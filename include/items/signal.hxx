@@ -110,7 +110,7 @@ public: // functions
 
 	std::string str() const override;
 
-	const std::optional<sigset_t>& sigset() const {
+	const std::optional<cosmos::SigSet>& sigset() const {
 		return m_sigset;
 	}
 
@@ -120,7 +120,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<sigset_t> m_sigset;
+	std::optional<cosmos::SigSet> m_sigset;
 };
 
 } // end ns

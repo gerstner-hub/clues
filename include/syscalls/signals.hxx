@@ -55,6 +55,7 @@ struct CLUES_API SigActionSystemCall :
 	item::SuccessResult result;
 };
 
+/// Type for rt_sigprocmask() and old sigprocmask().
 struct CLUES_API SigProcMaskSystemCall :
 		public SystemCall {
 
@@ -75,6 +76,7 @@ struct CLUES_API SigProcMaskSystemCall :
 	item::SigSetOperation operation;
 	item::SigSetParameter new_mask;
 	item::SigSetParameter old_mask;
+	/// size of sigset_t, only used with rt_sigprocmask().
 	std::optional<item::SizeValue> sigset_size;
 
 	/* return value */

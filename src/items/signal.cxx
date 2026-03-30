@@ -56,7 +56,7 @@ std::string SigActionParameter::str() const {
 			ss << format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(raw->sa_handler)});
 	}
 
-	ss << ", mask=" << format::signal_set(*(m_sigaction->mask().raw())) << ", flags="
+	ss << ", mask=" << format::signal_set(m_sigaction->mask()) << ", flags="
 		<< format::saflags(m_sigaction->getFlags().raw()) << ", restorer="
 		<< format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(raw->sa_restorer)}) << ")";
 
@@ -141,18 +141,28 @@ void SigActionParameter::processValue(const Tracee &proc) {
 }
 
 void SigSetParameter::processValue(const Tracee &proc) {
+	if (proc.isEnterStop() && isOut()) {
+		m_sigset.reset();
+		return;
+	}
+
 	if (!m_sigset) {
-		m_sigset = sigset_t{};
+		m_sigset = cosmos::SigSet{};
 	}
 
 	if (m_call->callNr() == SystemCallNr::SIGPROCMASK) {
+		uint32_t mask;
 		/* legacy i386 sigprocmask() using a 32-bit sigset_t */
-		if (!proc.readStruct(asPtr(), m_sigset->__val[0])) {
+		if (!proc.readStruct(asPtr(), mask)) {
 			m_sigset.reset();
+			return;
 		}
+
+		m_sigset->raw()->__val[0] = mask;
 	} else {
-		if (!proc.readStruct(asPtr(), *m_sigset)) {
+		if (!proc.readStruct(asPtr(), *m_sigset->raw())) {
 			m_sigset.reset();
+			return;
 		}
 	}
 }
@@ -164,6 +174,5 @@ std::string SigSetParameter::str() const {
 		return "NULL";
 	}
 }
-
 
 } // end ns

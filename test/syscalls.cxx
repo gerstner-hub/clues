@@ -1614,6 +1614,7 @@ const auto TESTS = std::array{
 			VERIFY(action.getFlags() == flags || action.getFlags() == flags + Flags{RESTORER});
 			VERIFY(action.mask().isSet(cosmos::signal::CHILD));
 			VERIFY(sc.old_action.action().has_value());
+			VERIFY(sc.sigset_size->value() == 8);
 		}), EXIT_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}), 0, {
@@ -1661,6 +1662,60 @@ const auto TESTS = std::array{
 				act->mask |= 1 << (SIGCHLD - 1);
 				act->flags = SA_RESTART|SA_RESETHAND;
 				syscall32(SyscallNr32::SIGACTION, SIGUSR1, act, oldact);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::RT_SIGPROCMASK, []() {
+			sigset_t set, old;
+			sigemptyset(&set);
+			sigaddset(&set, SIGUSR1);
+			sigfillset(&old);
+			sigprocmask(SIG_BLOCK, &set, &old);
+		}, ENTRY_VERIFY_CB(SigProcMaskSystemCall, {
+			VERIFY(sc.operation.op() == clues::item::SigSetOperation::Op::BLOCK);
+			const auto new_set = *sc.new_mask.sigset();
+
+			VERIFY(new_set.isSet(cosmos::signal::USR1));
+			VERIFY(sc.old_mask.sigset() == std::nullopt);
+			VERIFY(sc.sigset_size->value() == 8);
+		}), EXIT_VERIFY_CB(SigProcMaskSystemCall, {
+			const auto old_set = *sc.old_mask.sigset();
+			VERIFY(!old_set.isSet(cosmos::signal::USR1));
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(2, []() {
+				auto set = alloc_struct32<sigset_t>();
+				auto old = alloc_struct32<sigset_t>();
+				sigemptyset(set);
+				sigemptyset(old);
+				sigaddset(set, SIGUSR1);
+				syscall32(SyscallNr32::RT_SIGPROCMASK, SIG_BLOCK, set, old, 8);
+			})
+		}
+	}, TestSpec{SystemCallNr::SIGPROCMASK, []() {
+#ifdef COSMOS_I386
+			uint32_t set = 0, old;
+			set |= 1 << (SIGUSR1 - 1);
+			syscall(SYS_sigprocmask, SIG_BLOCK, &set, &old);
+#endif
+		}, ENTRY_VERIFY_CB(SigProcMaskSystemCall, {
+			VERIFY(sc.operation.op() == clues::item::SigSetOperation::Op::BLOCK);
+			const auto new_set = *sc.new_mask.sigset();
+
+			VERIFY(new_set.isSet(cosmos::signal::USR1));
+			VERIFY(sc.sigset_size == std::nullopt);
+		}), EXIT_VERIFY_CB(SigProcMaskSystemCall, {
+			const auto old_set = *sc.old_mask.sigset();
+			VERIFY(!old_set.isSet(cosmos::signal::USR1));
+			VERIFY(sc.hasResultValue());
+		}), 0, {
+			I386_CROSS_ABI(2, []() {
+				auto set = alloc_struct32<uint32_t>();
+				auto old = alloc_struct32<uint32_t>();
+				*set = 0;
+				*set |= 1 << (SIGUSR1 - 1);
+				syscall32(SyscallNr32::SIGPROCMASK, SIG_BLOCK, set, old);
 			})
 		},
 		"",

@@ -6,6 +6,7 @@
 // cosmos
 #include <cosmos/io/types.hxx>
 #include <cosmos/proc/SigInfo.hxx>
+#include <cosmos/proc/SigSet.hxx>
 #include <cosmos/proc/types.hxx>
 #include <cosmos/fwd.hxx>
 
@@ -33,7 +34,7 @@ namespace clues::format {
 CLUES_API std::string signal(const cosmos::SignalNr signal, const bool verbose=true);
 
 /// Returns a string like "{SIGINT (Interrupted), SIGQUIT (Quit), ...}".
-CLUES_API std::string signal_set(const sigset_t &set);
+CLUES_API std::string signal_set(const cosmos::SigSet &set);
 
 /// Returns a string like "SA_NOCLDSTOP|SA_NOCLDWAIT|..."
 CLUES_API std::string saflags(const int flags);

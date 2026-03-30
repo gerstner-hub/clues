@@ -77,14 +77,16 @@ std::string signal(const cosmos::SignalNr signal, const bool verbose) {
 	return ss.str();
 }
 
-std::string signal_set(const sigset_t &set) {
+std::string signal_set(const cosmos::SigSet &set) {
 	std::stringstream ss;
 
 	ss << "{";
 
 	for (int signum = 1; signum < SIGRTMAX; signum++) {
-		if (sigismember(&set, signum)) {
-			ss << format::signal(cosmos::SignalNr{signum}, /*verbose=*/false) << ", ";
+		const auto sig = cosmos::SignalNr{signum};
+
+		if (set.isSet(cosmos::Signal{sig})) {
+			ss << format::signal(sig, /*verbose=*/false) << ", ";
 		}
 	}
 
