@@ -1845,6 +1845,38 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::TGKILL, getpid(), gettid(), 0);
 			})
 		}
+	}, TestSpec{SystemCallNr::WAIT4, []() {
+			if (const auto pid = ::syscall(SYS_fork); pid == 0) {
+				::_exit(10);
+			} else {
+				int status;
+				struct rusage ru;
+				::syscall(SYS_wait4, pid, &status, WCONTINUED, &ru);
+			}
+		}, ENTRY_VERIFY_CB(Wait4SystemCall, {
+			VERIFY(cosmos::to_integral(sc.pid.pid()) > 0);
+			using enum cosmos::WaitFlag;
+			const auto options = sc.options.options();
+			VERIFY(options[WAIT_FOR_CONTINUED]);
+		}), EXIT_VERIFY_CB(Wait4SystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(cosmos::to_integral(sc.event_pid.pid()) > 0);
+			VERIFY(sc.pid.pid() == sc.event_pid.pid());
+			const auto status = sc.wstatus.status();
+			VERIFY(status != std::nullopt);
+			VERIFY(status->exited() && status->status() == cosmos::ExitStatus{10});
+			VERIFY(sc.rusage.usage() != std::nullopt);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				if (const auto pid = ::syscall(SYS_fork); pid == 0) {
+					::_exit(10);
+				} else {
+					auto status = alloc_struct32<int>();
+					auto ru = alloc_struct32<struct rusage>();
+					syscall32(SyscallNr32::WAIT4, pid, status, WCONTINUED, ru);
+				}
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
