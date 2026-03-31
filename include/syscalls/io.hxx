@@ -15,15 +15,15 @@ struct CLUES_API WriteSystemCall :
 			fd{},
 			buf{count, ItemType::PARAM_IN, "buf", "source buffer"},
 			count{"count", "buffer length"},
-			written{"bytes", "bytes written"} {
+			written{"bytes", "bytes written", ItemType::RETVAL} {
 		setReturnItem(written);
 		setParameters(fd, buf, count);
 	}
 
 	item::FileDescriptor fd;
 	item::BufferPointer buf;
-	item::ValueInParameter count;
-	item::ReturnValue written;
+	item::SizeValue count;
+	item::SizeValue written;
 };
 
 struct CLUES_API ReadSystemCall :

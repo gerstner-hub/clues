@@ -10,7 +10,7 @@
 
 namespace clues::item {
 
-void PipeEnds::processValue(const Tracee &proc) {
+void PipeEnds::updateData(const Tracee &proc) {
 	int ends[2];
 
 	if (!proc.readStruct(asPtr(), ends)) {

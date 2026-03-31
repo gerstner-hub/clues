@@ -52,7 +52,11 @@ protected: // functions
 		m_write_end = cosmos::FileNum::INVALID;
 	}
 
-	void processValue(const Tracee &proc) override;
+	void processValue(const Tracee &) override {
+		reset();
+	}
+
+	void updateData(const Tracee &proc) override;
 
 protected: // data
 
