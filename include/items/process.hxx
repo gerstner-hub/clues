@@ -112,7 +112,7 @@ class CLUES_API ResourceUsageItem :
 		public PointerOutValue {
 public: // functions
 
-	ResourceUsageItem() :
+	explicit ResourceUsageItem() :
 			PointerOutValue{"rusage", "resource usage"} {
 	}
 
@@ -132,7 +132,11 @@ protected: // types
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processValue(const Tracee &) override {
+		m_rusage.reset();
+	}
+
+	void updateData(const Tracee &proc) override;
 
 protected: // data
 

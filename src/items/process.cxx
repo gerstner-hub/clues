@@ -20,7 +20,7 @@ std::string WaitOptionsItem::str() const {
 	return BITFLAGS_STR();
 }
 
-void ResourceUsageItem::processValue(const Tracee &proc) {
+void ResourceUsageItem::updateData(const Tracee &proc) {
 	m_rusage.emplace(ResourceUsage{});
 
 	if (!proc.readStruct(asPtr(), m_rusage->raw())) {
