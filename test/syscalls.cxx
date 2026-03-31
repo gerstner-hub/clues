@@ -46,7 +46,8 @@ using namespace std::string_literals;
  */
 
 using clues::SystemCall;
-using TraceVerifyCB = std::function<void (const SystemCall &, bool &good)>;
+using clues::Tracee;
+using TraceVerifyCB = std::function<void (const Tracee &, const SystemCall &, bool &good)>;
 using SyscallInvoker = std::function<void (void)>;
 using clues::SystemCallNr;
 using clues::ForeignPtr;
@@ -113,19 +114,22 @@ constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x7000000
 
 #define VERIFY_FALSE(expr) VERIFY(!(expr))
 
-#define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc, bool &good) { \
+#define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const Tracee &tracee, const SystemCall &_sc, bool &good) { \
+	(void)tracee; \
 	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
 }
 
-#define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](const SystemCall &_sc, bool &good) { \
+#define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](const Tracee &tracee, const SystemCall &_sc, bool &good) { \
+	(void)tracee; \
 	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
 }
 
-#define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const SystemCall &_sc, bool &good) { \
+#define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const Tracee &tracee, const SystemCall &_sc, bool &good) { \
+	(void)tracee; \
 	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
@@ -266,7 +270,7 @@ public:
 
 protected:
 
-	void syscallEntry(clues::Tracee &,
+	void syscallEntry(clues::Tracee &tracee,
 			const SystemCall &call,
 			const StatusFlags) override {
 		if (m_ran_cbs) {
@@ -287,10 +291,10 @@ protected:
 			return;
 		}
 
-		m_enter_verify(call, m_entry_good);
+		m_enter_verify(tracee, call, m_entry_good);
 	}
 
-	void syscallExit(clues::Tracee &,
+	void syscallExit(clues::Tracee &tracee,
 			const SystemCall &call,
 			const StatusFlags) override {
 		if (m_ran_cbs) {
@@ -313,7 +317,7 @@ protected:
 			return;
 		}
 
-		m_exit_verify(call, m_exit_good);
+		m_exit_verify(tracee, call, m_exit_good);
 		m_ran_cbs = true;
 	}
 
