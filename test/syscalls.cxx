@@ -1702,14 +1702,14 @@ const auto TESTS = std::array{
 			sigaddset(&set, SIGUSR1);
 			sigfillset(&old);
 			sigprocmask(SIG_BLOCK, &set, &old);
-		}, ENTRY_VERIFY_CB(SigProcMaskSystemCall, {
+		}, ENTRY_VERIFY_CB(RtSigProcMaskSystemCall, {
 			VERIFY(sc.operation.op() == clues::item::SigSetOperation::Op::BLOCK);
 			const auto new_set = *sc.new_mask.sigset();
 
 			VERIFY(new_set.isSet(cosmos::signal::USR1));
 			VERIFY(sc.old_mask.sigset() == std::nullopt);
-			VERIFY(sc.sigset_size->value() == 8);
-		}), EXIT_VERIFY_CB(SigProcMaskSystemCall, {
+			VERIFY(sc.sigset_size.value() == 8);
+		}), EXIT_VERIFY_CB(RtSigProcMaskSystemCall, {
 			const auto old_set = *sc.old_mask.sigset();
 			VERIFY(!old_set.isSet(cosmos::signal::USR1));
 			VERIFY(sc.hasResultValue());
@@ -1734,7 +1734,6 @@ const auto TESTS = std::array{
 			const auto new_set = *sc.new_mask.sigset();
 
 			VERIFY(new_set.isSet(cosmos::signal::USR1));
-			VERIFY(sc.sigset_size == std::nullopt);
 		}), EXIT_VERIFY_CB(SigProcMaskSystemCall, {
 			const auto old_set = *sc.old_mask.sigset();
 			VERIFY(!old_set.isSet(cosmos::signal::USR1));

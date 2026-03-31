@@ -43,6 +43,7 @@ struct CLUES_API SigActionSystemCall :
 	item::SuccessResult result;
 };
 
+/// Type for the current rt_sigaction() system call.
 struct CLUES_API RtSigActionSystemCall :
 		public SigActionSystemCall {
 
@@ -61,32 +62,39 @@ struct CLUES_API RtSigActionSystemCall :
 	item::SizeValue sigset_size;
 };
 
-/// Type for rt_sigprocmask() and old sigprocmask().
+/// Type for old sigprocmask().
 struct CLUES_API SigProcMaskSystemCall :
 		public SystemCall {
 
-	explicit SigProcMaskSystemCall(const SystemCallNr nr) :
+	explicit SigProcMaskSystemCall(const SystemCallNr nr = SystemCallNr::SIGPROCMASK) :
 			SystemCall{nr},
 			new_mask{ItemType::PARAM_IN, "new mask"},
 			old_mask{ItemType::PARAM_OUT, "old mask"} {
 		setReturnItem(result);
 		setParameters(operation, new_mask, old_mask);
-
-		if (nr == SystemCallNr::RT_SIGPROCMASK) {
-			sigset_size.emplace(item::SizeValue{"sigset_size", "sizeof(sigset_t)"});
-			addParameters(*sigset_size);
-		}
 	}
 
 	/* parameters */
 	item::SigSetOperation operation;
 	item::SigSetParameter new_mask;
 	item::SigSetParameter old_mask;
-	/// size of sigset_t, only used with rt_sigprocmask().
-	std::optional<item::SizeValue> sigset_size;
 
 	/* return value */
 	item::SuccessResult result;
+};
+
+/// Type for the current rt_sigprocmask().
+struct CLUES_API RtSigProcMaskSystemCall :
+		public SigProcMaskSystemCall {
+
+	explicit RtSigProcMaskSystemCall() :
+			SigProcMaskSystemCall{SystemCallNr::RT_SIGPROCMASK},
+			sigset_size{"sigset_size", "sizeof(sigset_t)"} {
+		addParameters(sigset_size);
+	}
+
+	/// size of sigset_t, fixed to "8".
+	item::SizeValue sigset_size;
 };
 
 struct CLUES_API TgKillSystemCall :

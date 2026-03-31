@@ -156,8 +156,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::RESTART_SYSCALL: return new_sys<RestartSystemCall>();
 	case SystemCallNr::RT_SIGACTION:    return new_sys<RtSigActionSystemCall>();
 	case SystemCallNr::SIGACTION:       return new_sys<SigActionSystemCall>();
-	case SystemCallNr::RT_SIGPROCMASK:  [[fallthrough]];
-	case SystemCallNr::SIGPROCMASK:     return new_sys<SigProcMaskSystemCall>(nr);
+	case SystemCallNr::RT_SIGPROCMASK:  return new_sys<RtSigProcMaskSystemCall>();
+	case SystemCallNr::SIGPROCMASK:     return new_sys<SigProcMaskSystemCall>();
 	case SystemCallNr::SET_TID_ADDRESS: return new_sys<SetTIDAddressSystemCall>();
 	case SystemCallNr::OLDSTAT:         [[fallthrough]];
 	case SystemCallNr::STAT64:          [[fallthrough]];
