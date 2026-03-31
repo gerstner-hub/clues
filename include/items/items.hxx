@@ -230,6 +230,8 @@ protected: // functions
 
 		if (isIn() || isInOut()) {
 			fetchValue(tracee);
+		} else {
+			m_val.reset();
 		}
 	}
 
