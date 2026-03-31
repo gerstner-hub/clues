@@ -23,36 +23,42 @@ struct CLUES_API AlarmSystemCall :
 	item::UintValue old_seconds;
 };
 
-/// Type for rt_sigaction() and old sigaction().
+/// Type for and old sigaction().
 struct CLUES_API SigActionSystemCall :
 		public SystemCall {
 
-	explicit SigActionSystemCall(const SystemCallNr nr) :
+	explicit SigActionSystemCall(const SystemCallNr nr = SystemCallNr::SIGACTION) :
 			SystemCall{nr},
 			old_action{"old_action", "struct sigaction", ItemType::PARAM_OUT} {
 		setReturnItem(result);
 		setParameters(signum, action, old_action);
-
-		if (nr == SystemCallNr::RT_SIGACTION) {
-			sigset_size.emplace(item::SizeValue{"sigset_size", "sizeof(sigset_t)"});
-			addParameters(*sigset_size);
-		}
 	}
 
 	/* parameters */
 	item::SignalNumber signum;
 	item::SigActionParameter action;
 	item::SigActionParameter old_action;
+
+	/* return value */
+	item::SuccessResult result;
+};
+
+struct CLUES_API RtSigActionSystemCall :
+		public SigActionSystemCall {
+
+	explicit RtSigActionSystemCall() :
+			SigActionSystemCall{SystemCallNr::RT_SIGACTION},
+			sigset_size{"sigset_size", "sizeof(sigset_t)"} {
+		addParameters(sigset_size);
+	}
+
 	/// Provides `sizeof(sigset_t)` as found in the sigaction struct.
 	/**
 	 * Actually this is even more confusing, it is not the actual
 	 * `sizeof()`, it is rather the amount of bytes in `sigset_t` actually
 	 * used for signals, which is 8, hard-codedly, at the moment.
 	 **/
-	std::optional<item::SizeValue> sigset_size;
-
-	/* return value */
-	item::SuccessResult result;
+	item::SizeValue sigset_size;
 };
 
 /// Type for rt_sigprocmask() and old sigprocmask().

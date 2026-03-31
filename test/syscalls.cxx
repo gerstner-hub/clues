@@ -1630,7 +1630,7 @@ const auto TESTS = std::array{
 			sigaddset(&act.sa_mask, SIGCHLD);
 			act.sa_flags = SA_RESTART|SA_RESETHAND;
 			TWICE(::sigaction(SIGUSR1, &act, &oldact));
-		}, ENTRY_VERIFY_CB(SigActionSystemCall, {
+		}, ENTRY_VERIFY_CB(RtSigActionSystemCall, {
 			VERIFY(sc.signum.nr() == cosmos::signal::USR1.raw());
 			const auto &action = *sc.action.action();
 			VERIFY(action.raw()->sa_handler == (void*)0x1234);
@@ -1642,8 +1642,8 @@ const auto TESTS = std::array{
 			VERIFY(action.getFlags() == flags || action.getFlags() == flags + Flags{RESTORER});
 			VERIFY(action.mask().isSet(cosmos::signal::CHILD));
 			VERIFY(sc.old_action.action() == std::nullopt);
-			VERIFY(sc.sigset_size->value() == 8);
-		}), EXIT_VERIFY_CB(SigActionSystemCall, {
+			VERIFY(sc.sigset_size.value() == 8);
+		}), EXIT_VERIFY_CB(RtSigActionSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.old_action.action().has_value());
 		}), IgnoreCalls{1}, {
