@@ -1832,6 +1832,19 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::SET_TID_ADDRESS, tptr);
 			})
 		}
+	}, TestSpec{SystemCallNr::TGKILL, []() {
+			::tgkill(getpid(), gettid(), 0);
+		}, ENTRY_VERIFY_CB(TgKillSystemCall, {
+			VERIFY(sc.thread_group.pid() == tracee.pid());
+			VERIFY(cosmos::as_pid(sc.thread_id.tid()) == tracee.pid());
+			VERIFY(sc.signum.nr() == cosmos::SignalNr::NONE);
+		}), EXIT_VERIFY_CB(TgKillSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				syscall32(SyscallNr32::TGKILL, getpid(), gettid(), 0);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
