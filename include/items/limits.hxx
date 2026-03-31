@@ -56,8 +56,12 @@ protected: // functions
 	void updateData(const Tracee &proc) override;
 
 	void processValue(const Tracee &proc) override {
-		// the same logic on input as on output
-		return updateData(proc);
+		if (isOut()) {
+			m_limit.reset();
+		} else {
+			// the same logic on input as on output
+			return updateData(proc);
+		}
 	}
 
 	/// Checks whether the current context involves a 32-bit struct rlimit.

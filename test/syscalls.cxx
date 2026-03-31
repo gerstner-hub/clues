@@ -127,6 +127,17 @@ constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x7000000
 	__VA_ARGS__ \
 }
 
+/*
+ * this is used to perform the same system call twice, which is useful when
+ * output parameters are present and we want to verify that no old state
+ * remains in the SystemCall object.
+ */
+#define TWICE(...) { \
+	for (auto _: cosmos::Twice{}) { \
+		__VA_ARGS__; \
+	} \
+}
+
 #ifdef COSMOS_X86_64
 #	define TEST_I386_EMU
 
@@ -875,9 +886,7 @@ const auto TESTS = std::array{
 			/* the struct will be too big, bug that should be no
 			 * matter as long as we don't touch it here */
 			struct stat st;
-			// do it twice, see above
-			syscall(SYS_oldfstat, fd, &st);
-			syscall(SYS_oldfstat, fd, &st);
+			TWICE(syscall(SYS_oldfstat, fd, &st));
 #endif
 		}, ENTRY_VERIFY_CB(FstatSystemCall, {
 			VERIFY(sc.fd.fd() == FIRST_FD);
@@ -937,8 +946,9 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::GETDENTS, []() {
 			int fd = open("/", O_RDONLY|O_DIRECTORY);
 			char buffer[65535];
-			// do it twice to catch potentially missing cleanup in
-			// the system call object
+			/* do it TWICE, but we need to seek back to the
+			 * beginning of the directory here, thus it needs
+			 * extra code */
 			syscall(SYS_getdents, fd, buffer, sizeof(buffer));
 			lseek(fd, 0, SEEK_SET);
 			syscall(SYS_getdents, fd, buffer, sizeof(buffer));
@@ -1138,8 +1148,9 @@ const auto TESTS = std::array{
 			syscall(SYS_getrlimit, RLIMIT_CORE, &lim);
 		}, ENTRY_VERIFY_CB(GetRlimitSystemCall, {
 			VERIFY(sc.type.type() == cosmos::LimitType::CORE);
-			VERIFY(sc.limit.limit().has_value());
+			VERIFY(sc.limit.limit() == std::nullopt);
 		}), EXIT_VERIFY_CB(GetRlimitSystemCall, {
+			VERIFY(sc.limit.limit().has_value());
 			VERIFY(sc.hasResultValue());
 		}), 0, {
 			I386_CROSS_ABI(1, []() {
@@ -1177,7 +1188,7 @@ const auto TESTS = std::array{
 			struct rlimit new_lim;
 			new_lim.rlim_cur = 1000;
 			new_lim.rlim_max = 10000;
-			prlimit(0, RLIMIT_CORE, &new_lim, &old_lim);
+			TWICE(prlimit(0, RLIMIT_CORE, &new_lim, &old_lim));
 		}, ENTRY_VERIFY_CB(Prlimit64SystemCall, {
 			VERIFY(sc.pid.pid() == cosmos::ProcessID::SELF);
 			VERIFY(sc.type.type() == cosmos::LimitType::CORE);
@@ -1185,8 +1196,9 @@ const auto TESTS = std::array{
 			const auto newlim = *sc.limit.limit();
 			VERIFY(newlim.getSoftLimit() == 1000);
 			VERIFY(newlim.getHardLimit() == 10000);
-			VERIFY(sc.old_limit.limit().has_value());
+			VERIFY(sc.old_limit.limit() == std::nullopt);
 		}), EXIT_VERIFY_CB(Prlimit64SystemCall, {
+			VERIFY(sc.old_limit.limit().has_value());
 			VERIFY(sc.hasResultValue());
 		}), 0, {
 			I386_CROSS_ABI(2, []() {
@@ -1255,10 +1267,7 @@ const auto TESTS = std::array{
 		}
 	}, TestSpec{SystemCallNr::LSTAT, []() {
 			struct stat st;
-			// do it twice to re-use the same system call object
-			// and catch potentially unclean state
-			syscall(SYS_lstat, "/", &st);
-			syscall(SYS_lstat, "/", &st);
+			TWICE(syscall(SYS_lstat, "/", &st));
 		}, ENTRY_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.path.data() == "/");
 			VERIFY(sc.statbuf.status() == std::nullopt);
@@ -1280,9 +1289,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::LSTAT64, []() {
 #ifdef COSMOS_I386
 			struct stat st;
-			// do it twice, see above
-			syscall(SYS_lstat64, "/", &st);
-			syscall(SYS_lstat64, "/", &st);
+			TWICE(syscall(SYS_lstat64, "/", &st));
 #endif
 		}, ENTRY_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.path.data() == "/");
@@ -1306,9 +1313,7 @@ const auto TESTS = std::array{
 			/* the struct will be too big, bug that should be no
 			 * matter as long as we don't touch it here */
 			struct stat st;
-			// do it twice, see above
-			syscall(SYS_oldlstat, "/", &st);
-			syscall(SYS_oldlstat, "/", &st);
+			TWICE(syscall(SYS_oldlstat, "/", &st));
 #endif
 		}, ENTRY_VERIFY_CB(LstatSystemCall, {
 			VERIFY(sc.path.data() == "/");
