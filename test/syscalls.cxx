@@ -1625,7 +1625,7 @@ const auto TESTS = std::array{
 			act.sa_handler = (sig_handler_t)0x1234;
 			sigaddset(&act.sa_mask, SIGCHLD);
 			act.sa_flags = SA_RESTART|SA_RESETHAND;
-			::sigaction(SIGUSR1, &act, &oldact);
+			TWICE(::sigaction(SIGUSR1, &act, &oldact));
 		}, ENTRY_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.signum.nr() == cosmos::signal::USR1.raw());
 			const auto &action = *sc.action.action();
@@ -1637,11 +1637,12 @@ const auto TESTS = std::array{
 			 * for that */
 			VERIFY(action.getFlags() == flags || action.getFlags() == flags + Flags{RESTORER});
 			VERIFY(action.mask().isSet(cosmos::signal::CHILD));
-			VERIFY(sc.old_action.action().has_value());
+			VERIFY(sc.old_action.action() == std::nullopt);
 			VERIFY(sc.sigset_size->value() == 8);
 		}), EXIT_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.hasResultValue());
-		}), 0, {
+			VERIFY(sc.old_action.action().has_value());
+		}), 1, {
 			I386_CROSS_ABI(2, []() {
 				auto act = alloc_struct32<clues::kernel_sigaction32>();
 				auto oldact = alloc_struct32<clues::kernel_sigaction32>();
@@ -1661,7 +1662,7 @@ const auto TESTS = std::array{
 			act.handler = 0x1234;
 			act.mask |= 1 << (SIGCHLD - 1);
 			act.flags = SA_RESTART|SA_RESETHAND;
-			::syscall(SYS_sigaction, SIGUSR1, &act, &oldact);
+			TWICE(::syscall(SYS_sigaction, SIGUSR1, &act, &oldact));
 #endif
 		}, ENTRY_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.signum.nr() == cosmos::signal::USR1.raw());
@@ -1674,10 +1675,11 @@ const auto TESTS = std::array{
 			 * for that */
 			VERIFY(action.getFlags() == flags || action.getFlags() == flags + Flags{RESTORER});
 			VERIFY(action.mask().isSet(cosmos::signal::CHILD));
-			VERIFY(sc.old_action.action().has_value());
+			VERIFY(sc.old_action.action() == std::nullopt);
 		}), EXIT_VERIFY_CB(SigActionSystemCall, {
 			VERIFY(sc.hasResultValue());
-		}), 0, {
+			VERIFY(sc.old_action.action().has_value());
+		}), 1, {
 			I386_CROSS_ABI(2, []() {
 				auto act = alloc_struct32<clues::kernel_old_sigaction>();
 				auto oldact = alloc_struct32<clues::kernel_old_sigaction>();

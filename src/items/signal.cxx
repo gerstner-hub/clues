@@ -117,6 +117,12 @@ void fetch_sigaction(const ForeignPtr ptr, const Tracee &proc, std::optional<cos
 } // end anon ns
 
 void SigActionParameter::processValue(const Tracee &proc) {
+
+	if (isOut() && proc.isEnterStop()) {
+		m_sigaction.reset();
+		return;
+	}
+
 	if (!m_sigaction) {
 		m_sigaction = cosmos::SigAction{};
 	}
