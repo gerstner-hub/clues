@@ -118,6 +118,12 @@ public: // functions
 
 	std::string str() const override;
 
+	std::optional<const cosmos::ResourceUsage> usage() const {
+		if (!m_rusage)
+			return {};
+		return *m_rusage;
+	}
+
 protected: // types
 
 	struct ResourceUsage :
