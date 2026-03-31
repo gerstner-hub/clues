@@ -83,11 +83,11 @@ protected: // data
 };
 
 class WaitOptionsItem :
-		public SystemCallItem {
+		public ValueInParameter {
 public: // functions
 
 	explicit WaitOptionsItem() :
-			SystemCallItem{ItemType::PARAM_IN, "options", "wait options"} {
+			ValueInParameter{"options", "wait options"} {
 	}
 
 	auto options() const {
