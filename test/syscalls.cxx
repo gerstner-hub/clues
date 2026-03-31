@@ -1749,6 +1749,20 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::SET_TID_ADDRESS, []() {
+			int tptr;
+			syscall(SYS_set_tid_address, &tptr);
+		}, ENTRY_VERIFY_CB(SetTIDAddressSystemCall, {
+			VERIFY(sc.address.ptr() != ForeignPtr::NO_POINTER);
+		}), EXIT_VERIFY_CB(SetTIDAddressSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.caller_tid.tid() != cosmos::ThreadID::INVALID);
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto tptr = alloc_struct32<int>();
+				syscall32(SyscallNr32::SET_TID_ADDRESS, tptr);
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
