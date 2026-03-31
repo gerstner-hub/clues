@@ -1337,6 +1337,71 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::STAT64, []() {
+#ifdef COSMOS_I386
+			struct stat st;
+			TWICE(syscall(SYS_stat64, "/", &st));
+#endif
+		}, ENTRY_VERIFY_CB(StatSystemCall, {
+			VERIFY(sc.path.data() == "/");
+			VERIFY(sc.statbuf.status() == std::nullopt);
+		}), EXIT_VERIFY_CB(StatSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto &st = *sc.statbuf.status();
+			VERIFY(st.uid() == cosmos::UserID::ROOT);
+			VERIFY(st.gid() == cosmos::GroupID::ROOT);
+			VERIFY(st.type().isDirectory());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto st = alloc_struct32<struct stat>();
+				auto path = alloc_str32("/");
+				syscall32(SyscallNr32::STAT64, path, st);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::STAT, []() {
+			struct stat st;
+			TWICE(syscall(SYS_stat, "/", &st));
+		}, ENTRY_VERIFY_CB(StatSystemCall, {
+			VERIFY(sc.path.data() == "/");
+			VERIFY(sc.statbuf.status() == std::nullopt);
+		}), EXIT_VERIFY_CB(StatSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto &st = *sc.statbuf.status();
+			VERIFY(st.uid() == cosmos::UserID::ROOT);
+			VERIFY(st.gid() == cosmos::GroupID::ROOT);
+			VERIFY(st.type().isDirectory());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto st = alloc_struct32<struct stat>();
+				auto path = alloc_str32("/");
+				syscall32(SyscallNr32::STAT, path, st);
+			})
+		}
+	}, TestSpec{SystemCallNr::OLDSTAT, []() {
+#ifdef COSMOS_I386
+			struct stat st;
+			TWICE(syscall(SYS_oldstat, "/", &st));
+#endif
+		}, ENTRY_VERIFY_CB(StatSystemCall, {
+			VERIFY(sc.path.data() == "/");
+			VERIFY(sc.statbuf.status() == std::nullopt);
+		}), EXIT_VERIFY_CB(StatSystemCall, {
+			VERIFY(sc.hasResultValue());
+			const auto &st = *sc.statbuf.status();
+			VERIFY(st.uid() == cosmos::UserID::ROOT);
+			VERIFY(st.gid() == cosmos::GroupID::ROOT);
+			VERIFY(st.type().isDirectory());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto st = alloc_struct32<struct stat>();
+				auto path = alloc_str32("/");
+				syscall32(SyscallNr32::OLDSTAT, path, st);
+			})
+		},
+		"",
+		{clues::ABI::I386}
 	},
 	/*
 	 * mmap() and mmap2() are especially problematic cases, because mmap()
