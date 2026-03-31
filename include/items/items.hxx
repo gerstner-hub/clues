@@ -290,6 +290,7 @@ using UintValue = IntValueT<unsigned int>;
 using Uint32Value = IntValueT<uint32_t>;
 using ULongValue = IntValueT<unsigned long>;
 using SizeValue = IntValueT<size_t>;
+using OffsetValue = IntValueT<off_t>;
 
 ///! Represents an unused system call parameter.
 /**

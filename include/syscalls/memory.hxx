@@ -79,7 +79,7 @@ public: // data
 	item::MemoryProtectionParameter protection;
 	item::MapFlagsParameter flags;
 	item::FileDescriptor fd;
-	item::ValueInParameter offset;
+	item::OffsetValue offset;
 
 	/* parameters for old mmap() */
 	std::optional<item::OldMmapArgs> old_args;
