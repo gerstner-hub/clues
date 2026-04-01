@@ -1,5 +1,8 @@
 #pragma once
 
+// C++
+#include <cstdint>
+
 // Linux
 #include <signal.h>
 
