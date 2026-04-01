@@ -160,6 +160,13 @@ public: // functions
 		const std::string_view long_name = {}) :
 			PointerValue{type, short_name, long_name},
 			m_size_par{size_par} {
+		if (type == ItemType::PARAM_IN) {
+			/*
+			 * currently needed for write(), but other system
+			 * calls might be affected, too.
+			 */
+			m_flags.set(Flag::DEFER_FILL);
+		}
 	}
 
 	const auto& data() const {

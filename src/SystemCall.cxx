@@ -39,11 +39,25 @@ SystemCall::SystemCall(const SystemCallNr nr) :
 
 void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) {
 	const auto args = info.entryInfo()->args();
+	std::vector<std::pair<SystemCallItem*, Word>> deferred;
+
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
 		if (item::is_unused_par(par))
 			continue;
-		par.fill(proc, Word{static_cast<Word>(args[numpar])});
+
+		const auto word = Word{static_cast<Word>(args[numpar])};
+
+		if (par.deferFill()) {
+			deferred.push_back({&par, word});
+			continue;
+		}
+
+		par.fill(proc, word);
+	}
+
+	for (const auto [item, word]: deferred) {
+		item->fill(proc, word);
 	}
 }
 

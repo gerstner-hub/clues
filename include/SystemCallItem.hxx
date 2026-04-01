@@ -6,6 +6,7 @@
 #include <type_traits>
 
 // cosmos
+#include <cosmos/BitMask.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -31,6 +32,20 @@ enum class ItemType {
  **/
 class CLUES_API SystemCallItem {
 	friend SystemCall;
+public: // types
+
+
+	enum class Flag {
+		/// Only fill in this item after all other items have been filled.
+		/**
+		 * This helps to model context-dependent parameters that rely
+		 * on the values of parameters appearing at a later position.
+		 **/
+		DEFER_FILL = 1 << 0
+	};
+
+	using Flags = cosmos::BitMask<Flag>;
+
 public: // functions
 
 	/// Constructs a new SystemCallItem.
@@ -119,6 +134,14 @@ public: // functions
 		return valueAs<ForeignPtr>();
 	}
 
+	Flags flags() const {
+		return m_flags;
+	}
+
+	bool deferFill() const {
+		return m_flags[Flag::DEFER_FILL];
+	}
+
 protected: // functions
 
 	/// Processes the value stored in m_val acc. to the actual item type.
@@ -166,6 +189,8 @@ protected: // data
 	std::string_view m_long_name;
 	/// The raw register value for the item.
 	Word m_val;
+	/// Flags influencing the processing of the item.
+	Flags m_flags;
 };
 
 } // end ns
