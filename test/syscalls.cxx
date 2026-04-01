@@ -1691,6 +1691,34 @@ const auto TESTS = std::array{
 				}
 			})
 		}
+	}, TestSpec{SystemCallNr::WRITE, []() {
+			int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+			const char buffer[] = "abcdefgh";
+			if (write(fd, buffer, sizeof(buffer)) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(WriteSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.buf.data().size() == 9);
+			std::string s;
+			for (const auto byte: sc.buf.data()) {
+				if (byte)
+					s.push_back(byte);
+			}
+			VERIFY(s == "abcdefgh");
+			VERIFY(sc.count.value() == 9);
+			VERIFY(sc.buf.availableBytes() == 9);
+		}), EXIT_VERIFY_CB(WriteSystemCall, {
+			VERIFY(sc.hasResultValue());
+			// partial writes should not occur here
+			VERIFY(sc.written.value() == 9);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+				auto buffer = alloc_str32("abcdefgh");
+				syscall32(SyscallNr32::WRITE, fd, buffer, strlen(buffer) + 1);
+			})
+		}
 	}, TestSpec{SystemCallNr::RT_SIGACTION, []() {
 			using sig_handler_t = void(*)(int);
 			struct sigaction act, oldact;
