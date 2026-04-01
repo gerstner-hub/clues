@@ -12,7 +12,7 @@
 
 namespace clues::item {
 
-class ProcessIDItem :
+class CLUES_API ProcessIDItem :
 		public SystemCallItem {
 public: // functions
 
@@ -40,7 +40,7 @@ protected: // data
 	cosmos::ProcessID m_pid = cosmos::ProcessID::INVALID;
 };
 
-class ThreadIDItem :
+class CLUES_API ThreadIDItem :
 		public SystemCallItem {
 public: // functions
 
@@ -61,7 +61,7 @@ protected: // data
 	cosmos::ThreadID m_tid = cosmos::ThreadID::INVALID;
 };
 
-class ExitStatusItem :
+class CLUES_API ExitStatusItem :
 		public SystemCallItem {
 public: // functions
 
@@ -82,7 +82,7 @@ protected: // data
 	cosmos::ExitStatus m_status = cosmos::ExitStatus::INVALID;
 };
 
-class WaitOptionsItem :
+class CLUES_API WaitOptionsItem :
 		public ValueInParameter {
 public: // functions
 
