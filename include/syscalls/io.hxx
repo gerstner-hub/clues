@@ -79,7 +79,7 @@ struct CLUES_API IoCtlSystemCall :
 };
 
 /// The classic `pipe()` system call without flags.
-struct PipeSystemCall :
+struct CLUES_API PipeSystemCall :
 		public SystemCall {
 
 	explicit PipeSystemCall(const SystemCallNr nr = SystemCallNr::PIPE) :
@@ -102,7 +102,7 @@ protected: // functions
 	void updateFDTracking(const Tracee &proc) override;
 };
 
-struct Pipe2SystemCall :
+struct CLUES_API Pipe2SystemCall :
 		public PipeSystemCall {
 
 	explicit Pipe2SystemCall() :
