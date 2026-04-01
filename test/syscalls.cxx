@@ -1905,6 +1905,59 @@ const auto TESTS = std::array{
 				}
 			})
 		}
+	}, TestSpec{SystemCallNr::PIPE, []() {
+			int pipes[2];
+			TWICE({
+				syscall(SYS_pipe, pipes);
+				close(pipes[0]);
+				close(pipes[1]);
+			});
+		}, ENTRY_VERIFY_CB(PipeSystemCall, {
+			VERIFY(sc.ends.readEnd() == cosmos::FileNum::INVALID);
+			VERIFY(sc.ends.writeEnd() == cosmos::FileNum::INVALID);
+		}), EXIT_VERIFY_CB(PipeSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.ends.readEnd() == FIRST_FD);
+			VERIFY(sc.ends.writeEnd() == SECOND_FD);
+		}), IgnoreCalls{3}, {
+			I386_CROSS_ABI(IgnoreCalls{4}, []() {
+				auto pipes = *alloc_struct32<int[2]>();
+				TWICE({
+					syscall32(SyscallNr32::PIPE, pipes);
+					close(pipes[0]);
+					close(pipes[1]);
+				});
+			})
+		}
+	}, TestSpec{SystemCallNr::PIPE2, []() {
+			int pipes[2];
+			TWICE({
+				if (pipe2(pipes, O_CLOEXEC|O_NONBLOCK) < 0) {
+					_exit(1);
+				}
+				close(pipes[0]);
+				close(pipes[1]);
+			});
+		}, ENTRY_VERIFY_CB(Pipe2SystemCall, {
+			VERIFY(sc.ends.readEnd() == cosmos::FileNum::INVALID);
+			VERIFY(sc.ends.writeEnd() == cosmos::FileNum::INVALID);
+			const auto flags = sc.flags.flags();
+			using enum clues::item::PipeFlags::Flag;
+			VERIFY(flags == clues::item::PipeFlags::Flags{CLOEXEC, NONBLOCK});
+		}), EXIT_VERIFY_CB(Pipe2SystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.ends.readEnd() == FIRST_FD);
+			VERIFY(sc.ends.writeEnd() == SECOND_FD);
+		}), IgnoreCalls{3}, {
+			I386_CROSS_ABI(IgnoreCalls{4}, []() {
+				auto pipes = *alloc_struct32<int[2]>();
+				TWICE({
+					syscall32(SyscallNr32::PIPE2, pipes, O_CLOEXEC|O_NONBLOCK);
+					close(pipes[0]);
+					close(pipes[1]);
+				});
+			})
+		}
 	},
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
