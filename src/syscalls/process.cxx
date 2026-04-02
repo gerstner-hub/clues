@@ -3,6 +3,7 @@
 
 namespace clues {
 
+#ifdef CLUES_HAVE_ARCH_PRCTL
 void ArchPrctlSystemCall::prepareNewSystemCall() {
 	// only keep the `op` parameter
 	m_pars.erase(m_pars.begin() + 1, m_pars.end());
@@ -47,6 +48,7 @@ bool ArchPrctlSystemCall::check2ndPass(const Tracee &) {
 
 	return true;
 }
+#endif
 
 void CloneSystemCall::prepareNewSystemCall() {
 	/* drop all but the fixed initial two parameters */

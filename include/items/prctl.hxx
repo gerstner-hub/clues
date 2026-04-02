@@ -1,13 +1,18 @@
 #pragma once
 
-// Linux
-#include <asm/prctl.h>
-
 // clues
+#include <clues/arch.hxx>
 #include <clues/items/items.hxx>
+
+// Linux
+#ifdef CLUES_HAVE_ARCH_PRCTL
+#include <asm/prctl.h>
+#endif
+
 
 namespace clues::item {
 
+#ifdef CLUES_HAVE_ARCH_PRCTL
 /// The `op` parameter to the arch_prctl system call.
 class CLUES_API ArchOpParameter :
 		public ValueInParameter {
@@ -44,5 +49,6 @@ protected: // data
 
 	Operation m_op = Operation{0};
 };
+#endif
 
 } // end ns

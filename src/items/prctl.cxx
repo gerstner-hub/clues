@@ -13,6 +13,7 @@
 
 namespace clues::item {
 
+#ifdef CLUES_HAVE_ARCH_PRCTL
 std::string ArchOpParameter::str() const {
 	switch (valueAs<int>()) {
 #ifdef COSMOS_X86
@@ -28,5 +29,6 @@ std::string ArchOpParameter::str() const {
 		default: return "unknown";
 	}
 }
+#endif
 
 } // end ns

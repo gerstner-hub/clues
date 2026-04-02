@@ -4,6 +4,8 @@
 #include <cosmos/fs/types.hxx>
 
 // clues
+#include <clues/SystemCall.hxx>
+#include <clues/arch.hxx>
 #include <clues/dso_export.h>
 #include <clues/items/clone.hxx>
 #include <clues/items/creds.hxx>
@@ -13,9 +15,10 @@
 #include <clues/items/process.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
-#include <clues/SystemCall.hxx>
 
 namespace clues {
+
+#ifdef CLUES_HAVE_ARCH_PRCTL
 
 /// x86-specific prctl() extension.
 struct CLUES_API ArchPrctlSystemCall :
@@ -47,6 +50,8 @@ protected: // functions
 
 	void prepareNewSystemCall() override;
 };
+
+#endif
 
 /// Wrapper for the clone() and clone2() system calls.
 /**

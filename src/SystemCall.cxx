@@ -122,7 +122,9 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::FACCESSAT:       return new_sys<FAccessAtSystemCall>();
 	case SystemCallNr::FACCESSAT2:      return new_sys<FAccessAt2SystemCall>();
 	case SystemCallNr::ALARM:           return new_sys<AlarmSystemCall>();
+#ifdef CLUES_HAVE_ARCH_PRCTL
 	case SystemCallNr::ARCH_PRCTL:      return new_sys<ArchPrctlSystemCall>();
+#endif
 	case SystemCallNr::BRK:             return new_sys<BreakSystemCall>();
 	case SystemCallNr::CLOCK_NANOSLEEP: return new_sys<ClockNanoSleepSystemCall>();
 	case SystemCallNr::CLONE:           return new_sys<CloneSystemCall>();
