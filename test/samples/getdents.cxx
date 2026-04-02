@@ -10,4 +10,6 @@ int main(const int argc, const char **argv) {
 	char buffer[16384];
 
 	syscall(SYS_getdents, fd, buffer, sizeof(buffer));
+	lseek(fd, SEEK_SET, 0);
+	syscall(SYS_getdents64, fd, buffer, sizeof(buffer));
 }
