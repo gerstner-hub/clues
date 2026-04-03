@@ -1,10 +1,16 @@
+#include <clues/arch.hxx>
+
+#ifdef CLUES_HAVE_ARCH_PRCTL
 #include <asm/prctl.h>
+#else
+#include <iostream>
+#endif
+
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#include <cosmos/compiler.hxx>
 
-#ifdef COSMOS_X86
+#ifdef CLUES_HAVE_ARCH_PRCTL
 template <typename ADDR>
 static int arch_prctl(int op, ADDR addr) {
 	return syscall(SYS_arch_prctl, op, addr);
@@ -12,7 +18,7 @@ static int arch_prctl(int op, ADDR addr) {
 #endif
 
 int main() {
-#ifdef COSMOS_X86
+#ifdef CLUES_HAVE_ARCH_PRCTL
 	arch_prctl(ARCH_SET_CPUID, 1);
 	arch_prctl(ARCH_SET_CPUID, 0);
 	arch_prctl(ARCH_SET_CPUID, 100);
@@ -26,6 +32,9 @@ int main() {
 	arch_prctl(ARCH_SET_FS, orig_fs);
 	arch_prctl(ARCH_SET_GS, orig_gs);
 #	endif
+#else
+	std::cerr << "no arch_prctl() on this ABI!\n";
+	_exit(1);
 #endif
 
 }

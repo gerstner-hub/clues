@@ -4,6 +4,9 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include <clues/arch.hxx>
+#include <clues/private/kernel/stat.hxx>
+
 namespace kernel {
 
 struct old_kernel_stat {
@@ -80,32 +83,6 @@ struct stat32_64 {
         unsigned long long      ino;
 };
 
-/*
- * the single stat structure used on 64-bit ABIs like x86_64
- */
-struct stat64 {
-        __kernel_ulong_t        dev;
-        __kernel_ulong_t        ino;
-        __kernel_ulong_t        nlink;
-
-        unsigned int            mode;
-        unsigned int            uid;
-        unsigned int            gid;
-        unsigned int            __pad0;
-        __kernel_ulong_t        rdev;
-        __kernel_long_t         size;
-        __kernel_long_t         blksize;
-        __kernel_long_t         blocks;      /* Number 512-byte blocks alloc */
-
-        __kernel_ulong_t        atime;
-        __kernel_ulong_t        atime_nsec;
-        __kernel_ulong_t        mtime;
-        __kernel_ulong_t        mtime_nsec;
-        __kernel_ulong_t        ctime;
-        __kernel_ulong_t        ctime_nsec;
-        __kernel_long_t         __unused[3];
-};
-
 }
 
 int main() {
@@ -154,9 +131,13 @@ int main() {
 
 	::close(dev_fd);
 #else
-	struct kernel::stat64 st64;
+	struct clues::stat64 st64;
+#	ifdef CLUES_HAVE_STAT
 	::syscall(SYS_stat, PATH, &st64);
+#	endif
+#	ifdef CLUES_HAVE_LSTAT
 	::syscall(SYS_lstat, PATH, &st64);
+#endif
 	::syscall(SYS_fstat, fd, &st64);
 
 	::syscall(SYS_newfstatat, fd, "", &st, AT_EMPTY_PATH);
