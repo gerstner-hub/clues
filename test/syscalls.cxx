@@ -1,14 +1,3 @@
-// Linux
-#include <asm/prctl.h>
-#include <fcntl.h>
-#include <linux/fs.h>
-#include <sched.h>
-#include <sys/ioctl.h>
-#include <sys/resource.h>
-#include <sys/syscall.h>
-#include <time.h>
-#include <unistd.h>
-
 // C++
 #include <cstring>
 #include <iostream>
@@ -29,6 +18,20 @@
 #include <clues/syscalls/all.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
+
+// Linux
+#ifdef CLUES_HAVE_ARCH_PRCTL
+#include <asm/prctl.h>
+#endif
+#include <fcntl.h>
+#include <linux/fs.h>
+#include <sched.h>
+#include <sys/ioctl.h>
+#include <sys/resource.h>
+#include <sys/syscall.h>
+#include <time.h>
+#include <unistd.h>
+
 
 // Test
 #include "TestBase.hxx"
@@ -452,6 +455,7 @@ using SyscallNr32 = clues::SystemCallNrI386;
  *   specification for the same system call.
  */
 const auto TESTS = std::array{
+#ifdef CLUES_HAVE_ACCESS
 	TestSpec{SystemCallNr::ACCESS, []() {
 			access("/etc/", R_OK|X_OK);
 		}, ENTRY_VERIFY_CB(AccessSystemCall, {
@@ -468,7 +472,9 @@ const auto TESTS = std::array{
 					alloc_str32("/etc/"), R_OK|X_OK);
 			})
 		}
-	}, TestSpec{SystemCallNr::FACCESSAT, []() {
+	},
+#endif
+	TestSpec{SystemCallNr::FACCESSAT, []() {
 			auto dirfd = open("/", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_faccessat, dirfd, "etc", R_OK|X_OK);
 		}, ENTRY_VERIFY_CB(FAccessAtSystemCall, {
@@ -499,6 +505,7 @@ const auto TESTS = std::array{
 					syscall32(SyscallNr32::FACCESSAT2, dirfd, alloc_str32("etc"), R_OK|X_OK, AT_EACCESS);
 			})
 		}
+#ifdef CLUES_HAVE_ALARM
 	}, TestSpec{SystemCallNr::ALARM, []() {
 			/* make two calls so that we get a non-zero return
 			 * value */
@@ -514,8 +521,8 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::ALARM, 4321);
 			})
 		}
-	},
-	TestSpec{SystemCallNr::BREAK, []() {
+#endif
+	}, TestSpec{SystemCallNr::BREAK, []() {
 			syscall(SYS_brk, 0x4711);
 		}, ENTRY_VERIFY_CB(BreakSystemCall, {
 			VERIFY(sc.req_addr.ptr() == ForeignPtr{0x4711});
@@ -561,7 +568,6 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::CLONE, []() {
 			pid_t child_tid = 9000;
 
-#ifdef COSMOS_X86
 			long flags = CLONE_PARENT_SETTID|SIGCHLD;
 			if (sizeof(long) == 8) {
 				/*
@@ -571,9 +577,11 @@ const auto TESTS = std::array{
 				 */
 				flags |= CLONE_CLEAR_SIGHAND;
 			}
+#if defined(COSMOS_X86) or defined(COSMOS_AARCH64)
+			// the first three parameters are all the same on these architectures
 			auto res = syscall(SYS_clone, flags, nullptr, &child_tid);
 #else
-#error "adapt unit test to your ABI"
+#	error "adapt unit test to your ABI"
 #endif
 			if (res == 0) {
 				_exit(123);
@@ -816,6 +824,7 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+#ifdef CLUES_HAVE_FORK
 	}, TestSpec{SystemCallNr::FORK, []() {
 			/* the fork() wrapper may invoke SYS_clone instead */
 			if (syscall(SYS_fork) == 0) {
@@ -837,6 +846,7 @@ const auto TESTS = std::array{
 				}
 			})
 		},
+#endif
 	}, TestSpec{SystemCallNr::FSTAT, []() {
 			int fd = open("/", O_RDONLY|O_DIRECTORY);
 			struct stat st;
@@ -951,6 +961,7 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::FUTEX, fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, ts);
 			})
 		},
+#ifdef CLUES_HAVE_LEGACY_GETDENTS
 	}, TestSpec{SystemCallNr::GETDENTS, []() {
 			int fd = open("/", O_RDONLY|O_DIRECTORY);
 			char buffer[65535];
@@ -994,6 +1005,7 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::GETDENTS, fd, buffer, 65535);
 			})
 		}
+#endif
 	}, TestSpec{SystemCallNr::GETDENTS64, []() {
 			int fd = open("/", O_RDONLY|O_DIRECTORY);
 			char buffer[65535];
@@ -1167,10 +1179,10 @@ const auto TESTS = std::array{
 			})
 		}
 	}, TestSpec{SystemCallNr::SETRLIMIT, []() {
-#ifdef COSMOS_X86_64
-			struct rlimit lim;
-#else
+#ifdef COSMOS_I386
 			clues::rlimit32 lim;
+#else
+			struct rlimit lim;
 #endif
 			lim.rlim_cur = 1000;
 			lim.rlim_max = 10000;
@@ -1273,6 +1285,7 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::IOCTL, fd, flags, attr);
 			})
 		}
+#ifdef CLUES_HAVE_LSTAT
 	}, TestSpec{SystemCallNr::LSTAT, []() {
 			struct stat st;
 			TWICE(syscall(SYS_lstat, "/", &st));
@@ -1294,6 +1307,7 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::LSTAT, path, st);
 			})
 		}
+#endif
 	}, TestSpec{SystemCallNr::LSTAT64, []() {
 #ifdef COSMOS_I386
 			struct stat st;
@@ -1364,6 +1378,7 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
+#ifdef CLUES_HAVE_STAT
 	}, TestSpec{SystemCallNr::STAT, []() {
 			struct stat st;
 			TWICE(syscall(SYS_stat, "/", &st));
@@ -1383,6 +1398,7 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::STAT, path, st);
 			})
 		}
+#endif
 	}, TestSpec{SystemCallNr::OLDSTAT, []() {
 #ifdef COSMOS_I386
 			struct stat st;
@@ -1579,6 +1595,7 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::NANOSLEEP, ts32, ts32);
 			})
 		}
+#ifdef CLUES_HAVE_OPEN
 	}, TestSpec{SystemCallNr::OPEN, []() {
 			syscall(SYS_open, "/etc/fstab", O_RDONLY|O_CLOEXEC);
 		}, ENTRY_VERIFY_CB(OpenSystemCall, {
@@ -1620,6 +1637,7 @@ const auto TESTS = std::array{
 			})
 		},
 		"CREAT"
+#endif
 	}, TestSpec{SystemCallNr::OPENAT, []() {
 			auto fd = open("/etc", O_RDONLY|O_DIRECTORY);
 			syscall(SYS_openat, fd, "fstab", O_RDONLY|O_CLOEXEC);
@@ -1874,7 +1892,12 @@ const auto TESTS = std::array{
 			})
 		}
 	}, TestSpec{SystemCallNr::WAIT4, []() {
-			if (const auto pid = ::syscall(SYS_fork); pid == 0) {
+			/* don't use SYS_fork here which is not available on
+			 * all ABIs.
+			 * libc's fork() issues multiple system calls,
+			 * however, difficult to keep track of.
+			 * */
+			if (const auto pid = fork(); pid == 0) {
 				::_exit(10);
 			} else {
 				int status;
@@ -1894,7 +1917,7 @@ const auto TESTS = std::array{
 			VERIFY(status != std::nullopt);
 			VERIFY(status->exited() && status->status() == cosmos::ExitStatus{10});
 			VERIFY(sc.rusage.usage() != std::nullopt);
-		}), IgnoreCalls{1}, {
+		}), IgnoreCalls{3}, {
 			I386_CROSS_ABI(IgnoreCalls{3}, []() {
 				if (const auto pid = ::syscall(SYS_fork); pid == 0) {
 					::_exit(10);
@@ -1905,6 +1928,7 @@ const auto TESTS = std::array{
 				}
 			})
 		}
+#ifdef CLUES_HAVE_PIPE1
 	}, TestSpec{SystemCallNr::PIPE, []() {
 			int pipes[2];
 			TWICE({
@@ -1929,6 +1953,7 @@ const auto TESTS = std::array{
 				});
 			})
 		}
+#endif
 	}, TestSpec{SystemCallNr::PIPE2, []() {
 			int pipes[2];
 			TWICE({
