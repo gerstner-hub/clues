@@ -43,7 +43,9 @@ std::string MapFlagsParameter::str() const {
 
 	BITFLAGS_STREAM() << '|';
 
+#ifdef MAP_32BIT
 	BITFLAGS_ADD(MAP_32BIT);
+#endif
 	BITFLAGS_ADD(MAP_ANONYMOUS);
 	BITFLAGS_ADD(MAP_FIXED);
 	BITFLAGS_ADD(MAP_FIXED_NOREPLACE);
