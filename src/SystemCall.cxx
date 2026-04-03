@@ -56,7 +56,7 @@ void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) 
 		par.fill(proc, word);
 	}
 
-	for (const auto [item, word]: deferred) {
+	for (const auto &[item, word]: deferred) {
 		item->fill(proc, word);
 	}
 }
