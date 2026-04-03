@@ -3,6 +3,9 @@
 // C++
 #include <cstdint>
 
+// cosmos
+#include <cosmos/compiler.hxx>
+
 namespace clues {
 
 extern "C" {
@@ -74,7 +77,8 @@ struct stat32_64 {
         uint64_t ino;
 } __attribute__((packed));
 
-/// The single stat structure used on 64-bit ABIs like x86_64.
+#ifdef COSMOS_X86
+/// The single stat structure use with modern stat calls on x86_64.
 struct stat64 {
         uint64_t dev;
         uint64_t ino;
@@ -97,6 +101,31 @@ struct stat64 {
         uint64_t ctime_nsec;
         int64_t __unused[3];
 };
+#else
+/// The single stat structure from asm-generic used e.g. on AARCH64
+struct stat64 {
+        unsigned long   dev;         /* Device.  */
+        unsigned long   ino;         /* File serial number.  */
+        unsigned int    mode;        /* File mode.  */
+        unsigned int    nlink;       /* Link count.  */
+        unsigned int    uid;         /* User ID of the file's owner.  */
+        unsigned int    gid;         /* Group ID of the file's group. */
+        unsigned long   rdev;        /* Device number, if device.  */
+        unsigned long   __pad1;
+        long            size;        /* Size of file, in bytes.  */
+        int             blksize;     /* Optimal block size for I/O.  */
+        int             __pad2;
+        long            blocks;      /* Number 512-byte blocks allocated. */
+        long            atime;       /* Time of last access.  */
+        unsigned long   atime_nsec;
+        long            mtime;       /* Time of last modification.  */
+        unsigned long   mtime_nsec;
+        long            ctime;       /* Time of last status change.  */
+        unsigned long   ctime_nsec;
+        unsigned int    __unused4;
+        unsigned int    __unused5;
+};
+#endif
 
 } // end extern
 
