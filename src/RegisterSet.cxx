@@ -31,3 +31,4 @@ std::ostream& operator<<(std::ostream &o, const clues::RegisterSet<abi> &rs) {
 template CLUES_API std::ostream& operator<<(std::ostream&, const clues::RegisterSet<clues::ABI::X86_64>&);
 template CLUES_API std::ostream& operator<<(std::ostream&, const clues::RegisterSet<clues::ABI::X32>&);
 template CLUES_API std::ostream& operator<<(std::ostream&, const clues::RegisterSet<clues::ABI::I386>&);
+template CLUES_API std::ostream& operator<<(std::ostream&, const clues::RegisterSet<clues::ABI::AARCH64>&);
