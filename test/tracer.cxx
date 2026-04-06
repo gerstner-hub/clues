@@ -150,7 +150,7 @@ protected:
 			{"automatically attached.*created by PID [0-9]+ via clone", OUT_OF_ORDER},
 			{R"(clone\(.*\) = [0-9]+)", OUT_OF_ORDER},
 			{"automatically attached.*created by PID [0-9]+ via fork", OUT_OF_ORDER},
-			{R"(^\[[0-9]+\] execve\(.*exiter.*\))", OUT_OF_ORDER},
+			{R"(^\[[0-9]+\] execve\(.*exiter.*)", OUT_OF_ORDER},
 			{"no longer running.*fork-in-thread", OUT_OF_ORDER},
 			{"now running.*exiter", OUT_OF_ORDER},
 			{"exited with 0"},
