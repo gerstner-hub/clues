@@ -1897,7 +1897,7 @@ const auto TESTS = std::array{
 			 * libc's fork() issues multiple system calls,
 			 * however, difficult to keep track of.
 			 * */
-			if (const auto pid = fork(); pid == 0) {
+			if (const auto pid = syscall(SYS_fork); pid == 0) {
 				::_exit(10);
 			} else {
 				int status;
@@ -1917,7 +1917,7 @@ const auto TESTS = std::array{
 			VERIFY(status != std::nullopt);
 			VERIFY(status->exited() && status->status() == cosmos::ExitStatus{10});
 			VERIFY(sc.rusage.usage() != std::nullopt);
-		}), IgnoreCalls{3}, {
+		}), IgnoreCalls{1}, {
 			I386_CROSS_ABI(IgnoreCalls{3}, []() {
 				if (const auto pid = ::syscall(SYS_fork); pid == 0) {
 					::_exit(10);
