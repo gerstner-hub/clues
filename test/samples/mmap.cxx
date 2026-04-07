@@ -3,6 +3,11 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#ifndef MAP_HUGE_2MB
+/* older Debian doesn't define this in the userspace headers */
+#	include <linux/mman.h>
+#endif
+
 int main() {
 	auto addr = mmap((void*)0x4711, 0x1000, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 	munmap(addr, 0x1000);
