@@ -180,7 +180,9 @@ std::string si_reason(const cosmos::SigInfo::SegfaultData::Reason reason) {
 		CASE_ENUM_TO_STR(SEGV_ADIPERR);
 		CASE_ENUM_TO_STR(SEGV_MTEAERR);
 		CASE_ENUM_TO_STR(SEGV_MTESERR);
+#ifdef SEGV_CPERR
 		CASE_ENUM_TO_STR(SEGV_CPERR);
+#endif
 		default: return std::to_string(raw);
 	}
 }
