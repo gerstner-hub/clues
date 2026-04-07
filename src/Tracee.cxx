@@ -1045,7 +1045,7 @@ void Tracee::dropFD(const cosmos::FileNum fd) const {
 }
 
 // explicit template instantiations
-#ifndef COSMOS_I386
+#if !defined(COSMOS_I386) && !defined(COSMOS_X32)
 template void Tracee::readVector<std::vector<uintptr_t>>(const ForeignPtr, std::vector<uintptr_t>&) const;
 #endif
 /* for 32-bit emulation */
