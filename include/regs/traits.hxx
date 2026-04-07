@@ -17,7 +17,7 @@ struct RegisterDataTraits {
 	 * a documentation purpose.
 	 **/
 	using type = std::nullptr_t;
-	static_assert(false, "no traits are defined for this ABI yet");
+	static_assert(abi == ABI{-1}, "no traits are defined for this ABI yet");
 };
 
 template <>

@@ -553,7 +553,7 @@ class SourceGenerator:
         fd.write("/// Traits which allow to lookup the correct SystemCallNr type per ABI\n")
         fd.write("template <ABI abi>\n")
         fd.write("struct SystemCallNrTraits {\n")
-        fd.write("\tstatic_assert(false, \"no traits defined for this ABI yet\");\n")
+        fd.write("\tstatic_assert(abi == ABI{-1}, \"no traits defined for this ABI yet\");\n")
         fd.write("};\n\n")
 
         for abi, table in self.parser.abis.items():
