@@ -253,6 +253,11 @@ protected: // data
 	std::optional<cosmos::WaitStatus> m_main_status;
 
 	/// The currently active system call, if any.
+	/**
+	 * This is only keeping track of system calls that are actually
+	 * printed to stdout. Ignored system calls are not kept track of here.
+	 * The Tracee objects keep track of any active system calls already.
+	 **/
 	std::optional<std::tuple<cosmos::ProcessID, const SystemCall*>> m_active_syscall;
 	/// Unfinished / preempted system calls.
 	/**

@@ -2,6 +2,7 @@
 #include <fnmatch.h>
 
 // C++
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -367,16 +368,16 @@ void TermTracer::syscallEntry(Tracee &tracee,
 		const SystemCall &sc,
 		const StatusFlags flags) {
 
+	if (!isEnabled(&sc)) {
+		return;
+	}
+
 	// this needs to be assigned before returning from this function but
 	// after traceStream() is called, if at all.
 	auto defer_assign_syscall = cosmos::defer([this, &tracee, &sc]() {
 		m_active_syscall = std::make_optional(
 				std::make_tuple(tracee.pid(), &sc));
 	});
-
-	if (!isEnabled(&sc)) {
-		return;
-	}
 
 	const auto syscall_info = *tracee.currentSystemCallInfo();
 	checkABI(tracee, syscall_info);
@@ -401,12 +402,6 @@ void TermTracer::syscallEntry(Tracee &tracee,
 void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 		const StatusFlags flags) {
 
-	/// This needs to be reset before returning from this function but
-	/// after `checkResumedSyscall()` is called, if at all.
-	auto defer_reset_syscall = cosmos::defer([this]() {
-		m_active_syscall.reset();
-	});
-
 	if (isExecSyscall(sc) && sc.result()) {
 		// this was already dealt with in newExecutionContext()
 		return;
@@ -414,9 +409,19 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 		return;
 	}
 
+	/// This needs to be reset before returning from this function but
+	/// after `checkResumedSyscall()` is called, if at all.
+	auto defer_reset_syscall = cosmos::defer([this]() {
+		m_active_syscall.reset();
+	});
+
+
 	checkResumedSyscall(tracee);
 
-	auto &trace = traceStream(tracee, false);
+	// we are preempting another Tracee's system call (one Tracee already entered, this Tracee exits
+	const bool need_newline = m_active_syscall && !hasActiveSyscall(tracee);
+
+	auto &trace = traceStream(tracee, need_newline);
 	printParsOnExit(trace, sc.parameters());
 
 	trace << ") = ";
@@ -524,9 +529,9 @@ void TermTracer::newExecutionContext(Tracee &tracee,
 
 	// cache this state here, because checkResumedSyscall() might alter the info
 	const auto is_enabled = isEnabled(currentSyscall(tracee));
-	checkResumedSyscall(tracee);
 
 	if (is_enabled) {
+		checkResumedSyscall(tracee);
 		/* anticipate the success system call status to avoid
 		 * complexities while outputting status messages and
 		 * interactive dialogs. */
@@ -682,12 +687,14 @@ void TermTracer::checkResumedSyscall(const Tracee &tracee) {
 	if (hasActiveSyscall(tracee))
 		return;
 
-	auto node = m_unfinished_syscalls.extract(tracee.pid());
-	auto sc = node.mapped();
+	/*
+	 * when there's no active system call then we expect one to be stored
+	 * as unfinished, otherwise something is off.
+	 */
 
-	if (!isEnabled(sc))
-		// we cleaned up the data, nothing else to do
-		return;
+	auto node = m_unfinished_syscalls.extract(tracee.pid());
+	assert(!node.empty());
+	auto sc = node.mapped();
 
 	auto &trace = traceStream(tracee);
 	trace << "<resuming ...> " << sc->name();
