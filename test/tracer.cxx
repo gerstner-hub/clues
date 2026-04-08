@@ -85,7 +85,7 @@ protected:
 			EventInfo{"exited with 77"},
 		};
 
-		auto status = m_invoker.run({"--", findHelper("exiter"), "77"}, m_parser_cb);
+		auto status = m_invoker.run({"-e", "exit_group", "--", findHelper("exiter"), "77"}, m_parser_cb);
 		RUN_STEP("tracer-exited-with-77", status == cosmos::ExitStatus{77});
 		RUN_STEP("seen-all-expected-trace-events", verifyEvents());
 	}
