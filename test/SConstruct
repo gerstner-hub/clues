@@ -23,7 +23,7 @@ if env['sanitizer']:
     run_env['ENV']['ASAN_OPTIONS'] = 'detect_odr_violation=0'
 
 need_helpers = ("execve.cxx", "tracer.cxx", "syscalls.cxx")
-need_samples = ("detach.cxx",)
+need_samples = ("detach.cxx", "tracer_syscalls.cxx")
 need_tracer = ("tracer.cxx",)
 
 for test in tests:

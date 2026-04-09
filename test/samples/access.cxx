@@ -3,7 +3,7 @@
 #include <sys/syscall.h>
 
 int main() {
-	access("/etc/fstab", R_OK);
+	syscall(SYS_access, "/etc/fstab", R_OK);
 
 	int fd = open("/etc", O_DIRECTORY|O_RDONLY);
 	if (fd < 0) {
