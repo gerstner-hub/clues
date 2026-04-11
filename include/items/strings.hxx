@@ -20,7 +20,7 @@ public: // functions
 	std::string str() const override;
 
 	/// Returns the unmodified string data.
-	const std::string& data() const {
+	const std::optional<std::string>& data() const {
 		return m_str;
 	}
 
@@ -41,7 +41,7 @@ protected: // functions
 
 protected: // data
 
-	std::string m_str;
+	std::optional<std::string> m_str;
 };
 
 /// A nullptr-terminated array of pointers to c-strings.

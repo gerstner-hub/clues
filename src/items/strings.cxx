@@ -8,15 +8,23 @@
 namespace clues::item {
 
 std::string StringData::str() const {
-	if (m_str.empty() && !isZero()) {
+	if (!m_str) {
 		return "<invalid>";
+	} else if (m_str->empty()) {
+		return "\"\"";
+	} else {
+		return cosmos::sprintf("\"%s\"", m_str->c_str());
 	}
-	return cosmos::sprintf("\"%s\"", m_str.c_str());
 }
 
 void StringData::fetch(const Tracee &proc) {
-	// fetch the the string from the Tracee's address space.
-	proc.readString(asPtr(), m_str);
+	m_str.emplace(std::string{});
+	// fetch the string from the Tracee's address space.
+	try {
+		proc.readString(asPtr(), *m_str);
+	} catch (...) {
+		m_str.reset();
+	}
 }
 
 void StringArrayData::processValue(const Tracee &proc) {
