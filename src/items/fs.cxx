@@ -189,7 +189,6 @@ std::string StatParameter::str() const {
 
 	ss
 		<< "{"
-		<< "size=" << st.st_size << ", "
 		<< "ino=" << st.st_ino << ", "
 		<< "dev=" << format::device_id(m_stat->device()) << ", "
 		<< "mode=" << format::file_type(m_stat->type()) << "|" << format::file_mode_numeric(m_stat->mode().mask()) << ", "
