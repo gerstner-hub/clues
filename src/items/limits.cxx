@@ -41,7 +41,7 @@ void ResourceType::processValue(const Tracee &) {
 
 std::string ResourceLimit::str() const {
 	if (!m_limit) {
-		return "<invalid>";
+		return isZero() ? "NULL" : "<invalid>";
 	}
 	std::stringstream ss;
 
