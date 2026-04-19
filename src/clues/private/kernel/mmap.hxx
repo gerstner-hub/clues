@@ -1,5 +1,8 @@
 #pragma once
 
+// C++
+#include <cstdint>
+
 namespace clues {
 
 extern "C" {

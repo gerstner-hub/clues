@@ -8,6 +8,7 @@
 #include <clues/items/mmap.hxx>
 #include <clues/private/kernel/mmap.hxx>
 #include <clues/private/utils.hxx>
+#include <clues/syscalls/memory.hxx>
 #include <clues/Tracee.hxx>
 
 namespace clues::item {
@@ -87,6 +88,21 @@ void OldMmapArgs::processValue(const Tracee &proc) {
 	m_type = cosmos::mem::MapType{raw_flags & 0x3};
 
 	m_valid = true;
+}
+
+std::string OldMmapArgs::str() const {
+	auto &mmap_call = dynamic_cast<const MmapSystemCall&>(*m_call);
+
+	std::stringstream ss;
+	ss << "{hint=" << mmap_call.hint.str()
+		<< ", length=" << mmap_call.length.str()
+		<< ", prot=" << mmap_call.protection.str()
+		<< ", flags=" << mmap_call.flags.str()
+		<< ", fd=" << mmap_call.fd.str()
+		<< ", offset=" << mmap_call.offset.str()
+		<< "}";
+
+	return ss.str();
 }
 
 } // end ns

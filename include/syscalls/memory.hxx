@@ -36,8 +36,8 @@ struct CLUES_API BreakSystemCall :
  * SYS_mmap on older ABIs like I386 takes a single `struct mmap_args`
  * parameter. Thus when SYS_mmap occurs during tracing, in an abstract
  * application not considering the ABI, it can be either the modern mmap() or
- * the legacy mmap(). To ease handling these difference this type covers both
- * SYS_mmap and SYS_mmap2 on all ABIs. Even on older ABIs the six member
+ * the legacy mmap(). To ease handling these differences, this type covers
+ * both SYS_mmap and SYS_mmap2 on all ABIs. Even on older ABIs the six members
  * corresponding to the modern mmap() system call will be filled. This way
  * applications can process both types of mmap system calls in a unified way.
  *

@@ -116,6 +116,8 @@ protected: // functions
 
 	void processValue(const Tracee&) override;
 
+	std::string str() const override;
+
 protected: // data
 
 	bool m_valid = false;
