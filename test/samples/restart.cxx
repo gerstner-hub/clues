@@ -112,8 +112,8 @@ int main(const int argc, const char **argv) {
 	 * this example triggers:
 	 *
 	 * - a transparent restart involving restart_syscall()
-	 * - a transparent restart without restart_syscsall()
-	 * - a regular visiable EINTR return from a system call
+	 * - a transparent restart without restart_syscall()
+	 * - a regular visible EINTR return from a system call
 	 */
 
 	action.setHandler(sighandler);
