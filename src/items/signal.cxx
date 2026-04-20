@@ -58,7 +58,7 @@ std::string SigActionParameter::str() const {
 
 	ss << ", mask=" << format::signal_set(m_sigaction->mask()) << ", flags="
 		<< format::saflags(m_sigaction->getFlags().raw()) << ", restorer="
-		<< format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(raw->sa_restorer)}) << ")";
+		<< format::pointer(ForeignPtr{reinterpret_cast<uintptr_t>(raw->sa_restorer)}) << "}";
 
 	return ss.str();
 }
