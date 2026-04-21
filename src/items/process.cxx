@@ -40,8 +40,8 @@ std::string ResourceUsageItem::str() const {
 		<< ", stime=" << format::timeval(ru.ru_stime)
 		<< ", maxrss=" << ru.ru_maxrss
 		<< ", ixrss=" << ru.ru_ixrss
-		<< ", idrss" << ru.ru_idrss
-		<< ", isrss" << ru.ru_isrss
+		<< ", idrss=" << ru.ru_idrss
+		<< ", isrss=" << ru.ru_isrss
 		<< ", minflt=" << ru.ru_minflt
 		<< ", majflt=" << ru.ru_majflt
 		<< ", nswap=" << ru.ru_nswap
