@@ -57,12 +57,14 @@ public:
 
 	TracerSyscallTest() :
 			m_specs{
+#ifdef CLUES_HAVE_ACCESS
 				TestSpec{"access", "access,faccessat,faccessat2", {
 						R"(access\(path="/etc/fstab", check=R_OK\) = 0)",
 						R"(faccessat\(fd=[0-9], path="fstab", check=W_OK\) = 13)",
 						R"(faccessat2\(fd=[0-9], path="fstab", check=X_OK, flags=0x[0-9]+ \(AT_EACCESS\)\) = 13)"
 					}, "*access*()"
 				},
+#endif
 #ifdef CLUES_HAVE_ALARM
 				TestSpec{{}, "alarm", {
 					R"(alarm\(seconds=[0-9]+\) = 0)"
@@ -154,8 +156,13 @@ public:
 					R"(futex\(addr=0x[0-9a-f]+, op=0x100 \(FUTEX_WAIT\|FUTEX_CLOCK_REALTIME\), value=[0-9]+, timeout=\{[0-9]+s, [0-9]+ns\}\) = [0-9]+)"
 					/* TODO: cover more futex variants */
 				}},
+#ifdef CLUES_HAVE_LEGACY_GETDENTS
 				TestSpec{{}, "getdents", {
 					R"(getdents\(fd=[0-9]+, dirent=[0-9]+ entries: \{d_ino=[0-9]+, d_off=[0-9]+, d_reclen=[0-9]+, d_name="[^"]+", d_type=DT_[A-Z]+\}, .*\}, size=[0-9]+\) = [0-9]+)"
+				}},
+#endif
+				TestSpec{"getdents", "getdents64", {
+					R"(getdents64\(fd=[0-9]+, dirent=[0-9]+ entries: \{d_ino=[0-9]+, d_off=[0-9]+, d_reclen=[0-9]+, d_name="[^"]+", d_type=DT_[A-Z]+\}, .*\}, size=[0-9]+\) = [0-9]+)"
 				}},
 				TestSpec{"getids", "getuid", {
 					R"(getuid\(\) = [0-9]+)"
@@ -194,9 +201,11 @@ public:
 				TestSpec{"mmap", "munmap", {
 					R"(munmap\(addr=0x[0-9a-f]+, len=[0-9]+\) = 0)"
 				}},
+#ifdef CLUES_HAVE_OPEN
 				TestSpec{{}, "open", {
 					R"(open\(filename="[^"]+", flags=0x40 \(O_RDONLY\|O_CREAT\), mode=0o[0-7]+ \(rwxr-xr-x\)\) = [0-9])"
 				}},
+#endif
 				TestSpec{"open", "openat", {
 					R"(openat\(fd=AT_FDCWD, filename="[^"]+", flags=0x[0-9a-f]+ \(O_RDONLY\|O_DIRECTORY[^\)]*\)\) = [0-9]+)"
 				}},
@@ -221,9 +230,11 @@ public:
 				TestSpec{{}, "write", {
 					R"(write\(fd=[0-9]+, buf="[^"]+", count=[0-9]+\) = [0-9]+)"
 				}},
+#ifdef CLUES_HAVE_PIPE1
 				TestSpec{{}, "pipe", {
 					R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"
 				}},
+#endif
 				TestSpec{"pipe", "pipe2", {
 					R"(pipe2\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\], flags=0x[0-9a-f]+ \(O_CLOEXEC\|O_DIRECT\)\) = 0)"
 				}},
@@ -244,9 +255,6 @@ public:
 				}},
 				TestSpec{"getids", "getegid32", {
 					R"(getegid32\(\) = [0-9]+)"
-				}},
-				TestSpec{"getdents", "getdents64", {
-					R"(getdents64\(fd=[0-9]+, dirent=[0-9]+ entries: \{d_ino=[0-9]+, d_off=[0-9]+, d_reclen=[0-9]+, d_name="[^"]+", d_type=DT_[A-Z]+\}, .*\}, size=[0-9]+\) = [0-9]+)"
 				}},
 				TestSpec{"stat", "oldstat", {
 					R"(oldstat\(path="[^"]+", stat=\{ino=[0-9]+, dev=0x[0-9a-f]+:0x[0-9a-f]+, mode=S_IFCHR\|0o[0-7]+, nlink=[0-9]+, uid=0, gid=0, rdev=0x[0-9a-f]+:0x[0-9a-f]+, size=[0-9]+, atim=[0-9]+s, mtim=[0-9]+s, ctim=[0-9]+s\}\) = [0-9]+)"
@@ -295,13 +303,17 @@ public:
 				TestSpec{"stat", "newfstatat", {
 						R"(newfstatat\(fd=[0-9]+, string="os-release", stat=\{ino=[0-9]+, dev=0x[0-9a-f]+:0x[0-9a-f]+, mode=S_[A-Z]|0o[0-7]+, nlink=[0-9]+, uid=0, gid=0, size=[0-9]+, blksize=[0-9]+, blocks=[0-9]+, atim=\{[0-9]+s, [0-9]+ns\}, mtim=\{[0-9]+s, [0-9]+ns\}, ctim=\{[0-9]+s, [0-9]+ns\}\}, flags=0x800 \(AT_NO_AUTOMOUNT\)\) = 0)",
 				}},
+#	ifdef CLUES_HAVE_LSTAT
 				TestSpec{"stat", "lstat", {
 						R"(lstat\(path="[^"]+", stat=\{ino=[0-9]+, dev=0x[0-9a-f]+:0x[0-9a-f]+, mode=S_[A-Z]+\|0o[0-7]+, nlink=[0-9]+, uid=0, gid=0, size=[0-9]+, blksize=[0-9]+, blocks=[0-9]+, atim=\{[0-9]+s, [0-9]+ns\}, mtim=\{[0-9]+s, [0-9]+ns\}, ctim=\{[0-9]+s, [0-9]+ns\}\}\) = 0)"
 				}},
+#	endif
+#	ifdef CLUES_HAVE_STAT
 				TestSpec{{}, "stat", {
 					R"(stat\(path="[^"]+", stat=\{ino=[0-9]+, dev=0x[0-9a-f]+:0x[0-9a-f]+, mode=S_IFREG\|0o[0-7]+, nlink=[0-9]+, uid=0, gid=0, size=[0-9]+, blksize=[0-9]+, blocks=[0-9]+, atim=\{[0-9]+s, [0-9]+ns\}, mtim=\{[0-9]+s, [0-9]+ns\}, ctim=\{[0-9]+s, [0-9]+ns\}\}\) = [0-9]+)"
 				}}
-#endif
+#	endif
+#endif // else I386
 			} {
 	}
 
