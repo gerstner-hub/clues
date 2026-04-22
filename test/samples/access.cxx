@@ -2,8 +2,12 @@
 #include <fcntl.h>
 #include <sys/syscall.h>
 
+#include <clues/arch.hxx>
+
 int main() {
+#ifdef CLUES_HAVE_ACCESS
 	syscall(SYS_access, "/etc/fstab", R_OK);
+#endif
 
 	int fd = open("/etc", O_DIRECTORY|O_RDONLY);
 	if (fd < 0) {
