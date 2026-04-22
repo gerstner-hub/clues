@@ -1892,12 +1892,15 @@ const auto TESTS = std::array{
 			})
 		}
 	}, TestSpec{SystemCallNr::WAIT4, []() {
-			/* don't use SYS_fork here which is not available on
-			 * all ABIs.
-			 * libc's fork() issues multiple system calls,
-			 * however, difficult to keep track of.
-			 * */
-			if (const auto pid = syscall(SYS_fork); pid == 0) {
+			/*
+			 * fork() is not available on all ABIs and libc's
+			 * fork() can create additional syscall noise, so
+			 * directly use clone3() for this purpose.
+			 */
+			struct clone_args cl;
+			cosmos::zero_object(cl);
+			cl.exit_signal = SIGCHLD;
+			if (const auto pid = syscall(SYS_clone3, &cl, sizeof(cl)); pid == 0) {
 				::_exit(10);
 			} else {
 				int status;
