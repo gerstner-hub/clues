@@ -57,10 +57,6 @@ public: // functions
 	/**
 	 * \param[in] nr
 	 *	The unique well-known number of this system call.
-	 * \param[in] pars
-	 * 	A vector of the parameters in the order they need to be passed
-	 * 	to the system call. The ownership is transferred to the
-	 * 	SystemCall instance.
 	 **/
 	SystemCall(const SystemCallNr nr);
 

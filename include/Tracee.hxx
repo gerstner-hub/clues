@@ -254,8 +254,8 @@ public: // functions
 	 * process situation.
 	 *
 	 * Sadly this bit is not easily accessible via system calls. The only
-	 * way to determine it is from /proc/<pid>/status or implicitly e.g. a
-	 * newly fork()'ed process is a thread-group leader while clone()'ed
+	 * way to determine it is from `/proc/<pid>/status` or implicitly e.g.
+	 * a newly fork()'ed process is a thread-group leader while clone()'ed
 	 * processes _can_ be thread-group leaders (if its not a thread that
 	 * has been created).
 	 **/

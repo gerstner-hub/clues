@@ -26,7 +26,7 @@ class SystemCall;
 
 /// Main class for configuring and running libclues
 /**
- * This is the main class for configuring Tracee's and actually performing
+ * This is the main class for configuring Tracees and actually performing
  * tracing. The tracing main loop is implemented here and callbacks are
  * delivered to the EventConsumer interface.
  *

@@ -77,7 +77,7 @@ public: // types
 
 	/// Different types of file descriptors.
 	/**
-	 * This distinguishes file types found in /proc/<pid>/fd. These are
+	 * This distinguishes file types found in `/proc/<pid>/fd`. These are
 	 * types more from a kernel point of view, i.e. the different kernel
 	 * facilities that offer file descriptors, not the types from a
 	 * stat(2) point of view. Directories, regular files and device files

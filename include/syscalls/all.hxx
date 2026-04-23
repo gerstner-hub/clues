@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * \file This header pulls in all specializations of SystemCall known to
- * libclues.
+ * \file
+ * This header pulls in all specializations of SystemCall known to libclues.
  **/
 
 #include <clues/syscalls/fs.hxx>

@@ -27,14 +27,14 @@ const char* get_kernel_errno_label(const KernelErrno err);
 /// Returns a string label for the given event
 const char* get_ptrace_event_str(const cosmos::ptrace::Event event);
 
-/// Returns the currently open file descriptors according to /proc/<pid>/fd
+/// Returns the currently open file descriptors according to `/proc/<pid>/fd`.
 /**
  * This function can throw a cosmos::ApiError in case the process is no longer
  * accessible in /proc.
  **/
 std::set<cosmos::FileNum> get_currently_open_fds(const cosmos::ProcessID pid);
 
-/// Obtain detailed information about currently open file descriptors according to /proc/<pid>/fd.
+/// Obtain detailed information about currently open file descriptors according to `/proc/<pid>/fd`.
 /**
  * This function can throw a cosmos::ApiError in case the process is no longer
  * accessible in /proc.
@@ -97,7 +97,7 @@ inline bool is_supported_abi(const ABI abi) {
 /// Parse a proc file of the given process using the given functor.
 /**
  * This function performs a line-wise read of the file found in
- * /proc/<pid>/<subpath> and calls `parser` for each line. When the function
+ * `/proc/<pid>/<subpath>` and calls `parser` for each line. When the function
  * returns `true` then parsing ends and the function call returns, otherwise
  * further lines will be passed to `parser` until the end of file is
  * encountered.

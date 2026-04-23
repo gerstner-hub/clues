@@ -10,3 +10,10 @@ states_cmd = doc_env.Command(
     'states.gv',
     action='dot -Tpdf $SOURCE -o $TARGET')
 env.Alias('states_graph', states_cmd)
+
+doxy_cmd = doc_env.Command(
+    'doxygen/html/index.html',
+    'doxygen.conf',
+    action='doxygen -q $SOURCE')
+env.AlwaysBuild(doxy_cmd)
+env.Alias('doxygen', doxy_cmd)
