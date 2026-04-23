@@ -1,7 +1,7 @@
-name: Build libcosmos and run unit tests
+name: Build libclues and clues and run unit tests
 on: [push, pull_request]
 jobs:
-  build_libcosmos:
+  build_libclues:
     runs-on: ubuntu-latest
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
