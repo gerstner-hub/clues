@@ -1,0 +1,27 @@
+var structclues_1_1FcntlSystemCall =
+[
+    [ "check2ndPass", "structclues_1_1FcntlSystemCall.html#a1a11d88072ae23bb7bc33fc0bce354e8", null ],
+    [ "prepareNewSystemCall", "structclues_1_1FcntlSystemCall.html#a52cce3c79aad7359dd91359e7e0e8ef9", null ],
+    [ "updateFDTracking", "structclues_1_1FcntlSystemCall.html#ab93f2f5a179b8297a170cbaccdf89db6", null ],
+    [ "dnotify_arg", "structclues_1_1FcntlSystemCall.html#a8b4c06491cdcae6625c8556df3c264a8", null ],
+    [ "dup_lowest", "structclues_1_1FcntlSystemCall.html#a0a77ba251cf5b149ddaf04723f006faa", null ],
+    [ "ext_owner_arg", "structclues_1_1FcntlSystemCall.html#ae6775ee189df0ecc287a1366782a1e67", null ],
+    [ "fd_flags_arg", "structclues_1_1FcntlSystemCall.html#a3163f34e203884b1f03184a2a5fdc9a4", null ],
+    [ "file_seals_arg", "structclues_1_1FcntlSystemCall.html#a8be2ba330ff6ebe700ace788399e6745", null ],
+    [ "flock_arg", "structclues_1_1FcntlSystemCall.html#a8387b9aa31fdcc90d97f729021ae2a35", null ],
+    [ "io_signal_arg", "structclues_1_1FcntlSystemCall.html#a8db7a28bad2324a6858f117298150b5f", null ],
+    [ "lease_arg", "structclues_1_1FcntlSystemCall.html#af8250b510da375819653659b02105752", null ],
+    [ "owner_arg", "structclues_1_1FcntlSystemCall.html#a5ca5507231721ff4a01a2e399c5bacde", null ],
+    [ "pipe_size_arg", "structclues_1_1FcntlSystemCall.html#a138b7cd6615e242f39f5f07e2312bc55", null ],
+    [ "result", "structclues_1_1FcntlSystemCall.html#a53bc1d19a1c66044899346e2d483a5ad", null ],
+    [ "ret_dupfd", "structclues_1_1FcntlSystemCall.html#a73baa2daa1e9b0ff4458bb878a9f2c24", null ],
+    [ "ret_fd_flags", "structclues_1_1FcntlSystemCall.html#a23657ebe8734ca6a1bc050c18a718746", null ],
+    [ "ret_io_signal", "structclues_1_1FcntlSystemCall.html#a9b1d4b7c91f0b1b822b21eae24fd4792", null ],
+    [ "ret_lease", "structclues_1_1FcntlSystemCall.html#a6019d3d2c085f857b4eec5f1ede7d594", null ],
+    [ "ret_owner", "structclues_1_1FcntlSystemCall.html#a89f0b4a8afab1f6b210195713f68313f", null ],
+    [ "ret_pipe_size", "structclues_1_1FcntlSystemCall.html#a69128af73425337d04f9729cbab9496a", null ],
+    [ "ret_seals", "structclues_1_1FcntlSystemCall.html#aafa82661f9b31bdcda92f8efbddac05a", null ],
+    [ "ret_status_flags", "structclues_1_1FcntlSystemCall.html#a1e4f72f29b4d519044a4da30d26e5800", null ],
+    [ "rw_hint_arg", "structclues_1_1FcntlSystemCall.html#a7bb3dff16efb121b81432a0b2465ea61", null ],
+    [ "status_flags_arg", "structclues_1_1FcntlSystemCall.html#af47a19849f66c93ae5cebd9ffc0f2c21", null ]
+];
