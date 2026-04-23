@@ -1,7 +1,7 @@
-.sconsign.dblite
-build*
-install*
+/.sconsign.dblite
+/build*
+/install*
 *.swp
-tags
-.tags
-.*.tag
+/tags
+/.tags
+/.*.tag
