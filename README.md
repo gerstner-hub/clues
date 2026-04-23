@@ -184,4 +184,7 @@ more, however. Some aspects of tracing might even be become plain impossible
 when trying to perform multi-threaded tracing. For this reason `clues` sticks
 to single-threaded tracing for the time being.
 
+There is also a [Doxygen API documentation page][doxygen] for libclues.
+
 [cosmos]: https://github.com/gerstner-hub/libcosmos
+[doxygen]: https://gerstner-hub.github.io/clues
