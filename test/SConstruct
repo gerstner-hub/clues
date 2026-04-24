@@ -2,14 +2,11 @@ import os
 
 Import('env')
 
-libcosmos = env['libs']['libcosmos']
-libclues = env['libs']['libclues']
-
 tests = env.GatherSources(suffixes=['.cxx'], recursive=False)
 
 test_env = env.Clone()
 static_lib_sources = []
-test_env.ConfigureForLibOrPackage('libclues', static_lib_sources)
+test_env.ConfigureForLib('libclues', static_lib_sources)
 test_env.ConfigureForLibOrPackage('libcosmos', static_lib_sources)
 
 env.SConscript(test_env['buildroot'] + 'test/helpers/SConstruct')

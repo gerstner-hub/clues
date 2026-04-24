@@ -5,7 +5,7 @@ Import('env')
 
 static_sources = []
 env.ConfigureForLibOrPackage('libcosmos', static_sources)
-env.ConfigureForLibOrPackage('libclues', static_sources)
+env.ConfigureForLib('libclues', static_sources)
 
 for sys_test in env.GatherSources(suffixes=['.cxx']):
     label = '.'.join(sys_test.split('.')[:-1])
