@@ -18,7 +18,7 @@ jobs:
       - name: Update APT
         run: sudo apt-get update
       - name: Install build tools
-        run: sudo apt-get install -y scons build-essential clang doxygen flake8 pkg-config
+        run: sudo apt-get install -y scons build-essential clang doxygen flake8 pkg-config g++-aarch64-linux-gnu
       - name: Compile and test various native build configurations
         # skip 32-bit and static linking builds
         # the GitHub Ubuntu runner image uses some strange repository
@@ -31,10 +31,12 @@ jobs:
         # locally, thus I did not investigate this more deeply
         run: |
           ./libcosmos/scripts/check.py --skip-32bit --skip-static
-      #- name: Cross-build for arm
-      #  run: |
-      #    scons buildroot=build.arm compiler=arm-linux-gnueabi-gcc install tests
+      - name: List aarch64 toolchain bins
+        run: dpkg -L gcc-aarch64-linux-gnu | grep bin
+      - name: Cross-build for arm
+        run: |
+          scons variant=aarch64 compiler=aarch64-linux-gnu-gcc install tests
       # the runner's doxygen for some reason doesn't support a -q switch
-      #- name: build doxygen
-      #  run: |
-      #    scons doxygen
+      - name: build doxygen
+        run: |
+          scons doxygen
