@@ -24,7 +24,7 @@ if env['sanitizer']:
 
 need_helpers = ("execve.cxx", "tracer.cxx", "syscalls.cxx")
 need_samples = ("detach.cxx", "tracer_syscalls.cxx")
-need_tracer = ("tracer.cxx",)
+need_tracer = ("tracer.cxx", "tracer_syscalls.cxx")
 
 for test in tests:
 
