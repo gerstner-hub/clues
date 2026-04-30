@@ -179,7 +179,6 @@ env.RegisterLibConfig(
     'libclues',
     libclues,
     {
-        'CCFLAGS': ['-DCLUES_API='],
         'CPPPATH': [public_includes, Dir(".").abspath]
     },
     {

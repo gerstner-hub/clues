@@ -14,6 +14,7 @@
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
+#include <clues/dso_export.h>
 #include <clues/fwd.hxx>
 #include <clues/sysnrs/fwd.hxx>
 #include <clues/types.hxx>

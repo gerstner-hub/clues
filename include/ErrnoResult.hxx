@@ -7,6 +7,7 @@
 #include <cosmos/error/errno.hxx>
 
 // clues
+#include <clues/dso_export.h>
 #include <clues/types.hxx>
 
 namespace clues {

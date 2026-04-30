@@ -12,6 +12,7 @@
 #include <cosmos/string.hxx>
 
 // clues
+#include <clues/dso_export.h>
 #include <clues/types.hxx>
 
 namespace cosmos {

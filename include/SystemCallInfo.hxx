@@ -4,6 +4,7 @@
 #include <cosmos/proc/ptrace.hxx>
 
 // clues
+#include <clues/dso_export.h>
 #include <clues/sysnrs/types.hxx>
 #include <clues/types.hxx>
 
