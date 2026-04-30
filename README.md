@@ -186,5 +186,18 @@ to single-threaded tracing for the time being.
 
 There is also a [Doxygen API documentation page][doxygen] for libclues.
 
+Available Packages
+==================
+
+Packages of the current state of `clues` can be found in the Arch Linux AUR
+[linked statically][aur-static], or [dynamically][aur-shared] against its
+dependencies.
+
+I also packaged `clues` in [my home project][obs] of the openSUSE build
+service.
+
 [cosmos]: https://github.com/gerstner-hub/libcosmos
 [doxygen]: https://gerstner-hub.github.io/clues
+[aur-shared]: https://aur.archlinux.org/packages/clues
+[aur-static]: https://aur.archlinux.org/packages/clues-static
+[obs]: https://build.opensuse.org/package/show/home:mgerstner/clues
