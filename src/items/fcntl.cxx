@@ -295,7 +295,7 @@ std::string FLockParameter::str() const {
 			lock_type_to_str(cosmos::to_integral(m_lock->type())).data(),
 			whence_str(cosmos::to_integral(m_lock->whence())),
 			m_lock->start(),
-			m_lock->start(),
+			m_lock->length(),
 			cosmos::to_integral(m_lock->pid())
 	);
 }
