@@ -31,7 +31,7 @@ namespace clues::format {
  * If `verbose` is set then a human-readable description of the signal is
  * added in parantheses, otherwise just the short signal name is returned.
  **/
-CLUES_API std::string signal(const cosmos::SignalNr signal, const bool verbose=true);
+CLUES_API std::string signal(const cosmos::SignalNr signal, const bool verbose=false);
 
 /// Returns a string like "{SIGINT (Interrupted), SIGQUIT (Quit), ...}".
 CLUES_API std::string signal_set(const cosmos::SigSet &set);

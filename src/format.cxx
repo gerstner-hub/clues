@@ -22,59 +22,69 @@
 
 using namespace std::string_literals;
 
+namespace {
+
+std::string signal_label(const cosmos::SignalNr signal) {
+	const auto raw = cosmos::to_integral(signal);
+
+	switch (raw) {
+		CASE_ENUM_TO_STR(SIGINT);
+		CASE_ENUM_TO_STR(SIGTERM);
+		CASE_ENUM_TO_STR(SIGHUP);
+		CASE_ENUM_TO_STR(SIGQUIT);
+		CASE_ENUM_TO_STR(SIGILL);
+		CASE_ENUM_TO_STR(SIGABRT);
+		CASE_ENUM_TO_STR(SIGFPE);
+		CASE_ENUM_TO_STR(SIGKILL);
+		CASE_ENUM_TO_STR(SIGPIPE);
+		CASE_ENUM_TO_STR(SIGSEGV);
+		CASE_ENUM_TO_STR(SIGALRM);
+		CASE_ENUM_TO_STR(SIGUSR1);
+		CASE_ENUM_TO_STR(SIGUSR2);
+		CASE_ENUM_TO_STR(SIGCONT);
+		CASE_ENUM_TO_STR(SIGSTOP);
+		CASE_ENUM_TO_STR(SIGTSTP);
+		CASE_ENUM_TO_STR(SIGTTIN);
+		CASE_ENUM_TO_STR(SIGTTOU);
+		CASE_ENUM_TO_STR(SIGTRAP);
+		CASE_ENUM_TO_STR(SIGBUS);
+		CASE_ENUM_TO_STR(SIGSTKFLT);
+		CASE_ENUM_TO_STR(SIGCHLD);
+		CASE_ENUM_TO_STR(SIGIO);
+		CASE_ENUM_TO_STR(SIGPROF);
+		CASE_ENUM_TO_STR(SIGSYS);
+		CASE_ENUM_TO_STR(SIGWINCH);
+		CASE_ENUM_TO_STR(SIGPWR);
+		CASE_ENUM_TO_STR(SIGURG);
+		CASE_ENUM_TO_STR(SIGXCPU);
+		CASE_ENUM_TO_STR(SIGVTALRM);
+		CASE_ENUM_TO_STR(SIGXFSZ);
+		default: return std::format("unknown ({})", raw); break;
+	}
+}
+
+} // end anon ns
+
 namespace clues::format {
 
 std::string signal(const cosmos::SignalNr signal, const bool verbose) {
-	std::stringstream ss;
+	std::string ret;
 
 	const auto SIGRTMIN_PRIV = SIGRTMIN - 2;
 
 	if (const auto raw = cosmos::to_integral(signal); raw < SIGRTMIN_PRIV || raw > SIGRTMAX) {
-		switch (raw) {
-			CASE_ENUM_TO_STR(SIGINT);
-			CASE_ENUM_TO_STR(SIGTERM);
-			CASE_ENUM_TO_STR(SIGHUP);
-			CASE_ENUM_TO_STR(SIGQUIT);
-			CASE_ENUM_TO_STR(SIGILL);
-			CASE_ENUM_TO_STR(SIGABRT);
-			CASE_ENUM_TO_STR(SIGFPE);
-			CASE_ENUM_TO_STR(SIGKILL);
-			CASE_ENUM_TO_STR(SIGPIPE);
-			CASE_ENUM_TO_STR(SIGSEGV);
-			CASE_ENUM_TO_STR(SIGALRM);
-			CASE_ENUM_TO_STR(SIGUSR1);
-			CASE_ENUM_TO_STR(SIGUSR2);
-			CASE_ENUM_TO_STR(SIGCONT);
-			CASE_ENUM_TO_STR(SIGSTOP);
-			CASE_ENUM_TO_STR(SIGTSTP);
-			CASE_ENUM_TO_STR(SIGTTIN);
-			CASE_ENUM_TO_STR(SIGTTOU);
-			CASE_ENUM_TO_STR(SIGTRAP);
-			CASE_ENUM_TO_STR(SIGBUS);
-			CASE_ENUM_TO_STR(SIGSTKFLT);
-			CASE_ENUM_TO_STR(SIGCHLD);
-			CASE_ENUM_TO_STR(SIGIO);
-			CASE_ENUM_TO_STR(SIGPROF);
-			CASE_ENUM_TO_STR(SIGSYS);
-			CASE_ENUM_TO_STR(SIGWINCH);
-			CASE_ENUM_TO_STR(SIGPWR);
-			CASE_ENUM_TO_STR(SIGURG);
-			CASE_ENUM_TO_STR(SIGXCPU);
-			CASE_ENUM_TO_STR(SIGVTALRM);
-			CASE_ENUM_TO_STR(SIGXFSZ);
-			default: ss << "unknown (" << raw << ")"; break;
-		}
+		ret = signal_label(signal);
 	} else if (raw >= SIGRTMIN_PRIV && raw < SIGRTMIN) {
-		ss << "glibc internal signal";
+		ret = "glibc internal signal";
 	} else {
-		ss << "SIGRT" << raw - SIGRTMIN;
+		ret = std::format("SIGRT{}", raw - SIGRTMIN);
 	}
 
 	if (verbose) {
-		ss << " (" << cosmos::Signal{signal}.name() << ")";
+		ret += std::format(" ({})", cosmos::Signal{signal}.name());
 	}
 
-	return ss.str();
+	return ret;
 }
 
 std::string signal_set(const cosmos::SigSet &set) {
