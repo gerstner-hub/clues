@@ -34,27 +34,19 @@ std::string ResourceUsageItem::str() const {
 
 	const auto ru = m_rusage->raw();
 
-	std::stringstream ss;
-	ss
-		<< "{utime=" << format::timeval(ru.ru_utime)
-		<< ", stime=" << format::timeval(ru.ru_stime)
-		<< ", maxrss=" << ru.ru_maxrss
-		<< ", ixrss=" << ru.ru_ixrss
-		<< ", idrss=" << ru.ru_idrss
-		<< ", isrss=" << ru.ru_isrss
-		<< ", minflt=" << ru.ru_minflt
-		<< ", majflt=" << ru.ru_majflt
-		<< ", nswap=" << ru.ru_nswap
-		<< ", inblock=" << ru.ru_inblock
-		<< ", oublock=" << ru.ru_oublock
-		<< ", msgsnd=" << ru.ru_msgsnd
-		<< ", msgrcv=" << ru.ru_msgrcv
-		<< ", nsignals=" << ru.ru_nsignals
-		<< ", nvcsw=" << ru.ru_nvcsw
-		<< ", nivcsw=" << ru.ru_nivcsw
-		<< "}";
-
-	return ss.str();
+	return std::format("{{utime={}, stime={}, maxrss={}, ixrss={}, "
+			"idrss={}, isrss={}, minflt={}, majflt={}, nswap={}, "
+			"inblock={}, oublock={}, msgsnd={}, msgrcv={}, "
+			"nsignals={}, nvcsw={}, nivcsw={}}}",
+			format::timeval(ru.ru_utime), format::timeval(ru.ru_stime),
+			ru.ru_maxrss, ru.ru_ixrss,
+			ru.ru_idrss, ru.ru_isrss,
+			ru.ru_minflt, ru.ru_majflt,
+			ru.ru_nswap,
+			ru.ru_inblock, ru.ru_oublock,
+			ru.ru_msgsnd, ru.ru_msgrcv,
+			ru.ru_nsignals,
+			ru.ru_nvcsw, ru.ru_nivcsw);
 }
 
 std::string WaitStatusItem::scalarToString() const {
@@ -62,19 +54,20 @@ std::string WaitStatusItem::scalarToString() const {
 		return "???";
 	}
 
-	std::stringstream ss;
-
 	if (m_status->exited()) {
-		ss << "WIFEXITED && WEXITSTATUS == " << cosmos::to_integral(*m_status->status());
+		return std::format("WIFEXITED && WEXITSTATUS == {}",
+				cosmos::to_integral(*m_status->status()));
 	} else if (m_status->signaled()) {
-		ss << "WIFSIGNALED &&";
+		std::string ret{"WIFSIGNALED &&"};
 		if (m_status->dumped()) {
-			ss << "WCOREDUMP &&";
+			ret += " WCOREDUMP &&";
 		}
-		ss << "WTERMSIG == " << format::signal(m_status->termSig()->raw(), false);
+		ret += std::format(" WTERMSIG == {}",
+				format::signal(m_status->termSig()->raw()));
+		return ret;
+	} else {
+		return "?!?";
 	}
-
-	return ss.str();
 }
 
 } // end ns

@@ -43,13 +43,10 @@ std::string ResourceLimit::str() const {
 	if (!m_limit) {
 		return isZero() ? "NULL" : "<invalid>";
 	}
-	std::stringstream ss;
 
-	ss
-		<< "{rlim_cur=" << format::limit(m_limit->rlim_cur) << ", rlim_max="
-		<< format::limit(m_limit->rlim_max) << "}";
-
-	return ss.str();
+	return std::format("{{rlim_cur={}, rlim_max={}}}",
+			format::limit(m_limit->rlim_cur),
+			format::limit(m_limit->rlim_max));
 }
 
 void ResourceLimit::updateData(const Tracee &proc) {

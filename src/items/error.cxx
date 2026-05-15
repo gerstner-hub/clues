@@ -11,7 +11,7 @@ std::string SuccessResult::str() const {
 	if (valid()) {
 		return "0";
 	} else {
-		return cosmos::sprintf("%d (\?\?\?)", valueAs<int>());
+		return std::format("{} (\?\?\?)", valueAs<int>());
 	}
 }
 

@@ -7,6 +7,7 @@
 #include <sys/time.h>
 
 // cosmos
+#include <cosmos/formatters.hxx>
 #include <cosmos/formatting.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/proc/ptrace.hxx>
@@ -88,39 +89,36 @@ std::string signal(const cosmos::SignalNr signal, const bool verbose) {
 }
 
 std::string signal_set(const cosmos::SigSet &set) {
-	std::stringstream ss;
-
-	ss << "{";
+	std::string ret;
 
 	for (int signum = 1; signum < SIGRTMAX; signum++) {
 		const auto sig = cosmos::SignalNr{signum};
 
 		if (set.isSet(cosmos::Signal{sig})) {
-			ss << format::signal(sig, /*verbose=*/false) << ", ";
+			ret += format::signal(sig, /*verbose=*/false) + ", ";
 		}
 	}
 
-	auto ret = ss.str();
 	if (cosmos::is_suffix(ret, ", ")) {
 		ret = ret.substr(0, ret.size() - 2);
 	}
 
-	return ret + "}";
+	return "{"s + ret + "}";
 }
 
 std::string saflags(const int flags) {
 #define chk_sa_flag(FLAG) if (flags & FLAG) { \
-	if (!first) ss << "|";\
+	if (!first) ret += "|";\
 	else first = false;\
 	\
-	ss << #FLAG;\
+	ret += #FLAG;\
 }
 
 	if (flags == 0) {
 		return "0";
 	}
 
-	std::stringstream ss;
+	std::string ret;
 	bool first = true;
 
 	chk_sa_flag(SA_NOCLDSTOP);
@@ -132,7 +130,7 @@ std::string saflags(const int flags) {
 	chk_sa_flag(SA_SIGINFO);
 	chk_sa_flag(SA_RESTORER);
 
-	return ss.str();
+	return ret;
 }
 
 std::string limit(const uint64_t lim) {
@@ -146,7 +144,7 @@ std::string limit(const uint64_t lim) {
 		return "RLIM64_INFINITY";
 #endif
 	else if ((lim % 1024) == 0)
-		return std::to_string(lim / 1024) + " * " + "1024";
+		return std::format("{} * 1024", lim / 1024);
 	else
 		return std::to_string(lim);
 }
@@ -336,8 +334,8 @@ std::string sig_info(const cosmos::SigInfo &info) {
 
 	auto add_fault_data = [&ss](auto data) {
 		// translated si_code
-		ss << " (" << format::si_reason(data.reason) << ")";
-		ss << ", si_addr=" << data.addr;
+		ss << std::format(" ({}), si_addr={}",
+			format::si_reason(data.reason), data.addr);
 	};
 
 	ss << info.sigNr() << " {";
@@ -361,13 +359,13 @@ std::string sig_info(const cosmos::SigInfo &info) {
 		ss << ", si_timerid=" << cosmos::to_integral(timer_data->id);
 		ss << ", si_overrun=" << timer_data->overrun;
 	} else if (auto sys_data = info.sysData(); sys_data) {
-		ss << ", reason=" << format::si_reason(sys_data->reason);
-		ss << ", si_addr=" << sys_data->call_addr;
-		ss << ", si_syscall=" << sys_data->call_nr
-			<< "(" << SystemCall::name(SystemCallNr{static_cast<uint64_t>(sys_data->call_nr)})
-			<< ")";
-		ss << ", si_arch=" << format::ptrace_arch(sys_data->arch);
-		ss << ", si_errno=" << sys_data->error;
+		ss << std::format(", reason={}, si_addr={}, si_syscall={} ({}), si_arch={}, si_errno={}",
+			format::si_reason(sys_data->reason),
+			sys_data->call_addr,
+			sys_data->call_nr,
+			SystemCall::name(SystemCallNr{static_cast<uint64_t>(sys_data->call_nr)}),
+			format::ptrace_arch(sys_data->arch),
+			sys_data->error);
 	} else if (auto child_data = info.childData(); child_data) {
 		// translated si_code
 		ss << " (" << format::child_event(child_data->event) << ")";
@@ -386,9 +384,10 @@ std::string sig_info(const cosmos::SigInfo &info) {
 		}
 	} else if (auto poll_data = info.pollData(); poll_data) {
 		// translated si_code
-		ss << " (" << format::si_reason(poll_data->reason) << ")";
-		ss << ", si_fd=" << cosmos::to_integral(poll_data->fd);
-		ss << ", si_band=" << format::poll_events(poll_data->events);
+		ss << std::format(" ({}), si_fd={}, si_band={}",
+			format::si_reason(poll_data->reason),
+			poll_data->fd,
+			format::poll_events(poll_data->events));
 	} else if (auto ill_data = info.illData(); ill_data) {
 		add_fault_data(*ill_data);
 	} else if (auto fpe_data = info.fpeData(); fpe_data) {
@@ -396,8 +395,8 @@ std::string sig_info(const cosmos::SigInfo &info) {
 	} else if (auto segv_data = info.segfaultData(); segv_data) {
 		add_fault_data(*segv_data);
 		if (auto bound = segv_data->bound; bound) {
-			ss << ", si_lower=" << bound->lower;
-			ss << ", si_upper=" << bound->upper;
+			ss << std::format(", si_lower={}, si_upper={}",
+				bound->lower, bound->upper);
 		}
 		if (auto key = segv_data->key; key) {
 			ss << ", si_pkey=" << cosmos::to_integral(*key);
@@ -472,28 +471,24 @@ std::string device_id(const cosmos::DeviceID id) {
 }
 
 std::string timespec(const struct timespec &ts, const bool only_secs) {
-	std::stringstream ss;
 	if (only_secs) {
-		ss << ts.tv_sec << "s";
+		return std::format("{}s", ts.tv_sec);
 	} else {
-		ss << "{" << ts.tv_sec << "s, " << ts.tv_nsec << "ns}";
+		return std::format("{{{}s, {}ns}}", ts.tv_sec, ts.tv_nsec);
 	}
-	return ss.str();
 }
 
 std::string timeval(const struct timeval &tv, const bool only_secs) {
-	std::stringstream ss;
 	if (only_secs) {
-		ss << tv.tv_sec << "s";
+		return std::format("{}s", tv.tv_sec);
 	} else {
-		ss << "{" << tv.tv_sec << "s, " << tv.tv_usec << "us}";
+		return std::format("{{{}s, {}us}}", tv.tv_sec, tv.tv_usec);
 	}
-	return ss.str();
 }
 
 struct HexChar :
 		public cosmos::FormattedNumber<unsigned char> {
-	HexChar(const unsigned char ch) :
+	explicit HexChar(const unsigned char ch) :
 		cosmos::FormattedNumber<unsigned char>{ch, 2, [](std::ostream &o){ o << std::hex; }, "\\x"}
 	{}
 };
@@ -547,21 +542,14 @@ std::string pointer(const ForeignPtr ptr) {
 	if (ptr == ForeignPtr::NO_POINTER)
 		return "NULL";
 
-	std::stringstream ss;
-	ss << reinterpret_cast<void*>(cosmos::to_integral(ptr));
-
-	return ss.str();
+	return std::format("{}", reinterpret_cast<void*>(cosmos::to_integral(ptr)));
 }
 
 std::string pointer(const ForeignPtr ptr, const std::string_view data) {
 	if (ptr == ForeignPtr::NO_POINTER)
 		return "NULL";
 
-	std::stringstream ss;
-
-	ss << reinterpret_cast<void*>(cosmos::to_integral(ptr)) << " → " << "[" << data << "]";
-
-	return ss.str();
+	return std::format("{} → [{}]", format::pointer(ptr), data);
 }
 
 std::string_view fd_type(const FDInfo &info) {
@@ -598,7 +586,7 @@ std::string fd_info(const FDInfo &info) {
 			extra_info = ","s + (read_end ? "ro"s : "wronly"s);
 			[[ fallthrough ]];
 		}
-		default: return cosmos::sprintf("<%s%s>", &fd_type(info)[0], extra_info.c_str());
+		default: return std::format("<{}{}>", fd_type(info), extra_info.c_str());
 	}
 }
 

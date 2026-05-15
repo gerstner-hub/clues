@@ -141,23 +141,21 @@ void AccessModeParameter::processValue(const Tracee&) {
 std::string AccessModeParameter::str() const {
 	using cosmos::fs::AccessCheck;
 
-	std::stringstream ss;
+	std::string ret;
 
 	if (m_checks.none()) {
-		ss << "F_OK";
+		ret = "F_OK";
 	} else {
 		if (m_checks[AccessCheck::READ_OK]) {
-			ss << "R_OK|";
+			ret += "R_OK|";
 		}
 		if (m_checks[AccessCheck::WRITE_OK]) {
-			ss << "W_OK|";
+			ret += "W_OK|";
 		}
 		if (m_checks[AccessCheck::EXEC_OK]) {
-			ss << "X_OK";
+			ret += "X_OK";
 		}
 	}
-
-	auto ret = ss.str();
 
 	if (ret.empty()) {
 		return "???";
@@ -180,38 +178,36 @@ std::string StatParameter::str() const {
 		}
 	}
 
-	std::stringstream ss;
-
 	const auto st = *m_stat->raw();
 	using namespace std::string_literals;
 
 	const auto is_old_stat = isOldStat();
 
-	ss
-		<< "{"
-		<< "ino=" << st.st_ino << ", "
-		<< "dev=" << format::device_id(m_stat->device()) << ", "
-		<< "mode=" << format::file_type(m_stat->type()) << "|" << format::file_mode_numeric(m_stat->mode().mask()) << ", "
-		<< "nlink=" << m_stat->numLinks() << ", "
-		<< "uid=" << st.st_uid << ", "
-		<< "gid=" << st.st_gid << ", "
-		<< (m_stat->type().isCharDev() || m_stat->type().isBlockDev() ? "rdev="s + format::device_id(m_stat->representedDevice()) + ", " : "")
-		<< "size=" << st.st_size << ", ";
+	std::string ret = std::format("{{ino={}, dev={}, mode={}|{}, nlink={}, uid={}, gid={}, ",
+		st.st_ino, format::device_id(m_stat->device()), format::file_type(m_stat->type()),
+		format::file_mode_numeric(m_stat->mode().mask()), m_stat->numLinks(),
+		m_stat->uid(), m_stat->gid());
+
+	if (m_stat->type().isCharDev() || m_stat->type().isBlockDev()) {
+		ret += std::format("rdev={}, ", format::device_id(m_stat->representedDevice()));
+	}
+
+	ret += std::format("size={}, ", st.st_size);
 
 	if (!is_old_stat) {
 		/*
 		 * these fields do not exist in oldstat syscalls
 		 */
-		ss << "blksize=" << st.st_blksize << ", " << "blocks=" << st.st_blocks << ", ";
+		ret += std::format("blksize={}, blocks={}, ",
+				m_stat->blockSize(), m_stat->allocatedBlocks());
 	}
 
-	ss
-		<< "atim=" << format::timespec(m_stat->accessTime(), is_old_stat) << ", "
-		<< "mtim=" << format::timespec(m_stat->modTime(), is_old_stat) << ", "
-		<< "ctim=" << format::timespec(m_stat->statusTime(), is_old_stat)
-		<< "}";
+	ret += std::format("atim={}, mtim={}, ctim={}}}",
+		format::timespec(m_stat->accessTime(), is_old_stat),
+		format::timespec(m_stat->modTime(), is_old_stat),
+		format::timespec(m_stat->statusTime(), is_old_stat));
 
-	return ss.str();
+	return ret;
 }
 
 bool StatParameter::isOldStat() const {
@@ -361,33 +357,32 @@ static std::string_view entry_type_label(const cosmos::DirEntry::Type type) {
 }
 
 std::string DirEntries::str() const {
-	std::stringstream ss;
 	auto result = m_call->result();
 
 	if (!result) {
-		ss << "undefined";
+		return "undefined";
 	} else if (m_entries.empty()) {
-		ss << "empty";
+		return "empty";
 	} else {
-		ss << m_entries.size() << " entries: ";
+		std::string ret = std::format("{} entries: ", m_entries.size());
 
 		std::string comma;
 
 		for (const auto &entry: m_entries) {
-			ss << comma << "{d_ino=" << entry.inode
-				<< ", d_off=" << entry.offset
-				<< ", d_reclen=" << offsetof(struct linux_dirent, d_name) + entry.name.length() + 2
-				<< ", d_name=\"" << entry.name
-				<< "\", d_type=" << entry_type_label(entry.type)
-				<< "}";
+			ret += comma;
+			ret += std::format("{{d_ino={}, d_off={}, d_reclen={}, d_name=\"{}\", d_type={}}}",
+				entry.inode, entry.offset,
+				offsetof(struct linux_dirent, d_name) + entry.name.length() + 2,
+				entry.name,
+				entry_type_label(entry.type));
 
 			if (comma.empty()) {
 				comma = ", ";
 			}
 		}
-	}
 
-	return ss.str();
+		return ret;
+	}
 }
 
 void DirEntries::updateData(const Tracee &proc) {

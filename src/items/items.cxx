@@ -32,13 +32,11 @@ std::string format_number(INT value, const Base base) {
 } // end ns
 
 std::string GenericPointerValue::str() const {
-	std::stringstream ss;
-	if (auto ptr = valueAs<long*>(); ptr) {
-		ss << ptr;
+	if (auto ptr = valueAs<void*>(); ptr) {
+		return std::format("{:p}", ptr);
 	} else {
-		ss << "NULL";
+		return "NULL";
 	}
-	return ss.str();
 }
 
 template <typename INT>

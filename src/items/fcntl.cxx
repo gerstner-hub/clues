@@ -3,6 +3,7 @@
 
 // cosmos
 #include <cosmos/error/RuntimeError.hxx>
+#include <cosmos/formatters.hxx>
 #include <cosmos/formatting.hxx>
 
 // clues
@@ -301,12 +302,12 @@ std::string FLockParameter::str() const {
 		}
 	};
 
-	return cosmos::sprintf("{l_type=%s, l_whence=%s, l_start=%jd, l_len=%jd, l_pid=%d}",
+	return std::format("{{l_type={}, l_whence={}, l_start={}, l_len={}, l_pid={}}}",
 			lock_type_to_str(cosmos::to_integral(m_lock->type())).data(),
 			whence_str(cosmos::to_integral(m_lock->whence())),
 			m_lock->start(),
 			m_lock->length(),
-			cosmos::to_integral(m_lock->pid())
+			m_lock->pid()
 	);
 }
 
@@ -347,9 +348,7 @@ std::string ExtFileDescOwner::str() const {
 		}
 	};
 
-	std::stringstream ss;
-	ss << "{type=" << type_str(m_owner->type()) << ", id=" << m_owner->raw()->pid << "}";
-	return ss.str();
+	return std::format("{{type={}, id={}}}", type_str(m_owner->type()), m_owner->raw()->pid);
 }
 
 void ExtFileDescOwner::processValue(const Tracee &proc) {

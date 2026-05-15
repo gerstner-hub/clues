@@ -160,7 +160,7 @@ std::string CloneArgs::str() const {
 			return "NULL";
 		else
 			// verifySize() failed
-			return format::pointer(asPtr()) + " (size mismatch)";
+			return std::format("{} (size mismatch)", format::pointer(asPtr()));
 	}
 
 	auto uint2ptr = [](uint64_t val) -> ForeignPtr {

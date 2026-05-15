@@ -93,16 +93,10 @@ void OldMmapArgs::processValue(const Tracee &proc) {
 std::string OldMmapArgs::str() const {
 	auto &mmap_call = dynamic_cast<const MmapSystemCall&>(*m_call);
 
-	std::stringstream ss;
-	ss << "{hint=" << mmap_call.hint.str()
-		<< ", length=" << mmap_call.length.str()
-		<< ", prot=" << mmap_call.protection.str()
-		<< ", flags=" << mmap_call.flags.str()
-		<< ", fd=" << mmap_call.fd.str()
-		<< ", offset=" << mmap_call.offset.str()
-		<< "}";
-
-	return ss.str();
+	return std::format("{{hint={}, length={}, prot={}, flags={}, fd={}, offset={}}}",
+		mmap_call.hint.str(), mmap_call.length.str(),
+		mmap_call.protection.str(), mmap_call.flags.str(),
+		mmap_call.fd.str(), mmap_call.offset.str());
 }
 
 } // end ns

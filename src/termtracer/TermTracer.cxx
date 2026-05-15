@@ -34,6 +34,8 @@
 // termtracer
 #include "TermTracer.hxx"
 
+using namespace std::string_literals;
+
 namespace clues {
 
 namespace {
@@ -332,21 +334,21 @@ std::string TermTracer::formatTraceeInvocation(const Tracee &tracee) {
 
 std::string TermTracer::formatTraceeInvocation(const std::string &exe,
 		const cosmos::StringVector &cmdline) const {
-	std::stringstream ss;
-	ss << exe << " [";
+	std::string ret = exe + " [";
 	bool first = true;
 	for (const auto &arg: cmdline) {
 		if (first) {
 			first = false;
 		} else {
-			ss << ", ";
+			ret += ", ";
 		}
-		ss << "\"" << arg << "\"";
+
+		ret += "\""s + arg + "\"";
 	}
 
-	ss << "]";
+	ret += "]";
 
-	return ss.str();
+	return ret;
 }
 
 void TermTracer::printPar(std::ostream &trace, const SystemCallItem &par) const {

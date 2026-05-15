@@ -71,13 +71,13 @@ std::string StringArrayData::str() const {
 	ret += "[";
 
 	for (const auto &str: m_strs) {
-		ret += "\"";
-		ret += str;
-		ret += "\", ";
+		ret += std::format("\"{}\", ", str);
 	}
 
-	if (!m_strs.empty())
+	if (!m_strs.empty()) {
+		// discard superfluous comma
 		ret.erase(ret.size() - 2);
+	}
 
 	ret += "]";
 
