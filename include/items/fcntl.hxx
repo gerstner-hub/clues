@@ -81,6 +81,10 @@ public: // functions
 		return cosmos::in_list(m_op, {Oper::GETLK64, Oper::SETLK64, Oper::SETLKW64});
 	}
 
+	bool isOFDLock() const {
+		return cosmos::in_list(m_op, {Oper::OFD_SETLK, Oper::OFD_SETLKW, Oper::OFD_GETLK});
+	}
+
 protected: // functions
 
 	void processValue(const Tracee &proc) override;

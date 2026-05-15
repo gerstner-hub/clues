@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <iostream>
 
 static void flockCntl() {
 	char path[] = "/tmp/fcntl_syscall_test.XXXXXX";
@@ -58,20 +59,22 @@ static void flockCntl() {
 
 	struct flock32 fl32;
 	fl32.l_type = F_RDLCK;
-	fl32.l_whence = SEEK_SET;
-	fl32.l_start = 20;
-	fl32.l_len = 200;
+	fl32.l_whence = SEEK_CUR;
+	fl32.l_start = 10;
+	fl32.l_len = 100;
 	fl32.l_pid = 815;
 
 	syscall(SYS_fcntl, fd, F_SETLK32, &fl32);
 	syscall(SYS_fcntl, fd, F_GETLK32, &fl32);
 	fl32.l_type = F_UNLCK;
+	fl32.l_len = 100;
 	syscall(SYS_fcntl, fd, F_SETLKW32, &fl32);
 
 	fl32.l_type = F_RDLCK;
 	syscall(SYS_fcntl64, fd, F_SETLK32, &fl32);
 	syscall(SYS_fcntl64, fd, F_GETLK32, &fl32);
 	fl32.l_type = F_UNLCK;
+	fl32.l_len = 100;
 	syscall(SYS_fcntl64, fd, F_SETLKW32, &fl32);
 
 	// should fail with 32-bit fcntl()

@@ -223,7 +223,21 @@ void FLockParameter::processValue(const Tracee &proc) {
 
 	// on i386 things get complicated
 
-	if (const auto sysnr = m_call->callNr(); sysnr != SystemCallNr::FCNTL64) {
+	auto fcntl_sys = dynamic_cast<const FcntlSystemCall*>(m_call);
+	if (!fcntl_sys)
+		// alien system call?
+		return;
+
+	const bool is_ofd_lock = fcntl_sys->operation.isOFDLock();
+	const bool is_lock64 = fcntl_sys->operation.isLock64();
+
+
+	if (const auto sysnr = m_call->callNr(); !is_ofd_lock && sysnr != SystemCallNr::FCNTL64) {
+		if (is_lock64) {
+			// 64-bit operation on 32-bit fcntl is unsupported.
+			// report invalid
+			return;
+		}
 		/*
 		 * for the old fcntl() call only the 32-bit `off_t` structure
 		 * is supported. This one also has no alignment issues if the
@@ -239,12 +253,8 @@ void FLockParameter::processValue(const Tracee &proc) {
 	 * consider alignment for flock64 in case we're dealing with an
 	 * emulation binary.
 	 */
-	auto fcntl_sys = dynamic_cast<const FcntlSystemCall*>(m_call);
-	if (!fcntl_sys)
-		// alien system call?
-		return;
 
-	if (fcntl_sys->operation.isLock64()) {
+	if (is_lock64 || is_ofd_lock) {
 		// either native 32-bit tracing or the target is a 32-bit
 		// emulation binary, we need i386 alignment in both cases
 		fetch_lock.operator()<kernel::flock64_i386>();

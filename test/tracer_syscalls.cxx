@@ -119,7 +119,7 @@ public:
 						R"(fcntl(64)?\(fd=[0-9]+, op=F_SETLK(64)?, flock=\{l_type=F_RDLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = 0)",
 						R"(fcntl(64)?\(fd=[0-9]+, op=F_SETLK(64)?, flock=\{l_type=F_UNLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = 0)",
 						R"(fcntl(64)?\(fd=[0-9]+, op=F_SETLKW(64)?, flock=\{l_type=F_RDLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = 0)",
-						R"(fcntl(64)?\(fd=[0-9]+, op=F_GETLK(64)?, flock=\{l_type=F_UNLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = )",
+						R"(fcntl(64)?\(fd=[0-9]+, op=F_GETLK(64)?, flock=\{l_type=F_UNLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = 0)",
 						R"(fcntl(64)?\(fd=[0-9]+, op=F_SETLK(64)?, flock=\{l_type=F_WRLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = 0)",
 						R"(fcntl(64)?\(fd=[0-9]+, op=F_SETLK(64)?, flock=\{l_type=F_UNLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = 0)",
 						R"(fcntl(64)?\(fd=[0-9]+, op=F_OFD_SETLK(64)?, flock=\{l_type=F_RDLCK, l_whence=SEEK_CUR, l_start=10, l_len=100, l_pid=[0-9]+\}\) = 0)",
