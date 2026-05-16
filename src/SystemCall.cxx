@@ -183,6 +183,8 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::WRITE:           return new_sys<WriteSystemCall>();
 	case SystemCallNr::PIPE:            return new_sys<PipeSystemCall>();
 	case SystemCallNr::PIPE2:           return new_sys<Pipe2SystemCall>();
+	case SystemCallNr::PWRITE64:        return new_sys<PWrite64SystemCall>();
+	case SystemCallNr::PREAD64:         return new_sys<PRead64SystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }

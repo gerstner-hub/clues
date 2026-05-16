@@ -7,4 +7,8 @@ int main() {
 	if (read(fd, buffer, sizeof(buffer)) < 0) {
 
 	}
+
+	if (pread(fd, buffer, sizeof(buffer), 20) < 0) {
+
+	}
 }

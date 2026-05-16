@@ -1697,6 +1697,7 @@ const auto TESTS = std::array{
 			VERIFY(sc.fd.fd() == FIRST_FD);
 			VERIFY(sc.count.value() == 1024);
 		}), EXIT_VERIFY_CB(ReadSystemCall, {
+			VERIFY(sc.hasResultValue());
 			VERIFY(sc.buf.availableBytes() > 0);
 			VERIFY(sc.buf.data().size() <= sc.buf.availableBytes());
 			VERIFY(sc.read.value() == sc.buf.availableBytes());
@@ -1735,6 +1736,63 @@ const auto TESTS = std::array{
 				int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
 				auto buffer = alloc_str32("abcdefgh");
 				syscall32(SyscallNr32::WRITE, fd, buffer, strlen(buffer) + 1);
+			})
+		}
+	}, TestSpec{SystemCallNr::PREAD64, []() {
+			int fd = open("/etc/fstab", O_RDONLY);
+			char buffer[1024];
+			if (pread(fd, buffer, sizeof(buffer), 100) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(PRead64SystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.count.value() == 1024);
+			VERIFY(sc.offset.value() == 100);
+		}), EXIT_VERIFY_CB(PRead64SystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.buf.availableBytes() > 0);
+			VERIFY(sc.buf.data().size() <= sc.buf.availableBytes());
+			VERIFY(sc.read.value() == sc.buf.availableBytes());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				auto path = alloc_str32("/etc/fstab");
+				int fd = open(path, O_RDONLY);
+				auto buffer = alloc32<char*>(1024);
+				if (syscall32(SyscallNr32::PREAD64, fd, buffer, 1024, 100) < 0) {
+				}
+			})
+		}
+	}, TestSpec{SystemCallNr::PWRITE64, []() {
+			int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+			const char buffer[] = "abcdefgh";
+			if (write(fd, buffer, sizeof(buffer)) < 0) {
+
+			}
+			if (pwrite(fd, buffer, sizeof(buffer), sizeof(buffer) / 2) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(PWrite64SystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.buf.data().size() == 9);
+			std::string s;
+			for (const auto byte: sc.buf.data()) {
+				if (byte)
+					s.push_back(byte);
+			}
+			VERIFY(s == "abcdefgh");
+			VERIFY(sc.count.value() == 9);
+			VERIFY(sc.buf.availableBytes() == 9);
+			VERIFY(sc.offset.value() == (off_t)sc.count.value() / 2);
+		}), EXIT_VERIFY_CB(PWrite64SystemCall, {
+			VERIFY(sc.hasResultValue());
+			// partial writes should not occur here
+			VERIFY(sc.written.value() == 9);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
+				auto buffer = alloc_str32("abcdefgh");
+				syscall32(SyscallNr32::WRITE, fd, buffer, strlen(buffer) + 1);
+				syscall32(SyscallNr32::PWRITE64, fd, buffer, strlen(buffer) + 1, (strlen(buffer) + 1) / 2);
 			})
 		}
 	}, TestSpec{SystemCallNr::RT_SIGACTION, []() {

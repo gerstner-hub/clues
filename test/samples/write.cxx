@@ -7,4 +7,8 @@ int main() {
 	if (write(fd, buffer, sizeof(buffer)) < 0) {
 
 	}
+
+	if (pwrite(fd, buffer, sizeof(buffer), 100) < 0) {
+
+	}
 }

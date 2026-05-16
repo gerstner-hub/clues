@@ -10,8 +10,8 @@ namespace clues {
 
 struct CLUES_API WriteSystemCall :
 		public SystemCall {
-	WriteSystemCall() :
-			SystemCall{SystemCallNr::WRITE},
+	explicit WriteSystemCall(const SystemCallNr nr = SystemCallNr::WRITE) :
+			SystemCall{nr},
 			fd{},
 			buf{count, ItemType::PARAM_IN, "buf", "source buffer"},
 			count{"count", "buffer length"},
@@ -28,8 +28,8 @@ struct CLUES_API WriteSystemCall :
 
 struct CLUES_API ReadSystemCall :
 		public SystemCall {
-	ReadSystemCall() :
-			SystemCall{SystemCallNr::READ},
+	explicit ReadSystemCall(const SystemCallNr nr = SystemCallNr::READ) :
+			SystemCall{nr},
 			fd{},
 			buf{read, ItemType::PARAM_OUT, "buf", "target buffer"},
 			count{"count", "buffer length"},
@@ -42,6 +42,36 @@ struct CLUES_API ReadSystemCall :
 	item::BufferPointer buf;
 	item::SizeValue count;
 	item::SizeValue read;
+};
+
+/// pread64 read from file at position system call.
+/**
+ * This has the same signature as read(), only with an added `off_t` parameter.
+ **/
+struct CLUES_API PRead64SystemCall :
+		public ReadSystemCall {
+	PRead64SystemCall() :
+			ReadSystemCall{SystemCallNr::PREAD64},
+       			offset{"offset", "read offset"} {
+		addParameters(offset);
+	}
+
+	item::OffsetValue offset;
+};
+
+/// pwrite64 write to file at position system call.
+/**
+ * This has the same signature as write(), only with an added `off_t` parameter.
+ **/
+struct CLUES_API PWrite64SystemCall :
+		public WriteSystemCall {
+	PWrite64SystemCall() :
+			WriteSystemCall{SystemCallNr::PWRITE64},
+       			offset{"offset", "write offset"} {
+		addParameters(offset);
+	}
+
+	item::OffsetValue offset;
 };
 
 // TODO: the number of parameters can vary here.
