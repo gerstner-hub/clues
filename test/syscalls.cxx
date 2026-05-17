@@ -1198,6 +1198,56 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::GETRLIMIT, RLIMIT_CORE, lim);
 			})
 		}
+	}, TestSpec{SystemCallNr::GETPID, []() {
+			getpid();
+		}, ENTRY_VERIFY_CB(GetPIDSystemCall, {
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetPIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.pid() == tracee.pid());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::GETPID);
+			})
+		}
+	}, TestSpec{SystemCallNr::GETPPID, []() {
+			getppid();
+		}, ENTRY_VERIFY_CB(GetPPIDSystemCall, {
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetPPIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.pid() == cosmos::proc::get_own_pid());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::GETPPID);
+			})
+		}
+	}, TestSpec{SystemCallNr::GETPGID, []() {
+			getpgid(getpid());
+		}, ENTRY_VERIFY_CB(GetPGIDSystemCall, {
+			VERIFY(sc.pid.pid() == tracee.pid());
+		}), EXIT_VERIFY_CB(GetPGIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.pgid() ==
+					cosmos::proc::get_process_group_of(cosmos::proc::get_own_pid()));
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				const auto pid = getpid();
+				syscall32(SyscallNr32::GETPGID, pid);
+			})
+		}
+	}, TestSpec{SystemCallNr::GETTID, []() {
+			gettid();
+		}, ENTRY_VERIFY_CB(GetTIDSystemCall, {
+			(void)sc;
+		}), EXIT_VERIFY_CB(GetTIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(cosmos::as_pid(sc.id.tid()) == tracee.pid());
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::GETTID);
+			})
+		}
 	}, TestSpec{SystemCallNr::SETRLIMIT, []() {
 #ifdef COSMOS_I386
 			clues::rlimit32 lim;

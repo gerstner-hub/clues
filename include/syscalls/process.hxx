@@ -226,6 +226,10 @@ protected:
 			case SystemCallNr::GETGID:    return "gid";
 			case SystemCallNr::GETEGID32: [[fallthrough]];
 			case SystemCallNr::GETEGID:   return "egid";
+			case SystemCallNr::GETPID:    return "pid";
+			case SystemCallNr::GETPPID:   return "pid";
+			case SystemCallNr::GETTID:    return "tid";
+			case SystemCallNr::GETPGID:   return "pgid";
 			default: return "???";
 		}
 	}
@@ -240,6 +244,10 @@ protected:
 			case SystemCallNr::GETGID:    return "real group ID";
 			case SystemCallNr::GETEGID32: [[fallthrough]];
 			case SystemCallNr::GETEGID:   return "effective group ID";
+			case SystemCallNr::GETPID:    return "own process ID";
+			case SystemCallNr::GETPPID:   return "parent process ID";
+			case SystemCallNr::GETTID:    return "own thread ID";
+			case SystemCallNr::GETPGID:   return "own process group ID";
 			default: return "???";
 		}
 	}
@@ -249,6 +257,20 @@ using GetUIDSystemCall  = GetXIDSystemCall<item::UserID>;
 using GetEUIDSystemCall = GetXIDSystemCall<item::UserID>;
 using GetGIDSystemCall  = GetXIDSystemCall<item::GroupID>;
 using GetEGIDSystemCall = GetXIDSystemCall<item::GroupID>;
+using GetPIDSystemCall  = GetXIDSystemCall<item::ProcessIDItem>;
+using GetPPIDSystemCall = GetXIDSystemCall<item::ProcessIDItem>;
+using GetTIDSystemCall  = GetXIDSystemCall<item::ThreadIDItem>;
+
+struct CLUES_API GetPGIDSystemCall :
+		GetXIDSystemCall<item::ProcessGroupIDItem> {
+	explicit GetPGIDSystemCall() :
+			GetXIDSystemCall{SystemCallNr::GETPGID},
+			pid{ItemType::PARAM_IN} {
+		setParameters(pid);
+	}
+
+	item::ProcessIDItem pid; ///< the PID to get the process group ID for.
+};
 
 struct CLUES_API Wait4SystemCall :
 		public SystemCall {

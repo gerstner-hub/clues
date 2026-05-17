@@ -16,8 +16,12 @@ class CLUES_API ProcessIDItem :
 		public SystemCallItem {
 public: // functions
 
-	explicit ProcessIDItem(const ItemType type, const std::string_view desc) :
+	explicit ProcessIDItem(const ItemType type, const std::string_view desc = "process ID") :
 			SystemCallItem{type, "pid", desc} {
+	}
+
+	ProcessIDItem(const ItemType type, const std::string_view label, const std::string_view desc) :
+			SystemCallItem{type, label, desc} {
 	}
 
 	auto pid() const { return m_pid; }
@@ -40,12 +44,48 @@ protected: // data
 	cosmos::ProcessID m_pid = cosmos::ProcessID::INVALID;
 };
 
+class CLUES_API ProcessGroupIDItem :
+		public SystemCallItem {
+public: // functions
+
+	explicit ProcessGroupIDItem(const ItemType type, const std::string_view desc = "process group ID") :
+			SystemCallItem{type, "pgid", desc} {
+	}
+
+	ProcessGroupIDItem(const ItemType type, const std::string_view label, const std::string_view desc) :
+			SystemCallItem{type, label, desc} {
+	}
+
+	auto pgid() const { return m_pgid; }
+
+	std::string str() const override {
+		if (m_pgid == cosmos::ProcessGroupID::INVALID)
+			return "-1";
+
+		return SystemCallItem::str();
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_pgid = valueAs<cosmos::ProcessGroupID>();
+	}
+
+protected: // data
+
+	cosmos::ProcessGroupID m_pgid = cosmos::ProcessGroupID::INVALID;
+};
+
 class CLUES_API ThreadIDItem :
 		public SystemCallItem {
 public: // functions
 
-	explicit ThreadIDItem(const ItemType type, const std::string_view desc = "thread id") :
+	explicit ThreadIDItem(const ItemType type, const std::string_view desc = "thread ID") :
 			SystemCallItem{type, "tid", desc} {
+	}
+
+	ThreadIDItem(const ItemType type, const std::string_view label, const std::string_view desc) :
+			SystemCallItem{type, label, desc} {
 	}
 
 	auto tid() const { return m_tid; }

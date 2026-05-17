@@ -179,6 +179,18 @@ public:
 				TestSpec{"getids", "getegid", {
 					R"(getegid\(\) = [0-9]+)"
 				}},
+				TestSpec{"getids", "getpid", {
+					R"(getpid\(\) = [0-9]+ \(pid\))"
+				}},
+				TestSpec{"getids", "getppid", {
+					R"(getppid\(\) = [0-9]+ \(pid\))"
+				}},
+				TestSpec{"getids", "getpgid", {
+					R"(getpgid\(pid=[0-9]+\) = [0-9]+ \(pgid\))"
+				}},
+				TestSpec{"getids", "gettid", {
+					R"(gettid\(\) = [0-9]+ \(tid\))"
+				}},
 				TestSpec{"rlimit", "getrlimit", {
 					R"(getrlimit\(resource=RLIMIT_AS, limit=\{rlim_cur=(RLIM_INFINITY|[0-9]+), rlim_max=(RLIM_INFINITY|[0-9]+)\}\) = 0)"
 				}},
