@@ -1,11 +1,12 @@
 #pragma once
 
 // clues
-#include <clues/SystemCall.hxx>
 #include <clues/items/items.hxx>
 #include <clues/items/limits.hxx>
+#include <clues/items/other.hxx>
 #include <clues/items/process.hxx>
 #include <clues/sysnrs/generic.hxx>
+#include <clues/SystemCall.hxx>
 
 namespace clues {
 
@@ -85,6 +86,25 @@ struct CLUES_API ExitGroupSystemCall :
 
 	item::ExitStatusItem status;
 	item::SuccessResult result; // actually it never returns
+};
+
+struct CLUES_API GetRandomSystemCall :
+		public SystemCall {
+
+	GetRandomSystemCall() :
+			SystemCall{SystemCallNr::GETRANDOM},
+       			buf{count, ItemType::PARAM_OUT, "buf"},
+			count{"size"},
+			flags{},
+			obtained{"bytes", "bytes obtained", ItemType::RETVAL} {
+		setParameters(buf, count, flags);
+		setReturnItem(obtained);
+	}
+
+	item::BufferPointer buf; ///< buffer where to store random data.
+	item::SizeValue count; ///< number of bytes to store into buffer.
+	item::GetRandomFlagsValue flags;
+	item::SizeValue obtained; ///< number of bytes actually placed into buffer.
 };
 
 } // end ns

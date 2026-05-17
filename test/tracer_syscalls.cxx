@@ -107,6 +107,9 @@ public:
 				TestSpec{"exit", "exit_group", {
 						R"(exit_group\(status=[0-9]+\) = )"
 				}},
+				TestSpec{{}, "getrandom", {
+						R"(getrandom\(buf="[^"]+", size=16, flags=0x1 \(GRND_NONBLOCK\)\) = 16)",
+				}},
 				TestSpec{"fcntl", "fcntl,fcntl64", {
 						/* output differs quite chaotically here between x86-64 and i386, thus we need to add some degree of freedom in some spots */
 						R"(fcntl(64)?\(fd=[0-9]+, op=F_DUPFD, lowest_fd=[0-9]+\) = [0-9]+)",
