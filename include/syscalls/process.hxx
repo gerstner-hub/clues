@@ -192,10 +192,20 @@ struct CLUES_API ExecveAtSystemCall :
 };
 
 template <typename ID_T>
-struct GetXIdSystemCall :
+/// Template for get*id() system calls returning user/group/process/thread IDs.
+/**
+ * This template is used generally for system calls taking no argument and
+ * returning an identifier related to the caller's context like the
+ * real/effective user/group ID, the process ID, the process group ID, the
+ * thread ID etc.
+ *
+ * `using` declarations for concrete types are provided like GetUIDSystemCall
+ * and so on.
+ **/
+struct GetXIDSystemCall :
 		public SystemCall {
 
-	GetXIdSystemCall(const SystemCallNr nr) :
+	GetXIDSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
 			id{ItemType::RETVAL, getShortLabel(), getLongLabel()} {
 		setReturnItem(id);
@@ -235,10 +245,10 @@ protected:
 	}
 };
 
-using GetUidSystemCall  = GetXIdSystemCall<item::UserID>;
-using GetEuidSystemCall = GetXIdSystemCall<item::UserID>;
-using GetGidSystemCall  = GetXIdSystemCall<item::GroupID>;
-using GetEgidSystemCall = GetXIdSystemCall<item::GroupID>;
+using GetUIDSystemCall  = GetXIDSystemCall<item::UserID>;
+using GetEUIDSystemCall = GetXIDSystemCall<item::UserID>;
+using GetGIDSystemCall  = GetXIDSystemCall<item::GroupID>;
+using GetEGIDSystemCall = GetXIDSystemCall<item::GroupID>;
 
 struct CLUES_API Wait4SystemCall :
 		public SystemCall {

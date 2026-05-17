@@ -1065,10 +1065,10 @@ const auto TESTS = std::array{
 		}
 	}, TestSpec{SystemCallNr::GETUID, []() {
 			syscall(SYS_getuid);
-		}, ENTRY_VERIFY_CB(GetUidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetUIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetUidSystemCall, {
+		}), EXIT_VERIFY_CB(GetUIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.uid() == cosmos::proc::get_real_user_id());
 		}), IgnoreCalls{0}, {
@@ -1080,10 +1080,10 @@ const auto TESTS = std::array{
 #ifdef COSMOS_I386
 			syscall(SYS_getuid32);
 #endif
-		}, ENTRY_VERIFY_CB(GetUidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetUIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetUidSystemCall, {
+		}), EXIT_VERIFY_CB(GetUIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.uid() == cosmos::proc::get_real_user_id());
 		}), IgnoreCalls{0}, {
@@ -1095,10 +1095,10 @@ const auto TESTS = std::array{
 		{clues::ABI::I386}
 	}, TestSpec{SystemCallNr::GETEUID, []() {
 			syscall(SYS_geteuid);
-		}, ENTRY_VERIFY_CB(GetEuidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetEUIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetEuidSystemCall, {
+		}), EXIT_VERIFY_CB(GetEUIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.uid() == cosmos::proc::get_effective_user_id());
 		}), IgnoreCalls{0}, {
@@ -1110,10 +1110,10 @@ const auto TESTS = std::array{
 #ifdef COSMOS_I386
 			syscall(SYS_geteuid32);
 #endif
-		}, ENTRY_VERIFY_CB(GetEuidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetEUIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetEuidSystemCall, {
+		}), EXIT_VERIFY_CB(GetEUIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.uid() == cosmos::proc::get_effective_user_id());
 		}), IgnoreCalls{0}, {
@@ -1125,10 +1125,10 @@ const auto TESTS = std::array{
 		{clues::ABI::I386}
 	}, TestSpec{SystemCallNr::GETGID, []() {
 			syscall(SYS_getgid);
-		}, ENTRY_VERIFY_CB(GetGidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetGIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetGidSystemCall, {
+		}), EXIT_VERIFY_CB(GetGIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.gid() == cosmos::proc::get_real_group_id());
 		}), IgnoreCalls{0}, {
@@ -1140,10 +1140,10 @@ const auto TESTS = std::array{
 #ifdef COSMOS_I386
 			syscall(SYS_getgid32);
 #endif
-		}, ENTRY_VERIFY_CB(GetGidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetGIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetGidSystemCall, {
+		}), EXIT_VERIFY_CB(GetGIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.gid() == cosmos::proc::get_real_group_id());
 		}), IgnoreCalls{0}, {
@@ -1155,10 +1155,10 @@ const auto TESTS = std::array{
 		{clues::ABI::I386}
 	}, TestSpec{SystemCallNr::GETEGID, []() {
 			syscall(SYS_getegid);
-		}, ENTRY_VERIFY_CB(GetEgidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetEGIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetEgidSystemCall, {
+		}), EXIT_VERIFY_CB(GetEGIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.gid() == cosmos::proc::get_effective_group_id());
 		}), IgnoreCalls{0}, {
@@ -1170,10 +1170,10 @@ const auto TESTS = std::array{
 #ifdef COSMOS_I386
 			syscall(SYS_getegid32);
 #endif
-		}, ENTRY_VERIFY_CB(GetEgidSystemCall, {
+		}, ENTRY_VERIFY_CB(GetEGIDSystemCall, {
 			/* no input parameters */
 			(void)sc;
-		}), EXIT_VERIFY_CB(GetEgidSystemCall, {
+		}), EXIT_VERIFY_CB(GetEGIDSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.id.gid() == cosmos::proc::get_effective_group_id());
 		}), IgnoreCalls{0}, {
