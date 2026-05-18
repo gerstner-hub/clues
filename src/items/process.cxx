@@ -6,7 +6,7 @@
 
 namespace clues::item {
 
-std::string WaitOptionsItem::str() const {
+std::string WaitOptions::str() const {
 	BITFLAGS_FORMAT_START(m_options);
 	BITFLAGS_ADD(WEXITED);
 	BITFLAGS_ADD(WSTOPPED);
@@ -20,15 +20,15 @@ std::string WaitOptionsItem::str() const {
 	return BITFLAGS_STR();
 }
 
-void ResourceUsageItem::updateData(const Tracee &proc) {
-	m_rusage.emplace(ResourceUsage{});
+void ResourceUsage::updateData(const Tracee &proc) {
+	m_rusage.emplace(Usage{});
 
 	if (!proc.readStruct(asPtr(), m_rusage->raw())) {
 		m_rusage.reset();
 	}
 }
 
-std::string ResourceUsageItem::str() const {
+std::string ResourceUsage::str() const {
 	if (!m_rusage)
 		return "NULL";
 
@@ -49,7 +49,7 @@ std::string ResourceUsageItem::str() const {
 			ru.ru_nvcsw, ru.ru_nivcsw);
 }
 
-std::string WaitStatusItem::scalarToString() const {
+std::string WaitStatus::scalarToString() const {
 	if (!m_status) {
 		return "???";
 	}

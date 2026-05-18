@@ -109,7 +109,7 @@ struct CLUES_API CloneSystemCall :
 	/* return value */
 
 	/// The new child's PID.
-	item::ProcessIDItem new_pid;
+	item::ProcessID new_pid;
 
 protected: // functions
 
@@ -133,7 +133,7 @@ struct CLUES_API Clone3SystemCall :
 	/// Size of the CloneArgs structure argument in `cl_args`.
 	item::SizeValue size;
 	/// New child's PID or zero if executing in child context.
-	item::ProcessIDItem pid;
+	item::ProcessID pid;
 
 protected: // functions
 
@@ -149,7 +149,7 @@ struct CLUES_API ForkSystemCall :
 		setReturnItem(pid);
 	}
 
-	item::ProcessIDItem pid;
+	item::ProcessID pid;
 };
 
 struct CLUES_API ExecveSystemCall :
@@ -257,19 +257,19 @@ using GetUIDSystemCall  = GetXIDSystemCall<item::UserID>;
 using GetEUIDSystemCall = GetXIDSystemCall<item::UserID>;
 using GetGIDSystemCall  = GetXIDSystemCall<item::GroupID>;
 using GetEGIDSystemCall = GetXIDSystemCall<item::GroupID>;
-using GetPIDSystemCall  = GetXIDSystemCall<item::ProcessIDItem>;
-using GetPPIDSystemCall = GetXIDSystemCall<item::ProcessIDItem>;
-using GetTIDSystemCall  = GetXIDSystemCall<item::ThreadIDItem>;
+using GetPIDSystemCall  = GetXIDSystemCall<item::ProcessID>;
+using GetPPIDSystemCall = GetXIDSystemCall<item::ProcessID>;
+using GetTIDSystemCall  = GetXIDSystemCall<item::ThreadID>;
 
 struct CLUES_API GetPGIDSystemCall :
-		GetXIDSystemCall<item::ProcessGroupIDItem> {
+		GetXIDSystemCall<item::ProcessGroupID> {
 	explicit GetPGIDSystemCall() :
 			GetXIDSystemCall{SystemCallNr::GETPGID},
 			pid{ItemType::PARAM_IN} {
 		setParameters(pid);
 	}
 
-	item::ProcessIDItem pid; ///< the PID to get the process group ID for.
+	item::ProcessID pid; ///< the PID to get the process group ID for.
 };
 
 struct CLUES_API Wait4SystemCall :
@@ -283,13 +283,13 @@ struct CLUES_API Wait4SystemCall :
 	}
 
 	/* parameters */
-	item::ProcessIDItem pid;
-	item::WaitStatusItem wstatus;
-	item::WaitOptionsItem options;
-	item::ResourceUsageItem rusage;
+	item::ProcessID pid;
+	item::WaitStatus wstatus;
+	item::WaitOptions options;
+	item::ResourceUsage rusage;
 
 	/* return value */
-	item::ProcessIDItem event_pid;
+	item::ProcessID event_pid;
 };
 
 } // end ns

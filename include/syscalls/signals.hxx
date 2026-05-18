@@ -109,8 +109,8 @@ struct CLUES_API TgKillSystemCall :
 	}
 
 	/* parameters */
-	item::ProcessIDItem thread_group;
-	item::ThreadIDItem thread_id;
+	item::ProcessID thread_group;
+	item::ThreadID thread_id;
 	item::SignalNumber signum;
 
 	/* return value */

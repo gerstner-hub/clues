@@ -12,15 +12,15 @@
 
 namespace clues::item {
 
-class CLUES_API ProcessIDItem :
+class CLUES_API ProcessID :
 		public SystemCallItem {
 public: // functions
 
-	explicit ProcessIDItem(const ItemType type, const std::string_view desc = "process ID") :
+	explicit ProcessID(const ItemType type, const std::string_view desc = "process ID") :
 			SystemCallItem{type, "pid", desc} {
 	}
 
-	ProcessIDItem(const ItemType type, const std::string_view label, const std::string_view desc) :
+	ProcessID(const ItemType type, const std::string_view label, const std::string_view desc) :
 			SystemCallItem{type, label, desc} {
 	}
 
@@ -44,15 +44,15 @@ protected: // data
 	cosmos::ProcessID m_pid = cosmos::ProcessID::INVALID;
 };
 
-class CLUES_API ProcessGroupIDItem :
+class CLUES_API ProcessGroupID :
 		public SystemCallItem {
 public: // functions
 
-	explicit ProcessGroupIDItem(const ItemType type, const std::string_view desc = "process group ID") :
+	explicit ProcessGroupID(const ItemType type, const std::string_view desc = "process group ID") :
 			SystemCallItem{type, "pgid", desc} {
 	}
 
-	ProcessGroupIDItem(const ItemType type, const std::string_view label, const std::string_view desc) :
+	ProcessGroupID(const ItemType type, const std::string_view label, const std::string_view desc) :
 			SystemCallItem{type, label, desc} {
 	}
 
@@ -76,15 +76,15 @@ protected: // data
 	cosmos::ProcessGroupID m_pgid = cosmos::ProcessGroupID::INVALID;
 };
 
-class CLUES_API ThreadIDItem :
+class CLUES_API ThreadID :
 		public SystemCallItem {
 public: // functions
 
-	explicit ThreadIDItem(const ItemType type, const std::string_view desc = "thread ID") :
+	explicit ThreadID(const ItemType type, const std::string_view desc = "thread ID") :
 			SystemCallItem{type, "tid", desc} {
 	}
 
-	ThreadIDItem(const ItemType type, const std::string_view label, const std::string_view desc) :
+	ThreadID(const ItemType type, const std::string_view label, const std::string_view desc) :
 			SystemCallItem{type, label, desc} {
 	}
 
@@ -101,11 +101,11 @@ protected: // data
 	cosmos::ThreadID m_tid = cosmos::ThreadID::INVALID;
 };
 
-class CLUES_API ExitStatusItem :
+class CLUES_API ExitStatus :
 		public SystemCallItem {
 public: // functions
 
-	explicit ExitStatusItem(const ItemType type, const std::string_view desc) :
+	explicit ExitStatus(const ItemType type, const std::string_view desc) :
 			SystemCallItem{type, "status", desc} {
 	}
 
@@ -122,11 +122,11 @@ protected: // data
 	cosmos::ExitStatus m_status = cosmos::ExitStatus::INVALID;
 };
 
-class CLUES_API WaitOptionsItem :
+class CLUES_API WaitOptions :
 		public ValueInParameter {
 public: // functions
 
-	explicit WaitOptionsItem() :
+	explicit WaitOptions() :
 			ValueInParameter{"options", "wait options"} {
 	}
 
@@ -148,11 +148,11 @@ protected: // data
 };
 
 /// Pointer to a `struct rusage` to be filled in.
-class CLUES_API ResourceUsageItem :
+class CLUES_API ResourceUsage :
 		public PointerOutValue {
 public: // functions
 
-	explicit ResourceUsageItem() :
+	explicit ResourceUsage() :
 			PointerOutValue{"rusage", "resource usage"} {
 	}
 
@@ -166,7 +166,7 @@ public: // functions
 
 protected: // types
 
-	struct ResourceUsage :
+	struct Usage :
 			public cosmos::ResourceUsage {
 
 		struct rusage& raw() {
@@ -186,15 +186,15 @@ protected: // functions
 
 protected: // data
 
-	std::optional<ResourceUsage> m_rusage;
+	std::optional<Usage> m_rusage;
 };
 
 /// Pointer to an int containing wait() status result data.
-class CLUES_API WaitStatusItem :
+class CLUES_API WaitStatus :
 		public PointerToScalar<int> {
 public: // functions
 
-	explicit WaitStatusItem() :
+	explicit WaitStatus() :
 			PointerToScalar{"wstatus", "wait status"} {
 	}
 

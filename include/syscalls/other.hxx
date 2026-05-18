@@ -56,7 +56,7 @@ struct CLUES_API Prlimit64SystemCall :
 		setParameters(pid, type, limit, old_limit);
 	}
 
-	item::ProcessIDItem pid;
+	item::ProcessID pid;
 	item::ResourceType type;
 	item::ResourceLimit limit;
 	item::ResourceLimit old_limit;
@@ -84,7 +84,7 @@ struct CLUES_API ExitGroupSystemCall :
 		setParameters(status);
 	}
 
-	item::ExitStatusItem status;
+	item::ExitStatus status;
 	item::SuccessResult result; // actually it never returns
 };
 

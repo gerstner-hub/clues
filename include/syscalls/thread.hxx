@@ -32,7 +32,7 @@ struct CLUES_API SetTIDAddressSystemCall :
 	item::GenericPointerValue address;
 
 	/// This will always be the TID of the caller.
-	item::ThreadIDItem caller_tid;
+	item::ThreadID caller_tid;
 };
 
 struct CLUES_API GetRobustListSystemCall :
@@ -49,7 +49,7 @@ struct CLUES_API GetRobustListSystemCall :
 		list_head.setBase(Base::HEX);
 	}
 
-	item::ThreadIDItem thread_id;
+	item::ThreadID thread_id;
 	/*
 	 * This points to `struct robust_list_head*` defined in futex.h. It
 	 * could be fully modeled, but since this is so low-level and exotic I
