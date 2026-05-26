@@ -230,6 +230,7 @@ protected:
 			case SystemCallNr::GETPPID:   return "pid";
 			case SystemCallNr::GETTID:    return "tid";
 			case SystemCallNr::GETPGID:   return "pgid";
+			case SystemCallNr::GETSID:    return "sid";
 			default: return "???";
 		}
 	}
@@ -248,6 +249,7 @@ protected:
 			case SystemCallNr::GETPPID:   return "parent process ID";
 			case SystemCallNr::GETTID:    return "own thread ID";
 			case SystemCallNr::GETPGID:   return "own process group ID";
+			case SystemCallNr::GETSID:    return "own session ID";
 			default: return "???";
 		}
 	}
@@ -270,6 +272,28 @@ struct CLUES_API GetPGIDSystemCall :
 	}
 
 	item::ProcessID pid; ///< the PID to get the process group ID for.
+};
+
+struct CLUES_API GetSIDSystemCall :
+		GetXIDSystemCall<item::SessionID> {
+	explicit GetSIDSystemCall() :
+			GetXIDSystemCall{SystemCallNr::GETSID},
+			pid{ItemType::PARAM_IN} {
+		setParameters(pid);
+	}
+
+	item::ProcessID pid; ///< the PID to get the session ID for.
+};
+
+struct CLUES_API SetSIDSystemCall :
+		public SystemCall {
+	explicit SetSIDSystemCall() :
+			SystemCall{SystemCallNr::SETSID},
+			new_sid{ItemType::RETVAL} {
+		setReturnItem(new_sid);
+	}
+
+	item::SessionID new_sid;
 };
 
 struct CLUES_API Wait4SystemCall :

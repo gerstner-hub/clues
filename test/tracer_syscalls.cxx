@@ -191,6 +191,12 @@ public:
 				TestSpec{"getids", "gettid", {
 					R"(gettid\(\) = [0-9]+ \(tid\))"
 				}},
+				TestSpec{"getids", "getsid", {
+					R"(getsid\(pid=[0-9]+\) = [0-9]+ \(sid\))"
+				}},
+				TestSpec{"getids", "setsid", {
+					R"(setsid\(\) = [0-9]+ \(sid\))"
+				}},
 				TestSpec{"rlimit", "getrlimit", {
 					R"(getrlimit\(resource=RLIMIT_AS, limit=\{rlim_cur=(RLIM_INFINITY|[0-9]+), rlim_max=(RLIM_INFINITY|[0-9]+)\}\) = 0)"
 				}},

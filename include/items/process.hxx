@@ -76,6 +76,38 @@ protected: // data
 	cosmos::ProcessGroupID m_pgid = cosmos::ProcessGroupID::INVALID;
 };
 
+class CLUES_API SessionID :
+		public SystemCallItem {
+public: // functions
+
+	explicit SessionID(const ItemType type, const std::string_view desc = "session ID") :
+			SystemCallItem{type, "sid", desc} {
+	}
+
+	SessionID(const ItemType type, const std::string_view label, const std::string_view desc) :
+			SystemCallItem{type, label, desc} {
+	}
+
+	auto sid() const { return m_sid; }
+
+	std::string str() const override {
+		if (m_sid == cosmos::SessionID::INVALID)
+			return "-1";
+
+		return SystemCallItem::str();
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_sid = valueAs<cosmos::SessionID>();
+	}
+
+protected: // data
+
+	cosmos::SessionID m_sid = cosmos::SessionID::INVALID;
+};
+
 class CLUES_API ThreadID :
 		public SystemCallItem {
 public: // functions

@@ -17,4 +17,7 @@ int main() {
 	syscall(SYS_getpgid, own_pid);
 	syscall(SYS_getppid);
 	syscall(SYS_gettid);
+
+	syscall(SYS_getsid, getpid());
+	syscall(SYS_setsid);
 }

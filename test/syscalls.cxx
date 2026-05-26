@@ -1248,6 +1248,30 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::GETTID);
 			})
 		}
+	}, TestSpec{SystemCallNr::GETSID, []() {
+			getsid(getpid());
+		}, ENTRY_VERIFY_CB(GetSIDSystemCall, {
+			VERIFY(sc.pid.pid() == tracee.pid());
+		}), EXIT_VERIFY_CB(GetSIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.id.sid() == cosmos::proc::get_session_of(cosmos::proc::get_own_pid()));
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				syscall32(SyscallNr32::GETSID, getpid());
+			})
+		}
+	}, TestSpec{SystemCallNr::SETSID, []() {
+			setsid();
+		}, ENTRY_VERIFY_CB(SetSIDSystemCall, {
+			(void)sc;
+		}), EXIT_VERIFY_CB(SetSIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_sid.sid() == cosmos::proc::get_session_of(tracee.pid()));
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::SETSID);
+			})
+		}
 	}, TestSpec{SystemCallNr::SETRLIMIT, []() {
 #ifdef COSMOS_I386
 			clues::rlimit32 lim;

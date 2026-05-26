@@ -1,7 +1,7 @@
 #pragma once
 
 // cosmos
-#include <cosmos/types.hxx>
+#include <cosmos/creds.hxx>
 
 // clues
 #include <clues/SystemCallItem.hxx>
