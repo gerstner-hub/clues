@@ -83,6 +83,10 @@ public: // functions
 		const std::string_view long_name) :
 			SystemCallItem{type, short_name, long_name} {
 	}
+
+	ForeignPtr ptr() const {
+		return ForeignPtr{valueAs<uintptr_t>()};
+	}
 };
 
 /// Specialization of a PointerValue for out-parameters.
@@ -132,10 +136,6 @@ public: // functions
 	}
 
 	std::string str() const override;
-
-	ForeignPtr ptr() const {
-		return ForeignPtr{valueAs<uintptr_t>()};
-	}
 
 protected: // functions
 
