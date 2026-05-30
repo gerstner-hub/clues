@@ -141,6 +141,14 @@ enum class ForeignPtr : uintptr_t {
 	NO_POINTER = 0
 };
 
+/// Increment the foreign pointer to point to the next item of a given type.
+template <typename T>
+inline ForeignPtr increment(const ForeignPtr ptr) {
+	const auto raw = cosmos::to_integral(ptr);
+
+	return ForeignPtr{raw + sizeof(T)};
+}
+
 } // end ns
 
 /// Support for increment of ForeignPtr to the next word boundary.
