@@ -232,6 +232,22 @@ public: // functions
 		return true;
 	}
 
+	/// Reads an array of structs from the tracee's address space into `vec`.
+	/**
+	 * This call expects `vec` to have the size of the expected number of
+	 * items of type T found at `addr`.
+	 **/
+	template<typename T, bool CHECK_TRIVIAL=true>
+	bool readStructs(ForeignPtr addr, std::vector<T> &vec) const {
+		for (auto &out: vec) {
+			if (!readStruct(addr, out))
+				return false;
+			addr = increment<T>(addr);
+		}
+
+		return true;
+	}
+
 	/// Reads in a zero terminated array of data items into the STL-vector like parameter `out`.
 	template <typename VECTOR>
 	void readVector(const ForeignPtr pointer, VECTOR &out) const;
