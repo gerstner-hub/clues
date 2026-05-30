@@ -4,9 +4,10 @@
 // clues
 #include <clues/format.hxx>
 #include <clues/items/io.hxx>
-#include <clues/Tracee.hxx>
-// private
+#include <clues/logger.hxx>
+#include <clues/private/kernel/iovec.hxx>
 #include <clues/private/utils.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues::item {
 
@@ -57,6 +58,100 @@ std::string PipeFlags::str() const {
 
 void PipeFlags::processValue(const Tracee &) {
 	m_flags = Flags{valueAs<int>()};
+}
+
+void IOVectorBase::processValue(const Tracee &tracee) {
+	m_buffers.resize(m_vector_count_par.valueAs<size_t>());
+
+	auto obtain_specs = [this, &tracee](auto &specs) {
+		specs.resize(m_buffers.size());
+		if (!tracee.readStructs(ptr(), specs))
+			return;
+
+		for (size_t i = 0; i < specs.size(); i++) {
+			const auto &native = specs[i];
+			auto &buffer = m_buffers[i];
+			buffer.base = ForeignPtr{
+				static_cast<uintptr_t>(native.iov_base)
+			};
+			buffer.len = native.iov_len;
+			buffer.filled = 0;
+			buffer.data.clear();
+		}
+	};
+
+	if (m_call->is32BitEmulationABI()) {
+		std::vector<clues::iovec32> specs;
+		obtain_specs(specs);
+	} else {
+		std::vector<clues::iovec> specs;
+		obtain_specs(specs);
+	}
+}
+
+std::string IOVectorBase::str() const {
+	std::string ret = "[";
+
+	bool first = true;
+
+	for (const auto &buffer: m_buffers) {
+		if (first) {
+			first = false;
+		} else {
+			ret += ", ";
+		}
+		ret += std::format("{{iov_base={}, iov_len={}}}",
+			buffer.data.empty() ?
+				format::pointer(buffer.base) :
+				format::pointer(buffer.base,
+					format::buffer(buffer.data.data(),
+					buffer.data.size())),
+			buffer.len
+		);
+	}
+
+	return ret + "]";
+}
+
+void IOVectorBase::fetchBuffer(const Tracee &tracee, Buffer &buffer,
+		const size_t left_to_fetch) {
+	buffer.filled = std::min(left_to_fetch, buffer.len);
+	const auto to_fetch = std::min(tracee.maxBufferPrefetch(), buffer.filled);
+	buffer.data.resize(to_fetch);
+
+	try {
+		tracee.readBlob(buffer.base,
+				reinterpret_cast<char*>(buffer.data.data()),
+				to_fetch);
+	} catch (const cosmos::CosmosError &e) {
+		LOG_ERROR("Failed to fetch buffer data from Tracee: " << e.what());
+		buffer.data.clear();
+	}
+}
+
+void ReadVector::updateData(const Tracee &tracee) {
+	if (m_call->hasErrorCode())
+		return;
+
+	size_t left_to_fetch = m_obtained_bytes_par.valueAs<size_t>();
+
+	for (auto &buffer: m_buffers) {
+		fetchBuffer(tracee, buffer, left_to_fetch);
+		left_to_fetch -= buffer.filled;
+
+		if (left_to_fetch == 0)
+			break;
+	}
+}
+
+void WriteVector::processValue(const Tracee &tracee) {
+	IOVectorBase::processValue(tracee);
+
+	/* we can fill the buffer data right away */
+	for (auto &buffer: m_buffers) {
+		/* on output there's always enough payload data present */
+		fetchBuffer(tracee, buffer, buffer.len);
+	}
 }
 
 } // end ns
