@@ -231,7 +231,9 @@ public:
 					R"(openat\(fd=AT_FDCWD, filename="[^"]+", flags=0x[0-9a-f]+ \(O_RDONLY\|O_DIRECTORY[^\)]*\)\) = [0-9]+)"
 				}},
 				TestSpec{{}, "read", {
-					R"(read\(fd=[0-9]+, buf="[^"]+"(\.\.\.)?, count=[0-9]+\) = [0-9]+)"
+					R"(read\(fd=[0-9]+, buf="[^"]+"(\.\.\.)?, count=[0-9]+\) = [0-9]+)",
+					/* failure to read should not show buffer contents */
+					R"(read\(fd=[0-9]+, buf=0x[0-9a-f]+, count=[0-9]+\) = [0-9]+.*errno)"
 				}},
 				TestSpec{"read", "pread64", {
 					R"(pread64\(fd=[0-9]+, buf="[^"]+"(\.\.\.)?, count=[0-9]+, offset=[0-9]+\) = [0-9]+)"

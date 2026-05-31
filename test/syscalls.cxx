@@ -1804,6 +1804,33 @@ const auto TESTS = std::array{
 				}
 			})
 		}
+	}, TestSpec{SystemCallNr::READ, []() {
+			int pipes[2];
+			if (pipe2(pipes, O_NONBLOCK) < 0) {
+
+			}
+			char buffer[1024];
+			if (read(pipes[0], buffer, sizeof(buffer)) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(ReadSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.count.value() == 1024);
+		}), EXIT_VERIFY_CB(ReadSystemCall, {
+			VERIFY(sc.hasErrorCode());
+			VERIFY(sc.buf.availableBytes() == 0);
+			VERIFY(sc.buf.data().empty());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				auto pipes = *alloc_struct32<int[2]>();
+				if (pipe2(pipes, O_NONBLOCK) < 0) {
+				}
+				auto buffer = alloc32<char*>(1024);
+				if (syscall32(SyscallNr32::READ, pipes[0], buffer, 1024) < 0) {
+				}
+			})
+		},
+		"failed read"
 	}, TestSpec{SystemCallNr::WRITE, []() {
 			int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0755);
 			const char buffer[] = "abcdefgh";

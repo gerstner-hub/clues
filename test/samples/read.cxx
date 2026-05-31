@@ -2,8 +2,13 @@
 #include <fcntl.h>
 #include <sys/uio.h>
 
+#include <string_view>
+
 int main() {
 	int fd = open("/etc/fstab", O_RDONLY);
+	if (fd < 0) {
+		return 1;
+	}
 	char buffer[1024];
 	if (read(fd, buffer, sizeof(buffer)) < 0) {
 
@@ -12,6 +17,31 @@ int main() {
 	if (pread(fd, buffer, sizeof(buffer), 20) < 0) {
 
 	}
+
+	/*
+	 * test non-blocking I/O where a buffer is only partially filled on
+	 * read() and where another read() generates EAGAIN
+	 */
+
+	int pipes[2];
+
+	if (pipe2(pipes, O_NONBLOCK) != 0) {
+		return 1;
+	}
+
+	constexpr std::string_view TEST_DATA{"a test string"};
+
+	if (write(pipes[1], TEST_DATA.data(), TEST_DATA.size()) < 0)
+		return 1;
+
+	if (read(pipes[0], buffer, sizeof(buffer)) < 0) {
+	}
+
+	/* this should result in EAGAIN */
+	if (read(pipes[0], buffer, sizeof(buffer)) < 0) {
+	}
+
+	/* readv() */
 
 	char buffer2[1024];
 
