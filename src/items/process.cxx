@@ -1,7 +1,6 @@
 #include <clues/items/process.hxx>
 #include <clues/format.hxx>
 #include <clues/Tracee.hxx>
-// private
 #include <clues/private/utils.hxx>
 
 namespace clues::item {
@@ -21,6 +20,8 @@ std::string WaitOptions::str() const {
 }
 
 void ResourceUsage::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue())
+		return;
 	m_rusage.emplace(Usage{});
 
 	if (!proc.readStruct(asPtr(), m_rusage->raw())) {
@@ -47,6 +48,15 @@ std::string ResourceUsage::str() const {
 			ru.ru_msgsnd, ru.ru_msgrcv,
 			ru.ru_nsignals,
 			ru.ru_nvcsw, ru.ru_nivcsw);
+}
+
+void WaitStatus::updateData(const Tracee &tracee) {
+	if (!m_call->hasResultValue())
+		return;
+	PointerToScalar<int>::updateData(tracee);
+	if (m_val) {
+		m_status = cosmos::WaitStatus{*m_val};
+	}
 }
 
 std::string WaitStatus::scalarToString() const {

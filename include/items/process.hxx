@@ -243,12 +243,7 @@ protected: // functions
 		PointerToScalar<int>::processValue(tracee);
 	}
 
-	void updateData(const Tracee &tracee) override {
-		PointerToScalar<int>::updateData(tracee);
-		if (m_val) {
-			m_status = cosmos::WaitStatus{*m_val};
-		}
-	}
+	void updateData(const Tracee &tracee) override;
 
 protected: // data
 

@@ -84,4 +84,10 @@ std::string StringArrayData::str() const {
 	return ret;
 }
 
+void StringData::updateData(const Tracee &proc) {
+	if (m_call->hasResultValue()) {
+		fetch(proc);
+	}
+}
+
 } // end ns

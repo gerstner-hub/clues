@@ -121,6 +121,9 @@ void CloneArgs::updateData(const Tracee &proc) {
 
 	if (!m_args)
 		return;
+	else if (!m_call->hasResultValue())
+		// error during system call
+		return;
 
 	const auto &args = *m_args;
 	const auto raw = args.raw();

@@ -29,13 +29,12 @@ protected: // functions
 	void processValue(const Tracee &proc) override {
 		if (!this->isOut()) {
 			fetch(proc);
+		} else {
+			m_str.reset();
 		}
 	}
 
-	void updateData(const Tracee &proc) override {
-		fetch(proc);
-	}
-
+	void updateData(const Tracee &proc) override;
 
 	void fetch(const Tracee &);
 
