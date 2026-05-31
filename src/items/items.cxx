@@ -98,7 +98,10 @@ void BufferPointer::processValue(const Tracee &tracee) {
 
 void BufferPointer::updateData(const Tracee &tracee) {
 	if (isIn()) {
-		// nothing to update on system call return
+		// nothing to update on system call return.
+		return;
+	} else if (m_call->hasErrorCode()) {
+		// the system call failed, so buffer contents are undefined.
 		return;
 	}
 
@@ -118,10 +121,18 @@ void BufferPointer::fillBuffer(const Tracee &tracee) {
 }
 
 size_t BufferPointer::availableBytes() const {
-	return m_size_par.valueAs<size_t>();
+	if (m_call->hasResultValue())
+		return m_size_par.valueAs<size_t>();
+	else
+		return 0;
 }
 
 std::string BufferPointer::str() const {
+	if (this->isOut() && m_call->hasErrorCode()) {
+		// an out buffer could not be filled thus display pointer only
+		return format::pointer(asPtr());
+	}
+
 	const auto is_cut_off = availableBytes() != m_data.size();
 	auto ret = format::buffer(m_data.data(), m_data.size());
 
