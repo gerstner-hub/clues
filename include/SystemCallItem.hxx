@@ -145,6 +145,10 @@ public: // functions
 
 protected: // functions
 
+	void reset() {
+		m_val = Word::ZERO;
+	}
+
 	/// Processes the value stored in m_val acc. to the actual item type.
 	/**
 	 * This function is called for all parameter types upon entry to a

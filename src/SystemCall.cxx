@@ -94,6 +94,7 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 		m_return->fill(proc, Word{static_cast<Word>(*exit_info.retVal())});
 	} else {
 		m_error = ErrnoResult{*exit_info.errVal()};
+		m_return->reset();
 	}
 
 	for (auto &par: m_pars) {
