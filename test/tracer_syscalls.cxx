@@ -238,6 +238,11 @@ public:
 				TestSpec{"read", "pread64", {
 					R"(pread64\(fd=[0-9]+, buf="[^"]+"(\.\.\.)?, count=[0-9]+, offset=[0-9]+\) = [0-9]+)"
 				}},
+				TestSpec{"read", "readv", {
+					R"(readv\(fd=[0-9]+, iov=\[\{iov_base=0x[0-9a-f]+ → \["[^"]+"\], iov_len=[0-9]+\}, \{iov_base=0x[0-9a-f]+ → \["[^"]+"\], iov_len=[0-9]+\}\], iovcnt=[0-9]+\) = [0-9]+ \(bytes\))",
+					R"(readv\(fd=[0-9]+, iov=\[\{iov_base=0x[0-9a-f]+ → \["[^"]+"\], iov_len=[0-9]+\}, \{iov_base=0x[0-9a-f]+, iov_len=[0-9]+\}\], iovcnt=[0-9]+\) = [0-9]+ \(bytes\))"
+
+				}},
 				TestSpec{"sigaction", "rt_sigaction", {
 					R"(rt_sigaction\(signum=SIGCHLD, sigaction=\{handler=0x[0-9a-f]+, mask=\{SIGUSR1\}, flags=SA_RESETHAND\|SA_RESTART(\|SA_RESTORER)?, restorer=(0x[0-9a-f]+|NULL)\}, old_action=\{handler=SIG_DFL, mask=\{\}, flags=[0-9]+, restorer=NULL\}, sigset_size=8\) = [0-9]+)"
 				}},
