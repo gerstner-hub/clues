@@ -1977,6 +1977,56 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::WRITE, fd, buffer, strlen(buffer) + 1);
 			})
 		}
+	}, TestSpec{SystemCallNr::WRITEV, []() {
+			int pipes[2];
+			if (pipe2(pipes, 0) < 0) {
+
+			}
+
+			constexpr std::string_view DATA1{"test1"};
+			constexpr std::string_view DATA2{"test20"};
+
+			struct iovec vec[2];
+			vec[0].iov_base = (void*)DATA1.data();
+			vec[0].iov_len = DATA1.size();
+			vec[1].iov_base = (void*)DATA2.data();
+			vec[1].iov_len = DATA2.size();
+
+			if (::writev(pipes[1], vec, sizeof(vec) / sizeof(struct iovec)) != DATA1.size() + DATA2.size()) {
+
+			}
+
+		}, ENTRY_VERIFY_CB(WriteVSystemCall, {
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.fd.fd() == SECOND_FD);
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].len == 5);
+			VERIFY(buffers[0].filled == 5);
+			VERIFY(buffers[1].len == 6);
+			VERIFY(buffers[1].filled == 6);
+			VERIFY(sc.iov_count.value() == NUM_VECS);
+		}), EXIT_VERIFY_CB(WriteVSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.written.value() == 11);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				auto pipes = *alloc_struct32<int[2]>();
+				if (pipe2(pipes, 0) < 0) {
+				}
+				auto buf1 = alloc_str32("test1");
+				auto buf2 = alloc_str32("test20");
+
+				auto vec = *alloc_struct32<clues::iovec32[2]>();
+				vec[0].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf1));
+				vec[0].iov_len = 5;
+				vec[1].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf2));
+				vec[1].iov_len = 6;
+				if (syscall32(SyscallNr32::WRITEV, pipes[1], vec, 2) < 0) {
+				}
+			})
+		}
 	}, TestSpec{SystemCallNr::PREAD64, []() {
 			int fd = open("/etc/fstab", O_RDONLY);
 			char buffer[1024];

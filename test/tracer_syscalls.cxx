@@ -261,6 +261,9 @@ public:
 				TestSpec{{}, "write", {
 					R"(write\(fd=[0-9]+, buf="[^"]+", count=[0-9]+\) = [0-9]+)"
 				}},
+				TestSpec{"write", "writev", {
+					R"(writev\(fd=[0-9]+, iov=\[\{iov_base=0x[0-9a-f]+ → \["[^"]+"\], iov_len=[0-9]+\}, \{iov_base=0x[0-9a-f]+ → \["[^"]+"\], iov_len=[0-9]+\}\], iovcnt=[0-9]+\) = [0-9]+ \(bytes\))"
+				}},
 				TestSpec{"write", "pwrite64", {
 					R"(pwrite64\(fd=[0-9]+, buf="[^"]+", count=[0-9]+, offset=[0-9]+\) = [0-9]+)"
 				}},
