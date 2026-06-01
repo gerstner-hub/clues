@@ -64,6 +64,26 @@ struct CLUES_API ReadVSystemCall :
 	item::SizeValue read;
 };
 
+/// vector write system call using a range of struct iovec.
+struct CLUES_API WriteVSystemCall :
+		public SystemCall {
+
+	explicit WriteVSystemCall() :
+			SystemCall{SystemCallNr::WRITEV},
+       			fd{},
+			iov{iov_count},
+			iov_count{"iovcnt", "number of struct iovec*"},
+			written{"bytes", "bytes written", ItemType::RETVAL} {
+		setReturnItem(written);
+		setParameters(fd, iov, iov_count);
+	}
+
+	item::FileDescriptor fd;
+	item::WriteVector iov;
+	item::IntValue iov_count;
+	item::SizeValue written;
+};
+
 /// pread64 read from file at position system call.
 /**
  * This has the same signature as read(), only with an added `off_t` parameter.
