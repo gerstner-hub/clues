@@ -54,6 +54,15 @@ int main() {
 	lseek(fd, SEEK_SET, 0);
 
 	if (readv(fd, vec, 2) < 0 ) {
+		return 1;
+	}
+
+	/* now try a partial read from the pipe */
+	if (write(pipes[1], TEST_DATA.data(), TEST_DATA.size()) < 0) {
+		return 1;
+	}
+
+	if (readv(pipes[0], vec, 2) < 0) {
 
 	}
 }

@@ -11,10 +11,11 @@
 #include <cosmos/proc/process.hxx>
 
 // clues
+#include <clues/private/kernel/iovec.hxx>
 #include <clues/private/kernel/mmap.hxx>
 #include <clues/private/kernel/other.hxx>
-#include <clues/private/kernel/time.hxx>
 #include <clues/private/kernel/sigaction.hxx>
+#include <clues/private/kernel/time.hxx>
 #include <clues/syscalls/all.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
@@ -1827,6 +1828,123 @@ const auto TESTS = std::array{
 				}
 				auto buffer = alloc32<char*>(1024);
 				if (syscall32(SyscallNr32::READ, pipes[0], buffer, 1024) < 0) {
+				}
+			})
+		},
+		"failed read"
+	}, TestSpec{SystemCallNr::READV, []() {
+			int pipes[2];
+			if (pipe2(pipes, 0) < 0) {
+
+			}
+
+			constexpr std::string_view DATA{"test"};
+
+			if (::write(pipes[1], DATA.data(), DATA.size()) != DATA.size()) {
+
+			}
+
+			char buf1[128];
+			char buf2[200];
+			struct iovec vec[2];
+			vec[0].iov_base = (void*)buf1;
+			vec[0].iov_len = sizeof(buf1);
+			vec[1].iov_base = (void*)buf2;
+			vec[1].iov_len = sizeof(buf2);
+			if (::readv(pipes[0], vec, sizeof(vec) / sizeof(struct iovec)) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(ReadVSystemCall, {
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].len == 128);
+			VERIFY(buffers[0].filled == 0);
+			VERIFY(buffers[1].len == 200);
+			VERIFY(buffers[1].filled == 0);
+			VERIFY(sc.iov_count.value() == NUM_VECS);
+		}), EXIT_VERIFY_CB(ReadVSystemCall, {
+			VERIFY(sc.hasResultValue());
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].filled == 4);
+			VERIFY(buffers[1].filled == 0);
+			VERIFY(sc.read.value() == 4);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{7}, []() {
+				auto pipes = *alloc_struct32<int[2]>();
+				if (pipe2(pipes, 0) < 0) {
+				}
+				auto buf1 = alloc32<char*>(128);
+				auto buf2 = alloc32<char*>(200);
+				auto data = alloc_str32("test");
+				if (write(pipes[1], data, 4) != 4) {
+
+				}
+
+				auto vec = *alloc_struct32<clues::iovec32[2]>();
+				vec[0].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf1));
+				vec[0].iov_len = 128;
+				vec[1].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf2));
+				vec[1].iov_len = 200;
+				if (syscall32(SyscallNr32::READV, pipes[0], vec, 2) < 0) {
+				}
+			})
+		}
+	}, TestSpec{SystemCallNr::READV, []() {
+			int pipes[2];
+			if (pipe2(pipes, O_NONBLOCK) < 0) {
+
+			}
+
+			char buf1[128];
+			char buf2[200];
+			struct iovec vec[2];
+			vec[0].iov_base = (void*)buf1;
+			vec[0].iov_len = sizeof(buf1);
+			vec[1].iov_base = (void*)buf2;
+			vec[1].iov_len = sizeof(buf2);
+			if (::readv(pipes[0], vec, sizeof(vec) / sizeof(struct iovec)) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(ReadVSystemCall, {
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].len == 128);
+			VERIFY(buffers[0].filled == 0);
+			VERIFY(buffers[1].len == 200);
+			VERIFY(buffers[1].filled == 0);
+			VERIFY(sc.iov_count.value() == NUM_VECS);
+		}), EXIT_VERIFY_CB(ReadVSystemCall, {
+			VERIFY(sc.hasErrorCode());
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].filled == 0);
+			VERIFY(buffers[1].filled == 0);
+			VERIFY(sc.read.value() == 0);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				auto pipes = *alloc_struct32<int[2]>();
+				if (pipe2(pipes, O_NONBLOCK) < 0) {
+				}
+				auto buf1 = alloc32<char*>(128);
+				auto buf2 = alloc32<char*>(200);
+
+				auto vec = *alloc_struct32<clues::iovec32[2]>();
+				vec[0].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf1));
+				vec[0].iov_len = 128;
+				vec[1].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf2));
+				vec[1].iov_len = 200;
+				if (syscall32(SyscallNr32::READV, pipes[0], vec, 2) < 0) {
 				}
 			})
 		},
