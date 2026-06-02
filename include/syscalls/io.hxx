@@ -48,8 +48,8 @@ struct CLUES_API ReadSystemCall :
 struct CLUES_API ReadVSystemCall :
 		public SystemCall {
 
-	explicit ReadVSystemCall() :
-			SystemCall{SystemCallNr::READV},
+	explicit ReadVSystemCall(const SystemCallNr nr = SystemCallNr::READV) :
+			SystemCall{nr},
 			fd{},
 			iov{iov_count, read},
 			iov_count{"iovcnt", "number of struct iovec*"},
@@ -68,8 +68,8 @@ struct CLUES_API ReadVSystemCall :
 struct CLUES_API WriteVSystemCall :
 		public SystemCall {
 
-	explicit WriteVSystemCall() :
-			SystemCall{SystemCallNr::WRITEV},
+	explicit WriteVSystemCall(const SystemCallNr nr = SystemCallNr::WRITEV) :
+			SystemCall{nr},
        			fd{},
 			iov{iov_count},
 			iov_count{"iovcnt", "number of struct iovec*"},
@@ -108,6 +108,40 @@ struct CLUES_API PWrite64SystemCall :
 	PWrite64SystemCall() :
 			WriteSystemCall{SystemCallNr::PWRITE64},
        			offset{"offset", "write offset"} {
+		addParameters(offset);
+	}
+
+	item::OffsetValue offset;
+};
+
+/// Vector read system call using a range of struct iovec at a given offset.
+/**
+ * This has the same signature as ReadVSystemCall, only with an additional
+ * `off_t`.
+ **/
+struct CLUES_API PReadVSystemCall :
+		public ReadVSystemCall {
+
+	explicit PReadVSystemCall() :
+			ReadVSystemCall{SystemCallNr::PREADV},
+			offset{"offset", "read offset"} {
+		addParameters(offset);
+	}
+
+	item::OffsetValue offset;
+};
+
+/// Vector write system call using a range of struct iovec at a given offset.
+/**
+ * This has the same signature as WriteVSystemCall, only with an additional
+ * `off_t`.
+ **/
+struct CLUES_API PWriteVSystemCall :
+		public WriteVSystemCall {
+
+	explicit PWriteVSystemCall() :
+			WriteVSystemCall{SystemCallNr::PWRITEV},
+			offset{"offset", "write offset"} {
 		addParameters(offset);
 	}
 
