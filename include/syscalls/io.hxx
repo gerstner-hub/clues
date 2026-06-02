@@ -122,8 +122,8 @@ struct CLUES_API PWrite64SystemCall :
 struct CLUES_API PReadVSystemCall :
 		public ReadVSystemCall {
 
-	explicit PReadVSystemCall() :
-			ReadVSystemCall{SystemCallNr::PREADV},
+	explicit PReadVSystemCall(const SystemCallNr nr = SystemCallNr::PREADV) :
+			ReadVSystemCall{nr},
 			offset{"offset", "read offset"} {
 		addParameters(offset);
 	}
@@ -139,8 +139,8 @@ struct CLUES_API PReadVSystemCall :
 struct CLUES_API PWriteVSystemCall :
 		public WriteVSystemCall {
 
-	explicit PWriteVSystemCall() :
-			WriteVSystemCall{SystemCallNr::PWRITEV},
+	explicit PWriteVSystemCall(const SystemCallNr nr = SystemCallNr::PWRITEV) :
+			WriteVSystemCall{nr},
 			offset{"offset", "write offset"} {
 		addParameters(offset);
 	}
