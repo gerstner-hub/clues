@@ -1874,6 +1874,8 @@ const auto TESTS = std::array{
 			VERIFY(buffers[0].filled == 4);
 			VERIFY(buffers[1].filled == 0);
 			VERIFY(sc.read.value() == 4);
+			const std::string_view data{(const char*)buffers[0].data.data(), buffers[0].data.size()};
+			VERIFY(data == "test");
 		}), IgnoreCalls{2}, {
 			I386_CROSS_ABI(IgnoreCalls{7}, []() {
 				auto pipes = *alloc_struct32<int[2]>();
@@ -2070,6 +2072,10 @@ const auto TESTS = std::array{
 			VERIFY(buffers[1].len == 6);
 			VERIFY(buffers[1].filled == 6);
 			VERIFY(sc.iov_count.value() == NUM_VECS);
+			const std::string_view data1{(const char*)buffers[0].data.data(), buffers[0].data.size()};
+			const std::string_view data2{(const char*)buffers[1].data.data(), buffers[1].data.size()};
+			VERIFY(data1 == "test1");
+			VERIFY(data2 == "test20");
 		}), EXIT_VERIFY_CB(WriteVSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.written.value() == 11);
