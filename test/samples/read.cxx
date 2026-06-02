@@ -1,14 +1,26 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/uio.h>
+#include <stdlib.h>
 
 #include <string_view>
+#include <string>
 
 int main() {
-	int fd = open("/etc/fstab", O_RDONLY);
+	// create some test data in a temporary file */
+	int fd = open("/tmp", O_RDWR|O_TMPFILE|O_CLOEXEC, 0600);
 	if (fd < 0) {
 		return 1;
 	}
+
+	constexpr std::string_view TEST_DATA{"test file content goes here; pretty long line\nand another line\nand yet another line\n"};
+
+	if (write(fd, TEST_DATA.data(), TEST_DATA.size()) != TEST_DATA.size()) {
+		return 1;
+	}
+
+	lseek(fd, SEEK_SET, 0);
+
 	char buffer[1024];
 	if (read(fd, buffer, sizeof(buffer)) < 0) {
 
@@ -28,8 +40,6 @@ int main() {
 	if (pipe2(pipes, O_NONBLOCK) != 0) {
 		return 1;
 	}
-
-	constexpr std::string_view TEST_DATA{"a test string"};
 
 	if (write(pipes[1], TEST_DATA.data(), TEST_DATA.size()) < 0)
 		return 1;
@@ -53,16 +63,24 @@ int main() {
 
 	lseek(fd, SEEK_SET, 0);
 
-	if (readv(fd, vec, 2) < 0 ) {
+	if (readv(fd, vec, 2) < 0) {
 		return 1;
 	}
 
+	constexpr std::string_view PIPE_DATA{"test pipe content\n"};
+
 	/* now try a partial read from the pipe */
-	if (write(pipes[1], TEST_DATA.data(), TEST_DATA.size()) < 0) {
+	if (write(pipes[1], PIPE_DATA.data(), PIPE_DATA.size()) < 0) {
 		return 1;
 	}
 
 	if (readv(pipes[0], vec, 2) < 0) {
+
+	}
+
+	lseek(fd, SEEK_SET, 0);
+
+	if (preadv(fd, vec, 2, 7) < 0) {
 
 	}
 }
