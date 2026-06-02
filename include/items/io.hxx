@@ -191,7 +191,7 @@ protected: // data
  * according payload after system call exit into the Buffer::data member of
  * the individual vector buffers.
  **/
-class ReadVector :
+class CLUES_API ReadVector :
 		public IOVectorBase {
 public: // functions
 
@@ -223,7 +223,7 @@ protected: // data
  * valid payload data, this type will fetch contents into Buffer::data already
  * during system call entry.
  **/
-class WriteVector :
+class CLUES_API WriteVector :
 		public IOVectorBase {
 public: // functions
 
