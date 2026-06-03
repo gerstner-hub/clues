@@ -154,6 +154,25 @@ void WriteVector::processValue(const Tracee &tracee) {
 	}
 }
 
+std::string ReadWriteFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+
+	BITFLAGS_ADD(RWF_DSYNC);
+	BITFLAGS_ADD(RWF_HIPRI);
+	BITFLAGS_ADD(RWF_SYNC);
+	BITFLAGS_ADD(RWF_NOWAIT);
+	BITFLAGS_ADD(RWF_APPEND);
+	BITFLAGS_ADD(RWF_NOAPPEND);
+	BITFLAGS_ADD(RWF_ATOMIC);
+	BITFLAGS_ADD(RWF_DONTCACHE);
+
+	return BITFLAGS_STR();
+}
+
+void ReadWriteFlags::processValue(const Tracee &) {
+	m_flags = Flags{valueAs<int>()};
+}
+
 void CombinedOffsetValue::processValue(const Tracee &) {
 	off_t upper = valueAs<off_t>() << 32;
 	off_t lower = m_lower_bits_par.valueAs<off_t>();

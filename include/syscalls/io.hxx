@@ -160,6 +160,38 @@ protected: // data
 	item::UnusedItem offset_lower;
 };
 
+/// Variant of PReadVSystemCall accepting additional flags.
+/**
+ * This wraps preadv2(), which accepts additional flags allowing more precise
+ * control over the read operation.
+ **/
+struct CLUES_API PReadV2SystemCall :
+		public PReadVSystemCall {
+
+	explicit PReadV2SystemCall() :
+			PReadVSystemCall{SystemCallNr::PREADV2} {
+		addParameters(flags);
+	}
+
+	item::ReadWriteFlags flags;
+};
+
+/// Variant of PWriteVSystemCall accepting additional flags.
+/**
+ * This wraps pwritev2(), which accepts additional flags allowing more precise
+ * control over the write operation.
+ **/
+struct CLUES_API PWriteV2SystemCall :
+		public PWriteVSystemCall {
+
+	explicit PWriteV2SystemCall() :
+			PWriteVSystemCall{SystemCallNr::PWRITEV2} {
+		addParameters(flags);
+	}
+
+	item::ReadWriteFlags flags;
+};
+
 // TODO: the number of parameters can vary here.
 // can we find out during runtime if additional parameters
 // have been passed?

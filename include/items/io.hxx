@@ -9,6 +9,7 @@
 
 // cosmos
 #include <cosmos/BitMask.hxx>
+#include <cosmos/io/StreamIO.hxx>
 
 // clues
 #include <clues/items/fcntl.hxx>
@@ -282,6 +283,36 @@ protected: // data
 
 	const SystemCallItem &m_lower_bits_par;
 	off_t m_offset = 0;
+};
+
+/// Bitmask flags used in preadv2() and pwritev2().
+class CLUES_API ReadWriteFlags :
+		public ValueInParameter {
+public: // types
+
+	using enum cosmos::StreamIO::ReadWriteFlag;
+
+	using Flags = cosmos::StreamIO::ReadWriteFlags;
+
+public: // functions
+
+	explicit ReadWriteFlags() :
+			ValueInParameter{"flags"} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	Flags m_flags;
 };
 
 } // end ns
