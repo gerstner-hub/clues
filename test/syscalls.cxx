@@ -109,6 +109,7 @@ struct TestSpec {
 constexpr cosmos::FileNum FIRST_FD{4};
 constexpr cosmos::FileNum SECOND_FD{5};
 constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x70000000;
+constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 1;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
@@ -2010,10 +2011,40 @@ const auto TESTS = std::array{
 				vec[0].iov_len = 10;
 				vec[1].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf2));
 				vec[1].iov_len = 20;
-				if (syscall32(SyscallNr32::PREADV, fd, vec, 2, 5) < 0) {
+				if (syscall32(SyscallNr32::PREADV, fd, vec, 2, 5, 0) < 0) {
 				}
 			})
 		}
+	}, TestSpec{SystemCallNr::PREADV, []() {
+			int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+
+			if (fd < 0)
+				return;
+
+			char buf[64];
+			struct iovec vec;
+			vec.iov_base = (void*)buf;
+			vec.iov_len = sizeof(buf);
+			if (::preadv(fd, &vec, 1, LARGE_OFFSET64) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(PReadVSystemCall, {
+			VERIFY(sc.offset.value() == LARGE_OFFSET64);
+		}), EXIT_VERIFY_CB(PReadVSystemCall, {
+			(void)sc;
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+
+				auto buf = alloc32<char*>(20);
+				auto vec = alloc_struct32<clues::iovec32>();
+				vec->iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf));
+				vec->iov_len = 20;
+				/* large offset composed of 1 high bit and one low bit */
+				if (syscall32(SyscallNr32::PREADV, fd, vec, 1, 1, 1) < 0) {
+				}
+			})
+		}, "64-bit offset"
 	}, TestSpec{SystemCallNr::WRITE, []() {
 			int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0600);
 			const char buffer[] = "abcdefgh";
@@ -2139,10 +2170,41 @@ const auto TESTS = std::array{
 				vec[0].iov_len = 5;
 				vec[1].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf2));
 				vec[1].iov_len = 6;
-				if (syscall32(SyscallNr32::PWRITEV, fd, vec, 2, 15) < 0) {
+				if (syscall32(SyscallNr32::PWRITEV, fd, vec, 2, 15, 0) < 0) {
 				}
 			})
 		}
+	}, TestSpec{SystemCallNr::PWRITEV, []() {
+			int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0600);
+			if (fd < 0)
+				return;
+
+			constexpr std::string_view DATA1{"test1"};
+
+			struct iovec vec;
+			vec.iov_base = (void*)DATA1.data();
+			vec.iov_len = DATA1.size();
+
+			if (::pwritev(fd, &vec, 1, LARGE_OFFSET64) < 0) {
+				return;
+			}
+		}, ENTRY_VERIFY_CB(PWriteVSystemCall, {
+			VERIFY(sc.offset.value() == LARGE_OFFSET64);
+		}), EXIT_VERIFY_CB(PWriteVSystemCall, {
+			(void)sc;
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0600);
+				auto buf1 = alloc_str32("test1");
+
+				auto vec = alloc_struct32<clues::iovec32>();
+				vec->iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf1));
+				vec->iov_len = 5;
+				/* 64-bit offset comprised of 1 high bit and 1 low bit */
+				if (syscall32(SyscallNr32::PWRITEV, fd, vec, 1, 1, 1) < 0) {
+				}
+			})
+		}, "64-bit offset"
 	}, TestSpec{SystemCallNr::PREAD64, []() {
 			int fd = open("/etc/fstab", O_RDONLY);
 			char buffer[1024];
