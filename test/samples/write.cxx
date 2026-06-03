@@ -32,4 +32,10 @@ int main() {
 	if (pwritev(fd, iov, NUM_IOVS, 20) < 0) {
 		return 1;
 	}
+
+	lseek(fd, SEEK_SET, 0);
+
+	if (pwritev2(fd, iov, NUM_IOVS, 40, RWF_HIPRI) < 0) {
+
+	}
 }

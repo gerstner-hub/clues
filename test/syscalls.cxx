@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/syscall.h>
+#include <sys/uio.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -2045,6 +2046,70 @@ const auto TESTS = std::array{
 				}
 			})
 		}, "64-bit offset"
+	}, TestSpec{SystemCallNr::PREADV2, []() {
+			int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+
+			if (fd < 0)
+				return;
+
+			constexpr std::string_view DATA{"test data for positioned vector read"};
+
+			if (::write(fd, DATA.data(), DATA.size()) != DATA.size()) {
+				return;
+			}
+
+			char buf1[10];
+			char buf2[20];
+			struct iovec vec[2];
+			vec[0].iov_base = (void*)buf1;
+			vec[0].iov_len = sizeof(buf1);
+			vec[1].iov_base = (void*)buf2;
+			vec[1].iov_len = sizeof(buf2);
+			if (::preadv2(fd, vec, sizeof(vec) / sizeof(struct iovec), 5, RWF_HIPRI) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(PReadV2SystemCall, {
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].len == 10);
+			VERIFY(buffers[0].filled == 0);
+			VERIFY(buffers[1].len == 20);
+			VERIFY(buffers[1].filled == 0);
+			VERIFY(sc.iov_count.value() == NUM_VECS);
+			VERIFY(sc.offset.value() == 5);
+			VERIFY(sc.flags.flags() == cosmos::StreamIO::ReadWriteFlag::HIGH_PRIO);
+		}), EXIT_VERIFY_CB(PReadV2SystemCall, {
+			VERIFY(sc.hasResultValue());
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].filled == 10);
+			VERIFY(buffers[1].filled == 20);
+			VERIFY(sc.read.value() == 30);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{6}, []() {
+				int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+				auto buf1 = alloc32<char*>(10);
+				auto buf2 = alloc32<char*>(20);
+				auto data = alloc_str32("test data for positioned vector read");
+				const ssize_t len = strlen(data);
+				if (write(fd, data, len) != len) {
+					return;
+				}
+
+				auto vec = *alloc_struct32<clues::iovec32[2]>();
+				vec[0].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf1));
+				vec[0].iov_len = 10;
+				vec[1].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf2));
+				vec[1].iov_len = 20;
+				if (syscall32(SyscallNr32::PREADV2, fd, vec, 2, 5, 0, RWF_HIPRI) < 0) {
+				}
+			})
+		}
 	}, TestSpec{SystemCallNr::WRITE, []() {
 			int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0600);
 			const char buffer[] = "abcdefgh";
@@ -2205,6 +2270,54 @@ const auto TESTS = std::array{
 				}
 			})
 		}, "64-bit offset"
+	}, TestSpec{SystemCallNr::PWRITEV2, []() {
+			int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0600);
+			if (fd < 0)
+				return;
+
+			constexpr std::string_view DATA1{"test1"};
+			constexpr std::string_view DATA2{"test20"};
+
+			struct iovec vec[2];
+			vec[0].iov_base = (void*)DATA1.data();
+			vec[0].iov_len = DATA1.size();
+			vec[1].iov_base = (void*)DATA2.data();
+			vec[1].iov_len = DATA2.size();
+
+			if (::pwritev2(fd, vec, sizeof(vec) / sizeof(struct iovec), 15, RWF_HIPRI) != DATA1.size() + DATA2.size()) {
+				return;
+			}
+		}, ENTRY_VERIFY_CB(PWriteV2SystemCall, {
+			constexpr auto NUM_VECS = 2;
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.iov.count() == NUM_VECS);
+			const auto &buffers = sc.iov.buffers();
+			VERIFY(buffers.size() == NUM_VECS);
+			VERIFY(buffers[0].len == 5);
+			VERIFY(buffers[0].filled == 5);
+			VERIFY(buffers[1].len == 6);
+			VERIFY(buffers[1].filled == 6);
+			VERIFY(sc.iov_count.value() == NUM_VECS);
+			VERIFY(sc.offset.value() == 15);
+			VERIFY(sc.flags.flags() == cosmos::StreamIO::ReadWriteFlag::HIGH_PRIO);
+		}), EXIT_VERIFY_CB(PWriteVSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.written.value() == 11);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{4}, []() {
+				int fd = open("/tmp", O_WRONLY|O_TMPFILE|O_CLOEXEC, 0600);
+				auto buf1 = alloc_str32("test1");
+				auto buf2 = alloc_str32("test20");
+
+				auto vec = *alloc_struct32<clues::iovec32[2]>();
+				vec[0].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf1));
+				vec[0].iov_len = 5;
+				vec[1].iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf2));
+				vec[1].iov_len = 6;
+				if (syscall32(SyscallNr32::PWRITEV2, fd, vec, 2, 15, 0, RWF_HIPRI) < 0) {
+				}
+			})
+		}
 	}, TestSpec{SystemCallNr::PREAD64, []() {
 			int fd = open("/etc/fstab", O_RDONLY);
 			char buffer[1024];

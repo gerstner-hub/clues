@@ -83,4 +83,10 @@ int main() {
 	if (preadv(fd, vec, 2, 7) < 0) {
 
 	}
+
+	lseek(fd, SEEK_SET, 0);
+
+	if (preadv2(fd, vec, 2, 3, RWF_HIPRI) < 0) {
+
+	}
 }
