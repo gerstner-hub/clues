@@ -42,7 +42,18 @@ public: // types
 		 * This helps to model context-dependent parameters that rely
 		 * on the values of parameters appearing at a later position.
 		 **/
-		DEFER_FILL = 1 << 0
+		DEFER_FILL = 1 << 0,
+		/// The item is unused.
+		/**
+		 * This is set for system call registers that remain unused
+		 * due to unusual calling conventions or other special needs
+		 * of a system call.
+		 *
+		 * The basic value of the register will still be fetched
+		 * during system call entry but processValue() and
+		 * updateData() will not be called.
+		 **/
+		UNUSED     = 1 << 1
 	};
 
 	using Flags = cosmos::BitMask<Flag>;
@@ -141,6 +152,10 @@ public: // functions
 
 	bool deferFill() const {
 		return m_flags[Flag::DEFER_FILL];
+	}
+
+	bool isUnused() const {
+		return m_flags[Flag::UNUSED];
 	}
 
 protected: // functions

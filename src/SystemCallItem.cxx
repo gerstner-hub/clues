@@ -8,7 +8,10 @@ namespace clues {
 
 void SystemCallItem::fill(const Tracee &proc, const Word word) {
 	m_val = word;
-	processValue(proc);
+
+	if (!isUnused()) {
+		processValue(proc);
+	}
 }
 
 std::string SystemCallItem::str() const {

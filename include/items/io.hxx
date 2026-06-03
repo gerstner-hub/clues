@@ -236,5 +236,52 @@ protected: // functions
 	void processValue(const Tracee &tracee) override;
 };
 
-} // end ns
+/// An I/O offset value spread over two system call registers.
+/**
+ * Some system calls spread a 64-bit file offset across two registers for
+ * legacy reasons. This is currently the case for:
+ *
+ * - preadv(), preadv2()
+ * - pwritev(), pwritev2()
+ *
+ * In these cases the lower 32 bits for the offset are found in the first
+ * system call parameter and the upper 32 bits are found in the following
+ * system call parameter.
+ *
+ * This item types combines both parameters into a single 64-bit offset again.
+ * For this purpose the first system call register containing the low order
+ * bits needs to be covered by an instance of `UnusedItem`, which will be
+ * passed to the constructor of CombinedOffsetValue. The latter will be placed
+ * in the position of the following system call register containing the high
+ * order bits of the offset. This way the order of register processing
+ * naturally fits (the low order bits will already have been assigned to the
+ * UnusedItem and the high order bits are processed in this class's
+ * proessValue() callback.
+ **/
+class CLUES_API CombinedOffsetValue :
+		public SystemCallItem {
+public: // data
 
+	explicit CombinedOffsetValue(const SystemCallItem &lower_bits) :
+			SystemCallItem{ItemType::PARAM_IN,
+				"offset", "read/write offset"},
+				m_lower_bits_par{lower_bits} {
+	}
+
+	off_t value() const {
+		return m_offset;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &tracee) override;
+
+protected: // data
+
+	const SystemCallItem &m_lower_bits_par;
+	off_t m_offset = 0;
+};
+
+} // end ns

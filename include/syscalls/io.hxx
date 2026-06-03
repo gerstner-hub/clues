@@ -124,11 +124,17 @@ struct CLUES_API PReadVSystemCall :
 
 	explicit PReadVSystemCall(const SystemCallNr nr = SystemCallNr::PREADV) :
 			ReadVSystemCall{nr},
-			offset{"offset", "read offset"} {
-		addParameters(offset);
+			offset{offset_lower},
+			offset_lower{} {
+		addParameters(offset_lower, offset);
 	}
 
-	item::OffsetValue offset;
+	item::CombinedOffsetValue offset;
+
+protected: // data
+
+	/// The low order bits used by `offset`.
+	item::UnusedItem offset_lower;
 };
 
 /// Vector write system call using a range of struct iovec at a given offset.
@@ -141,11 +147,17 @@ struct CLUES_API PWriteVSystemCall :
 
 	explicit PWriteVSystemCall(const SystemCallNr nr = SystemCallNr::PWRITEV) :
 			WriteVSystemCall{nr},
-			offset{"offset", "write offset"} {
-		addParameters(offset);
+			offset{offset_lower},
+			offset_lower{} {
+		addParameters(offset_lower, offset);
 	}
 
-	item::OffsetValue offset;
+	item::CombinedOffsetValue offset;
+
+protected: // data
+
+	/// The low order bits used by `offset`.
+	item::UnusedItem offset_lower;
 };
 
 // TODO: the number of parameters can vary here.

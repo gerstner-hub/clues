@@ -143,7 +143,7 @@ std::string BufferPointer::str() const {
 	return ret;
 }
 
-SystemCallItem unused = SystemCallItem{ItemType::PARAM_IN, "unused", "unused parameter"};
+UnusedItem unused = UnusedItem{};
 
 /*
  * explicit template instantiations

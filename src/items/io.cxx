@@ -154,4 +154,15 @@ void WriteVector::processValue(const Tracee &tracee) {
 	}
 }
 
+void CombinedOffsetValue::processValue(const Tracee &) {
+	off_t upper = valueAs<off_t>() << 32;
+	off_t lower = m_lower_bits_par.valueAs<off_t>();
+
+	m_offset = lower | upper;
+}
+
+std::string CombinedOffsetValue::str() const {
+	return std::to_string(m_offset);
+}
+
 } // end ns

@@ -301,30 +301,45 @@ using ULongValue = IntValueT<unsigned long>;
 using SizeValue = IntValueT<size_t>;
 using OffsetValue = IntValueT<off_t>;
 
-///! Represents an unused system call parameter.
-/**
- * In some system calls a certain system call parameter needs to be skipped
- * (e.g. in futex()). Since the SystemCall uses a `std::vector` to access
- * parameters linearly we need a way to identify unused parameters. This
- * global instance is used for this purpose.
- **/
-CLUES_API extern SystemCallItem unused;
-
-inline bool is_unused_par(const SystemCallItem &item) {
-	return &item == &unused;
-}
-
 /// Item used together with UnknownSystemCall.
 struct UnknownItem :
 		public ValueInParameter {
 
 	UnknownItem() :
-		ValueInParameter{"unknown"} {
+			ValueInParameter{"unknown"} {
 	}
 
 	std::string str() const override {
 		return "<yet unsupported system call>";
 	}
 };
+
+///! Represents an unused system call parameter.
+/**
+ * In some system calls a certain system call parameter needs to be skipped
+ * (e.g. in futex()). Since the SystemCall uses a `std::vector` to access
+ * parameters linearly we need a way to identify unused parameters. This
+ * type is used for this purpose.
+ *
+ * The global instance clues::item::unused can be used to quickly skip over
+ * unused system call registers. In other cases the value in the register is
+ * actually used but by another type e.g. in the case of CombinedOffsetValue.
+ * In such situations a dedicated instance of UnusedItem is needed. In such
+ * situations a dedicated instance of UnusedItem is needed.
+ */
+struct UnusedItem :
+		public ValueInParameter {
+
+	UnusedItem() :
+			ValueInParameter{"unused"} {
+		m_flags.set(Flag::UNUSED);
+	}
+
+	std::string str() const override {
+		return "<unused system call parameter>";
+	}
+};
+
+CLUES_API extern UnusedItem unused;
 
 } // end ns

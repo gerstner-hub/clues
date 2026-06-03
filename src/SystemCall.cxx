@@ -43,8 +43,6 @@ void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) 
 
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
-		if (item::is_unused_par(par))
-			continue;
 
 		const auto word = Word{static_cast<Word>(args[numpar])};
 
