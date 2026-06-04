@@ -1,8 +1,14 @@
 // Linux
 #include <sys/syscall.h>
 
+// C++
+#include <cstdint>
+#include <sys/types.h>
+
 // cosmos
 #include <cosmos/compiler.hxx>
+
+namespace clues {
 
 /*
  * this header contains preprocessor defines to help with conditional
@@ -14,6 +20,20 @@
 #	define CLUES_HAVE_LEGACY_GETDENTS
 /* aarch64 only has openat() anymore */
 #	define CLUES_HAVE_OPEN
+#endif
+
+/*
+ * On 32-bit platforms like I386 the off_t used in legacy system call
+ * interfaces is an int32_t, but we won't see this in user space when
+ * compiling with _FILE_OFFSET_BITS=64. Thus we need our own define here.
+ *
+ * This is important to get proper sign extension when negative offsets are
+ * used, for example.
+ */
+#ifdef COSMOS_I386
+using kernel_off_t = int32_t;
+#else
+using kernel_off_t = off_t;
 #endif
 
 /*
@@ -47,3 +67,5 @@
 #ifdef SYS_alarm
 #	define CLUES_HAVE_ALARM
 #endif
+
+} // end ns

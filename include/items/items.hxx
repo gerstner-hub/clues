@@ -4,6 +4,7 @@
 #include <vector>
 
 // clues
+#include <clues/arch.hxx>
 #include <clues/SystemCallItem.hxx>
 
 /*
@@ -299,7 +300,7 @@ using UintValue = IntValueT<unsigned int>;
 using Uint32Value = IntValueT<uint32_t>;
 using ULongValue = IntValueT<unsigned long>;
 using SizeValue = IntValueT<size_t>;
-using OffsetValue = IntValueT<off_t>;
+using OffsetValue = IntValueT<kernel_off_t>;
 
 /// Item used together with UnknownSystemCall.
 struct UnknownItem :
