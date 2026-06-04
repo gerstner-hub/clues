@@ -2596,7 +2596,37 @@ const auto TESTS = std::array{
 
 				syscall32(SyscallNr32::LSEEK, fd, -10L, SEEK_END);
 			})
-		}
+		},
+	}, TestSpec{SystemCallNr::LLSEEK, []() {
+			int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+
+			constexpr std::string_view DATA{"arbitrary data for testing lseek"};
+
+			if (::write(fd, DATA.data(), DATA.size()) != DATA.size()) {
+				return;
+			}
+
+			/* this will automatically be translated into llseek() by glibc */
+			lseek(fd, LARGE_OFFSET64, SEEK_SET);
+		}, ENTRY_VERIFY_CB(LLSeekSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.offset.value() == LARGE_OFFSET64);
+			VERIFY(sc.whence.type() == cosmos::StreamIO::SeekType::SET);
+		}), EXIT_VERIFY_CB(LLSeekSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+				constexpr std::string_view DATA{"arbitrary data for testing lseek"};
+				if (::write(fd, DATA.data(), DATA.size()) != DATA.size()) {
+					return;
+				}
+
+				auto new_off = alloc_struct32<off_t>();
+
+				syscall32(SyscallNr32::LLSEEK, fd, 1, 2, new_off, SEEK_SET);
+			})
+		}, "", {clues::ABI::I386}
 #ifdef CLUES_HAVE_PIPE1
 	}, TestSpec{SystemCallNr::PIPE, []() {
 			int pipes[2];

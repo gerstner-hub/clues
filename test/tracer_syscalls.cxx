@@ -348,6 +348,9 @@ public:
 				TestSpec{{}, "sigprocmask", {
 					R"(sigprocmask\(sigsetop=SIG_BLOCK, new mask=\{SIGUSR1\}, old mask=\{SIGUSR1\}\) = [0-9]+)"
 				}},
+				TestSpec{"lseek", "llseek", {
+					R"(llseek\(fd=[0-9]+, offset=[0-9]+, result=0x[0-9a-f]+ → \[[0-9]+\], whence=SEEK_[A-Z]+\) = 0)"
+				}},
 #else
 				TestSpec{"stat", "fstat", {
 						R"(fstat\(fd=[0-9]+, stat=\{ino=[0-9]+, dev=0x[0-9a-f]+:0x[0-9a-f]+, mode=S_[A-Z]+\|0o[0-7]+, nlink=[0-9]+, uid=0, gid=0, size=[0-9]+, blksize=[0-9]+, blocks=[0-9]+, atim=\{[0-9]+s, [0-9]+ns\}, mtim=\{[0-9]+s, [0-9]+ns\}, ctim=\{[0-9]+s, [0-9]+ns\}\}\) = 0)",
