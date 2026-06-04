@@ -244,6 +244,7 @@ protected: // functions
  *
  * - preadv(), preadv2()
  * - pwritev(), pwritev2()
+ * - llseek()
  *
  * In these cases the lower 32 bits for the offset are found in the first
  * system call parameter and the upper 32 bits are found in the following
@@ -252,21 +253,26 @@ protected: // functions
  * This item types combines both parameters into a single 64-bit offset again.
  * For this purpose the first system call register containing the low order
  * bits needs to be covered by an instance of `UnusedItem`, which will be
- * passed to the constructor of CombinedOffsetValue. The latter will be placed
- * in the position of the following system call register containing the high
- * order bits of the offset. This way the order of register processing
- * naturally fits (the low order bits will already have been assigned to the
- * UnusedItem and the high order bits are processed in this class's
- * proessValue() callback.
+ * passed to the constructor of CombinedOffsetValue.
+ *
+ * By default this type expects that the high order bits are appearing first
+ * in the order of system call arguments. This way processing of the arguments
+ * can take place the usual way. If this does not fit the system call
+ * signature then `need_defer` needs to be passed during construction time, in
+ * which case the DEFER_FILL flag will be set for this item, to make the low
+ * order bits available the time processValue() is called.
  **/
 class CLUES_API CombinedOffsetValue :
 		public SystemCallItem {
 public: // data
 
-	explicit CombinedOffsetValue(const SystemCallItem &lower_bits) :
+	explicit CombinedOffsetValue(const SystemCallItem &lower_bits, const bool needs_defer = false) :
 			SystemCallItem{ItemType::PARAM_IN,
 				"offset", "read/write offset"},
 				m_lower_bits_par{lower_bits} {
+		if (needs_defer) {
+			m_flags.set(Flag::DEFER_FILL);
+		}
 	}
 
 	off_t value() const {
