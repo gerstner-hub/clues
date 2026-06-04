@@ -2569,6 +2569,34 @@ const auto TESTS = std::array{
 				}
 			})
 		}
+	}, TestSpec{SystemCallNr::LSEEK, []() {
+			int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+
+			constexpr std::string_view DATA{"arbitrary data for testing lseek"};
+
+			if (::write(fd, DATA.data(), DATA.size()) != DATA.size()) {
+				return;
+			}
+
+			syscall(SYS_lseek, fd, -10L, SEEK_END);
+		}, ENTRY_VERIFY_CB(LSeekSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.offset.value() == -10);
+			VERIFY(sc.whence.type() == cosmos::StreamIO::SeekType::END);
+		}), EXIT_VERIFY_CB(LSeekSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_offset.value() == 22);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0600);
+				constexpr std::string_view DATA{"arbitrary data for testing lseek"};
+				if (::write(fd, DATA.data(), DATA.size()) != DATA.size()) {
+					return;
+				}
+
+				syscall32(SyscallNr32::LSEEK, fd, -10L, SEEK_END);
+			})
+		}
 #ifdef CLUES_HAVE_PIPE1
 	}, TestSpec{SystemCallNr::PIPE, []() {
 			int pipes[2];

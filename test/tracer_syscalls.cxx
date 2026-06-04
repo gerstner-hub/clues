@@ -279,6 +279,9 @@ public:
 				TestSpec{"write", "pwrite64", {
 					R"(pwrite64\(fd=[0-9]+, buf="[^"]+", count=[0-9]+, offset=[0-9]+\) = [0-9]+)"
 				}},
+				TestSpec{{}, "lseek", {
+					R"(lseek\(fd=[0-9]+, offset=(-)?[0-9]+, whence=SEEK_[A-Z]+\) = [0-9]+ \(offset\))"
+				}},
 #ifdef CLUES_HAVE_PIPE1
 				TestSpec{{}, "pipe", {
 					R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"
