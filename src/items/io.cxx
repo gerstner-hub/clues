@@ -5,6 +5,7 @@
 #include <clues/format.hxx>
 #include <clues/items/io.hxx>
 #include <clues/logger.hxx>
+#include <clues/macros.h>
 #include <clues/private/kernel/iovec.hxx>
 #include <clues/private/utils.hxx>
 #include <clues/Tracee.hxx>
@@ -182,6 +183,21 @@ void CombinedOffsetValue::processValue(const Tracee &) {
 
 std::string CombinedOffsetValue::str() const {
 	return std::to_string(m_offset);
+}
+
+void Whence::processValue(const Tracee &) {
+	m_type = valueAs<SeekType>();
+}
+
+std::string Whence::str() const {
+	switch (cosmos::to_integral(m_type)) {
+		CASE_ENUM_TO_STR(SEEK_SET);
+		CASE_ENUM_TO_STR(SEEK_CUR);
+		CASE_ENUM_TO_STR(SEEK_END);
+		CASE_ENUM_TO_STR(SEEK_DATA);
+		CASE_ENUM_TO_STR(SEEK_HOLE);
+		default: return "SEEK_???";
+	}
 }
 
 } // end ns

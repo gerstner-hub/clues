@@ -315,4 +315,34 @@ protected: // data
 	Flags m_flags;
 };
 
+/// Seek direction for use with lseek() type system calls.
+class CLUES_API Whence :
+		public ValueInParameter {
+public: // types
+
+	using enum cosmos::StreamIO::SeekType;
+
+	using SeekType = cosmos::StreamIO::SeekType;
+
+public: // functions
+
+	explicit Whence() :
+			ValueInParameter{"whence", "seek direction"} {
+	}
+
+	SeekType type() const {
+		return m_type;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	SeekType m_type = SeekType{0};
+};
+
 } // end ns

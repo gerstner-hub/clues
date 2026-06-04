@@ -197,6 +197,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::PWRITEV:         return new_sys<PWriteVSystemCall>();
 	case SystemCallNr::PWRITEV2:        return new_sys<PWriteV2SystemCall>();
 	case SystemCallNr::GETRANDOM:       return new_sys<GetRandomSystemCall>();
+	case SystemCallNr::LSEEK:           return new_sys<LSeekSystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }

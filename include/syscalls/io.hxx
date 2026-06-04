@@ -261,4 +261,21 @@ struct CLUES_API Pipe2SystemCall :
 	item::PipeFlags flags;
 };
 
+struct CLUES_API LSeekSystemCall :
+		public SystemCall {
+
+	explicit LSeekSystemCall() :
+			SystemCall{SystemCallNr::LSEEK},
+			offset{"offset", "seek offset"},
+			new_offset{"offset", "resulting offset", ItemType::RETVAL} {
+		setParameters(fd, offset, whence);
+		setReturnItem(new_offset);
+	}
+
+	item::FileDescriptor fd;
+	item::OffsetValue offset;
+	item::Whence whence;
+	item::OffsetValue new_offset;
+};
+
 } // end ns
