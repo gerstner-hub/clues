@@ -110,7 +110,7 @@ struct TestSpec {
 constexpr cosmos::FileNum FIRST_FD{4};
 constexpr cosmos::FileNum SECOND_FD{5};
 constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x70000000;
-constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 1;
+constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 2;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
@@ -2042,7 +2042,7 @@ const auto TESTS = std::array{
 				vec->iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf));
 				vec->iov_len = 20;
 				/* large offset composed of 1 high bit and one low bit */
-				if (syscall32(SyscallNr32::PREADV, fd, vec, 1, 1, 1) < 0) {
+				if (syscall32(SyscallNr32::PREADV, fd, vec, 1, 2, 1) < 0) {
 				}
 			})
 		}, "64-bit offset"
@@ -2266,7 +2266,7 @@ const auto TESTS = std::array{
 				vec->iov_base = static_cast<uint32_t>(reinterpret_cast<intptr_t>(buf1));
 				vec->iov_len = 5;
 				/* 64-bit offset comprised of 1 high bit and 1 low bit */
-				if (syscall32(SyscallNr32::PWRITEV, fd, vec, 1, 1, 1) < 0) {
+				if (syscall32(SyscallNr32::PWRITEV, fd, vec, 1, 2, 1) < 0) {
 				}
 			})
 		}, "64-bit offset"
