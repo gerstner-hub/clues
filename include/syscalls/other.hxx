@@ -107,4 +107,37 @@ struct CLUES_API GetRandomSystemCall :
 	item::SizeValue obtained; ///< number of bytes actually placed into buffer.
 };
 
+/// Restartable sequences system call.
+/**
+ * This is a low-level system call usually only used by the C library. It
+ * establishes a per-thread data structure which is used for efficient reading
+ * and setting of per-thread information without requiring locking or atomic
+ * operations.
+ *
+ * Due to the low level nature of this system call libclues currently only
+ * provides raw access to the `struct rseq` used in the RSeqParameter.
+ **/
+struct CLUES_API RSeqSystemCall :
+		public SystemCall {
+
+	explicit RSeqSystemCall() :
+			SystemCall{SystemCallNr::RSEQ},
+			rseq_len{"rseq_len", "size of struct rseq"},
+			signature{"signature", "abort handler signature"} {
+		signature.setBase(Base::HEX);
+		setParameters(rseq, rseq_len, flags, signature);
+		setReturnItem(result);
+	}
+
+	/// `struct rseq` of `rseq_len` bytes size.
+	item::RSeqParameter rseq;
+	/// The length of `rseq`, at least 32 bytes.
+	item::Uint32Value rseq_len;
+	/// Flags currently used for registering/unregistering struct rseq.
+	item::RSeqFlagsValue flags;
+	/// A signature expected before "abort handler code".
+	item::Uint32Value signature;
+	item::SuccessResult result;
+};
+
 } // end ns

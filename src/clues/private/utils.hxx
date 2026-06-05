@@ -28,8 +28,13 @@ inline std::string strip_back(std::string &&s, const char ch = '|') {
 #define BITFLAGS_FORMAT_START_COMBINED(bitmask, raw_val) std::stringstream _bf_ss; \
 		auto _flags = bitmask.raw(); \
 		_bf_ss << cosmos::HexNum<decltype(raw_val)>{raw_val, 0} << " ("
+
+/// format a raw flags integer which is not using cosmos::BitMask
+#define BITFLAGS_FORMAT_START_RAW(flags) std::stringstream _bf_ss; auto _flags = flags; \
+		_bf_ss << cosmos::HexNum<decltype(flags)>{_flags, 0} << " (";
+
 #define BITFLAGS_STREAM() _bf_ss
-#define BITFLAGS_ADD(FLAG) if (FLAG && (_flags & FLAG) == FLAG) _bf_ss << #FLAG << '|'
+#define BITFLAGS_ADD(FLAG) if (FLAG != 0 && (_flags & FLAG) == FLAG) _bf_ss << #FLAG << '|'
 #define BITFLAGS_STR() strip_back(_bf_ss.str()) + ")"
 
 } // end ns
