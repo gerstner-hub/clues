@@ -1,3 +1,5 @@
+#pragma once
+
 // cosmos
 #include <cosmos/random.hxx>
 
