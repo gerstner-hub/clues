@@ -1,4 +1,5 @@
 // C++
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <type_traits>
@@ -2627,6 +2628,41 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::LLSEEK, fd, 1, 2, new_off, SEEK_SET);
 			})
 		}, "", {clues::ABI::I386}
+	}, TestSpec{SystemCallNr::RSEQ, []() {
+			constexpr size_t RS_SIZE = 64;
+			struct rseq *rs = (struct rseq*)std::aligned_alloc(32, RS_SIZE);
+			rs->cpu_id_start = 0;
+			rs->cpu_id = -1;
+			rs->rseq_cs = 0;
+			rs->flags = RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL;
+			rs->node_id = 0;
+			rs->mm_cid = 0;
+			syscall(SYS_rseq, rs, RS_SIZE, 0, 0x12345678);
+		}, ENTRY_VERIFY_CB(RSeqSystemCall, {
+			VERIFY(sc.rseq_len.value() == 64);
+			VERIFY(sc.flags.flags().raw() == 0);
+			VERIFY(sc.signature.value() == 0x12345678);
+		}), EXIT_VERIFY_CB(RSeqSystemCall, {
+			/*
+			 * re-registering a struct rseq actually doesn't work
+			 * without us knowing the existing registration done
+			 * by glibc, thus we'll have to live with an error
+			 * code here.
+			 */
+			VERIFY(sc.hasErrorCode());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				constexpr size_t RS_SIZE = 64;
+				struct rseq *rs = alloc32<struct rseq*>(RS_SIZE);
+				rs->cpu_id_start = 0;
+				rs->cpu_id = -1;
+				rs->rseq_cs = 0;
+				rs->flags = RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL;
+				rs->node_id = 0;
+				rs->mm_cid = 0;
+				syscall32(SyscallNr32::RSEQ, rs, RS_SIZE, 0, 0x12345678);
+			})
+		}
 #ifdef CLUES_HAVE_PIPE1
 	}, TestSpec{SystemCallNr::PIPE, []() {
 			int pipes[2];

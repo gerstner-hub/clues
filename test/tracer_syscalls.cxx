@@ -282,6 +282,9 @@ public:
 				TestSpec{{}, "lseek", {
 					R"(lseek\(fd=[0-9]+, offset=(-)?[0-9]+, whence=SEEK_[A-Z]+\) = [0-9]+ \(offset\))"
 				}},
+				TestSpec{"robust_list", "rseq", {
+					R"(rseq\(rseq=\{cpu_id_start=[0-9]+, cpu_id=[0-9]+, rseq_cs=(NULL|0x[0-9a-f]+), flags=0x[0-9a-f]+ \(.*\), node_id=[0-9]+, mm_cid=[0-9]+\}, rseq_len=[0-9]+, flags=0x[0-9a-f]+ \(.*\), signature=0x[0-9a-f]+\) = 0 \(success\))"
+				}},
 #ifdef CLUES_HAVE_PIPE1
 				TestSpec{{}, "pipe", {
 					R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"
