@@ -137,11 +137,11 @@ void ReadVector::updateData(const Tracee &tracee) {
 	size_t left_to_fetch = m_obtained_bytes_par.valueAs<size_t>();
 
 	for (auto &buffer: m_buffers) {
-		fetchBuffer(tracee, buffer, left_to_fetch);
-		left_to_fetch -= buffer.filled;
-
 		if (left_to_fetch == 0)
 			break;
+
+		fetchBuffer(tracee, buffer, left_to_fetch);
+		left_to_fetch -= buffer.filled;
 	}
 }
 
