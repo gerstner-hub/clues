@@ -1,5 +1,11 @@
 #pragma once
 
+// Linux
+#include <sys/prctl.h>
+
+// C++
+#include <optional>
+
 // cosmos
 #include <cosmos/proc/process.hxx>
 #include <cosmos/proc/ResourceUsage.hxx>

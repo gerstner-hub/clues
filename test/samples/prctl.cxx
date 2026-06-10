@@ -8,6 +8,9 @@
 
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <linux/prctl.h>
+#include <linux/capability.h>
+#include <sys/prctl.h>
 
 
 #ifdef CLUES_HAVE_ARCH_PRCTL
@@ -32,9 +35,59 @@ int main() {
 	arch_prctl(ARCH_SET_FS, orig_fs);
 	arch_prctl(ARCH_SET_GS, orig_gs);
 #	endif
-#else
-	std::cerr << "no arch_prctl() on this ABI!\n";
-	_exit(1);
 #endif
 
+	long long_out;
+
+	prctl(PR_CAPBSET_READ, CAP_SYS_ADMIN);
+	prctl(PR_CAPBSET_DROP, CAP_SYS_ADMIN);
+	prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_RAISE, CAP_SYS_ADMIN, 0, 0);
+	prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_LOWER, CAP_NET_ADMIN, 0, 0);
+	prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_RAW, 0, 0);
+	prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0, 0 ,0);
+	prctl(PR_SET_CHILD_SUBREAPER, 1);
+	prctl(PR_GET_CHILD_SUBREAPER, &long_out);
+	prctl(PR_SET_DUMPABLE, 1);
+	prctl(PR_GET_DUMPABLE);
+	prctl(PR_GET_IO_FLUSHER);
+	prctl(PR_SET_IO_FLUSHER, 1, 0, 0, 0);
+	prctl(PR_GET_KEEPCAPS);
+	prctl(PR_SET_KEEPCAPS, 1);
+	prctl(PR_MCE_KILL, PR_MCE_KILL_CLEAR, 0, 0, 0);
+	prctl(PR_MCE_KILL, PR_MCE_KILL_SET, PR_MCE_KILL_EARLY, 0, 0);
+	prctl(PR_MCE_KILL_GET, 0, 0, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_START_CODE, 0x1234, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_END_CODE, 0x4321, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_START_DATA, 0x2345, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_END_DATA, 0x5432, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_START_STACK, 0x3456, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_START_BRK, 0x4567, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_BRK, 0x6789, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_ARG_START, 0x7890, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_ARG_END, 0x9870, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_ENV_START, 0x8900, 0, 0);
+	prctl(PR_SET_MM, PR_SET_MM_ENV_END, 0x9990, 0, 0);
+	/* this also takes a size argument */
+	prctl(PR_SET_MM, PR_SET_MM_AUXV, 0x1357, 0x100, 0);
+	/* this takes a file descriptor */
+	prctl(PR_SET_MM, PR_SET_MM_EXE_FILE, 14, 0, 0);
+	/* takes a struct containing all the memory mapping information */
+	prctl_mm_map map;
+	map.start_code = 0x1234;
+	map.end_code = 0x4321;
+	map.start_data = 0x2345;
+	map.end_data = 0x5432;
+	map.start_brk = 0x3456;
+	map.brk = 0x6543;
+	map.start_stack = 0x4567;
+	map.arg_start = 0x5678;
+	map.arg_end = 0x8765;
+	map.env_start = 0x6789;
+	map.env_end = 0x9876;
+	map.auxv = (__u64*)0x7890;
+	map.auxv_size = 0x123;
+	map.exe_fd = 14;
+	prctl(PR_SET_MM, PR_SET_MM_MAP, &map, sizeof(map), 0);
+	unsigned int map_size = 0;
+	prctl(PR_SET_MM, PR_SET_MM_MAP_SIZE, &map_size, 0, 0);
 }

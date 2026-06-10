@@ -200,6 +200,7 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::LSEEK:           return new_sys<LSeekSystemCall>();
 	case SystemCallNr::LLSEEK:          return new_sys<LLSeekSystemCall>();
 	case SystemCallNr::RSEQ:            return new_sys<RSeqSystemCall>();
+	case SystemCallNr::PRCTL:           return new_sys<PrCtlSystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }

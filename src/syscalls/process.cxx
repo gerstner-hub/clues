@@ -1,5 +1,6 @@
 // clues
 #include <clues/syscalls/process.hxx>
+#include <clues/SystemCallInfo.hxx>
 
 namespace clues {
 
@@ -143,6 +144,174 @@ void Clone3SystemCall::updateFDTracking(const Tracee &proc) {
 		FDInfo info{FDInfo::Type::PID_FD, cl_args.pidfd()};
 		trackFD(proc, std::move(info));
 	}
+}
+
+bool PrCtlSystemCall::check2ndPass(const Tracee &proc) {
+	using enum item::ProcessOp::Operation;
+
+	auto set_bool_return = [this]() {
+		bool_res.emplace("bool", "", ItemType::RETVAL);
+		setReturnItem(*bool_res);
+	};
+
+	/*
+	 * TODO:
+	 *
+	 * GET7SET_ENDIAN PowerPC only
+	 * GET/SET_FP_MODE MIPS only
+	 * GET/SET_FP_EMDU IA64 only
+	 * GET/SET_FP_EXC PowerPC only
+	 */
+
+	switch (*op.operation()) {
+		case CAPBSET_READ: {
+			cap.emplace();
+			addParameters(*cap);
+			set_bool_return();
+			break;
+		} case CAPBSET_DROP: {
+			cap.emplace();
+			addParameters(*cap);
+			/* use default return value */
+			break;
+		} case CAP_AMBIENT: {
+			using SubOp = item::AmbientCapOp;
+			ambient_op.emplace();
+			addParameters(*ambient_op);
+			const auto data = m_info->argAsWord(1);
+			/*
+			 * we need to know the sub-operation to further deduce
+			 * the return type and additional parameters.
+			 */
+			ambient_op->fill(proc, data);
+
+			const auto sub_op = ambient_op->operation();
+
+			if (sub_op != SubOp::CLEAR_ALL) {
+				// we need an additional capability parameter
+				cap.emplace();
+			}
+
+			if (sub_op == SubOp::IS_SET) {
+				// here we need a bool return, keep the
+				// default otherwise
+				set_bool_return();
+			}
+
+			if (cap) {
+				addParameters(*cap);
+			}
+			break;
+		} case GET_CHILD_SUBREAPER: {
+			is_subreaper.emplace("subreaper", "is child-subreaper");
+			addParameters(*is_subreaper);
+			break;
+		} case GET_DUMPABLE: /* fallthrough */
+		  case GET_IO_FLUSHER: /* fallthrough */
+		  case GET_KEEPCAPS: {
+			set_bool_return();
+			break;
+		} case SET_DUMPABLE: /* fallthrough */
+		  case SET_IO_FLUSHER: /* fallthrough */
+		  case SET_CHILD_SUBREAPER: /* fallthrough */
+		  case SET_KEEPCAPS: {
+			bool_setting.emplace("state", "new attribute state");
+			addParameters(*bool_setting);
+			break;
+		} case MCE_KILL: {
+			mce_op.emplace();
+			addParameters(*mce_op);
+			const auto data = m_info->argAsWord(1);
+			/*
+			 * we need to know the sub-operation to further deduce
+			 * possible additional parameters.
+			 */
+			mce_op->fill(proc, data);
+
+			if (mce_op->operation() == item::MachineCheckOp::SET) {
+				mce_policy.emplace();
+				addParameters(*mce_policy);
+			}
+			break;
+		} case MCE_KILL_GET: {
+			mce_policy_res.emplace(ItemType::RETVAL);
+			setReturnItem(*mce_policy_res);
+			break;
+		} case SET_MM: {
+			mm_op.emplace();
+			addParameters(*mm_op);
+			const auto data = m_info->argAsWord(1);
+			/* we need to know the sub-operation to further decude
+			 * possible additional parameters */
+			mm_op->fill(proc, data);
+
+			using enum item::MemoryMapOp::Operation;
+
+			switch (*mm_op->operation()) {
+				case START_CODE:
+				case END_CODE:
+				case START_DATA:
+				case END_DATA:
+				case START_STACK:
+				case START_BRK:
+				case BRK:
+				case ARG_START:
+				case ARG_END:
+				case ENV_START:
+				case ENV_END:
+				case AUXV:
+					mm_addr.emplace("addr");
+					addParameters(*mm_addr);
+					break;
+				case MAP_SIZE:
+					map_size.emplace("size");
+					addParameters(*map_size);
+					break;
+				case EXE_FILE:
+					exe_fd.emplace();
+					addParameters(*exe_fd);
+					break;
+				case MAP:
+					mm_struct.emplace();
+					mm_struct_size.emplace("size",
+							"size of struct prctl_mm_map");
+					addParameters(*mm_struct, *mm_struct_size);
+					break;
+			}
+			break;
+		} default: {
+			break;
+		}
+	}
+
+	if (!m_return) {
+		res.emplace();
+		setReturnItem(*res);
+	}
+
+	return true;
+}
+
+void PrCtlSystemCall::prepareNewSystemCall() {
+	m_pars.erase(m_pars.begin() + 1, m_pars.end());
+	m_return = nullptr;
+
+	res.reset();
+	bool_res.reset();
+	mce_policy_res.reset();
+
+	cap.reset();
+	ambient_op.reset();
+	mce_op.reset();
+	mce_policy.reset();
+	is_subreaper.reset();
+	bool_setting.reset();
+	mm_op.reset();
+	mm_addr.reset();
+	map_size.reset();
+	exe_fd.reset();
+	mm_struct.reset();
+	mm_struct_size.reset();
 }
 
 } // end ns

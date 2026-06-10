@@ -43,6 +43,23 @@ public: // functions
 		return m_abi;
 	}
 
+	Word argAsWord(const size_t nr) const {
+		if (!isEntry()) {
+			throw cosmos::UsageError{"Not an EntryInfo"};
+		}
+
+		const auto args = entryInfo()->args();
+
+		if (nr >= args.size()) {
+			throw cosmos::UsageError{"Bad arg nr."};
+		}
+
+		/* the ptrace API always uses a 64-bit system call argument
+		 * type here, while our `Word` is based on the native ABI and
+		 * can be 32-bits in size */
+		return static_cast<Word>(args[nr]);
+	}
+
 protected: // data
 
 	SystemCallNr m_generic;

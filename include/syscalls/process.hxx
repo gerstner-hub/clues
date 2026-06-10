@@ -1,12 +1,15 @@
 #pragma once
 
+// C++
+#include <optional>
+
 // cosmos
 #include <cosmos/fs/types.hxx>
 
 // clues
-#include <clues/SystemCall.hxx>
 #include <clues/arch.hxx>
 #include <clues/dso_export.h>
+#include <clues/items/caps.hxx>
 #include <clues/items/clone.hxx>
 #include <clues/items/creds.hxx>
 #include <clues/items/fs.hxx>
@@ -15,6 +18,7 @@
 #include <clues/items/process.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
+#include <clues/SystemCall.hxx>
 
 namespace clues {
 
@@ -314,6 +318,107 @@ struct CLUES_API Wait4SystemCall :
 
 	/* return value */
 	item::ProcessID event_pid;
+};
+
+/// Base type for prctl() system calls.
+/**
+ * prctl() is a varargs system call similar to ioctl(). Due to the many
+ * different types of parameters and return values specializations of this
+ * type exist for the more exotic instances.
+ *
+ * The only common parameter is the first integer argument which specifies the
+ * operation to be carrier out and on which the interpretation of the rest of
+ * the parameters and the return value depend.
+ **/
+struct CLUES_API PrCtlSystemCall :
+		public SystemCall {
+
+	explicit PrCtlSystemCall() :
+			SystemCall{SystemCallNr::PRCTL} {
+		setParameters(op);
+	}
+
+	/* fixed parameters */
+
+	/// The only fixed parameter: the type of process operation.
+	item::ProcessOp op;
+
+	/* vararg parameters */
+
+	/// Capability to operate on.
+	/**
+	 * This is available for the following Operation values:
+	 *
+	 * - CAPBSET_READ
+	 * - CAPBSET_DROP
+	 **/
+	std::optional<item::Capability> cap;
+	/// sub-operation for Operation::CAP_AMBIENT.
+	std::optional<item::AmbientCapOp> ambient_op;
+	/// sub-operation for Operation::MCE_KILL.
+	std::optional<item::MachineCheckOp> mce_op;
+	/// policy for Operation::MCE_KILL sub-op MachineCheckOp::MCE_KILL_SET.
+	std::optional<item::MachineCheckPolicy> mce_policy;
+	/// sub-operation for Operation::SET_MM.
+	std::optional<item::MemoryMapOp> mm_op;
+	/// current child-subreaper setting for Operation::GET_CHILD_SUBREAPER.
+	std::optional<item::PointerToScalar<long>> is_subreaper;
+	/// new boolean value for attribute.
+	/**
+	 * This is available for the following Operation values:
+	 *
+	 * - SET_CHILD_SUBREAPER
+	 * - SET_DUMPABLE
+	 * - GET_IO_FLUSHER
+	 * - SET_KEEPCAPS
+	 **/
+	std::optional<item::BoolValue> bool_setting;
+	/// memory map setting for most of the MemoryMapOp sub-operations.
+	std::optional<item::GenericPointerValue> mm_addr;
+	/// out pointer for MemoryMapOp::MAP_SIZE.
+	std::optional<item::PointerToScalar<unsigned int>> map_size;
+	/// file descriptor for MemoryMapOp::EXE_FILE.
+	std::optional<item::FileDescriptor> exe_fd;
+	/// pointer to prctl_mm_map* for MemoryMapOp::MAP.
+	std::optional<item::MemoryMapStruct> mm_struct;
+	/// size of area pointed to by `map_struct`.
+	std::optional<item::ULongValue> mm_struct_size;
+
+	/* return values */
+
+	/// Regular success status result.
+	/**
+	 * This is used (on success) for the following Operation values:
+	 *
+	 * - CAPBSET_DROP
+	 * - SET_CHILD_SUBREAPER
+	 * - GET_CHILD_SUBREAPER
+	 * - CAP_AMBIENT (except for sub-operation CAP_AMBIENT_IS_SET)
+	 **/
+	std::optional<item::SuccessResult> res;
+	/// Boolean indicator.
+	/**
+	 * This is available for the following Operation values:
+	 *
+	 * - CAPBSET_READ
+	 * - GET_DUMPABLE
+	 * - SET_DUMPABLE
+	 * - GET_IO_FLUSHER
+	 * - SET_IO_FLUSHER
+	 * - SET_CHILD_SUBREAPER
+	 * - MCE_KILL
+	 * - CAP_AMBIENT (only for sub-operation CAP_AMBIENT_IS_SET)
+	 **/
+	std::optional<item::BoolValue> bool_res;
+	/// Machine check exception policy return for Operation::MCE_KILL_GET.
+	std::optional<item::MachineCheckPolicy> mce_policy_res;
+
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override;
+
+	void prepareNewSystemCall() override;
 };
 
 } // end ns

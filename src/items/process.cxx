@@ -1,7 +1,8 @@
-#include <clues/items/process.hxx>
 #include <clues/format.hxx>
-#include <clues/Tracee.hxx>
+#include <clues/items/process.hxx>
+#include <clues/macros.h>
 #include <clues/private/utils.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues::item {
 
@@ -79,5 +80,4 @@ std::string WaitStatus::scalarToString() const {
 		return "?!?";
 	}
 }
-
 } // end ns

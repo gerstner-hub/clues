@@ -216,9 +216,15 @@ public: // functions
 	/**
 	 * \return `true` if `out` could be filled, `false` otherwise (e.g.
 	 * nullptr was encouneterd).
+	 *
+	 * `max_bytes` can be passed to limit the maximum number of bytes to
+	 * read from Tracee memory which is useful e.g. in case the Tracee is
+	 * using an older version of a struct T, which is smaller than the one
+	 * known by the tracer.
 	 **/
 	template <typename T, bool CHECK_TRIVIAL=true>
-	bool readStruct(const ForeignPtr addr, T &out) const {
+	bool readStruct(const ForeignPtr addr, T &out,
+			size_t max_bytes=sizeof(T)) const {
 		// the address of the struct in the tracee's address space
 		if (addr == ForeignPtr::NO_POINTER)
 			// null address specification
@@ -228,7 +234,7 @@ public: // functions
 			static_assert(std::is_trivial_v<T> == true);
 		}
 
-		readBlob(addr, reinterpret_cast<char*>(&out), sizeof(T));
+		readBlob(addr, reinterpret_cast<char*>(&out), max_bytes);
 		return true;
 	}
 

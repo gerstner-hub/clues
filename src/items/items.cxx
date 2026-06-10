@@ -4,6 +4,7 @@
 #include <type_traits>
 
 // cosmos
+#include <cosmos/compiler.hxx>
 #include <cosmos/formatting.hxx>
 #include <cosmos/io/ILogger.hxx>
 
@@ -143,6 +144,10 @@ std::string BufferPointer::str() const {
 	return ret;
 }
 
+std::string BoolValue::str() const {
+	return m_value ? "true" : "false";
+}
+
 UnusedItem unused = UnusedItem{};
 
 /*
@@ -150,6 +155,9 @@ UnusedItem unused = UnusedItem{};
  */
 
 template class CLUES_API PointerToScalar<unsigned long>;
+#ifdef COSMOS_I386
+template class CLUES_API PointerToScalar<long>;
+#endif
 template class CLUES_API PointerToScalar<unsigned int>;
 template class CLUES_API PointerToScalar<int>;
 template class CLUES_API PointerToScalar<cosmos::ProcessID>;

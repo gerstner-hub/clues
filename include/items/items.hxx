@@ -295,12 +295,42 @@ protected: // data
 	Base m_base = Base::DEC;
 };
 
-using IntValue = IntValueT<int>;
-using UintValue = IntValueT<unsigned int>;
+using IntValue    = IntValueT<int>;
+using UintValue   = IntValueT<unsigned int>;
 using Uint32Value = IntValueT<uint32_t>;
-using ULongValue = IntValueT<unsigned long>;
-using SizeValue = IntValueT<size_t>;
+using ULongValue  = IntValueT<unsigned long>;
+using LongValue   = IntValueT<long>;
+using SizeValue   = IntValueT<size_t>;
 using OffsetValue = IntValueT<kernel_off_t>;
+
+/// A 0/1 integer representing a boolean value.
+class CLUES_API BoolValue :
+		public ValueParameter {
+public: // functions
+
+	explicit BoolValue(
+		const std::string_view short_name,
+		const std::string_view long_name = {},
+		const ItemType type = ItemType::PARAM_IN) :
+			ValueParameter{type, short_name, long_name} {
+	}
+
+	bool value() const {
+		return m_value;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_value = valueAs<bool>();
+	}
+
+protected: // data
+
+	bool m_value = false;
+};
 
 /// Item used together with UnknownSystemCall.
 struct UnknownItem :
