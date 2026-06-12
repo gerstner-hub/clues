@@ -24,7 +24,7 @@ void FutexSystemCall::prepareNewSystemCall() {
 	new_fd.reset();
 
 	// setup the default return value
-	result.emplace(item::SuccessResult{});
+	result.emplace();
 	setReturnItem(*result);
 }
 
@@ -37,7 +37,7 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 	};
 
 	auto setWokenUpReturnValue = [this, setNewReturnItem]() {
-		num_woken_up.emplace(item::ReturnValue{"nwokenup", "number of waiters woken up"});
+		num_woken_up.emplace("nwokenup", "number of waiters woken up");
 		setNewReturnItem(*num_woken_up);
 	};
 
@@ -46,22 +46,22 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 	switch (command) {
 	case WAIT: [[fallthrough]];
 	case WAIT_BITSET:
-		value.emplace(item::Uint32Value{"value"});
-		timeout.emplace(item::TimeSpecParameter{"timeout"});
+		value.emplace("value");
+		timeout.emplace("timeout");
 		if (command == WAIT) {
 			addParameters(*value, *timeout);
 		} else {
-			bitset.emplace(item::GenericPointerValue{"bitset"});
+			bitset.emplace("bitset");
 			addParameters(*value, *timeout, item::unused, *bitset);
 		}
 		break;
 	case WAKE: [[fallthrough]];
 	case WAKE_BITSET:
-		wake_count.emplace(item::Uint32Value{"nwakeup", "number of waiters to wake up"});
+		wake_count.emplace("nwakeup", "number of waiters to wake up");
 		if (command == WAKE) {
 			addParameters(*wake_count);
 		} else {
-			bitset.emplace(item::GenericPointerValue{"bitset"});
+			bitset.emplace("bitset");
 			addParameters(*wake_count, item::unused, item::unused, *bitset);
 		}
 
@@ -72,32 +72,32 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 		 * this operation is not supported anymore, but we model it
 		 * anyway
 		 */
-		fd_sig.emplace(item::SignalNumber{});
-		new_fd.emplace(item::FileDescriptor{});
+		fd_sig.emplace();
+		new_fd.emplace();
 		addParameters(*fd_sig);
-		new_fd.emplace(item::FileDescriptor{ItemType::RETVAL});
+		new_fd.emplace(ItemType::RETVAL);
 		setNewReturnItem(*new_fd);
 		break;
 	case REQUEUE: [[fallthrough]];
 	case CMP_REQUEUE: [[fallthrough]];
 	case CMP_REQUEUE_PI:
-		wake_count.emplace(item::Uint32Value{"nwakeup", "number of waiters to wake up"});
-		requeue_limit.emplace(item::Uint32Value{"val2", "max number of waiters to requeue"});
-		futex2_addr.emplace(item::GenericPointerValue{"addr2", "requeue address"});
+		wake_count.emplace("nwakeup", "number of waiters to wake up");
+		requeue_limit.emplace("val2", "max number of waiters to requeue");
+		futex2_addr.emplace("addr2", "requeue address");
 		if (command == REQUEUE) {
 			addParameters(*wake_count, *requeue_limit, *futex2_addr);
 		} else {
-			requeue_value.emplace(item::Uint32Value{"val3", "comparison value"});
+			requeue_value.emplace("val3", "comparison value");
 			addParameters(*wake_count, *requeue_limit, *futex2_addr, *requeue_value);
 		}
 
 		setWokenUpReturnValue();
 		break;
 	case WAKE_OP:
-		wake_count.emplace(item::Uint32Value{"nwakeup", "number of waiters to wake up at addr1"});
-		wake_count2.emplace(item::Uint32Value{"nwakeup2", "number of waiters to wake up at addr2"});
-		futex2_addr.emplace(item::GenericPointerValue{"addr2", "op-futex"});
-		wake_op.emplace(item::FutexWakeOperation{});
+		wake_count.emplace("nwakeup", "number of waiters to wake up at addr1");
+		wake_count2.emplace("nwakeup2", "number of waiters to wake up at addr2");
+		futex2_addr.emplace("addr2", "op-futex");
+		wake_op.emplace();
 		addParameters(*wake_count, *wake_count2, *futex2_addr, *wake_op);
 
 		setWokenUpReturnValue();
@@ -107,7 +107,7 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 		// absolute timeout measured against CLOCK_REALTIME (or
 		// MONOTONIC in case of LOCK_PI2, if the CLOCK_REALTIME flag
 		// is not passed in `operation`.
-		timeout.emplace(item::TimeSpecParameter{"timeout"});
+		timeout.emplace("timeout");
 		addParameters(item::unused, *timeout);
 		break;
 	case TRYLOCK_PI: [[fallthrough]];
@@ -115,10 +115,10 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 		// none of the extra arguments are used in these cases
 		break;
 	case WAIT_REQUEUE_PI:
-		value.emplace(item::Uint32Value{"value"});
+		value.emplace("value");
 		// absolute timeout
-		timeout.emplace(item::TimeSpecParameter{"timeout"});
-		futex2_addr.emplace(item::GenericPointerValue{"addr2", "requeue address"});
+		timeout.emplace("timeout");
+		futex2_addr.emplace("addr2", "requeue address");
 		addParameters(*value, *timeout, *futex2_addr);
 		break;
 	default:

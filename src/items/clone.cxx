@@ -86,7 +86,7 @@ void CloneArgs::processValue(const Tracee &proc) {
 	if (!verifySize())
 		return;
 
-	m_args.emplace(cosmos::CloneArgs{});
+	m_args.emplace();
 
 	// ignore the check for trivial types, cosmos::CloneArgs has a
 	// constructor to set the whole structure to zero, we can live with that

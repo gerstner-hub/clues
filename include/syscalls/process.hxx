@@ -27,7 +27,7 @@ struct CLUES_API ArchPrctlSystemCall :
 	ArchPrctlSystemCall() :
 			SystemCall{SystemCallNr::ARCH_PRCTL} {
 		setParameters(op);
-		result.emplace(item::SuccessResult{});
+		result.emplace();
 		setReturnItem(*result);
 	}
 

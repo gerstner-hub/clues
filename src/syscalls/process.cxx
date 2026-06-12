@@ -13,7 +13,7 @@ void ArchPrctlSystemCall::prepareNewSystemCall() {
 	get_addr.reset();
 
 	on_off_ret.reset();
-	result.emplace(item::SuccessResult{});
+	result.emplace();
 	setReturnItem(*result);
 }
 
@@ -23,22 +23,22 @@ bool ArchPrctlSystemCall::check2ndPass(const Tracee &) {
 
 	switch (op.operation()) {
 	case SET_CPUID:
-		on_off.emplace(item::ULongValue{"enable"});
+		on_off.emplace("enable");
 		addParameters(*on_off);
 		break;
 	case GET_CPUID:
 		result.reset();
-		on_off_ret.emplace(item::IntValue{"enabled?", "", ItemType::RETVAL});
+		on_off_ret.emplace("enabled?", "", ItemType::RETVAL);
 		setReturnItem(*on_off_ret);
 		break;
 	case SET_FS: [[fallthrough]];
 	case SET_GS:
-		set_addr.emplace(item::GenericPointerValue{"base"});
+		set_addr.emplace("base");
 		addParameters(*set_addr);
 		break;
 	case GET_FS: [[fallthrough]];
 	case GET_GS:
-		get_addr.emplace(item::PointerToScalar<unsigned long>{"*base"});
+		get_addr.emplace("*base");
 		get_addr->setBase(Base::HEX);
 		addParameters(*get_addr);
 		break;
@@ -76,7 +76,8 @@ bool CloneSystemCall::check2ndPass(const Tracee &)  {
 
 	auto maybe_add_settid_par = [this, clone_flags, maybe_add_unused_par](const size_t pos) {
 		if (clone_flags[CHILD_SETTID]) {
-			child_tid.emplace(item::GenericPointerValue{"child_tid", "pointer to child TID in child's memory"});
+			child_tid.emplace("child_tid",
+					"pointer to child TID in child's memory");
 			maybe_add_unused_par(pos);
 			addParameters(*child_tid);
 		}
@@ -84,7 +85,7 @@ bool CloneSystemCall::check2ndPass(const Tracee &)  {
 
 	auto maybe_add_settls_par = [this, clone_flags, maybe_add_unused_par](const size_t pos) {
 		if (clone_flags[SETTLS]) {
-			tls.emplace(item::GenericPointerValue{"tls", "ABI-specific thread-local-storage data"});
+			tls.emplace("tls", "ABI-specific thread-local-storage data");
 
 			maybe_add_unused_par(pos);
 			addParameters(*tls);
@@ -93,12 +94,12 @@ bool CloneSystemCall::check2ndPass(const Tracee &)  {
 
 	// these two are mutual-exclusive in the old clone() system call
 	if (clone_flags[PARENT_SETTID]) {
-		parent_tid.emplace(item::PointerToScalar<cosmos::ProcessID>{
-				"parent_tid", "pointer to child TID in parent's memory"});
+		parent_tid.emplace("parent_tid",
+				"pointer to child TID in parent's memory");
 		addParameters(*parent_tid);
 	} else if (clone_flags[PIDFD]) {
-		pidfd.emplace(item::PointerToScalar<cosmos::FileNum>{
-				"pidfd", "pointer to pidfd in parent's memory (alternative use of parent_tid)"});
+		pidfd.emplace("pidfd",
+				"pointer to pidfd in parent's memory (alternative use of parent_tid)");
 		addParameters(*pidfd);
 	}
 

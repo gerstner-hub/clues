@@ -18,7 +18,7 @@ void MmapSystemCall::prepareNewSystemCall() {
 		old_args.reset();
 		setParameters(hint, length, protection, flags, fd, offset);
 	} else {
-		old_args.emplace(item::OldMmapArgs{});
+		old_args.emplace();
 		setParameters(*old_args);
 	}
 }

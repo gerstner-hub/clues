@@ -18,7 +18,7 @@ std::string StringData::str() const {
 }
 
 void StringData::fetch(const Tracee &proc) {
-	m_str.emplace(std::string{});
+	m_str.emplace();
 	// fetch the string from the Tracee's address space.
 	try {
 		proc.readString(asPtr(), *m_str);

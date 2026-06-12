@@ -22,7 +22,7 @@ std::string WaitOptions::str() const {
 void ResourceUsage::updateData(const Tracee &proc) {
 	if (!m_call->hasResultValue())
 		return;
-	m_rusage.emplace(Usage{});
+	m_rusage.emplace();
 
 	if (!proc.readStruct(asPtr(), m_rusage->raw())) {
 		m_rusage.reset();

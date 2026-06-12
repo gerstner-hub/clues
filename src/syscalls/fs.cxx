@@ -10,7 +10,7 @@ void FcntlSystemCall::prepareNewSystemCall() {
 	m_pars.erase(m_pars.begin() + 2, m_pars.end());
 
 	// setup the default return value
-	result.emplace(item::SuccessResult{});
+	result.emplace();
 	setReturnItem(*result);
 
 	/* args */
@@ -51,27 +51,27 @@ bool FcntlSystemCall::check2ndPass(const Tracee &) {
 	switch (operation.operation()) {
 		case Oper::DUPFD: [[fallthrough]];
 		case Oper::DUPFD_CLOEXEC: {
-			dup_lowest.emplace(item::FileDescriptor{ItemType::PARAM_IN, item::AtSemantics{false},
-				"lowest_fd", "lowest dup file descriptor number"});
-			ret_dupfd.emplace(item::FileDescriptor{ItemType::RETVAL, item::AtSemantics{false},
-				"dupfd", "duplicated file descriptor"});
+			dup_lowest.emplace(ItemType::PARAM_IN, item::AtSemantics{false},
+					"lowest_fd", "lowest dup file descriptor number");
+			ret_dupfd.emplace(ItemType::RETVAL, item::AtSemantics{false},
+					"dupfd", "duplicated file descriptor");
 			setNewReturnItem(*ret_dupfd);
 			setExtraParameter(*dup_lowest);
 			break;
 		} case Oper::GETFD: {
-			ret_fd_flags.emplace(item::FileDescFlagsValue{ItemType::RETVAL});
+			ret_fd_flags.emplace(ItemType::RETVAL);
 			setNewReturnItem(*ret_fd_flags);
 			break;
 		} case Oper::SETFD: {
-			fd_flags_arg.emplace(item::FileDescFlagsValue{ItemType::PARAM_IN});
+			fd_flags_arg.emplace(ItemType::PARAM_IN);
 			setExtraParameter(*fd_flags_arg);
 			break;
 		} case Oper::GETFL: {
-			ret_status_flags.emplace(item::OpenFlagsValue{ItemType::RETVAL});
+			ret_status_flags.emplace(ItemType::RETVAL);
 			setNewReturnItem(*ret_status_flags);
 			break;
 		} case Oper::SETFL: {
-			status_flags_arg.emplace(item::OpenFlagsValue{ItemType::PARAM_IN});
+			status_flags_arg.emplace(ItemType::PARAM_IN);
 			setExtraParameter(*status_flags_arg);
 			break;
 		} case Oper::SETLK: [[fallthrough]];
@@ -87,72 +87,72 @@ bool FcntlSystemCall::check2ndPass(const Tracee &) {
 			 * OFD locks and old style locks use the same API
 			 * details
 			 */
-			flock_arg.emplace(item::FLockParameter{});
+			flock_arg.emplace();
 			setExtraParameter(*flock_arg);
 			break;
 		} case Oper::GETOWN: {
-			ret_owner.emplace(item::FileDescOwner{ItemType::RETVAL});
+			ret_owner.emplace(ItemType::RETVAL);
 			setNewReturnItem(*ret_owner);
 			break;
 		} case Oper::SETOWN: {
-			owner_arg.emplace(item::FileDescOwner{ItemType::PARAM_IN});
+			owner_arg.emplace(ItemType::PARAM_IN);
 			setExtraParameter(*owner_arg);
 			break;
 		} case Oper::GETOWN_EX: {
-			ext_owner_arg.emplace(item::ExtFileDescOwner{ItemType::PARAM_OUT});
+			ext_owner_arg.emplace(ItemType::PARAM_OUT);
 			setExtraParameter(*ext_owner_arg);
 			break;
 		} case Oper::SETOWN_EX: {
-			ext_owner_arg.emplace(item::ExtFileDescOwner{ItemType::PARAM_IN});
+			ext_owner_arg.emplace(ItemType::PARAM_IN);
 			setExtraParameter(*ext_owner_arg);
 			break;
 		} case Oper::GETSIG: {
-			ret_io_signal.emplace(item::SignalNumber{ItemType::RETVAL});
+			ret_io_signal.emplace(ItemType::RETVAL);
 			setNewReturnItem(*ret_io_signal);
 			break;
 		} case Oper::SETSIG: {
-			io_signal_arg.emplace(item::SignalNumber{});
+			io_signal_arg.emplace();
 			setExtraParameter(*io_signal_arg);
 			break;
 		} case Oper::GETLEASE: {
-			ret_lease.emplace(item::LeaseType{ItemType::RETVAL});
+			ret_lease.emplace(ItemType::RETVAL);
 			setNewReturnItem(*ret_lease);
 			break;
 		} case Oper::SETLEASE: {
-			lease_arg.emplace(item::LeaseType{ItemType::PARAM_IN});
+			lease_arg.emplace(ItemType::PARAM_IN);
 			setExtraParameter(*lease_arg);
 			break;
 		} case Oper::NOTIFY: {
-			dnotify_arg.emplace(item::DNotifySettings{});
+			dnotify_arg.emplace();
 			setExtraParameter(*dnotify_arg);
 			break;
 		} case Oper::SETPIPE_SZ: {
-			pipe_size_arg.emplace(item::IntValue{"pipe size", "pipe buffer size"});
+			pipe_size_arg.emplace("pipe size", "pipe buffer size");
 			setExtraParameter(*pipe_size_arg);
 			/*
 			 * SET and GET both return the current pipe size
 			 */
 			[[fallthrough]];
 		} case Oper::GETPIPE_SZ: {
-			ret_pipe_size.emplace(item::IntValue{"pipe size", "pipe buffer size", ItemType::RETVAL});
+			ret_pipe_size.emplace("pipe size", "pipe buffer size", ItemType::RETVAL);
 			setNewReturnItem(*ret_pipe_size);
 			break;
 		} case Oper::ADD_SEALS: {
-			file_seals_arg.emplace(item::FileSealSettings{ItemType::PARAM_IN});
+			file_seals_arg.emplace(ItemType::PARAM_IN);
 			setExtraParameter(*file_seals_arg);
 			break;
 		} case Oper::GET_SEALS: {
-			ret_seals.emplace(item::FileSealSettings{ItemType::RETVAL});
+			ret_seals.emplace(ItemType::RETVAL);
 			setNewReturnItem(*ret_seals);
 			break;
 		} case Oper::GET_RW_HINT: [[fallthrough]];
 		  case Oper::GET_FILE_RW_HINT: {
-			rw_hint_arg.emplace(item::ReadWriteHint{ItemType::PARAM_OUT});
+			rw_hint_arg.emplace(ItemType::PARAM_OUT);
 			setExtraParameter(*rw_hint_arg);
 			break;
 		} case Oper::SET_RW_HINT: [[fallthrough]];
 		  case Oper::SET_FILE_RW_HINT: {
-			rw_hint_arg.emplace(item::ReadWriteHint{ItemType::PARAM_IN});
+			rw_hint_arg.emplace(ItemType::PARAM_IN);
 			setExtraParameter(*rw_hint_arg);
 			break;
 		} default: {
@@ -192,7 +192,7 @@ bool OpenSystemCall::check2ndPass(const Tracee &) {
 	using enum cosmos::OpenFlag;
 
 	if (const auto _flags = flags.flags(); _flags[CREATE] || _flags[TMPFILE]) {
-		mode.emplace(item::FileModeParameter{});
+		mode.emplace();
 		addParameters(*mode);
 		return true;
 	}
@@ -217,7 +217,7 @@ bool OpenAtSystemCall::check2ndPass(const Tracee &) {
 	using enum cosmos::OpenFlag;
 
 	if (const auto _flags = flags.flags(); _flags[CREATE] || _flags[TMPFILE]) {
-		mode.emplace(item::FileModeParameter{});
+		mode.emplace();
 		addParameters(*mode);
 		return true;
 	}
