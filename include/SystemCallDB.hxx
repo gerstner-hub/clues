@@ -2,11 +2,14 @@
 
 // C++
 #include <map>
+#include <memory>
 
 // clues
 #include <clues/SystemCall.hxx>
 
 namespace clues {
+
+using SystemCallPtr = std::shared_ptr<SystemCall>;
 
 /// Stores information about each system call number in form of SystemCall objects.
 /**

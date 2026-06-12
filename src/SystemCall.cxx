@@ -7,14 +7,6 @@
 
 // clues
 #include <clues/logger.hxx>
-#include <clues/syscalls/fs.hxx>
-#include <clues/syscalls/io.hxx>
-#include <clues/syscalls/memory.hxx>
-#include <clues/syscalls/other.hxx>
-#include <clues/syscalls/process.hxx>
-#include <clues/syscalls/signals.hxx>
-#include <clues/syscalls/thread.hxx>
-#include <clues/syscalls/time.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
@@ -106,103 +98,6 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 	}
 
 	m_info = nullptr;
-}
-
-// alias for creating SystemCall instances below
-template <typename T, typename... Args>
-std::shared_ptr<T> new_sys(Args&&... args)
-{
-	    return std::make_shared<T>(std::forward<Args>(args)...);
-}
-
-SystemCallPtr create_syscall(const SystemCallNr nr) {
-	switch (nr) {
-	case SystemCallNr::ACCESS:          return new_sys<AccessSystemCall>();
-	case SystemCallNr::FACCESSAT:       return new_sys<FAccessAtSystemCall>();
-	case SystemCallNr::FACCESSAT2:      return new_sys<FAccessAt2SystemCall>();
-	case SystemCallNr::ALARM:           return new_sys<AlarmSystemCall>();
-#ifdef CLUES_HAVE_ARCH_PRCTL
-	case SystemCallNr::ARCH_PRCTL:      return new_sys<ArchPrctlSystemCall>();
-#endif
-	case SystemCallNr::BRK:             return new_sys<BreakSystemCall>();
-	case SystemCallNr::CLOCK_NANOSLEEP: return new_sys<ClockNanoSleepSystemCall>();
-	case SystemCallNr::CLONE:           return new_sys<CloneSystemCall>();
-	case SystemCallNr::CLONE3:          return new_sys<Clone3SystemCall>();
-	case SystemCallNr::CLOSE:           return new_sys<CloseSystemCall>();
-	case SystemCallNr::EXECVE:          return new_sys<ExecveSystemCall>();
-	case SystemCallNr::EXECVEAT:        return new_sys<ExecveAtSystemCall>();
-	case SystemCallNr::EXIT_GROUP:      return new_sys<ExitGroupSystemCall>();
-	case SystemCallNr::FCNTL:           [[fallthrough]];
-	case SystemCallNr::FCNTL64:         return new_sys<FcntlSystemCall>(nr);
-	case SystemCallNr::FORK:            return new_sys<ForkSystemCall>();
-	case SystemCallNr::OLDFSTAT:        [[fallthrough]];
-	case SystemCallNr::FSTAT:           [[fallthrough]];
-	case SystemCallNr::FSTAT64:         return new_sys<FstatSystemCall>(nr);
-	case SystemCallNr::FSTATAT64:       [[fallthrough]];
-	case SystemCallNr::NEWFSTATAT:      return new_sys<FstatAtSystemCall>(nr);
-	case SystemCallNr::FUTEX:           return new_sys<FutexSystemCall>();
-	case SystemCallNr::GETDENTS:        [[fallthrough]];
-	case SystemCallNr::GETDENTS64:      return new_sys<GetDentsSystemCall>(nr);
-	case SystemCallNr::GETUID:          [[fallthrough]];
-	case SystemCallNr::GETUID32:        return new_sys<GetUIDSystemCall>(nr);
-	case SystemCallNr::GETEGID32:       [[fallthrough]];
-	case SystemCallNr::GETEGID:         return new_sys<GetEGIDSystemCall>(nr);
-	case SystemCallNr::GETEUID32:       [[fallthrough]];
-	case SystemCallNr::GETEUID:         return new_sys<GetEUIDSystemCall>(nr);
-	case SystemCallNr::GETGID32:        [[fallthrough]];
-	case SystemCallNr::GETGID:          return new_sys<GetGIDSystemCall>(nr);
-	case SystemCallNr::GETPID:          return new_sys<GetPIDSystemCall>(nr);
-	case SystemCallNr::GETPPID:         return new_sys<GetPPIDSystemCall>(nr);
-	case SystemCallNr::GETPGID:         return new_sys<GetPGIDSystemCall>();
-	case SystemCallNr::GETTID:          return new_sys<GetTIDSystemCall>(nr);
-	case SystemCallNr::GETSID:          return new_sys<GetSIDSystemCall>();
-	case SystemCallNr::SETSID:          return new_sys<SetSIDSystemCall>();
-	case SystemCallNr::GETRLIMIT:       return new_sys<GetRlimitSystemCall>();
-	case SystemCallNr::SETRLIMIT:       return new_sys<SetRlimitSystemCall>();
-	case SystemCallNr::PRLIMIT64:       return new_sys<Prlimit64SystemCall>();
-	case SystemCallNr::GET_ROBUST_LIST: return new_sys<GetRobustListSystemCall>();
-	case SystemCallNr::SET_ROBUST_LIST: return new_sys<SetRobustListSystemCall>();
-	case SystemCallNr::IOCTL:           return new_sys<IoCtlSystemCall>();
-	case SystemCallNr::LSTAT:           [[fallthrough]];
-	case SystemCallNr::LSTAT64:         [[fallthrough]];
-	case SystemCallNr::OLDLSTAT:        return new_sys<LstatSystemCall>(nr);
-	case SystemCallNr::MMAP:            [[fallthrough]];
-	case SystemCallNr::MMAP2:           return new_sys<MmapSystemCall>(nr);
-	case SystemCallNr::MPROTECT:        return new_sys<MprotectSystemCall>();
-	case SystemCallNr::MUNMAP:          return new_sys<MunmapSystemCall>();
-	case SystemCallNr::NANOSLEEP:       return new_sys<NanoSleepSystemCall>();
-	case SystemCallNr::OPENAT:          return new_sys<OpenAtSystemCall>();
-	case SystemCallNr::OPEN:            return new_sys<OpenSystemCall>();
-	case SystemCallNr::READ:            return new_sys<ReadSystemCall>();
-	case SystemCallNr::RESTART_SYSCALL: return new_sys<RestartSystemCall>();
-	case SystemCallNr::RT_SIGACTION:    return new_sys<RtSigActionSystemCall>();
-	case SystemCallNr::SIGACTION:       return new_sys<SigActionSystemCall>();
-	case SystemCallNr::RT_SIGPROCMASK:  return new_sys<RtSigProcMaskSystemCall>();
-	case SystemCallNr::SIGPROCMASK:     return new_sys<SigProcMaskSystemCall>();
-	case SystemCallNr::SET_TID_ADDRESS: return new_sys<SetTIDAddressSystemCall>();
-	case SystemCallNr::OLDSTAT:         [[fallthrough]];
-	case SystemCallNr::STAT64:          [[fallthrough]];
-	case SystemCallNr::STAT:            return new_sys<StatSystemCall>(nr);
-	case SystemCallNr::TGKILL:          return new_sys<TgKillSystemCall>();
-	case SystemCallNr::WAIT4:           return new_sys<Wait4SystemCall>();
-	case SystemCallNr::WRITE:           return new_sys<WriteSystemCall>();
-	case SystemCallNr::PIPE:            return new_sys<PipeSystemCall>();
-	case SystemCallNr::PIPE2:           return new_sys<Pipe2SystemCall>();
-	case SystemCallNr::PWRITE64:        return new_sys<PWrite64SystemCall>();
-	case SystemCallNr::PREAD64:         return new_sys<PRead64SystemCall>();
-	case SystemCallNr::READV:           return new_sys<ReadVSystemCall>();
-	case SystemCallNr::WRITEV:          return new_sys<WriteVSystemCall>();
-	case SystemCallNr::PREADV:          return new_sys<PReadVSystemCall>();
-	case SystemCallNr::PREADV2:         return new_sys<PReadV2SystemCall>();
-	case SystemCallNr::PWRITEV:         return new_sys<PWriteVSystemCall>();
-	case SystemCallNr::PWRITEV2:        return new_sys<PWriteV2SystemCall>();
-	case SystemCallNr::GETRANDOM:       return new_sys<GetRandomSystemCall>();
-	case SystemCallNr::LSEEK:           return new_sys<LSeekSystemCall>();
-	case SystemCallNr::LLSEEK:          return new_sys<LLSeekSystemCall>();
-	case SystemCallNr::RSEQ:            return new_sys<RSeqSystemCall>();
-	case SystemCallNr::PRCTL:           return new_sys<PrCtlSystemCall>();
-	default:                            return new_sys<UnknownSystemCall>(nr);
-	}
 }
 
 void SystemCall::dropFD(const Tracee &proc, const cosmos::FileNum num) {

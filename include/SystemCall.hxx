@@ -2,7 +2,6 @@
 
 // C++
 #include <iosfwd>
-#include <memory>
 #include <optional>
 #include <string_view>
 #include <vector>
@@ -29,7 +28,6 @@ std::ostream& operator<<(std::ostream &o, const clues::SystemCall &sc);
 namespace clues {
 
 class SystemCallItem;
-using SystemCallPtr = std::shared_ptr<SystemCall>;
 using SystemCallItemPtr = SystemCallItem*;
 
 /// Access to System Call Data
@@ -227,8 +225,5 @@ protected: // data
 	/// The current system call ABI which is in effect.
 	ABI m_abi = ABI::UNKNOWN;
 };
-
-/// Creates a dynamically allocated SystemCall instance for the given system call number
-CLUES_API SystemCallPtr create_syscall(const SystemCallNr nr);
 
 } // end ns
