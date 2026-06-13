@@ -28,6 +28,8 @@
 #define LOG_WARN_PID(X) LOG_WARN("[" << cosmos::to_integral(m_ptrace.pid()) << "] " << X)
 #define LOG_ERROR_PID(X) LOG_ERROR("[" << cosmos::to_integral(m_ptrace.pid()) << "] " << X)
 
+namespace clues {
+
 namespace {
 
 /// A filler that fills Tracee data into a container supporting push_back() until a terminating zero element is found.
@@ -93,9 +95,31 @@ protected: // data
 	char *m_buffer;
 };
 
-} // end anon ns
+/*
+ * helper to synthesize a SystemCallInfo from raw RegisterData
+ */
+template <typename REGDATA>
+SystemCallInfo build_syscall_info(const REGDATA &data) {
+	SystemCallInfo ret;
+	auto raw = ret.raw();
+	cosmos::zero_object(*raw);
+	raw->op = PTRACE_SYSCALL_INFO_ENTRY;
+	raw->arch = cosmos::to_integral(REGDATA::ARCH);
+	auto &entry = raw->entry;
+	entry.nr = cosmos::to_integral(data.syscallNr());
 
-namespace clues {
+	const auto pars = data.syscallPars();
+
+	for (size_t i = 0; i < pars.size(); i++) {
+		entry.args[i] = pars[i];
+	}
+
+	ret.updateSysNr();
+
+	return ret;
+}
+
+} // end anon ns
 
 Tracee::Tracee(Engine &engine, EventConsumer &consumer, TraceePtr sibling) :
 		m_engine{engine},
@@ -407,11 +431,43 @@ void Tracee::handleSystemCall() {
 	m_syscall_info.reset();
 }
 
+bool Tracee::tryRecoverRestartedSystemCall() {
+	// this happens when attaching to a non-child process and a system
+	// call like clock_nanosleep() is interrupted as a result.
+	//
+	// we cannot know which system call is being resumed, since we have no
+	// history. restart_syscall() carries no additional context
+	// pointing us to the kind of system call that is being resumed.
+	//
+	// it is quite a feature, though, to know which system call is being
+	// resumed, as it happens quite often that a process is attached that
+	// behaves unusually e.g. because it blocks.
+
+	// m_initial_regset is obtained during the initial ptrace-event-stop.
+	// It seems it contains the currently running system call. This only
+	// works if the system call was not interrupted more than once
+	// already, though.
+
+	auto orig_syscall = getInitialSyscallInfo(m_syscall_info->abi());
+
+	if (!orig_syscall)
+		return false;
+	else if (orig_syscall->sysNr() == SystemCallNr::RESTART_SYSCALL)
+		/* was restarted more than once, context lost */
+		return false;
+	else if (!SystemCall::validNr(orig_syscall->sysNr()))
+		/* sanity check, no valid system call number */
+		return false;
+
+	m_current_syscall = m_syscall_db.get(*orig_syscall);
+
+	return true;
+}
+
 void Tracee::handleSystemCallEntry() {
 	EventConsumer::StatusFlags flags;
 
-	const SystemCallNr nr = m_syscall_info->sysNr();
-	m_current_syscall = m_syscall_db.get(nr);
+	m_current_syscall = m_syscall_db.get(*m_syscall_info);
 
 	if (const auto last_abi = m_current_syscall->abi();
 			last_abi != ABI::UNKNOWN &&
@@ -421,7 +477,7 @@ void Tracee::handleSystemCallEntry() {
 
 	verifyArch();
 
-	if (nr == SystemCallNr::RESTART_SYSCALL) {
+	if (m_syscall_info->sysNr() == SystemCallNr::RESTART_SYSCALL) {
 		if (m_interrupted_syscall) {
 			m_current_syscall = m_interrupted_syscall;
 			m_interrupted_syscall = nullptr;
@@ -429,30 +485,8 @@ void Tracee::handleSystemCallEntry() {
 		} else if (m_syscall_ctr != 0) {
 			// explicit restart_syscall done by user space?
 			LOG_WARN_PID("unknown system call is resumed");
-		} else if (auto orig_syscall = getInitialSyscallNr(m_syscall_info->abi()); orig_syscall) {
-			// this happens when attaching to a non-child process
-			// and a system call like clock_nanosleep is
-			// interrupted as a result.
-			// we cannot know which system call is being resumed,
-			// since we have no history. restart_syscall() carries
-			// no additional context information pointing us to
-			// the kind of system call that is being resumed.
-			//
-			// it would be quite a feature, though, to know which
-			// system call is being resumed, as it happens quite
-			// often that a process is attached that behaves
-			// unusually e.g. because it blocks.
-
-			// m_initial_regset is obtained during the initial
-			// ptrace-event-stop. It seems it contains the
-			// currently running system call. This only works if
-			// the system call was not interrupted before already,
-			// though.
-
-			if (*orig_syscall != SystemCallNr::RESTART_SYSCALL && SystemCall::validNr(*orig_syscall)) {
-				m_current_syscall = m_syscall_db.get(*orig_syscall);
-				flags.set(EventConsumer::StatusFlag::RESUMED);
-			}
+		} else if (tryRecoverRestartedSystemCall()) {
+			flags.set(EventConsumer::StatusFlag::RESUMED);
 		}
 	} else if (m_interrupted_syscall && m_flags[Flag::SEEN_SIGRETURN]) {
 		if (m_interrupted_syscall->callNr() == m_current_syscall->callNr()) {
@@ -815,10 +849,12 @@ void Tracee::verifyArch() {
 	}
 }
 
-std::optional<SystemCallNr> Tracee::getInitialSyscallNr(const ABI abi) const {
-	auto visitor = [abi](const auto &rs) -> std::optional<SystemCallNr> {
-		if (abi == rs.ABI)
-			return rs.syscallNr();
+std::optional<SystemCallInfo> Tracee::getInitialSyscallInfo(
+		const ABI abi) const {
+	auto visitor = [abi](const auto &rs) -> std::optional<SystemCallInfo> {
+		if (abi == rs.ABI) {
+			return build_syscall_info(rs.raw());
+		}
 		return {};
 	};
 

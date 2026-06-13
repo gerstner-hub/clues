@@ -16,6 +16,8 @@ public: // constants
 
 	static constexpr auto NUM_REGS = 34;
 
+	static constexpr auto ARCH = cosmos::ptrace::Arch::AARCH64;
+
 	SystemCallNrAARCH64 syscallNr() const {
 		// w8 (32-bit wide register access) contains the system call
 		// number, thus make sure the upper 4 bytes are ignored to be

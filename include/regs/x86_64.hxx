@@ -19,6 +19,8 @@ public: // constants
 
 	static constexpr auto NUM_REGS = 27;
 
+	static constexpr auto ARCH = cosmos::ptrace::Arch::X86_64;
+
 public: // functions
 
 	auto syscallRes() const {

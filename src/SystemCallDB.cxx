@@ -12,6 +12,7 @@
 #include <clues/syscalls/time.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
+#include <clues/SystemCallInfo.hxx>
 
 namespace clues {
 
@@ -118,7 +119,9 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallNr nr) {
 
 } // end anon ns
 
-SystemCallPtr SystemCallDB::get(const SystemCallNr nr) {
+SystemCallPtr SystemCallDB::get(const SystemCallInfo &info) {
+	const auto nr = info.sysNr();
+
 	if (auto it = m_map.find(nr); it != m_map.end()) {
 		return it->second;
 	} else {
@@ -140,11 +143,10 @@ SystemCallPtr SystemCallDB::get(const SystemCallNr nr) {
 			 *
 			 * For the moment simply disable caching for these
 			 * instances, which are expect to be few. In the
-			 * future we could decide to go for a more complex
-			 * cache data structure, allowing for a bucket of
-			 * types, where each type in the bucket needs to be
-			 * checked whether it is suitable for the current
-			 * `get` request.
+			 * future we could decide to go for a std::multimap
+			 * cache data structure, where each instance in the
+			 * bucket needs to be checked whether it is suitable
+			 * for the current `info` context.
 			 */
 			return syscall;
 		}

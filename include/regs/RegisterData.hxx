@@ -5,6 +5,7 @@
 
 // cosmos
 #include <cosmos/memory.hxx> // for use in derived classes
+#include <cosmos/proc/ptrace.hxx> // for use in derived classes
 
 
 namespace clues {

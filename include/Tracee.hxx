@@ -417,8 +417,8 @@ protected: // functions
 	/// Verifies the tracee's architecture according to m_syscall_info, throws on mismatch.
 	void verifyArch();
 
-	/// Returns the initial system call nr. stored in m_initial_regset, if available for `abi`.
-	std::optional<SystemCallNr> getInitialSyscallNr(const ABI abi) const;
+	/// Returns the initial system call information from m_initial_regset, if available for `abi`.
+	std::optional<SystemCallInfo> getInitialSyscallInfo(const ABI abi) const;
 
 	void getInitialRegisters();
 
@@ -449,6 +449,8 @@ protected: // functions
 
 	/// Drop a file descriptor from the tracking of the Tracee's thread group.
 	void dropFD(const cosmos::FileNum fd) const;
+
+	bool tryRecoverRestartedSystemCall();
 
 protected: // data
 

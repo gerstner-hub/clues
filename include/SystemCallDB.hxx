@@ -11,6 +11,8 @@ namespace clues {
 
 using SystemCallPtr = std::shared_ptr<SystemCall>;
 
+class SystemCallInfo;
+
 /// Stores information about each system call number in form of SystemCall objects.
 /**
  * This is a caching map object. It doesn't fill in all system calls at once,
@@ -36,7 +38,7 @@ public: // functions
 		return *this;
 	}
 
-	SystemCallPtr get(const SystemCallNr nr);
+	SystemCallPtr get(const SystemCallInfo &info);
 
 	const SystemCallPtr get(const SystemCallNr nr) const {
 		return const_cast<SystemCallDB&>(*this).get(nr);

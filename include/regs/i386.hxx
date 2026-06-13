@@ -17,6 +17,8 @@ public: // constants
 
 	static constexpr auto NUM_REGS = 17;
 
+	static constexpr auto ARCH = cosmos::ptrace::Arch::I386;
+
 public: // functions
 
 	SystemCallNrI386 syscallNr() const {
