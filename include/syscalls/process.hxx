@@ -351,19 +351,42 @@ struct CLUES_API PrCtlSystemCall :
 	 *
 	 * - CAPBSET_READ
 	 * - CAPBSET_DROP
+	 * - CAP_AMBIENT with `ambient_op` other than CLEAR_ALL.
 	 **/
 	std::optional<item::Capability> cap;
 	/// sub-operation for Operation::CAP_AMBIENT.
 	std::optional<item::AmbientCapOp> ambient_op;
-	/// sub-operation for Operation::MCE_KILL.
-	std::optional<item::MachineCheckOp> mce_op;
-	/// policy for Operation::MCE_KILL sub-op MachineCheckOp::MCE_KILL_SET.
-	std::optional<item::MachineCheckPolicy> mce_policy;
-	/// sub-operation for Operation::SET_MM.
-	std::optional<item::MemoryMapOp> mm_op;
-	/// current child-subreaper setting for Operation::GET_CHILD_SUBREAPER.
+
+	/// Items used with the MCE family of operations.
+	struct MachineCheckItems {
+		/// sub-operation for Operation::MCE_KILL.
+		std::optional<item::MachineCheckOp> op;
+		/// Policy for Operation::MCE_KILL sub-op MachineCheckOp::SET.
+		std::optional<item::MachineCheckPolicy> policy;
+		/// Policy return for Operation::MCE_KILL_GET.
+		std::optional<item::MachineCheckPolicy> policy_res;
+
+	} mce;
+
+	struct MemoryMapItems {
+		/// sub-operation for Operation::SET_MM.
+		std::optional<item::MemoryMapOp> op;
+		/// memory map setting for most of the MemoryMapOp sub-operations.
+		std::optional<item::GenericPointerValue> addr;
+		/// out pointer for MemoryMapOp::MAP_SIZE.
+		std::optional<item::PointerToScalar<unsigned int>> reported_size;
+		/// file descriptor for MemoryMapOp::EXE_FILE.
+		std::optional<item::FileDescriptor> exe_fd;
+		/// pointer to prctl_mm_map* for MemoryMapOp::MAP.
+		std::optional<item::MemoryMapStruct> mm_struct;
+		/// size of area pointed to by `map_struct`.
+		std::optional<item::ULongValue> mm_struct_size;
+	} mm;
+
+	/// Current child-subreaper setting for Operation::GET_CHILD_SUBREAPER.
 	std::optional<item::PointerToScalar<long>> is_subreaper;
-	/// new boolean value for attribute.
+
+	/// New boolean value for attribute.
 	/**
 	 * This is available for the following Operation values:
 	 *
@@ -373,16 +396,6 @@ struct CLUES_API PrCtlSystemCall :
 	 * - SET_KEEPCAPS
 	 **/
 	std::optional<item::BoolValue> bool_setting;
-	/// memory map setting for most of the MemoryMapOp sub-operations.
-	std::optional<item::GenericPointerValue> mm_addr;
-	/// out pointer for MemoryMapOp::MAP_SIZE.
-	std::optional<item::PointerToScalar<unsigned int>> map_size;
-	/// file descriptor for MemoryMapOp::EXE_FILE.
-	std::optional<item::FileDescriptor> exe_fd;
-	/// pointer to prctl_mm_map* for MemoryMapOp::MAP.
-	std::optional<item::MemoryMapStruct> mm_struct;
-	/// size of area pointed to by `map_struct`.
-	std::optional<item::ULongValue> mm_struct_size;
 
 	/* return values */
 
@@ -396,6 +409,7 @@ struct CLUES_API PrCtlSystemCall :
 	 * - CAP_AMBIENT (except for sub-operation CAP_AMBIENT_IS_SET)
 	 **/
 	std::optional<item::SuccessResult> res;
+
 	/// Boolean indicator.
 	/**
 	 * This is available for the following Operation values:
@@ -410,9 +424,6 @@ struct CLUES_API PrCtlSystemCall :
 	 * - CAP_AMBIENT (only for sub-operation CAP_AMBIENT_IS_SET)
 	 **/
 	std::optional<item::BoolValue> bool_res;
-	/// Machine check exception policy return for Operation::MCE_KILL_GET.
-	std::optional<item::MachineCheckPolicy> mce_policy_res;
-
 
 protected: // functions
 

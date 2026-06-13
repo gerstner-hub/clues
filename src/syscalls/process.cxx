@@ -219,35 +219,35 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &proc) {
 			addParameters(*bool_setting);
 			break;
 		} case MCE_KILL: {
-			mce_op.emplace();
-			addParameters(*mce_op);
+			mce.op.emplace();
+			addParameters(*mce.op);
 			const auto data = m_info->argAsWord(1);
 			/*
 			 * we need to know the sub-operation to further deduce
 			 * possible additional parameters.
 			 */
-			mce_op->fill(proc, data);
+			mce.op->fill(proc, data);
 
-			if (mce_op->operation() == item::MachineCheckOp::SET) {
-				mce_policy.emplace();
-				addParameters(*mce_policy);
+			if (mce.op->operation() == item::MachineCheckOp::SET) {
+				mce.policy.emplace();
+				addParameters(*mce.policy);
 			}
 			break;
 		} case MCE_KILL_GET: {
-			mce_policy_res.emplace(ItemType::RETVAL);
-			setReturnItem(*mce_policy_res);
+			mce.policy_res.emplace(ItemType::RETVAL);
+			setReturnItem(*mce.policy_res);
 			break;
 		} case SET_MM: {
-			mm_op.emplace();
-			addParameters(*mm_op);
+			mm.op.emplace();
+			addParameters(*mm.op);
 			const auto data = m_info->argAsWord(1);
 			/* we need to know the sub-operation to further decude
 			 * possible additional parameters */
-			mm_op->fill(proc, data);
+			mm.op->fill(proc, data);
 
 			using enum item::MemoryMapOp::Operation;
 
-			switch (*mm_op->operation()) {
+			switch (*mm.op->operation()) {
 				case START_CODE:
 				case END_CODE:
 				case START_DATA:
@@ -260,22 +260,22 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &proc) {
 				case ENV_START:
 				case ENV_END:
 				case AUXV:
-					mm_addr.emplace("addr");
-					addParameters(*mm_addr);
+					mm.addr.emplace("addr");
+					addParameters(*mm.addr);
 					break;
 				case MAP_SIZE:
-					map_size.emplace("size");
-					addParameters(*map_size);
+					mm.reported_size.emplace("size");
+					addParameters(*mm.reported_size);
 					break;
 				case EXE_FILE:
-					exe_fd.emplace();
-					addParameters(*exe_fd);
+					mm.exe_fd.emplace();
+					addParameters(*mm.exe_fd);
 					break;
 				case MAP:
-					mm_struct.emplace();
-					mm_struct_size.emplace("size",
+					mm.mm_struct.emplace();
+					mm.mm_struct_size.emplace("size",
 							"size of struct prctl_mm_map");
-					addParameters(*mm_struct, *mm_struct_size);
+					addParameters(*mm.mm_struct, *mm.mm_struct_size);
 					break;
 			}
 			break;
@@ -296,22 +296,23 @@ void PrCtlSystemCall::prepareNewSystemCall() {
 	m_pars.erase(m_pars.begin() + 1, m_pars.end());
 	m_return = nullptr;
 
+	mce.policy_res.reset();
+	mce.op.reset();
+	mce.policy.reset();
+
 	res.reset();
 	bool_res.reset();
-	mce_policy_res.reset();
 
 	cap.reset();
 	ambient_op.reset();
-	mce_op.reset();
-	mce_policy.reset();
 	is_subreaper.reset();
 	bool_setting.reset();
-	mm_op.reset();
-	mm_addr.reset();
-	map_size.reset();
-	exe_fd.reset();
-	mm_struct.reset();
-	mm_struct_size.reset();
+	mm.op.reset();
+	mm.addr.reset();
+	mm.reported_size.reset();
+	mm.exe_fd.reset();
+	mm.mm_struct.reset();
+	mm.mm_struct_size.reset();
 }
 
 } // end ns

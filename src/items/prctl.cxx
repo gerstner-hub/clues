@@ -111,7 +111,8 @@ void MemoryMapStruct::processValue(const Tracee &proc) {
 
 	const auto &prctl_call = dynamic_cast<const PrCtlSystemCall&>(*m_call);
 
-	if (!proc.readStruct(asPtr(), *m_map, prctl_call.mm_struct_size->value())) {
+	if (!proc.readStruct(asPtr(),
+				*m_map, prctl_call.mm.mm_struct_size->value())) {
 		m_map.reset();
 	}
 }
