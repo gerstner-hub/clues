@@ -411,7 +411,7 @@ void Tracee::handleSystemCallEntry() {
 	EventConsumer::StatusFlags flags;
 
 	const SystemCallNr nr = m_syscall_info->sysNr();
-	m_current_syscall = &m_syscall_db.get(nr);
+	m_current_syscall = m_syscall_db.get(nr);
 
 	if (const auto last_abi = m_current_syscall->abi();
 			last_abi != ABI::UNKNOWN &&
@@ -450,7 +450,7 @@ void Tracee::handleSystemCallEntry() {
 			// though.
 
 			if (*orig_syscall != SystemCallNr::RESTART_SYSCALL && SystemCall::validNr(*orig_syscall)) {
-				m_current_syscall = &m_syscall_db.get(*orig_syscall);
+				m_current_syscall = m_syscall_db.get(*orig_syscall);
 				flags.set(EventConsumer::StatusFlag::RESUMED);
 			}
 		}

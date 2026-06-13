@@ -1,3 +1,6 @@
+// C++
+#include <utility>
+
 // clues
 #include <clues/syscalls/fs.hxx>
 #include <clues/syscalls/io.hxx>
@@ -16,12 +19,14 @@ namespace {
 
 // alias for creating SystemCall instances below
 template <typename T, typename... Args>
-std::shared_ptr<T> new_sys(Args&&... args)
+std::pair<std::shared_ptr<T>, bool> new_sys(Args&&... args)
 {
-	    return std::make_shared<T>(std::forward<Args>(args)...);
+	    return std::make_pair(
+			    std::make_shared<T>(std::forward<Args>(args)...),
+			    true);
 }
 
-SystemCallPtr create_syscall(const SystemCallNr nr) {
+std::pair<SystemCallPtr, bool> create_syscall(const SystemCallNr nr) {
 	switch (nr) {
 	case SystemCallNr::ACCESS:          return new_sys<AccessSystemCall>();
 	case SystemCallNr::FACCESSAT:       return new_sys<FAccessAtSystemCall>();
@@ -113,14 +118,36 @@ SystemCallPtr create_syscall(const SystemCallNr nr) {
 
 } // end anon ns
 
-SystemCall& SystemCallDB::get(const SystemCallNr nr) {
+SystemCallPtr SystemCallDB::get(const SystemCallNr nr) {
 	if (auto it = m_map.find(nr); it != m_map.end()) {
-		return *(it->second);
+		return it->second;
 	} else {
-		auto res = m_map.insert(std::make_pair(nr, create_syscall(nr)));
+		auto [syscall, do_cache] = create_syscall(nr);
 
-		it = res.first;
-		return *(it->second);
+		if (do_cache) {
+			auto res = m_map.insert(std::make_pair(nr, syscall));
+			it = res.first;
+			return it->second;
+		} else {
+			/*
+			 * For a few multi-personality system calls (i.e.
+			 * highly overloaded system calls in an ioctl() style)
+			 * we are using multiple specializes types to reduce
+			 * the complexity of individual classes. The current
+			 * caching scheme doesn't allow this, since we expect
+			 * a 1:1 relationship between system call nr and
+			 * system call type.
+			 *
+			 * For the moment simply disable caching for these
+			 * instances, which are expect to be few. In the
+			 * future we could decide to go for a more complex
+			 * cache data structure, allowing for a bucket of
+			 * types, where each type in the bucket needs to be
+			 * checked whether it is suitable for the current
+			 * `get` request.
+			 */
+			return syscall;
+		}
 	}
 }
 

@@ -36,9 +36,9 @@ public: // functions
 		return *this;
 	}
 
-	SystemCall& get(const SystemCallNr nr);
+	SystemCallPtr get(const SystemCallNr nr);
 
-	const SystemCall& get(const SystemCallNr nr) const {
+	const SystemCallPtr get(const SystemCallNr nr) const {
 		return const_cast<SystemCallDB&>(*this).get(nr);
 	}
 

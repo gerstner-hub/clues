@@ -471,9 +471,9 @@ protected: // data
 	/// Reusable database object for tracing system calls.
 	SystemCallDB m_syscall_db;
 	/// Holds state for the currently executing system call.
-	SystemCall *m_current_syscall = nullptr;
+	SystemCallPtr m_current_syscall;
 	/// Previous system call, if it has been interrupted.
-	SystemCall *m_interrupted_syscall = nullptr;
+	SystemCallPtr m_interrupted_syscall;
 	/// current RestartMode to use.
 	cosmos::Tracee::RestartMode m_restart_mode = cosmos::Tracee::RestartMode::CONT;
 	/// signal to inject upon next restart of the tracee.
