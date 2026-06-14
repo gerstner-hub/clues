@@ -7,55 +7,17 @@
 #include <cosmos/fs/types.hxx>
 
 // clues
-#include <clues/arch.hxx>
 #include <clues/dso_export.h>
-#include <clues/items/caps.hxx>
 #include <clues/items/clone.hxx>
 #include <clues/items/creds.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/items/items.hxx>
-#include <clues/items/prctl.hxx>
 #include <clues/items/process.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
 
 namespace clues {
-
-#ifdef CLUES_HAVE_ARCH_PRCTL
-
-/// x86-specific prctl() extension.
-struct CLUES_API ArchPrctlSystemCall :
-		public SystemCall {
-
-	ArchPrctlSystemCall() :
-			SystemCall{SystemCallNr::ARCH_PRCTL} {
-		setParameters(op);
-		result.emplace();
-		setReturnItem(*result);
-	}
-
-	/* parameters */
-	item::ArchOpParameter op;
-	/// On/off value for SET_CPUID.
-	std::optional<item::ULongValue> on_off;
-	/// new FS/GS base for SET_FS/SET_GS
-	std::optional<item::GenericPointerValue> set_addr;
-	/// pointer to base for GET_FS/GET_GS
-	std::optional<item::PointerToScalar<unsigned long>> get_addr;
-	/* return values */
-	std::optional<item::SuccessResult> result;
-	/// On/off return for GET_CPUID.
-	std::optional<item::IntValue> on_off_ret;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override;
-
-	void prepareNewSystemCall() override;
-};
-
-#endif
 
 /// Wrapper for the clone() and clone2() system calls.
 /**
@@ -318,118 +280,6 @@ struct CLUES_API Wait4SystemCall :
 
 	/* return value */
 	item::ProcessID event_pid;
-};
-
-/// Base type for prctl() system calls.
-/**
- * prctl() is a varargs system call similar to ioctl(). Due to the many
- * different types of parameters and return values specializations of this
- * type exist for the more exotic instances.
- *
- * The only common parameter is the first integer argument which specifies the
- * operation to be carrier out and on which the interpretation of the rest of
- * the parameters and the return value depend.
- **/
-struct CLUES_API PrCtlSystemCall :
-		public SystemCall {
-
-	explicit PrCtlSystemCall() :
-			SystemCall{SystemCallNr::PRCTL} {
-		setParameters(op);
-	}
-
-	/* fixed parameters */
-
-	/// The only fixed parameter: the type of process operation.
-	item::ProcessOp op;
-
-	/* vararg parameters */
-
-	/// Capability to operate on.
-	/**
-	 * This is available for the following Operation values:
-	 *
-	 * - CAPBSET_READ
-	 * - CAPBSET_DROP
-	 * - CAP_AMBIENT with `ambient_op` other than CLEAR_ALL.
-	 **/
-	std::optional<item::Capability> cap;
-	/// sub-operation for Operation::CAP_AMBIENT.
-	std::optional<item::AmbientCapOp> ambient_op;
-
-	/// Items used with the MCE family of operations.
-	struct MachineCheckItems {
-		/// sub-operation for Operation::MCE_KILL.
-		std::optional<item::MachineCheckOp> op;
-		/// Policy for Operation::MCE_KILL sub-op MachineCheckOp::SET.
-		std::optional<item::MachineCheckPolicy> policy;
-		/// Policy return for Operation::MCE_KILL_GET.
-		std::optional<item::MachineCheckPolicy> policy_res;
-
-	} mce;
-
-	struct MemoryMapItems {
-		/// sub-operation for Operation::SET_MM.
-		std::optional<item::MemoryMapOp> op;
-		/// memory map setting for most of the MemoryMapOp sub-operations.
-		std::optional<item::GenericPointerValue> addr;
-		/// out pointer for MemoryMapOp::MAP_SIZE.
-		std::optional<item::PointerToScalar<unsigned int>> reported_size;
-		/// file descriptor for MemoryMapOp::EXE_FILE.
-		std::optional<item::FileDescriptor> exe_fd;
-		/// pointer to prctl_mm_map* for MemoryMapOp::MAP.
-		std::optional<item::MemoryMapStruct> mm_struct;
-		/// size of area pointed to by `map_struct`.
-		std::optional<item::ULongValue> mm_struct_size;
-	} mm;
-
-	/// Current child-subreaper setting for Operation::GET_CHILD_SUBREAPER.
-	std::optional<item::PointerToScalar<long>> is_subreaper;
-
-	/// New boolean value for attribute.
-	/**
-	 * This is available for the following Operation values:
-	 *
-	 * - SET_CHILD_SUBREAPER
-	 * - SET_DUMPABLE
-	 * - GET_IO_FLUSHER
-	 * - SET_KEEPCAPS
-	 **/
-	std::optional<item::BoolValue> bool_setting;
-
-	/* return values */
-
-	/// Regular success status result.
-	/**
-	 * This is used (on success) for the following Operation values:
-	 *
-	 * - CAPBSET_DROP
-	 * - SET_CHILD_SUBREAPER
-	 * - GET_CHILD_SUBREAPER
-	 * - CAP_AMBIENT (except for sub-operation CAP_AMBIENT_IS_SET)
-	 **/
-	std::optional<item::SuccessResult> res;
-
-	/// Boolean indicator.
-	/**
-	 * This is available for the following Operation values:
-	 *
-	 * - CAPBSET_READ
-	 * - GET_DUMPABLE
-	 * - SET_DUMPABLE
-	 * - GET_IO_FLUSHER
-	 * - SET_IO_FLUSHER
-	 * - SET_CHILD_SUBREAPER
-	 * - MCE_KILL
-	 * - CAP_AMBIENT (only for sub-operation CAP_AMBIENT_IS_SET)
-	 **/
-	std::optional<item::BoolValue> bool_res;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override;
-
-	void prepareNewSystemCall() override;
 };
 
 } // end ns

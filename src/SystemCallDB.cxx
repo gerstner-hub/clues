@@ -6,6 +6,7 @@
 #include <clues/syscalls/io.hxx>
 #include <clues/syscalls/memory.hxx>
 #include <clues/syscalls/other.hxx>
+#include <clues/syscalls/prctl.hxx>
 #include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
 #include <clues/syscalls/thread.hxx>
@@ -20,14 +21,23 @@ namespace {
 
 // alias for creating SystemCall instances below
 template <typename T, typename... Args>
-std::pair<std::shared_ptr<T>, bool> new_sys(Args&&... args)
-{
+std::pair<SystemCallPtr, bool> new_sys(Args&&... args) {
 	    return std::make_pair(
 			    std::make_shared<T>(std::forward<Args>(args)...),
 			    true);
 }
 
-std::pair<SystemCallPtr, bool> create_syscall(const SystemCallNr nr) {
+// alias for creating multi-typed SystemCall instances below
+template <typename T, typename... Args>
+std::pair<SystemCallPtr, bool> new_multi_sys(Args&&... args) {
+	    return std::make_pair(
+			    T::createSystemCall(std::forward<Args>(args)...),
+			    false);
+}
+
+std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
+	const auto nr = info.sysNr();
+
 	switch (nr) {
 	case SystemCallNr::ACCESS:          return new_sys<AccessSystemCall>();
 	case SystemCallNr::FACCESSAT:       return new_sys<FAccessAtSystemCall>();
@@ -112,7 +122,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallNr nr) {
 	case SystemCallNr::LSEEK:           return new_sys<LSeekSystemCall>();
 	case SystemCallNr::LLSEEK:          return new_sys<LLSeekSystemCall>();
 	case SystemCallNr::RSEQ:            return new_sys<RSeqSystemCall>();
-	case SystemCallNr::PRCTL:           return new_sys<PrCtlSystemCall>();
+	case SystemCallNr::PRCTL:           return new_multi_sys<PrCtlSystemCall>(info);
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }
@@ -125,7 +135,7 @@ SystemCallPtr SystemCallDB::get(const SystemCallInfo &info) {
 	if (auto it = m_map.find(nr); it != m_map.end()) {
 		return it->second;
 	} else {
-		auto [syscall, do_cache] = create_syscall(nr);
+		auto [syscall, do_cache] = create_syscall(info);
 
 		if (do_cache) {
 			auto res = m_map.insert(std::make_pair(nr, syscall));

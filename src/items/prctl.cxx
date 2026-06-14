@@ -14,7 +14,7 @@
 #include <clues/format.hxx>
 #include <clues/items/prctl.hxx>
 #include <clues/macros.h>
-#include <clues/syscalls/process.hxx>
+#include <clues/syscalls/prctl.hxx>
 #include <clues/Tracee.hxx>
 
 namespace clues::item {
@@ -109,10 +109,10 @@ void MemoryMapStruct::processValue(const Tracee &proc) {
 	 */
 	m_map.emplace(prctl_mm_map{});
 
-	const auto &prctl_call = dynamic_cast<const PrCtlSystemCall&>(*m_call);
+	const auto &prctl_call = dynamic_cast<const prctl::MemoryMapSystemCall&>(*m_call);
 
 	if (!proc.readStruct(asPtr(),
-				*m_map, prctl_call.mm.mm_struct_size->value())) {
+				*m_map, prctl_call.mm_struct_size->value())) {
 		m_map.reset();
 	}
 }

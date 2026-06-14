@@ -9,6 +9,7 @@
 #include <clues/syscalls/io.hxx>
 #include <clues/syscalls/memory.hxx>
 #include <clues/syscalls/other.hxx>
+#include <clues/syscalls/prctl.hxx>
 #include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
 #include <clues/syscalls/thread.hxx>
