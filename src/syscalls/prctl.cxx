@@ -78,7 +78,7 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 	 * GET/SET_FP_EXC PowerPC only
 	 */
 
-	switch (*op.operation()) {
+	switch (op.operation()) {
 		case GET_DUMPABLE: /* fallthrough */
 		case GET_IO_FLUSHER: /* fallthrough */
 		case GET_KEEPCAPS: {
@@ -151,7 +151,7 @@ namespace prctl {
 bool MemoryMapSystemCall::check2ndPass(const Tracee&) {
 	using enum item::MemoryMapOp::Operation;
 
-	switch (*mm_op.operation()) {
+	switch (mm_op.operation()) {
 		case START_CODE:
 		case END_CODE:
 		case START_DATA:
@@ -253,7 +253,7 @@ void CapBSetSystemCall::prepareNewSystemCall() {
 bool CapBSetSystemCall::check2ndPass(const Tracee &) {
 	using enum item::ProcessOp::Operation;
 
-	switch (*op.operation()) {
+	switch (op.operation()) {
 		case CAPBSET_READ: {
 			setBoolReturn();
 			break;

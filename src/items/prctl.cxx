@@ -38,7 +38,7 @@ std::string ArchOpParameter::str() const {
 #endif
 
 std::string AmbientCapOp::str() const {
-	switch (cosmos::to_integral(*m_op)) {
+	switch (cosmos::to_integral(m_op)) {
 		CASE_ENUM_TO_STR(PR_CAP_AMBIENT_RAISE);
 		CASE_ENUM_TO_STR(PR_CAP_AMBIENT_LOWER);
 		CASE_ENUM_TO_STR(PR_CAP_AMBIENT_IS_SET);
@@ -52,7 +52,7 @@ void AmbientCapOp::processValue(const Tracee&) {
 }
 
 std::string MachineCheckOp::str() const {
-	switch (cosmos::to_integral(*m_op)) {
+	switch (cosmos::to_integral(m_op)) {
 		CASE_ENUM_TO_STR(PR_MCE_KILL_CLEAR);
 		CASE_ENUM_TO_STR(PR_MCE_KILL_SET);
 		default: return "PR_MCE_KILL_???";
@@ -64,7 +64,7 @@ void MachineCheckOp::processValue(const Tracee&) {
 }
 
 std::string MachineCheckPolicy::str() const {
-	switch (cosmos::to_integral(*m_policy)) {
+	switch (cosmos::to_integral(m_policy)) {
 		CASE_ENUM_TO_STR(PR_MCE_KILL_EARLY);
 		CASE_ENUM_TO_STR(PR_MCE_KILL_LATE);
 		default: return "PR_MCE_KILL_???";
@@ -76,7 +76,7 @@ void MachineCheckPolicy::processValue(const Tracee&) {
 }
 
 std::string MemoryMapOp::str() const {
-	switch (cosmos::to_integral(*m_op)) {
+	switch (cosmos::to_integral(m_op)) {
 		CASE_ENUM_TO_STR(PR_SET_MM_START_CODE);
 		CASE_ENUM_TO_STR(PR_SET_MM_END_CODE);
 		CASE_ENUM_TO_STR(PR_SET_MM_START_DATA);
@@ -149,7 +149,7 @@ std::string MemoryMapStruct::str() const {
 }
 
 std::string ProcessOp::str() const {
-	return std::string{label(*m_op)};
+	return std::string{label(m_op)};
 }
 
 std::string_view ProcessOp::label(const Operation op) const {

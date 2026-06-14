@@ -141,7 +141,7 @@ public: // functions
 			ValueInParameter{"op", "operation"} {
 	}
 
-	std::optional<Operation> operation() const {
+	Operation operation() const {
 		return m_op;
 	}
 
@@ -155,7 +155,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<Operation> m_op;
+	Operation m_op{};
 };
 
 /// Sub-operation enum value for prctl(PR_CAP_AMBIENT, subop).
@@ -179,7 +179,7 @@ public: // functions
 				"ambient capability set operation"} {
 	}
 
-	std::optional<Operation> operation() const {
+	Operation operation() const {
 		return m_op;
 	}
 
@@ -191,7 +191,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<Operation> m_op;
+	Operation m_op{};
 };
 
 /// Sub-operation enum value for prctl(PR_MCE_KILL, subop).
@@ -213,7 +213,7 @@ public: // functions
 				"machine check exception operation"} {
 	}
 
-	std::optional<Operation> operation() const {
+	Operation operation() const {
 		return m_op;
 	}
 
@@ -225,7 +225,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<Operation> m_op;
+	Operation m_op{};
 };
 
 /// Policy enum value for prctl(PR_MCE_KILL, PCR_ME_KILL_SET, policy).
@@ -247,7 +247,7 @@ public: // functions
 				"machine check exception policy"} {
 	}
 
-	std::optional<Policy> policy() const {
+	Policy policy() const {
 		return m_policy;
 	}
 
@@ -259,7 +259,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<Policy> m_policy;
+	Policy m_policy{};
 };
 
 /// Sub-operation enum value for prctl(PR_SET_MM, op).
@@ -293,7 +293,7 @@ public: // functions
 			ValueInParameter{"subop", "memory map operation"} {
 	}
 
-	std::optional<Operation> operation() const {
+	Operation operation() const {
 		return m_op;
 	}
 
@@ -305,7 +305,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<Operation> m_op;
+	Operation m_op{};
 };
 
 /// Wrapper around struct prctl_mm_map.
