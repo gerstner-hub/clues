@@ -24,7 +24,7 @@ public: // functions
 			ValueInParameter{"cap", "capability"} {
 	}
 
-	std::optional<cosmos::Capability> cap() const {
+	cosmos::Capability cap() const {
 		return m_cap;
 	}
 
@@ -36,7 +36,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<cosmos::Capability> m_cap;
+	cosmos::Capability m_cap{};
 };
 
 } // end ns

@@ -11,7 +11,7 @@
 namespace clues::item {
 
 std::string Capability::str() const {
-	const auto raw_cap = cosmos::to_integral(*m_cap);
+	const auto raw_cap = cosmos::to_integral(m_cap);
 	switch (raw_cap) {
 		CASE_ENUM_TO_STR(CAP_CHOWN);
 		CASE_ENUM_TO_STR(CAP_DAC_OVERRIDE);
