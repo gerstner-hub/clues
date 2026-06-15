@@ -234,8 +234,8 @@ class CLUES_API MachineCheckPolicy :
 public: // types
 
 	enum class Policy : long {
-		MCE_KILL_EARLY = PR_MCE_KILL_EARLY,
-		MCE_KILL_LATE  = PR_MCE_KILL_LATE
+		KILL_EARLY = PR_MCE_KILL_EARLY,
+		KILL_LATE  = PR_MCE_KILL_LATE
 	};
 
 	using enum Policy;
