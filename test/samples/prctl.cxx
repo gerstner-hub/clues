@@ -37,7 +37,7 @@ int main() {
 #	endif
 #endif
 
-	long long_out;
+	int int_out;
 
 	prctl(PR_CAPBSET_READ, CAP_SYS_ADMIN);
 	prctl(PR_CAPBSET_DROP, CAP_SYS_ADMIN);
@@ -46,7 +46,7 @@ int main() {
 	prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_IS_SET, CAP_NET_RAW, 0, 0);
 	prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0, 0 ,0);
 	prctl(PR_SET_CHILD_SUBREAPER, 1);
-	prctl(PR_GET_CHILD_SUBREAPER, &long_out);
+	prctl(PR_GET_CHILD_SUBREAPER, &int_out);
 	prctl(PR_SET_DUMPABLE, 1);
 	prctl(PR_GET_DUMPABLE);
 	prctl(PR_GET_IO_FLUSHER);
