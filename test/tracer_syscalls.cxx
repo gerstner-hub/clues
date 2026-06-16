@@ -285,6 +285,41 @@ public:
 				TestSpec{"robust_list", "rseq", {
 					R"(rseq\(rseq=\{cpu_id_start=[0-9]+, cpu_id=[0-9]+, rseq_cs=(NULL|0x[0-9a-f]+), flags=0x[0-9a-f]+ \(.*\), node_id=[0-9]+, mm_cid=[0-9]+\}, rseq_len=[0-9]+, flags=0x[0-9a-f]+ \(.*\), signature=0x[0-9a-f]+\) = 0 \(success\))"
 				}},
+				TestSpec{{}, "prctl", {
+						R"(prctl\(op=PR_CAPBSET_DROP, cap=CAP_[A-Z_]+\) = [0-9]+.*\))",
+						R"(prctl\(op=PR_CAPBSET_READ, cap=CAP_[A-Z_]+\) = (false|true) \(bool\))",
+						R"(prctl\(op=PR_CAP_AMBIENT, subop=PR_CAP_AMBIENT_RAISE, cap=CAP_[A-Z_]+\) = [0-9]+ .*)",
+						R"(prctl\(op=PR_CAP_AMBIENT, subop=PR_CAP_AMBIENT_LOWER, cap=CAP_[A-Z_]+\) = 0 \(success\))",
+						R"(prctl\(op=PR_CAP_AMBIENT, subop=PR_CAP_AMBIENT_IS_SET, cap=CAP_[A-Z_]+\) = false \(bool\))",
+						R"(prctl\(op=PR_CAP_AMBIENT, subop=PR_CAP_AMBIENT_CLEAR_ALL\) = 0 \(success\))",
+						R"(prctl\(op=PR_SET_CHILD_SUBREAPER, state=true\) = 0 \(success\))",
+						R"(prctl\(op=PR_GET_CHILD_SUBREAPER, subreaper=0x[0-9a-f]+ → \[1\]\) = 0 \(success\))",
+						R"(prctl\(op=PR_SET_DUMPABLE, state=true\) = 0 \(success\))",
+						R"(prctl\(op=PR_GET_DUMPABLE\) = true \(bool\))",
+						R"(prctl\(op=PR_GET_IO_FLUSHER\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_IO_FLUSHER, state=true\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_GET_KEEPCAPS\) = false \(bool\))",
+						R"(prctl\(op=PR_SET_KEEPCAPS, state=true\) = 0 \(success\))",
+						R"(prctl\(op=PR_MCE_KILL, subop=PR_MCE_KILL_CLEAR\) = 0 \(success\))",
+						R"(prctl\(op=PR_MCE_KILL, subop=PR_MCE_KILL_SET, policy=PR_MCE_KILL_EARLY\) = 0 \(success\))",
+						R"(prctl\(op=PR_MCE_KILL_GET\) = PR_MCE_KILL_EARLY \(policy\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_START_CODE, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_END_CODE, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_START_DATA, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_END_DATA, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_START_STACK, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_START_BRK, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_BRK, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_ARG_START, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_ARG_END, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_ENV_START, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_ENV_END, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_AUXV, addr=0x[0-9a-f]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_EXE_FILE, fd=[0-9]+\) = 1 \(EPERM\) \(errno\))",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_MAP, map=\{start_code=0x[0-9a-f]+, end_code=0x[0-9a-f]+, start_data=0x[0-9a-f]+, end_data=0x[0-9a-f]+, start_brk=0x[0-9a-f]+, brk=0x[0-9a-f]+, start_stack=0x[0-9a-f]+, arg_start=0x[0-9a-f]+, arg_end=0x[0-9a-f]+, env_start=0x[0-9a-f]+, env_end=0x[0-9a-f]+, auxv=0x[0-9a-f]+, auxv_size=[0-9]+, exe_fd=[0-9]+\}, size=[0-9]+\) = [0-9]+)",
+						R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_MAP_SIZE, size=0x[0-9a-f]+ → \[[0-9]+\]\) = 0 \(success\))",
+
+				}},
 #ifdef CLUES_HAVE_PIPE1
 				TestSpec{{}, "pipe", {
 					R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"
