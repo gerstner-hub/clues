@@ -40,8 +40,8 @@ public: // functions
 
 	SystemCallPtr get(const SystemCallInfo &info);
 
-	const SystemCallPtr get(const SystemCallNr nr) const {
-		return const_cast<SystemCallDB&>(*this).get(nr);
+	const SystemCallPtr get(const SystemCallInfo &info) const {
+		return const_cast<SystemCallDB&>(*this).get(info);
 	}
 
 protected: // data
