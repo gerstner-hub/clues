@@ -1,6 +1,8 @@
 // C++
 #include <iostream>
 #include <regex>
+#include <utility>
+#include <vector>
 
 // clues
 #include <clues/arch.hxx>
@@ -36,6 +38,20 @@ struct StringVector :
 #	define NEW_MMAP "mmap()"
 #endif
 
+/*
+ * these search/replace patterns allow to use symbolic names in regular
+ * expressions in TestSpec.exprs below. This way regular expressions are
+ * easier to write and read and we can also adapt more easily to changes in
+ * tracer output.
+ */
+const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
+	{"{addr}", R"(0x[0-9a-f]+)"},
+	{"{fd}", R"([0-9]+)"},
+	{"{bitmask}", R"(0x[0-9a-f]+)"},
+	{"{decimal}", R"([0-9]+)"},
+	{"{pid}", R"([0-9]+)"},
+};
+
 struct TestSpec {
 	/// Basename and command line of the sample binary to run. If empty then the name found in `filter` will be used as basename.
 	StringVector sample_cmdline;
@@ -58,14 +74,14 @@ const std::vector<TestSpec> TEST_SPECS{
 #ifdef CLUES_HAVE_ACCESS
 	TestSpec{"access", "access,faccessat,faccessat2", {
 			R"(access\(path="/etc/fstab", check=R_OK\) = 0)",
-			R"(faccessat\(fd=[0-9], path="fstab", check=W_OK\) = 13)",
-			R"(faccessat2\(fd=[0-9], path="fstab", check=X_OK, flags=0x[0-9]+ \(AT_EACCESS\)\) = 13)"
+			R"(faccessat\(fd={fd}, path="fstab", check=W_OK\) = 13)",
+			R"(faccessat2\(fd={fd}, path="fstab", check=X_OK, flags={bitmask} \(AT_EACCESS\)\) = 13)"
 		}, "*access*()"
 	},
 #endif
 #ifdef CLUES_HAVE_ALARM
 	TestSpec{{}, "alarm", {
-		R"(alarm\(seconds=[0-9]+\) = 0)"
+		R"(alarm\(seconds={decimal}\) = 0)"
 	}},
 #endif
 #ifdef CLUES_HAVE_ARCH_PRCTL
@@ -73,24 +89,24 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(arch_prctl\(op=ARCH_SET_CPUID, enable=[01]\) = [0-9]+)",
 			R"(arch_prctl\(op=ARCH_GET_CPUID\) = [0-9]+)",
 #	ifdef COSMOS_X86_64
-			R"(arch_prctl\(op=ARCH_GET_FS, \*base=0x[0-9a-f]+ → \[0x[0-9a-f]+\]\) = 0)",
-			R"(arch_prctl\(op=ARCH_GET_GS, \*base=0x[0-9a-f]+ → \[0x[0-9a-f]+\]\) = 0)",
-			R"(arch_prctl\(op=ARCH_SET_FS, base=0x[0-9a-f]+\) = 0)",
-			R"(arch_prctl\(op=ARCH_SET_GS, base=0x[0-9a-f]+\) = 0)"
+			R"(arch_prctl\(op=ARCH_GET_FS, \*base={addr} → \[{addr}\]\) = 0)",
+			R"(arch_prctl\(op=ARCH_GET_GS, \*base={addr} → \[{addr}\]\) = 0)",
+			R"(arch_prctl\(op=ARCH_SET_FS, base={addr}\) = 0)",
+			R"(arch_prctl\(op=ARCH_SET_GS, base={addr}\) = 0)"
 #	endif
 	}},
 #endif
 	TestSpec{{}, "break", {
-			R"(break\(req_addr=0x4711\) = 0x[0-9a-f]+)"
+			R"(break\(req_addr=0x4711\) = {addr})"
 	}, "brk()"},
 	TestSpec{{"nanosleep", "0", "500"}, "clock_nanosleep", {
-			R"(clock_nanosleep\(clockid=CLOCK_MONOTONIC, flags=TIMER_ABSTIME, time=\{[0-9]+s, [0-9]+ns\}, rem=0x[0-9a-f]+\) = 0)"
+			R"(clock_nanosleep\(clockid=CLOCK_MONOTONIC, flags=TIMER_ABSTIME, time=\{{decimal}s, {decimal}ns\}, rem={addr}\) = 0)"
 	}},
 	TestSpec{{"nanosleep", "0", "500"}, "nanosleep", {
-			R"(nanosleep\(req_time=\{[0-9]+s, [0-9]+ns\}, rem_time=\{[0-9]+s, [0-9]+ns\}\) = 0)"
+			R"(nanosleep\(req_time=\{{decimal}s, {decimal}ns\}, rem_time=\{{decimal}s, {decimal}ns\}\) = 0)"
 	}},
 	TestSpec{"clone", "clone,clone3", {
-			R"(clone\(flags=0x[0-9a-f]+ \(CLONE_.*SIGCHLD\), stack=0x[0-9a-f]+, parent_tid=0x[0-9a-f]+ → \[[0-9]+\]\) = [0-9]+)",
+			R"(clone\(flags={bitmask} \(CLONE_.*SIGCHLD\), stack={addr}, parent_tid={addr} → \[{decimal}\]\) = {pid})",
 			R"(clone3\(cl_args=\{flags=0x[0-9a-f]+ \(CLONE_CHILD_SETTID.*CLONE_PIDFD\), pidfd=0x[0-9a-f]+ → \[[0-9\], child_tid=0x[0-9a-f]+, parent_tid=0x[0-9a-f]+ → [[0-9]+], exit_signal=SIGCHLD, stack=NULL, stack_size=0, set_tid=NULL, set_tid_size=0}, size=88\) = [0-9]+)"
 	}, "clone*()"},
 	TestSpec{{}, "close", {
@@ -440,6 +456,21 @@ protected:
 		m_invoker.shutdown();
 	}
 
+	std::string searchReplaceRegEx(std::string regex) {
+		/* replace symbolic formatting specifiers by regular
+		 * expression syntax */
+		for (const auto& [search, replace]: REGEX_SEARCH_REPLACE) {
+			for (auto pos = regex.find(search);
+					pos != regex.npos;
+					pos = regex.find(search, pos)) {
+				regex.erase(pos, search.size());
+				regex.insert(pos, replace);
+			}
+		}
+
+		return regex;
+	}
+
 	void runSpec(const TestSpec &spec) {
 		std::string label = std::string{spec.label};
 		if (label.empty()) {
@@ -469,7 +500,8 @@ protected:
 		std::vector<std::regex> regexps;
 		for (const auto &expr: spec.exprs) {
 			try {
-				regexps.push_back(std::regex{expr});
+				const auto replaced_expr = searchReplaceRegEx(expr);
+				regexps.push_back(std::regex{replaced_expr});
 			} catch (std::exception &ex) {
 				std::cerr << std::format("Failed to compute regular expression '{}': {}", expr, ex.what()) << "\n";
 				RUN_STEP("build regex", false);
