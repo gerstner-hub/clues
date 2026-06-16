@@ -93,7 +93,8 @@ struct CLUES_API GetRandomSystemCall :
 
 	GetRandomSystemCall() :
 			SystemCall{SystemCallNr::GETRANDOM},
-       			buf{count, ItemType::PARAM_OUT, "buf"},
+			buf{count, ItemType::PARAM_OUT, "buf", "buffer",
+			/*is_binary=*/true},
 			count{"size"},
 			flags{},
 			obtained{"bytes", "bytes obtained", ItemType::RETVAL} {
