@@ -135,7 +135,11 @@ std::string BufferPointer::str() const {
 	}
 
 	const auto is_cut_off = availableBytes() != m_data.size();
-	auto ret = format::buffer(m_data.data(), m_data.size());
+	format::Flags flags;
+	if (m_is_binary) {
+		flags.set(format::Flag::BINARY);
+	}
+	auto ret = format::buffer(m_data.data(), m_data.size(), flags);
 
 	if (is_cut_off) {
 		ret += "...";

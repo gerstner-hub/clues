@@ -154,13 +154,20 @@ class CLUES_API BufferPointer :
 		public PointerValue {
 public: // functions
 
+	/// Create a new BufferPointer item.
+	/**
+	 * \param[in] is_binary If set then no attempt is made to interpret
+	 * the data as text in formatting operations.
+	 **/
 	explicit BufferPointer(
 		const SystemCallItem &size_par,
 		const ItemType type,
 		const std::string_view short_name,
-		const std::string_view long_name = {}) :
+		const std::string_view long_name = {},
+		const bool is_binary = false) :
 			PointerValue{type, short_name, long_name},
-			m_size_par{size_par} {
+			m_size_par{size_par},
+			m_is_binary{is_binary} {
 		if (type == ItemType::PARAM_IN) {
 			/*
 			 * currently needed for write(), but other system
@@ -197,6 +204,7 @@ protected: // functions
 protected: // data
 
 	const SystemCallItem &m_size_par;
+	const bool m_is_binary = false;
 	std::vector<uint8_t> m_data;
 };
 
