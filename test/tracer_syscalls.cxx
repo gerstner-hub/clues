@@ -382,6 +382,10 @@ protected:
 			m_print_lines = true;
 		}
 
+		if (m_argv.size() > 1) {
+			m_limit_arg = m_argv[1];
+		}
+
 		{
 			const auto exe = std::string{m_argv[0]};
 			auto test_dir = exe.substr(0, exe.find_last_of("/"));
@@ -402,6 +406,12 @@ protected:
 		if (label.empty()) {
 			label = spec.filter + "()";
 		}
+
+		if (!m_limit_arg.empty() && label.find(m_limit_arg) != 0) {
+			// skip non-matching test case
+			return;
+		}
+
 		START_TEST(std::string{label});
 		const auto exe = findSample(spec.sample_cmdline.empty() ? spec.filter : spec.sample_cmdline[0]);
 		std::vector<std::string> args;
@@ -476,6 +486,8 @@ protected:
 	const std::vector<TestSpec> m_specs;
 	std::vector<std::string> m_lines;
 	bool m_print_lines = false;
+	// only run test cases matching this label
+	std::string m_limit_arg;
 };
 
 int main(const int argc, const char **argv) {
