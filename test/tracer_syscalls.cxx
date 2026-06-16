@@ -429,7 +429,12 @@ protected:
 		matches.resize(spec.exprs.size());
 		std::vector<std::regex> regexps;
 		for (const auto &expr: spec.exprs) {
-			regexps.push_back(std::regex{expr});
+			try {
+				regexps.push_back(std::regex{expr});
+			} catch (std::exception &ex) {
+				std::cerr << std::format("Failed to compute regular expression '{}': {}", expr, ex.what()) << "\n";
+				RUN_STEP("build regex", false);
+			}
 		}
 		size_t num_found = 0;
 
