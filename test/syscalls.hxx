@@ -135,6 +135,7 @@ constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 2;
  */
 #define TWICE(...) { \
 	for (auto _: cosmos::Twice{}) { \
+		(void)_; \
 		__VA_ARGS__; \
 	} \
 }
