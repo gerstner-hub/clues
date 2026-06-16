@@ -508,7 +508,7 @@ protected:
 		for (size_t i = 0; i < matches.size(); i++) {
 			if (!matches[i]) {
 				for (const auto &line: m_lines) {
-					std::cout << line << "\n";
+					std::cerr << "> " << line << "\n";
 				}
 			}
 			RUN_STEP(cosmos::sprintf("regexp '%s' found", spec.exprs[i].c_str()), matches[i] == true);
