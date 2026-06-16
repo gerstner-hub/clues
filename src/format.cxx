@@ -505,7 +505,8 @@ std::string control_char(const char ch) {
 	}
 }
 
-std::string buffer(const uint8_t *buffer, const size_t len) {
+std::string buffer(const uint8_t *buffer, const size_t len,
+		const Flags flags) {
 	std::stringstream ss;
 	ss << '"';
 
@@ -524,12 +525,16 @@ std::string buffer(const uint8_t *buffer, const size_t len) {
 	for (size_t idx = 0; idx < len; idx++) {
 		const auto ch = static_cast<unsigned char>(buffer[idx]);
 
-		if (std::isprint(ch)) {
-			ss << ch;
-		} else if (std::isspace(ch)) {
-			ss << control_char(ch);
-		} else {
+		if (flags[Flag::BINARY]) {
 			ss << HexChar{ch};
+		} else {
+			if (std::isprint(ch)) {
+				ss << ch;
+			} else if (std::isspace(ch)) {
+				ss << control_char(ch);
+			} else {
+				ss << HexChar{ch};
+			}
 		}
 	}
 

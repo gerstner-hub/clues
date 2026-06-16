@@ -4,11 +4,12 @@
 #include <cstdint>
 
 // cosmos
+#include <cosmos/BitMask.hxx>
+#include <cosmos/fwd.hxx>
 #include <cosmos/io/types.hxx>
 #include <cosmos/proc/SigInfo.hxx>
 #include <cosmos/proc/SigSet.hxx>
 #include <cosmos/proc/types.hxx>
-#include <cosmos/fwd.hxx>
 
 // clues
 #include <clues/dso_export.h>
@@ -25,6 +26,13 @@ namespace clues {
 }
 
 namespace clues::format {
+
+enum class Flag {
+	/// Treat data as binary without interpreting is as text.
+	BINARY = 1 << 0
+};
+
+using Flags = cosmos::BitMask<Flag>;
 
 /// Returns a string like "SIGINT (Interrupted)" for the given signal number.
 /**
@@ -97,7 +105,8 @@ CLUES_API std::string timespec(const struct timespec &ts, const bool only_secs =
 CLUES_API std::string timeval(const struct timeval &tv, const bool only_secs = false);
 
 /// returns a string like "text \x08"
-CLUES_API std::string buffer(const uint8_t *buffer, const size_t len);
+CLUES_API std::string buffer(const uint8_t *buffer, const size_t len,
+		const Flags flags = {});
 
 /// translates a character like \n into its string representation "\n".
 CLUES_API std::string control_char(const char ch);
