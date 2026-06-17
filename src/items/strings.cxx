@@ -9,7 +9,11 @@ namespace clues::item {
 
 std::string StringData::str() const {
 	if (!m_str) {
-		return "<invalid>";
+		if (isZero()) {
+			return "NULL";
+		} else {
+			return "<invalid>";
+		}
 	} else if (m_str->empty()) {
 		return "\"\"";
 	} else {
