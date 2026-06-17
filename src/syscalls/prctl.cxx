@@ -142,6 +142,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 			return std::make_shared<CapBSetSystemCall>();
 		case GET_CHILD_SUBREAPER:
 			return std::make_shared<GetChildSubReaperSystemCall>();
+		case SET_VMA:
+			return std::make_shared<VirtualMemoryAttrSystemCall>();
 		default: return std::make_shared<PrCtlSystemCall>();
 	}
 }

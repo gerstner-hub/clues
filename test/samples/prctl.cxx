@@ -11,6 +11,7 @@
 #include <linux/prctl.h>
 #include <linux/capability.h>
 #include <sys/prctl.h>
+#include <sys/mman.h>
 
 
 #ifdef CLUES_HAVE_ARCH_PRCTL
@@ -90,4 +91,13 @@ int main() {
 	prctl(PR_SET_MM, PR_SET_MM_MAP, &map, sizeof(map), 0);
 	unsigned int map_size = 0;
 	prctl(PR_SET_MM, PR_SET_MM_MAP_SIZE, &map_size, 0, 0);
+
+	auto anon_mem = mmap(NULL,
+			4096,
+			PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+
+	/* this returns EINVAL is CONFIG_VMA_ANON_NAME is not set in the
+	 * kernel */
+	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, anon_mem, 4096, "testname");
+	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, anon_mem, 4096, NULL);
 }

@@ -344,4 +344,38 @@ protected: // data
 	std::optional<prctl_mm_map> m_map;
 };
 
+/// Attribute to set via the PR_SET_VMA prctl().
+class CLUES_API VirtualMemoryAttr :
+		public ValueInParameter {
+public: // types
+
+
+	enum class Attr : long {
+		/// Set the name of an anonymous memory area.
+		ANON_NAME  = PR_SET_VMA_ANON_NAME
+	};
+
+	using enum Attr;
+
+public: // functions
+
+	explicit VirtualMemoryAttr() :
+			ValueInParameter{"attr", "virtual memory attribute"} {
+	}
+
+	Attr attr() const {
+		return m_attr;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Attr m_attr{};
+};
+
 } // end ns

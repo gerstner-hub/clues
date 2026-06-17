@@ -228,4 +228,15 @@ void ProcessOp::processValue(const Tracee &) {
 	m_op = Operation{valueAs<int>()};
 }
 
+std::string VirtualMemoryAttr::str() const {
+	switch (cosmos::to_integral(m_attr)) {
+		CASE_ENUM_TO_STR(PR_SET_VMA_ANON_NAME);
+		default: return "PR_SET_VMA_???";
+	}
+}
+
+void VirtualMemoryAttr::processValue(const Tracee&) {
+	m_attr = Attr{valueAs<long>()};
+}
+
 } // end ns

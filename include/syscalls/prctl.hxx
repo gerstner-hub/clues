@@ -9,6 +9,7 @@
 #include <clues/items/fs.hxx>
 #include <clues/items/items.hxx>
 #include <clues/items/prctl.hxx>
+#include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
@@ -325,6 +326,47 @@ public: // data
 
 	/// Current child-subreaper setting filled in by the kernel.
 	item::PointerToScalar<long> is_subreaper;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to reset */
+	}
+};
+
+/// Specialization of PrCtlSystemCall for the PR_SET_VMA operation.
+/**
+ * This uses the `res` success status as return value.
+ **/
+class CLUES_API VirtualMemoryAttrSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit VirtualMemoryAttrSystemCall() :
+			PrCtlSystemCall{},
+			attr{},
+			addr{"addr", "memory area start address"},
+			size{"size", "extent of memory area"},
+			name{item::StringData{"name",
+				"anonymous memory area name"}} {
+		addParameters(attr, addr, size, *name);
+		setSuccessReturn();
+	}
+
+public: // data
+
+	/// The attribute to operate on.
+	item::VirtualMemoryAttr attr;
+	item::GenericPointerValue addr;
+	item::ULongValue size;
+	/* currently the only possible parameter, but we keep it optional to
+	 * be compatible with future extensions of the API */
+	/// The name for VirtualMemoryAttr::ANON_NAME.
+	std::optional<item::StringData> name;
 
 protected: // functions
 
