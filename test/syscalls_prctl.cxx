@@ -508,6 +508,52 @@ const auto TESTS = std::array{
 						4096, name);
 			})
 		}, "PR_SET_VMA"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_NAME, "testname");
+		}, ENTRY_VERIFY_CB(prctl::NameSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::SET_NAME);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.bool_res);
+			VERIFY(sc.name.has_value());
+			VERIFY(sc.name->data() == "testname");
+		}), EXIT_VERIFY_CB(prctl::NameSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto name = alloc_str32("testname");
+				syscall32(SyscallNr32::PRCTL,
+						PR_SET_NAME,
+						name);
+			})
+		}, "PR_SET_NAME"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_NAME, "testname");
+			char name[16];
+			prctl(PR_GET_NAME, name);
+		}, ENTRY_VERIFY_CB(prctl::NameSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::GET_NAME);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.bool_res);
+			VERIFY(sc.name.has_value());
+		}), EXIT_VERIFY_CB(prctl::NameSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.name->data() == "testname");
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				auto name = alloc_str32("testname");
+				syscall32(SyscallNr32::PRCTL,
+						PR_SET_NAME,
+						name);
+				auto outname = alloc32<char*>(16);
+				syscall32(SyscallNr32::PRCTL,
+						PR_GET_NAME,
+						outname);
+			})
+		}, "PR_GET_NAME"
 	}
 };
 

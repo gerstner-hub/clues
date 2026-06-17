@@ -379,6 +379,35 @@ protected: // functions
 	}
 };
 
+/// Specialization of PrCtlSystemCall for PR_GET_NAME and PR_SET_NAME.
+/**
+ * This type is used for both, getting the thread name and setting the thread
+ * name. The `name` member for getting the thread name is only updated during
+ * system exit, accordingly.
+ *
+ * This uses the `res` success status as return value.
+ **/
+class CLUES_API NameSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit NameSystemCall() :
+			PrCtlSystemCall{} {
+		setSuccessReturn();
+	}
+
+public: // data
+
+	/// The in or out string parameter.
+	std::optional<item::StringData> name;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override;
+
+	void prepareNewSystemCall() override;
+};
+
 } // end ns prctl
 
 } // end ns

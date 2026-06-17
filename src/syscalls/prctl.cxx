@@ -76,6 +76,7 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 	 * GET/SET_FP_MODE MIPS only
 	 * GET/SET_FP_EMDU IA64 only
 	 * GET/SET_FP_EXC PowerPC only
+	 * MPX_ENABLE/DISABLE_MANAGEMENT: dropped in kernel 5.4.
 	 */
 
 	switch (op.operation()) {
@@ -144,6 +145,9 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 			return std::make_shared<GetChildSubReaperSystemCall>();
 		case SET_VMA:
 			return std::make_shared<VirtualMemoryAttrSystemCall>();
+		case GET_NAME: /* fallthrough */
+		case SET_NAME:
+			return std::make_shared<NameSystemCall>();
 		default: return std::make_shared<PrCtlSystemCall>();
 	}
 }
@@ -268,6 +272,30 @@ bool CapBSetSystemCall::check2ndPass(const Tracee &) {
 	}
 
 	return true;
+}
+
+bool NameSystemCall::check2ndPass(const Tracee&) {
+	using enum item::ProcessOp::Operation;
+
+	switch (op.operation()) {
+		case GET_NAME: {
+			name.emplace("name", "process name", ItemType::PARAM_OUT);
+			break;
+		} case SET_NAME: {
+			name.emplace("name", "process name");
+			break;
+		} default: {
+			throw cosmos::RuntimeError{"bad prctl op"};
+		}
+	}
+
+	addParameters(*name);
+
+	return true;
+}
+
+void NameSystemCall::prepareNewSystemCall() {
+	m_pars.erase(m_pars.begin() + 1, m_pars.end());
 }
 
 } // end ns prctl
