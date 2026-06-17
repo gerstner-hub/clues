@@ -473,6 +473,41 @@ const auto TESTS = std::array{
 						CAP_NET_RAW, 0, 0, 0);
 			})
 		}, "CAPBSET_DROP"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			auto addr = mmap(NULL, 4096, PROT_READ|PROT_WRITE,
+					MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+			prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, addr,
+					4096, "testname");
+		}, ENTRY_VERIFY_CB(prctl::VirtualMemoryAttrSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::SET_VMA);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.bool_res);
+			VERIFY(sc.attr.attr() ==
+					clues::item::VirtualMemoryAttr::ANON_NAME);
+			VERIFY(sc.addr.ptr() != clues::ForeignPtr::NO_POINTER);
+			VERIFY(sc.size.value() == 4096);
+			VERIFY(sc.name.has_value());
+			VERIFY(*sc.name->data() == "testname");
+		}), EXIT_VERIFY_CB(prctl::VirtualMemoryAttrSystemCall, {
+			/* this call can fail with EINVAL if kernel support is
+			 * lacking */
+			(void)sc;
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto name = alloc_str32("testname");
+				auto addr = mmap(NULL, 4096,
+						PROT_READ|PROT_WRITE,
+						MAP_PRIVATE|MAP_32BIT|MAP_ANONYMOUS,
+						-1, 0);
+				syscall32(SyscallNr32::PRCTL,
+						PR_SET_VMA,
+						PR_SET_VMA_ANON_NAME,
+						addr,
+						4096, name);
+			})
+		}, "PR_SET_VMA"
 	}
 };
 
