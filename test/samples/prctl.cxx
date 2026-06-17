@@ -99,7 +99,10 @@ int main() {
 	/* this returns EINVAL is CONFIG_VMA_ANON_NAME is not set in the
 	 * kernel */
 	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, anon_mem, 4096, "testname");
+#ifndef __SANITIZE_ADDRESS__
+	/* don't do this on ASAN, this triggers an internal ASAN SIGSEGV */
 	prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, anon_mem, 4096, NULL);
+#endif
 
 	prctl(PR_SET_NAME, "new name");
 	char name[16];

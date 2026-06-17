@@ -338,8 +338,11 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_MAP, map=\{start_code={addr}, end_code={addr}, start_data={addr}, end_data={addr}, start_brk={addr}, brk={addr}, start_stack={addr}, arg_start={addr}, arg_end={addr}, env_start={addr}, env_end={addr}, auxv={addr}, auxv_size={decimal}, exe_fd={fd}\}, size={decimal}\) = [0-9]+)",
 			R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_MAP_SIZE, size={addr} → \[{decimal}\]\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_VMA, attr=PR_SET_VMA_ANON_NAME, addr={addr}, size={decimal}, name={string}\) = {decimal})",
+#ifndef __SANITIZE_ADDRESS__
 			R"(prctl\(op=PR_SET_VMA, attr=PR_SET_VMA_ANON_NAME, addr={addr}, size={decimal}, name=NULL\) = {decimal})",
+#endif
 			R"(prctl\(op=PR_SET_NAME, name="new name"\) = 0 \(success\))",
+			/* avoid internal ASAN BUG */
 			R"(prctl\(op=PR_GET_NAME, name="new name"\) = 0 \(success\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
