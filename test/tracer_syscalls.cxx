@@ -50,6 +50,10 @@ const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
 	{"{bitmask}", R"(0x[0-9a-f]+)"},
 	{"{decimal}", R"([0-9]+)"},
 	{"{pid}", R"([0-9]+)"},
+	// match a string surrounded by double-quotes, also supporting
+	// embedded escaped \" characters.
+	// Optionally a suffix ending in (...) if the string was truncated.
+	{"{string}", R"("(?:\\.|[^"\\])*(\.\.\.)?")"},
 };
 
 struct TestSpec {
@@ -245,12 +249,12 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(openat\(fd=AT_FDCWD, filename="[^"]+", flags=0x[0-9a-f]+ \(O_RDONLY\|O_DIRECTORY[^\)]*\)\) = [0-9]+)"
 	}},
 	TestSpec{{}, "read", {
-		R"(read\(fd=[0-9]+, buf="[^"]+"(\.\.\.)?, count=[0-9]+\) = [0-9]+)",
+		R"(read\(fd={fd}, buf={string}, count={decimal}\) = {decimal})",
 		/* failure to read should not show buffer contents */
-		R"(read\(fd=[0-9]+, buf=0x[0-9a-f]+, count=[0-9]+\) = [0-9]+.*errno)"
+		R"(read\(fd={fd}, buf={addr}, count={decimal}\) = [0-9]+.*errno)"
 	}},
 	TestSpec{"read", "pread64", {
-		R"(pread64\(fd=[0-9]+, buf="[^"]+"(\.\.\.)?, count=[0-9]+, offset=[0-9]+\) = [0-9]+)"
+		R"(pread64\(fd=[0-9]+, buf={string}, count=[0-9]+, offset=[0-9]+\) = [0-9]+)"
 	}},
 	TestSpec{"read", "readv", {
 		R"(readv\(fd=[0-9]+, iov=\[\{iov_base=0x[0-9a-f]+ → \["[^"]+"\], iov_len=[0-9]+\}, \{iov_base=0x[0-9a-f]+ → \["[^"]+"\], iov_len=[0-9]+\}\], iovcnt=[0-9]+\) = [0-9]+ \(bytes\))",
