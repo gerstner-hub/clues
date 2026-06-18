@@ -169,6 +169,9 @@ protected: // functions
 		addParameters(args...);
 	}
 
+	/// Remove currently present parameters starting at `start_index`.
+	void dropParameters(const size_t start_index = 0);
+
 	/// Check whether a second pass needs to be made processing parameters.
 	/**
 	 * This function can be overridden by the actual system call

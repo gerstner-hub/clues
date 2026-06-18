@@ -5,7 +5,7 @@ namespace clues {
 
 void FutexSystemCall::prepareNewSystemCall() {
 	/* drop all but the fixed initial two parameters */
-	m_pars.erase(m_pars.begin() + 2, m_pars.end());
+	dropParameters(2);
 
 	/* args */
 	value.reset();

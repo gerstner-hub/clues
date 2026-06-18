@@ -25,6 +25,10 @@ bool SystemCall::validNr(const SystemCallNr nr) {
 	return cosmos::to_integral(nr) < SYSTEM_CALL_NAMES.size();
 }
 
+void SystemCall::dropParameters(const size_t start_index) {
+	m_pars.erase(m_pars.begin() + start_index, m_pars.end());
+}
+
 SystemCall::SystemCall(const SystemCallNr nr) :
 		m_nr{nr}, m_name{SystemCall::name(nr)} {
 }

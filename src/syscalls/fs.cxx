@@ -7,7 +7,7 @@ namespace clues {
 
 void FcntlSystemCall::prepareNewSystemCall() {
 	/* drop all but the fixed initial two parameters */
-	m_pars.erase(m_pars.begin() + 2, m_pars.end());
+	dropParameters(2);
 
 	// setup the default return value
 	result.emplace();
@@ -183,7 +183,7 @@ void FcntlSystemCall::updateFDTracking(const Tracee &proc) {
 }
 
 void OpenSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 2, m_pars.end());
+	dropParameters(2);
 
 	mode.reset();
 }
@@ -209,7 +209,7 @@ void OpenSystemCall::updateFDTracking(const Tracee &proc) {
 }
 
 void OpenAtSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 3, m_pars.end());
+	dropParameters(3);
 	mode.reset();
 }
 

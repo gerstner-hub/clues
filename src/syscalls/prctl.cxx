@@ -7,7 +7,7 @@ namespace clues {
 #ifdef CLUES_HAVE_ARCH_PRCTL
 void ArchPrctlSystemCall::prepareNewSystemCall() {
 	// only keep the `op` parameter
-	m_pars.erase(m_pars.begin() + 1, m_pars.end());
+	dropParameters(1);
 
 	on_off.reset();
 	set_addr.reset();
@@ -108,7 +108,7 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 }
 
 void PrCtlSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 1, m_pars.end());
+	dropParameters(1);
 	m_return = nullptr;
 
 	clearOptArgs();
@@ -195,7 +195,7 @@ bool MemoryMapSystemCall::check2ndPass(const Tracee&) {
 }
 
 void MemoryMapSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 2, m_pars.end());
+	dropParameters(2);
 	PrCtlSystemCall::clearOptArgs();
 
 	addr.reset();
@@ -206,7 +206,7 @@ void MemoryMapSystemCall::prepareNewSystemCall() {
 }
 
 void MachineCheckKillSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 2, m_pars.end());
+	dropParameters(2);
 	PrCtlSystemCall::clearOptArgs();
 	policy.reset();
 }
@@ -222,12 +222,12 @@ bool MachineCheckKillSystemCall::check2ndPass(const Tracee &) {
 }
 
 void MachineCheckKillGetSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 1, m_pars.end());
+	dropParameters(1);
 	PrCtlSystemCall::clearOptArgs();
 }
 
 void CapAmbientSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 2, m_pars.end());
+	dropParameters(2);
 	PrCtlSystemCall::clearOptArgs();
 	PrCtlSystemCall::clearOptRetVals();
 	cap.reset();
@@ -297,7 +297,7 @@ bool NameSystemCall::check2ndPass(const Tracee&) {
 }
 
 void NameSystemCall::prepareNewSystemCall() {
-	m_pars.erase(m_pars.begin() + 1, m_pars.end());
+	dropParameters(1);
 }
 
 } // end ns prctl
