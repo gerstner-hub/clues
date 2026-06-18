@@ -554,7 +554,25 @@ const auto TESTS = std::array{
 						outname);
 			})
 		}, "PR_GET_NAME"
-	}
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::SET_NO_NEW_PRIVS);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(sc.bool_setting.has_value());
+			VERIFY(sc.bool_setting->value() == true);
+		}), EXIT_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL,
+						PR_SET_NO_NEW_PRIVS,
+						1, 0, 0, 0);
+			})
+		}, "PR_SET_NO_NEW_PRIVS"
+	},
 };
 
 } // end ns

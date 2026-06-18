@@ -107,4 +107,7 @@ int main() {
 	prctl(PR_SET_NAME, "new name");
 	char name[16];
 	prctl(PR_GET_NAME, name);
+
+	prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+	prctl(PR_GET_NO_NEW_PRIVS, 0, 0, 0, 0);
 }

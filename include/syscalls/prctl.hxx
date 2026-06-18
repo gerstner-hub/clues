@@ -72,6 +72,8 @@ protected: // functions
  * - CAP_AMBIENT: prctl::CapAmbientSystemCall
  * - CAPBSET_READ, CAPBSET_DROP: prctl::CapBSetSystemCall
  * - GET_CHILD_SUBREAPER: prctl::GetChildSubReaperSystemCall
+ * - PR_GET_NAME/PR_SET_NAME: prctl::NameSystemCall
+ * - PR_SET_VMA: prctl::VirtualMemoryAttrSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -79,12 +81,14 @@ protected: // functions
  * - SET_IO_FLUSHER
  * - SET_CHILD_SUBREAPER
  * - SET_KEEPCAPS
+ * - SET_NO_NEW_PRIVS
  *
  * The following operations use the `bool_res` return value:
  *
  * - GET_DUMPABLE
  * - GET_IO_FLUSHER
  * - GET_KEEPCAPS
+ * - GET_NO_NEW_PRIVS
  **/
 struct CLUES_API PrCtlSystemCall :
 		public SystemCall {

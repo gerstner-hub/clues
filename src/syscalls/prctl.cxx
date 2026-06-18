@@ -82,12 +82,14 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 	switch (op.operation()) {
 		case GET_DUMPABLE: /* fallthrough */
 		case GET_IO_FLUSHER: /* fallthrough */
+		case GET_NO_NEW_PRIVS: /* fallthrough */
 		case GET_KEEPCAPS: {
 			set_bool_return();
 			break;
 		} case SET_DUMPABLE: /* fallthrough */
 		  case SET_IO_FLUSHER: /* fallthrough */
 		  case SET_CHILD_SUBREAPER: /* fallthrough */
+		  case SET_NO_NEW_PRIVS: /* fallthrough */
 		  case SET_KEEPCAPS: {
 			bool_setting.emplace("state", "new attribute state");
 			addParameters(*bool_setting);
