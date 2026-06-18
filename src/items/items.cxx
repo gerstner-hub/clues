@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <sstream>
 #include <type_traits>
+#include <utility>
 
 // cosmos
 #include <cosmos/compiler.hxx>
@@ -75,11 +76,16 @@ std::string PointerToScalar<INT>::str() const {
 template <typename INT>
 std::string PointerToScalar<INT>::scalarToString() const {
 	if constexpr (std::is_enum_v<INT>) {
-		return format_number(cosmos::to_integral(*m_val), m_base);
+		if constexpr (format::has_enum_formatter<INT>) {
+			return format::enumeration(*m_val);
+		} else {
+			return format_number(cosmos::to_integral(*m_val),
+					m_base);
+		}
 	}
 	if constexpr (!std::is_enum_v<INT>) {
 		if constexpr (std::is_pointer_v<INT>) {
-			return format_number(reinterpret_cast<uintptr_t>(*m_val), clues::Base::HEX);
+			return format::pointer(ForeignPtr{(uintptr_t)(*m_val)});
 		}
 		if constexpr (!std::is_pointer_v<INT>) {
 			return format_number(*m_val, m_base);

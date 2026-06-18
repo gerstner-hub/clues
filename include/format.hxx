@@ -123,6 +123,22 @@ CLUES_API std::string_view fd_type(const FDInfo &info);
 /// formats the given FDInfo object in a user friendly way.
 CLUES_API std::string fd_info(const FDInfo &info);
 
+/*
+ * the following are helpers for template programming to obtain a label for
+ * enum types.
+ */
+
+inline std::string enumeration(const cosmos::SignalNr nr) {
+	return format::signal(nr);
+}
+
+
+template<typename T>
+/// Tells us whether format::enumeration() exists for type T.
+constexpr bool has_enum_formatter = requires(T t) {
+	enumeration(t);
+};
+
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);
 
