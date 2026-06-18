@@ -616,6 +616,24 @@ const auto TESTS = std::array{
 						SIGSEGV, 0, 0, 0);
 			})
 		}, "PR_SET_PDEATHSIG"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_PTRACER, 1, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetPTracerSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::SET_PTRACER);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(sc.pid.pid() == cosmos::ProcessID{1});
+		}), EXIT_VERIFY_CB(prctl::SetPTracerSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL,
+						PR_SET_PTRACER,
+						1, 0, 0, 0);
+			})
+		}, "PR_SET_PTRACER"
 	},
 };
 

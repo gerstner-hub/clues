@@ -3,6 +3,7 @@
 // clues
 #include <clues/arch.hxx>
 #include <clues/items/items.hxx>
+#include <clues/items/process.hxx>
 
 // Linux
 #ifdef CLUES_HAVE_ARCH_PRCTL
@@ -376,6 +377,24 @@ protected: // functions
 protected: // data
 
 	Attr m_attr{};
+};
+
+/// Specialized ProcessID for the SetPTracerSystemCall.
+class CLUES_API PTracerProcessID :
+		public ProcessID {
+public: // functions
+
+	explicit PTracerProcessID() :
+			ProcessID{ItemType::PARAM_IN} {
+	}
+
+	std::string str() const override {
+		if (pid() == cosmos::ProcessID::INVALID) {
+			return "PR_SET_PTRACER_ANY";
+		}
+
+		return ProcessID::str();
+	}
 };
 
 } // end ns

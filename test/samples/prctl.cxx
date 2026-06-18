@@ -114,4 +114,6 @@ int main() {
 	prctl(PR_SET_PDEATHSIG, SIGSEGV, 0, 0, 0);
 	long sig = 0;
 	prctl(PR_GET_PDEATHSIG, &sig, 0, 0, 0);
+	prctl(PR_SET_PTRACER, 1, 0, 0, 0);
+	prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
 }

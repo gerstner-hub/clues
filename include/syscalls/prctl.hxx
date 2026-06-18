@@ -441,6 +441,36 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
+/// Specialization of PrCtlSystemCall for PR_SET_PTRACER.
+/**
+ * This system call uses the `res` exit status return value.
+ **/
+class CLUES_API SetPTracerSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit SetPTracerSystemCall() :
+			PrCtlSystemCall{} {
+		setSuccessReturn();
+		addParameters(pid);
+	}
+
+public: // data
+
+	/// The new signal to set for PR_SET_PDEATHSIG.
+	item::PTracerProcessID pid;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to reset */
+	}
+};
+
 } // end ns prctl
 
 } // end ns

@@ -154,6 +154,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 		case SET_PDEATHSIG: /* fallthrough */
 		case GET_PDEATHSIG:
 			return std::make_shared<ParentDeathSignalSystemCall>();
+		case SET_PTRACER:
+			return std::make_shared<SetPTracerSystemCall>();
 		default: return std::make_shared<PrCtlSystemCall>();
 	}
 }
