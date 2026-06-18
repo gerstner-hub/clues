@@ -346,6 +346,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_NAME, name="new name"\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_NO_NEW_PRIVS, state={bool}\) = 0 \(success\))",
 			R"(prctl\(op=PR_GET_NO_NEW_PRIVS\) = {bool})",
+			R"(prctl\(op=PR_SET_PDEATHSIG, signum=SIGSEGV\) = 0)",
+			R"(prctl\(op=PR_GET_PDEATHSIG, sig={addr} → \[SIGSEGV\]\) = 0)",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

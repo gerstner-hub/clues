@@ -572,6 +572,50 @@ const auto TESTS = std::array{
 						1, 0, 0, 0);
 			})
 		}, "PR_SET_NO_NEW_PRIVS"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_PDEATHSIG, SIGSEGV, 0, 0, 0);
+			long sig = 0;
+			prctl(PR_GET_PDEATHSIG, &sig, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::ParentDeathSignalSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::GET_PDEATHSIG);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.new_signal);
+			VERIFY(sc.cur_signal.has_value());
+		}), EXIT_VERIFY_CB(prctl::ParentDeathSignalSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.cur_signal->value() == cosmos::SignalNr::SEGV);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				prctl(PR_SET_PDEATHSIG, SIGSEGV, 0, 0, 0);
+				auto sig = alloc_struct32<long>();
+				syscall32(SyscallNr32::PRCTL,
+						PR_GET_PDEATHSIG,
+						sig, 0, 0, 0);
+			})
+		}, "PR_GET_PDEATHSIG"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_PDEATHSIG, SIGSEGV, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::ParentDeathSignalSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::SET_PDEATHSIG);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.cur_signal);
+			VERIFY(sc.new_signal.has_value());
+			VERIFY(sc.new_signal->nr() == cosmos::SignalNr::SEGV);
+		}), EXIT_VERIFY_CB(prctl::ParentDeathSignalSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL,
+						PR_SET_PDEATHSIG,
+						SIGSEGV, 0, 0, 0);
+			})
+		}, "PR_SET_PDEATHSIG"
 	},
 };
 
