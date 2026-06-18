@@ -9,6 +9,7 @@
 #include <clues/items/fs.hxx>
 #include <clues/items/items.hxx>
 #include <clues/items/prctl.hxx>
+#include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
@@ -74,6 +75,7 @@ protected: // functions
  * - GET_CHILD_SUBREAPER: prctl::GetChildSubReaperSystemCall
  * - PR_GET_NAME/PR_SET_NAME: prctl::NameSystemCall
  * - PR_SET_VMA: prctl::VirtualMemoryAttrSystemCall
+ * - PR_SET_PDEATHSIG, PR_GET_PDEATHSIG: prctl::ParentDeathSignalSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -404,6 +406,33 @@ public: // data
 
 	/// The in or out string parameter.
 	std::optional<item::StringData> name;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override;
+
+	void prepareNewSystemCall() override;
+};
+
+/// Specialization of PrCtlSystemCall for PR_GET_PDEATHSIG and PR_SET_PDEATHSIG
+/**
+ * This system call uses the `res` exit status return value.
+ **/
+class CLUES_API ParentDeathSignalSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit ParentDeathSignalSystemCall() :
+			PrCtlSystemCall{} {
+		setSuccessReturn();
+	}
+
+public: // data
+
+	/// The new signal to set for PR_SET_PDEATHSIG.
+	std::optional<item::SignalNumber> new_signal;
+	/// The currently set signal for PR_GET_PDEATHSIG.
+	std::optional<item::PointerToScalar<cosmos::SignalNr>> cur_signal;
 
 protected: // functions
 

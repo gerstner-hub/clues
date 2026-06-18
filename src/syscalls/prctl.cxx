@@ -77,6 +77,7 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 	 * GET/SET_FP_EMDU IA64 only
 	 * GET/SET_FP_EXC PowerPC only
 	 * MPX_ENABLE/DISABLE_MANAGEMENT: dropped in kernel 5.4.
+	 * PAC_RESET_KEYS: arm64 only
 	 */
 
 	switch (op.operation()) {
@@ -150,6 +151,9 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 		case GET_NAME: /* fallthrough */
 		case SET_NAME:
 			return std::make_shared<NameSystemCall>();
+		case SET_PDEATHSIG: /* fallthrough */
+		case GET_PDEATHSIG:
+			return std::make_shared<ParentDeathSignalSystemCall>();
 		default: return std::make_shared<PrCtlSystemCall>();
 	}
 }
@@ -298,6 +302,33 @@ bool NameSystemCall::check2ndPass(const Tracee&) {
 
 void NameSystemCall::prepareNewSystemCall() {
 	dropParameters(1);
+}
+
+bool ParentDeathSignalSystemCall::check2ndPass(const Tracee&) {
+	using enum item::ProcessOp::Operation;
+
+	switch (op.operation()) {
+		case GET_PDEATHSIG: {
+			cur_signal.emplace("sig", "pointer to signal (long)");
+			addParameters(*cur_signal);
+			break;
+		} case SET_PDEATHSIG: {
+			new_signal.emplace();
+			addParameters(*new_signal);
+			break;
+
+		} default: {
+			throw cosmos::RuntimeError{"bad prctl op"};
+		}
+	}
+
+	return true;
+}
+
+void ParentDeathSignalSystemCall::prepareNewSystemCall() {
+	dropParameters(1);
+	new_signal.reset();
+	cur_signal.reset();
 }
 
 } // end ns prctl
