@@ -74,7 +74,7 @@ public: // functions
  * perform more complex operations on the tracee to gather the data as
  * appropriate.
  **/
-class PointerValue :
+class CLUES_API PointerValue :
 		public SystemCallItem {
 public: // functions
 
@@ -88,6 +88,10 @@ public: // functions
 	ForeignPtr ptr() const {
 		return ForeignPtr{valueAs<uintptr_t>()};
 	}
+
+protected:
+
+	std::string formatBadPointer() const;
 };
 
 /// Specialization of a PointerValue for out-parameters.

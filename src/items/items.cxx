@@ -41,6 +41,14 @@ std::string GenericPointerValue::str() const {
 	}
 }
 
+std::string PointerValue::formatBadPointer() const {
+	if (ptr() == ForeignPtr::NO_POINTER) {
+		return "NULL";
+	}
+
+	return format::pointer(ptr(), "<invalid>");
+}
+
 template <typename INT>
 std::string IntValueT<INT>::str() const {
 	return format_number(m_value, m_base);
