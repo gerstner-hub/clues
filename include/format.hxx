@@ -28,8 +28,10 @@ namespace clues {
 namespace clues::format {
 
 enum class Flag {
-	/// Treat data as binary without interpreting is as text.
-	BINARY = 1 << 0
+	/// Treat data as binary without interpreting it as text.
+	BINARY = 1 << 0,
+	/// The data is about an array type.
+	ARRAY = 1 << 1,
 };
 
 using Flags = cosmos::BitMask<Flag>;
@@ -115,7 +117,9 @@ CLUES_API std::string control_char(const char ch);
 CLUES_API std::string pointer(const ForeignPtr ptr);
 
 /// formats a pointer to data in the form of "0x123456 → [<data>]".
-CLUES_API std::string pointer(const ForeignPtr ptr, const std::string_view data);
+CLUES_API std::string pointer(const ForeignPtr ptr,
+		const std::string_view data,
+		const Flags flags = {});
 
 /// returns a label for `info.type`.
 CLUES_API std::string_view fd_type(const FDInfo &info);

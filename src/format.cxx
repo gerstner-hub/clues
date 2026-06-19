@@ -550,11 +550,21 @@ std::string pointer(const ForeignPtr ptr) {
 	return std::format("{}", reinterpret_cast<void*>(cosmos::to_integral(ptr)));
 }
 
-std::string pointer(const ForeignPtr ptr, const std::string_view data) {
+std::string pointer(const ForeignPtr ptr, const std::string_view data,
+		const Flags flags) {
 	if (ptr == ForeignPtr::NO_POINTER)
 		return "NULL";
 
-	return std::format("{} → [{}]", format::pointer(ptr), data);
+	const bool is_array = flags[Flag::ARRAY];
+
+	auto bracketed = [](const std::string_view s) {
+		return std::format("[{}]", s);
+	};
+
+	return std::format("{} → {}",
+			format::pointer(ptr),
+			/* for arrays avoid double brackets */
+			is_array ? std::string{data} : bracketed(data));
 }
 
 std::string_view fd_type(const FDInfo &info) {
