@@ -651,6 +651,65 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_GET_SECCOMP);
 			})
 		}, "PR_GET_SECCOMP"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_SECCOMP, SECCOMP_MODE_STRICT);
+		}, ENTRY_VERIFY_CB(prctl::SetSecCompSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::SET_SECCOMP);
+			VERIFY(sc.res);
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.mode.mode() == clues::item::SecCompMode::STRICT);
+			VERIFY(!sc.filter);
+		}), EXIT_VERIFY_CB(prctl::SetSecCompSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_SECCOMP, SECCOMP_MODE_STRICT);
+			})
+		}, "PR_SET_SECCOMP(strict)"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			struct sock_fprog prog{};
+			/*
+			 * an invalid bpf program jumping beyond the existing code, we only
+			 * want to provoke an EINVAL return here.
+			 */
+			struct sock_filter filter = BPF_JUMP(BPF_JMP | BPF_JA, 10, 0, 0);
+			prog.len = 1;
+			prog.filter = &filter;
+			prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog);
+		}, ENTRY_VERIFY_CB(prctl::SetSecCompSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::SET_SECCOMP);
+			VERIFY(sc.res);
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.mode.mode() == clues::item::SecCompMode::FILTER);
+			VERIFY(sc.filter.has_value());
+			const auto &filter_prog = sc.filter->prog();
+			const auto &filters = sc.filter->filters();
+
+			VERIFY(filter_prog != nullptr);
+			VERIFY(filter_prog->len == 1);
+			VERIFY(filter_prog->filter != nullptr);
+			VERIFY(filters.size() == 1);
+			const auto &filter = filters[0];
+			VERIFY(filter.k == 10);
+		}), EXIT_VERIFY_CB(prctl::SetSecCompSystemCall, {
+			/* should fail with EINVAL */
+			VERIFY(sc.hasErrorCode());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto prog = alloc_struct32<struct sock_fprog>();
+				auto filter = alloc_struct32<struct sock_filter>();
+				prog->len = 1;
+				prog->filter = filter;
+				*filter = BPF_JUMP(BPF_JMP | BPF_JA, 10, 0, 0);
+				syscall32(SyscallNr32::PRCTL, PR_SET_SECCOMP, SECCOMP_MODE_FILTER, prog);
+			})
+		}, "PR_SET_SECCOMP(filter)"
 	},
 };
 

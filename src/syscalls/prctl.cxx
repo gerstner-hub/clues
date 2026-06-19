@@ -162,6 +162,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 			return std::make_shared<ParentDeathSignalSystemCall>();
 		case SET_PTRACER:
 			return std::make_shared<SetPTracerSystemCall>();
+		case SET_SECCOMP:
+			return std::make_shared<SetSecCompSystemCall>();
 		default: return std::make_shared<PrCtlSystemCall>();
 	}
 }
@@ -337,6 +339,16 @@ void ParentDeathSignalSystemCall::prepareNewSystemCall() {
 	dropParameters(1);
 	new_signal.reset();
 	cur_signal.reset();
+}
+
+bool SetSecCompSystemCall::check2ndPass(const Tracee&) {
+	if (mode.mode() == item::SecCompMode::FILTER) {
+		filter.emplace();
+		addParameters(*filter);
+		return true;
+	}
+
+	return false;
 }
 
 } // end ns prctl

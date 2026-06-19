@@ -11,7 +11,6 @@
 #endif
 #include <linux/prctl.h>
 
-
 namespace clues::item {
 
 #ifdef CLUES_HAVE_ARCH_PRCTL

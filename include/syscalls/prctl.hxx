@@ -9,6 +9,7 @@
 #include <clues/items/fs.hxx>
 #include <clues/items/items.hxx>
 #include <clues/items/prctl.hxx>
+#include <clues/items/seccomp.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
@@ -485,6 +486,37 @@ protected: // functions
 
 	void prepareNewSystemCall() override {
 		/* nothing to reset */
+	}
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_SECCOMP.
+/**
+ * This system call uses the `res` exit status return value.
+ **/
+class CLUES_API SetSecCompSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit SetSecCompSystemCall() :
+			PrCtlSystemCall{} {
+		setSuccessReturn();
+		addParameters(mode);
+	}
+
+public: // data
+
+	/// The new secure computing mode to set.
+	item::SecCompMode mode;
+	/// For SecCompMode::FILTER this contains the filter program to be set.
+	std::optional<item::FilterProg> filter;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override;
+
+	void prepareNewSystemCall() override {
+		filter.reset();
+		dropParameters(2);
 	}
 };
 

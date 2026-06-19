@@ -46,6 +46,7 @@ struct StringVector :
  */
 const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
 	{"{addr}", R"(0x[0-9a-f]+)"},
+	{"{hex}", R"(0x[0-9a-f]+)"},
 	{"{fd}", R"([0-9]+)"},
 	{"{bitmask}", R"(0x[0-9a-f]+)"},
 	{"{decimal}", R"([0-9]+)"},
@@ -351,6 +352,7 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_SET_PTRACER, pid={pid}\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_PTRACER, pid=PR_SET_PTRACER_ANY\) = 0 \(success\))",
 			R"(prctl\(op=PR_GET_SECCOMP\) = 0 \(mode\))",
+			R"(prctl\(op=PR_SET_SECCOMP, mode=SECCOMP_MODE_FILTER, filter=\{len={decimal}, filter={addr} → \[\{code=0x0005, jt=0, jf=0, k=0xa\}, \{code=0x0005, jt=0, jf=0, k=0x14\}\]\}\) = 22 \(EINVAL\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

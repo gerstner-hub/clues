@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <linux/prctl.h>
 #include <linux/capability.h>
+#include <linux/seccomp.h>
+#include <linux/filter.h>
 #include <sys/prctl.h>
 #include <sys/mman.h>
 #include <signal.h>
@@ -120,4 +122,25 @@ int main() {
 	prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
 
 	prctl(PR_GET_SECCOMP);
+
+	struct sock_fprog prog{};
+	/*
+	 * an invalid bpf program jumping beyond the existing code, we only
+	 * want to provoke an EINVAL return here.
+	 */
+	struct sock_filter filter[2] = {
+		BPF_JUMP(BPF_JMP | BPF_JA, 10, 0, 0),
+		BPF_JUMP(BPF_JMP | BPF_JA, 20, 0, 0)
+	};
+	prog.len = sizeof(filter) / sizeof(struct sock_filter);
+	prog.filter = filter;
+	prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog);
+
+	/*
+	 * only execute this call after everything else, because afterwards we
+	 * no longer can execute arbitrary system calls, not even
+	 * exit_group().
+	 */
+	prctl(PR_SET_SECCOMP, SECCOMP_MODE_STRICT);
+	syscall(SYS_exit, 0);
 }
