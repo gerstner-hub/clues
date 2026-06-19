@@ -91,6 +91,10 @@ protected: // functions
  * - GET_IO_FLUSHER
  * - GET_KEEPCAPS
  * - GET_NO_NEW_PRIVS
+ *
+ * The following operations use the `int_res` return value:
+ *
+ * - GET_SECCOMP
  **/
 struct CLUES_API PrCtlSystemCall :
 		public SystemCall {
@@ -147,6 +151,19 @@ struct CLUES_API PrCtlSystemCall :
 	 * - SET_CHILD_SUBREAPER
 	 **/
 	std::optional<item::BoolValue> bool_res;
+
+	/// Integer return value.
+	/**
+	 * This is available for the following Operation values:
+	 *
+	 * - GET_SECCOMP (0 if not in secure computing mode, 2 if in secure
+	 *   computing mode but this prctl() call is allowed). This is
+	 *   available for the following Operation values:
+	 *
+	 *   - GET_SECCOMP (0 if not in secure computing mode, 2 if in secure
+	 *   computing mode but this prctl() call is allowed).
+	 **/
+	std::optional<item::IntValue> int_res;
 
 protected: // functions
 

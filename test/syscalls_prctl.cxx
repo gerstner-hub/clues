@@ -634,6 +634,23 @@ const auto TESTS = std::array{
 						1, 0, 0, 0);
 			})
 		}, "PR_SET_PTRACER"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_GET_SECCOMP);
+		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.op.operation() ==
+					clues::item::ProcessOp::GET_SECCOMP);
+			VERIFY(!sc.res);
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(sc.int_res.has_value());
+		}), EXIT_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.int_res->value() == 0);
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_GET_SECCOMP);
+			})
+		}, "PR_GET_SECCOMP"
 	},
 };
 

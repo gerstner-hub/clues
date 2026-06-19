@@ -95,6 +95,11 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 			bool_setting.emplace("state", "new attribute state");
 			addParameters(*bool_setting);
 			break;
+		} case GET_SECCOMP: {
+			int_res.emplace("mode", "current seccomp mode",
+					ItemType::RETVAL);
+			setReturnItem(*int_res);
+			break;
 		} default: {
 			break;
 		}
@@ -123,6 +128,7 @@ void PrCtlSystemCall::clearOptArgs() {
 void PrCtlSystemCall::clearOptRetVals() {
 	res.reset();
 	bool_res.reset();
+	int_res.reset();
 }
 
 SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
