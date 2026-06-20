@@ -135,36 +135,33 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 
 	using enum item::ProcessOp::Operation;
 	using namespace clues::prctl;
+	using std::make_shared;
 
 	const auto op = item::ProcessOp::Operation(info.entryInfo()->args()[0]);
 
 	switch (op) {
-		case SET_MM: return std::make_shared<MemoryMapSystemCall>();
-		case MCE_KILL: return std::make_shared<
-			       MachineCheckKillSystemCall>();
-		case MCE_KILL_GET:
-			return std::make_shared<
-				MachineCheckKillGetSystemCall>();
-		case CAP_AMBIENT:
-			return std::make_shared<CapAmbientSystemCall>();
+		case SET_MM: return make_shared<MemoryMapSystemCall>();
+		case MCE_KILL: return make_shared<MachineCheckKillSystemCall>();
+		case MCE_KILL_GET: return make_shared<MachineCheckKillGetSystemCall>();
+		case CAP_AMBIENT: return make_shared<CapAmbientSystemCall>();
 		case CAPBSET_READ: /* fallthrough */
 		case CAPBSET_DROP:
-			return std::make_shared<CapBSetSystemCall>();
+			return make_shared<CapBSetSystemCall>();
 		case GET_CHILD_SUBREAPER:
-			return std::make_shared<GetChildSubReaperSystemCall>();
+			return make_shared<GetChildSubReaperSystemCall>();
 		case SET_VMA:
-			return std::make_shared<VirtualMemoryAttrSystemCall>();
+			return make_shared<VirtualMemoryAttrSystemCall>();
 		case GET_NAME: /* fallthrough */
 		case SET_NAME:
-			return std::make_shared<NameSystemCall>();
+			return make_shared<NameSystemCall>();
 		case SET_PDEATHSIG: /* fallthrough */
 		case GET_PDEATHSIG:
-			return std::make_shared<ParentDeathSignalSystemCall>();
+			return make_shared<ParentDeathSignalSystemCall>();
 		case SET_PTRACER:
-			return std::make_shared<SetPTracerSystemCall>();
+			return make_shared<SetPTracerSystemCall>();
 		case SET_SECCOMP:
-			return std::make_shared<SetSecCompSystemCall>();
-		default: return std::make_shared<PrCtlSystemCall>();
+			return make_shared<SetSecCompSystemCall>();
+		default: return make_shared<PrCtlSystemCall>();
 	}
 }
 
