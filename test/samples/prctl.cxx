@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <linux/prctl.h>
 #include <linux/capability.h>
+#include <linux/securebits.h>
 #include <linux/seccomp.h>
 #include <linux/filter.h>
 #include <sys/prctl.h>
@@ -135,6 +136,9 @@ int main() {
 	prog.len = sizeof(filter) / sizeof(struct sock_filter);
 	prog.filter = filter;
 	prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog);
+
+	prctl(PR_SET_SECUREBITS, SECBIT_NOROOT|SECBIT_NO_CAP_AMBIENT_RAISE);
+	prctl(PR_GET_SECUREBITS);
 
 	/*
 	 * only execute this call after everything else, because afterwards we

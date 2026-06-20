@@ -39,4 +39,32 @@ protected: // data
 	cosmos::Capability m_cap{};
 };
 
+/// Specification of a secure bits mask.
+/**
+ * This is currently used with prctl::GetSecureBitsSystemCall and
+ * prctl::SetSecCompSystemCall.
+ **/
+class CLUES_API SecureBits :
+		public SystemCallItem {
+public: // functions
+
+	explicit SecureBits(const ItemType type) :
+			SystemCallItem{type, "bits", "secure bits mask"} {
+	}
+
+	cosmos::SecureBits mask() const {
+		return m_mask;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	cosmos::SecureBits m_mask;
+};
+
 } // end ns

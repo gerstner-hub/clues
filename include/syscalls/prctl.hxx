@@ -520,6 +520,69 @@ protected: // functions
 	}
 };
 
+/// Specialization of PrCtlSystemCall for PR_GET_SECUREBITS.
+/**
+ * This call takes no additional parameters and always returns `bits`, the
+ * secure bits bitmask.
+ **/
+class CLUES_API GetSecureBitsSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit GetSecureBitsSystemCall() :
+			PrCtlSystemCall{},
+       			bits{ItemType::RETVAL} {
+		setReturnItem(bits);
+	}
+
+public: // data
+
+	item::SecureBits bits;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to clean up */
+		return;
+	}
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_SECUREBITS.
+/**
+ * This call takes a SecureBits parameter and always returns a `res` success
+ * status.
+ **/
+class CLUES_API SetSecureBitsSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit SetSecureBitsSystemCall() :
+			PrCtlSystemCall{},
+			bits{ItemType::PARAM_IN} {
+		addParameters(bits);
+		setSuccessReturn();
+	}
+
+public: // data
+
+	item::SecureBits bits;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to clean up */
+		return;
+	}
+};
+
 } // end ns prctl
 
 } // end ns

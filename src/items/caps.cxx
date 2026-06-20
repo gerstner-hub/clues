@@ -7,6 +7,7 @@
 // clues
 #include <clues/items/caps.hxx>
 #include <clues/macros.h>
+#include <clues/private/utils.hxx>
 
 namespace clues::item {
 
@@ -60,6 +61,25 @@ std::string Capability::str() const {
 
 void Capability::processValue(const Tracee&) {
 	m_cap = cosmos::Capability{valueAs<long>()};
+}
+
+std::string SecureBits::str() const {
+	BITFLAGS_FORMAT_START(m_mask);
+
+	BITFLAGS_ADD(SECBIT_KEEP_CAPS);
+	BITFLAGS_ADD(SECBIT_KEEP_CAPS_LOCKED);
+	BITFLAGS_ADD(SECBIT_NO_SETUID_FIXUP);
+	BITFLAGS_ADD(SECBIT_NO_SETUID_FIXUP_LOCKED);
+	BITFLAGS_ADD(SECBIT_NOROOT);
+	BITFLAGS_ADD(SECBIT_NOROOT_LOCKED);
+	BITFLAGS_ADD(SECBIT_NO_CAP_AMBIENT_RAISE);
+	BITFLAGS_ADD(SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED);
+
+	return BITFLAGS_STR();
+}
+
+void SecureBits::processValue(const Tracee&) {
+	m_mask = cosmos::SecureBits{valueAs<unsigned long>()};
 }
 
 } // end ns

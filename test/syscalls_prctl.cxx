@@ -701,6 +701,45 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_SET_SECCOMP, SECCOMP_MODE_FILTER, prog);
 			})
 		}, "PR_SET_SECCOMP(filter)"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_KEEPCAPS, 1);
+			prctl(PR_GET_SECUREBITS);
+		}, ENTRY_VERIFY_CB(prctl::GetSecureBitsSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_SECUREBITS);
+			VERIFY(!sc.res);
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(prctl::GetSecureBitsSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.bits.mask()[cosmos::SecureBit::KEEP_CAPS] == true);
+			VERIFY(sc.bits.mask().count() == 1);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				prctl(PR_SET_KEEPCAPS, 1);
+				syscall32(SyscallNr32::PRCTL, PR_GET_SECUREBITS);
+			})
+		}, "PR_GET_SECUREBITS"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_SECUREBITS, SECBIT_NOROOT|SECBIT_NOROOT_LOCKED);
+		}, ENTRY_VERIFY_CB(prctl::SetSecureBitsSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_SECUREBITS);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.bits.mask() == cosmos::SecureBits{
+					{cosmos::SecureBit::NOROOT,
+					cosmos::SecureBit::NOROOT_LOCKED}});
+		}), EXIT_VERIFY_CB(prctl::SetSecureBitsSystemCall, {
+			/* this should fail due to lacking privs */
+			VERIFY(sc.hasErrorCode());
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_SECUREBITS,
+						SECBIT_NOROOT|SECBIT_NOROOT_LOCKED);
+			})
+		}, "PR_SET_SECUREBITS"
 	},
 };
 
