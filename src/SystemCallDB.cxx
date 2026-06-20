@@ -53,6 +53,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::CLOSE:           return new_sys<CloseSystemCall>();
 	case SystemCallNr::EXECVE:          return new_sys<ExecveSystemCall>();
 	case SystemCallNr::EXECVEAT:        return new_sys<ExecveAtSystemCall>();
+	case SystemCallNr::EXIT:            return new_sys<ExitSystemCall>();
 	case SystemCallNr::EXIT_GROUP:      return new_sys<ExitGroupSystemCall>();
 	case SystemCallNr::FCNTL:           [[fallthrough]];
 	case SystemCallNr::FCNTL64:         return new_sys<FcntlSystemCall>(nr);

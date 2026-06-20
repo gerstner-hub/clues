@@ -74,11 +74,19 @@ struct CLUES_API RestartSystemCall :
 	item::SuccessResult result;
 };
 
-struct CLUES_API ExitGroupSystemCall :
+template <SystemCallNr NR>
+/// Template type for exit() style system calls.
+/**
+ * Usually exit_group() is called these days by libc, but the older exit()
+ * system call still exists, which only exits the calling thread, not the
+ * complete process. Apart from the semantics the system call arguments are
+ * the same.
+ **/
+struct ExitSystemCallT :
 		public SystemCall {
 
-	ExitGroupSystemCall() :
-			SystemCall{SystemCallNr::EXIT_GROUP},
+	ExitSystemCallT() :
+			SystemCall{NR},
 			status{ItemType::PARAM_IN, "exit code"} {
 		setReturnItem(result);
 		setParameters(status);
@@ -87,6 +95,9 @@ struct CLUES_API ExitGroupSystemCall :
 	item::ExitStatus status;
 	item::SuccessResult result; // actually it never returns
 };
+
+using ExitGroupSystemCall = ExitSystemCallT<SystemCallNr::EXIT_GROUP>;
+using ExitSystemCall = ExitSystemCallT<SystemCallNr::EXIT>;
 
 struct CLUES_API GetRandomSystemCall :
 		public SystemCall {
