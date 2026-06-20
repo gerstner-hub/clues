@@ -547,7 +547,6 @@ protected: // functions
 
 	void prepareNewSystemCall() override {
 		/* nothing to clean up */
-		return;
 	}
 };
 
@@ -579,7 +578,69 @@ protected: // functions
 
 	void prepareNewSystemCall() override {
 		/* nothing to clean up */
-		return;
+	}
+};
+
+/// Specialization of PrCtlSystemCall for PR_GET_SPECULATION_CTRL.
+/**
+ * This type uses `setting` as return value and none of the base class
+ * optional parameters.
+ **/
+class CLUES_API GetSpeculationControlSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit GetSpeculationControlSystemCall() :
+			PrCtlSystemCall{},
+			setting{ItemType::RETVAL} {
+		addParameters(misfeature);
+		setReturnItem(setting);
+	}
+
+public: // data
+
+	item::SpeculationCtrlMisfeature misfeature;
+	item::SpeculationCtrlSetting setting;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to clean up */
+	}
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_SPECULATION_CTRL.
+/**
+ * This type uses the `res` success status return value from the base class.
+ **/
+class CLUES_API SetSpeculationControlSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit SetSpeculationControlSystemCall() :
+			PrCtlSystemCall{},
+			setting{ItemType::PARAM_IN} {
+		addParameters(misfeature, setting);
+		setSuccessReturn();
+	}
+
+public: // data
+
+	item::SpeculationCtrlMisfeature misfeature;
+	item::SpeculationCtrlSetting setting;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to clean up */
 	}
 };
 

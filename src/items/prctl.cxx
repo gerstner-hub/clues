@@ -14,6 +14,7 @@
 #include <clues/format.hxx>
 #include <clues/items/prctl.hxx>
 #include <clues/macros.h>
+#include <clues/private/utils.hxx>
 #include <clues/syscalls/prctl.hxx>
 #include <clues/Tracee.hxx>
 
@@ -237,6 +238,34 @@ std::string VirtualMemoryAttr::str() const {
 
 void VirtualMemoryAttr::processValue(const Tracee&) {
 	m_attr = Attr{valueAs<long>()};
+}
+
+std::string SpeculationCtrlMisfeature::str() const {
+	switch (cosmos::to_integral(m_misfeature)) {
+		CASE_ENUM_TO_STR(PR_SPEC_STORE_BYPASS);
+		CASE_ENUM_TO_STR(PR_SPEC_INDIRECT_BRANCH);
+		default: return "PR_SPEC_???";
+	}
+}
+
+void SpeculationCtrlMisfeature::processValue(const Tracee&) {
+	m_misfeature = Misfeature{valueAs<long>()};
+}
+
+std::string SpeculationCtrlSetting::str() const {
+	BITFLAGS_FORMAT_START(m_settings);
+
+	BITFLAGS_ADD(PR_SPEC_PRCTL);
+	BITFLAGS_ADD(PR_SPEC_ENABLE);
+	BITFLAGS_ADD(PR_SPEC_DISABLE);
+	BITFLAGS_ADD(PR_SPEC_FORCE_DISABLE);
+	BITFLAGS_ADD(PR_SPEC_DISABLE_NOEXEC);
+
+	return BITFLAGS_STR();
+}
+
+void SpeculationCtrlSetting::processValue(const Tracee&) {
+	m_settings = Settings{valueAs<long>()};
 }
 
 } // end ns

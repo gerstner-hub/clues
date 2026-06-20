@@ -140,6 +140,9 @@ int main() {
 	prctl(PR_SET_SECUREBITS, SECBIT_NOROOT|SECBIT_NO_CAP_AMBIENT_RAISE);
 	prctl(PR_GET_SECUREBITS);
 
+	prctl(PR_SET_SPECULATION_CTRL, PR_SPEC_INDIRECT_BRANCH, PR_SPEC_FORCE_DISABLE, 0, 0);
+	prctl(PR_GET_SPECULATION_CTRL, PR_SPEC_INDIRECT_BRANCH, 0, 0);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even

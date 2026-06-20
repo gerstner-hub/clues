@@ -356,6 +356,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_SET_SECCOMP, mode=SECCOMP_MODE_FILTER, filter=\{len={decimal}, filter={addr} → \[\{code=0x0005, jt=0, jf=0, k=0xa\}, \{code=0x0005, jt=0, jf=0, k=0x14\}\]\}\) = 22 \(EINVAL\))",
 			R"(prctl\(op=PR_SET_SECUREBITS, bits={hex} \(SECBIT_NOROOT|SECBIT_NO_CAP_AMBIENT_RAISE\)\) = 1 \(EPERM\) \(errno\))",
 			R"(prctl\(op=PR_GET_SECUREBITS\) = {hex} \(SECBIT_KEEP_CAPS\) \(bits\))",
+			R"(prctl\(op=PR_SET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH, setting=0x8 \(PR_SPEC_FORCE_DISABLE\)\) = 0 \(success\))",
+			R"(prctl\(op=PR_GET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH\) = 0x9 \(PR_SPEC_PRCTL|PR_SPEC_FORCE_DISABLE\) \(setting\))",
 
 	}},
 #ifdef CLUES_HAVE_PIPE1

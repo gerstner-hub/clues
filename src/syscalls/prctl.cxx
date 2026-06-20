@@ -165,6 +165,10 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 			return make_shared<GetSecureBitsSystemCall>();
 		case SET_SECUREBITS:
 			return make_shared<SetSecureBitsSystemCall>();
+		case GET_SPECULATION_CTRL:
+			return make_shared<GetSpeculationControlSystemCall>();
+		case SET_SPECULATION_CTRL:
+			return make_shared<SetSpeculationControlSystemCall>();
 		default: return make_shared<PrCtlSystemCall>();
 	}
 }

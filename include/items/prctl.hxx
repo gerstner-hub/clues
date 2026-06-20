@@ -396,4 +396,86 @@ public: // functions
 	}
 };
 
+/// Enum for the PR_GET_SPECULATION_CTRL and PR_SET_SPECULATION_CTRL prctls().
+class CLUES_API SpeculationCtrlMisfeature :
+		public ValueInParameter {
+public: // types
+
+	enum class Misfeature : long {
+		/// Speculative store bypass.
+		STORE_BYPASS = PR_SPEC_STORE_BYPASS,
+		/// Indirect branch speculation.
+		INDIRECT_BRANCH = PR_SPEC_INDIRECT_BRANCH,
+	};
+
+	using enum Misfeature;
+
+public: // functions
+
+	explicit SpeculationCtrlMisfeature() :
+			ValueInParameter{"misfeature", "speculation control misfeature"} {
+	}
+
+	Misfeature misfeature() const {
+		return m_misfeature;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Misfeature m_misfeature{};
+};
+
+/// Bitmask for the PR_GET_SPECULATION_CTRL and PR_SET_SPECULATION_CTRL prctls().
+/**
+ * It is not fully clear at first that this is actually a bitmask. Only the
+ * PR_SPEC_PRCTL bit is currently used in addition to one of the setting bits.
+ **/
+class CLUES_API SpeculationCtrlSetting :
+		public ValueParameter {
+public: // types
+
+	enum class Setting : long {
+		/// Mitigation can be controlled via PR_SET_SPECULATION_CTRL.
+		PRCTL = PR_SPEC_PRCTL,
+		/// Misfeature enabled, mitigation disabled.
+		ENABLE = PR_SPEC_ENABLE,
+		/// Misfeature disabled, mitigation enabled.
+		DISABLE = PR_SPEC_DISABLE,
+		/// Like DISABLE but cannot be undone.
+		FORCE_DISABLE = PR_SPEC_FORCE_DISABLE,
+		/// Like DISABLE but the setting is reset upon execve().
+		DISABLE_NOEXEC = PR_SPEC_DISABLE_NOEXEC,
+	};
+
+	using enum Setting;
+
+	using Settings = cosmos::BitMask<Setting>;
+
+public: // functions
+
+	explicit SpeculationCtrlSetting(const ItemType type) :
+			ValueParameter{type, "setting", "speculation control setting"} {
+	}
+
+	Settings settings() const {
+		return m_settings;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Settings m_settings{};
+};
+
 } // end ns
