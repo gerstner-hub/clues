@@ -238,6 +238,13 @@ const auto TESTS = std::array{
 			VERIFY(!sc.mm_struct_size);
 			VERIFY(sc.reported_size.has_value());
 		}), EXIT_VERIFY_CB(prctl::MemoryMapSystemCall, {
+			if (sc.hasErrorCode() && sc.error()->errorCode() == cosmos::Errno::PERMISSION) {
+				/* when the kernel is built without CHECKPOINT_RESTORE
+				 * then EPERM is returned here.
+				 */
+				return;
+			}
+
 			VERIFY(sc.hasResultValue());
 			const auto map_size = *sc.reported_size->value();
 			VERIFY(map_size >= sizeof(prctl_mm_map));

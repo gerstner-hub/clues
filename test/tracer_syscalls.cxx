@@ -337,7 +337,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_AUXV, addr={addr}\) = 1 \(EPERM\) \(errno\))",
 			R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_EXE_FILE, fd={fd}\) = 1 \(EPERM\) \(errno\))",
 			R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_MAP, map=\{start_code={addr}, end_code={addr}, start_data={addr}, end_data={addr}, start_brk={addr}, brk={addr}, start_stack={addr}, arg_start={addr}, arg_end={addr}, env_start={addr}, env_end={addr}, auxv={addr}, auxv_size={decimal}, exe_fd={fd}\}, size={decimal}\) = [0-9]+)",
-			R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_MAP_SIZE, size={addr} → \[{decimal}\]\) = 0 \(success\))",
+			/* this can fail with EPERM if CONFIG_CHECKPOINT_RESTORE is not set in the kernel */
+			R"(prctl\(op=PR_SET_MM, subop=PR_SET_MM_MAP_SIZE, size={addr} → \[{decimal}\]\) = (0 \(success\)|.*EPERM))",
 			R"(prctl\(op=PR_SET_VMA, attr=PR_SET_VMA_ANON_NAME, addr={addr}, size={decimal}, name={string}\) = {decimal})",
 #ifndef __SANITIZE_ADDRESS__
 			R"(prctl\(op=PR_SET_VMA, attr=PR_SET_VMA_ANON_NAME, addr={addr}, size={decimal}, name=NULL\) = {decimal})",
