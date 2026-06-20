@@ -247,7 +247,7 @@ bool Engine::tryUpdateTraceePID(const cosmos::ProcessID old_pid, const cosmos::P
 }
 
 void Engine::stop(const std::optional<cosmos::Signal> signal) {
-	for (auto it = m_tracees.begin(); it != m_tracees.end(); it++) {
+	for (auto it = m_tracees.begin(); it != m_tracees.end(); /* noop */) {
 		auto &tracee = *it->second;
 		if (tracee.isChildProcess() && tracee.alive() && signal) {
 			cosmos::signal::send(tracee.pid(), *signal);
@@ -255,7 +255,9 @@ void Engine::stop(const std::optional<cosmos::Signal> signal) {
 		tracee.detach();
 
 		if (!tracee.alive()) {
-			m_tracees.erase(it);
+			it = m_tracees.erase(it);
+		} else {
+			it++;
 		}
 	}
 }
