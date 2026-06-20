@@ -15,7 +15,7 @@ int main() {
 
 	constexpr std::string_view TEST_DATA{"test file content goes here; pretty long line\nand another line\nand yet another line\n"};
 
-	if (write(fd, TEST_DATA.data(), TEST_DATA.size()) != TEST_DATA.size()) {
+	if (write(fd, TEST_DATA.data(), TEST_DATA.size()) != (ssize_t)TEST_DATA.size()) {
 		return 1;
 	}
 
