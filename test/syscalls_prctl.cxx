@@ -7,6 +7,8 @@
 
 namespace {
 
+using clues::item::ProcessOp;
+
 const auto TESTS = std::array{
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
@@ -31,8 +33,7 @@ const auto TESTS = std::array{
 			prctl(PR_SET_DUMPABLE, 1);
 			prctl(PR_GET_DUMPABLE);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::GET_DUMPABLE);
+			VERIFY(sc.op.operation() == ProcessOp::GET_DUMPABLE);
 			VERIFY(!sc.bool_setting);
 			VERIFY(!sc.res);
 			VERIFY(sc.bool_res.has_value());
@@ -48,8 +49,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_DUMPABLE, 1);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_DUMPABLE);
+			VERIFY(sc.op.operation() == ProcessOp::SET_DUMPABLE);
 			VERIFY(sc.bool_setting.has_value());
 			VERIFY(sc.bool_setting->value() == true);
 			VERIFY(sc.res.has_value());
@@ -65,8 +65,7 @@ const auto TESTS = std::array{
 			prctl(PR_SET_KEEPCAPS, 1);
 			prctl(PR_GET_KEEPCAPS);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::GET_KEEPCAPS);
+			VERIFY(sc.op.operation() == ProcessOp::GET_KEEPCAPS);
 			VERIFY(!sc.bool_setting);
 			VERIFY(!sc.res);
 			VERIFY(sc.bool_res.has_value());
@@ -82,8 +81,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_KEEPCAPS, 1);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_KEEPCAPS);
+			VERIFY(sc.op.operation() == ProcessOp::SET_KEEPCAPS);
 			VERIFY(sc.bool_setting.has_value());
 			VERIFY(sc.bool_setting->value() == true);
 			VERIFY(sc.res.has_value());
@@ -98,8 +96,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_CHILD_SUBREAPER, 1);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_CHILD_SUBREAPER);
+			VERIFY(sc.op.operation() == ProcessOp::SET_CHILD_SUBREAPER);
 			VERIFY(sc.bool_setting.has_value());
 			VERIFY(sc.bool_setting->value() == true);
 			VERIFY(sc.res.has_value());
@@ -116,8 +113,7 @@ const auto TESTS = std::array{
 			prctl(PR_SET_CHILD_SUBREAPER, 1);
 			prctl(PR_GET_CHILD_SUBREAPER, &reaper);
 		}, ENTRY_VERIFY_CB(prctl::GetChildSubReaperSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::GET_CHILD_SUBREAPER);
+			VERIFY(sc.op.operation() == ProcessOp::GET_CHILD_SUBREAPER);
 			VERIFY(!sc.bool_setting.has_value());
 			VERIFY(!sc.bool_res);
 			VERIFY(sc.res.has_value());
@@ -135,8 +131,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_GET_IO_FLUSHER);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::GET_IO_FLUSHER);
+			VERIFY(sc.op.operation() == ProcessOp::GET_IO_FLUSHER);
 			VERIFY(!sc.bool_setting);
 			VERIFY(!sc.res);
 			VERIFY(sc.bool_res.has_value());
@@ -151,8 +146,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_IO_FLUSHER, 1);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_IO_FLUSHER);
+			VERIFY(sc.op.operation() == ProcessOp::SET_IO_FLUSHER);
 			VERIFY(sc.bool_setting.has_value());
 			VERIFY(sc.bool_setting->value() == true);
 			VERIFY(sc.res.has_value());
@@ -174,7 +168,7 @@ const auto TESTS = std::array{
 			 */
 			prctl(PR_SET_MM, PR_SET_MM_START_CODE, 0x1234);
 		}, ENTRY_VERIFY_CB(prctl::MemoryMapSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::SET_MM);
+			VERIFY(sc.op.operation() == ProcessOp::SET_MM);
 			VERIFY(sc.mm_op.operation() == clues::item::MemoryMapOp::START_CODE);
 			VERIFY(!sc.bool_setting.has_value());
 			VERIFY(sc.res.has_value());
@@ -200,7 +194,7 @@ const auto TESTS = std::array{
 			 */
 			prctl(PR_SET_MM, PR_SET_MM_EXE_FILE, 3);
 		}, ENTRY_VERIFY_CB(prctl::MemoryMapSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::SET_MM);
+			VERIFY(sc.op.operation() == ProcessOp::SET_MM);
 			VERIFY(sc.mm_op.operation() == clues::item::MemoryMapOp::EXE_FILE);
 			VERIFY(!sc.bool_setting.has_value());
 			VERIFY(sc.res.has_value());
@@ -227,7 +221,7 @@ const auto TESTS = std::array{
 			unsigned int map_size = 0;
 			prctl(PR_SET_MM, PR_SET_MM_MAP_SIZE, &map_size, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::MemoryMapSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::SET_MM);
+			VERIFY(sc.op.operation() == ProcessOp::SET_MM);
 			VERIFY(sc.mm_op.operation() == clues::item::MemoryMapOp::MAP_SIZE);
 			VERIFY(!sc.bool_setting.has_value());
 			VERIFY(sc.res.has_value());
@@ -275,7 +269,7 @@ const auto TESTS = std::array{
 			map.exe_fd = 14;
 			prctl(PR_SET_MM, PR_SET_MM_MAP, &map, sizeof(map), 0);
 		}, ENTRY_VERIFY_CB(prctl::MemoryMapSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::SET_MM);
+			VERIFY(sc.op.operation() == ProcessOp::SET_MM);
 			VERIFY(sc.mm_op.operation() == clues::item::MemoryMapOp::MAP);
 			VERIFY(!sc.bool_setting.has_value());
 			VERIFY(sc.res.has_value());
@@ -319,7 +313,7 @@ const auto TESTS = std::array{
 					PR_MCE_KILL_EARLY, 0, 0);
 			prctl(PR_MCE_KILL_GET, 0, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::MachineCheckKillGetSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::MCE_KILL_GET);
+			VERIFY(sc.op.operation() == ProcessOp::MCE_KILL_GET);
 			VERIFY(!sc.bool_setting.has_value());
 			VERIFY(!sc.res);
 			VERIFY(!sc.bool_res);
@@ -338,7 +332,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_MCE_KILL, PR_MCE_KILL_CLEAR, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::MachineCheckKillSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::MCE_KILL);
+			VERIFY(sc.op.operation() == ProcessOp::MCE_KILL);
 			VERIFY(sc.mce_kill_op.operation() ==
 					clues::item::MachineCheckOp::CLEAR);
 			VERIFY(!sc.bool_setting.has_value());
@@ -355,7 +349,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_MCE_KILL, PR_MCE_KILL_SET, PR_MCE_KILL_EARLY, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::MachineCheckKillSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::MCE_KILL);
+			VERIFY(sc.op.operation() == ProcessOp::MCE_KILL);
 			VERIFY(sc.mce_kill_op.operation() ==
 					clues::item::MachineCheckOp::SET);
 			VERIFY(!sc.bool_setting.has_value());
@@ -375,7 +369,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_CAP_AMBIENT, PR_CAP_AMBIENT_CLEAR_ALL, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::CapAmbientSystemCall, {
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::CAP_AMBIENT);
+			VERIFY(sc.op.operation() == ProcessOp::CAP_AMBIENT);
 			VERIFY(sc.ambient_op.operation() == clues::item::AmbientCapOp::CLEAR_ALL);
 			VERIFY(!sc.cap);
 			VERIFY(!sc.bool_setting.has_value());
@@ -397,7 +391,7 @@ const auto TESTS = std::array{
 			/* CAP_AMBIENT_RAISE is mostly the same, only that
 			 * we're lacking permission to do it, so let's stick
 			 * to this single test case */
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::CAP_AMBIENT);
+			VERIFY(sc.op.operation() == ProcessOp::CAP_AMBIENT);
 			VERIFY(sc.ambient_op.operation() == clues::item::AmbientCapOp::LOWER);
 			VERIFY(sc.cap.has_value());
 			VERIFY(sc.cap->cap() == cosmos::Capability::SYS_ADMIN);
@@ -420,7 +414,7 @@ const auto TESTS = std::array{
 			/* CAP_AMBIENT_RAISE is mostly the same, only that
 			 * we're lacking permission to do it, so let's stick
 			 * to this single test case */
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::CAP_AMBIENT);
+			VERIFY(sc.op.operation() == ProcessOp::CAP_AMBIENT);
 			VERIFY(sc.ambient_op.operation() == clues::item::AmbientCapOp::IS_SET);
 			VERIFY(sc.cap.has_value());
 			VERIFY(sc.cap->cap() == cosmos::Capability::NET_ADMIN);
@@ -444,7 +438,7 @@ const auto TESTS = std::array{
 			/* CAP_AMBIENT_RAISE is mostly the same, only that
 			 * we're lacking permission to do it, so let's stick
 			 * to this single test case */
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::CAPBSET_READ);
+			VERIFY(sc.op.operation() == ProcessOp::CAPBSET_READ);
 			VERIFY(sc.cap.cap() == cosmos::Capability::NET_ADMIN);
 			VERIFY(!sc.res);
 			VERIFY(!sc.bool_setting);
@@ -465,7 +459,7 @@ const auto TESTS = std::array{
 			/* CAP_AMBIENT_RAISE is mostly the same, only that
 			 * we're lacking permission to do it, so let's stick
 			 * to this single test case */
-			VERIFY(sc.op.operation() == clues::item::ProcessOp::CAPBSET_DROP);
+			VERIFY(sc.op.operation() == ProcessOp::CAPBSET_DROP);
 			VERIFY(sc.cap.cap() == cosmos::Capability::NET_RAW);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_setting);
@@ -486,8 +480,7 @@ const auto TESTS = std::array{
 			prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, addr,
 					4096, "testname");
 		}, ENTRY_VERIFY_CB(prctl::VirtualMemoryAttrSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_VMA);
+			VERIFY(sc.op.operation() == ProcessOp::SET_VMA);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_setting);
 			VERIFY(!sc.bool_res);
@@ -518,8 +511,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_NAME, "testname");
 		}, ENTRY_VERIFY_CB(prctl::NameSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_NAME);
+			VERIFY(sc.op.operation() == ProcessOp::SET_NAME);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_setting);
 			VERIFY(!sc.bool_res);
@@ -540,8 +532,7 @@ const auto TESTS = std::array{
 			char name[16];
 			prctl(PR_GET_NAME, name);
 		}, ENTRY_VERIFY_CB(prctl::NameSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::GET_NAME);
+			VERIFY(sc.op.operation() == ProcessOp::GET_NAME);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_setting);
 			VERIFY(!sc.bool_res);
@@ -564,8 +555,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_NO_NEW_PRIVS);
+			VERIFY(sc.op.operation() == ProcessOp::SET_NO_NEW_PRIVS);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_res);
 			VERIFY(sc.bool_setting.has_value());
@@ -584,8 +574,7 @@ const auto TESTS = std::array{
 			long sig = 0;
 			prctl(PR_GET_PDEATHSIG, &sig, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::ParentDeathSignalSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::GET_PDEATHSIG);
+			VERIFY(sc.op.operation() == ProcessOp::GET_PDEATHSIG);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_res);
 			VERIFY(!sc.bool_setting.has_value());
@@ -606,8 +595,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_PDEATHSIG, SIGSEGV, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::ParentDeathSignalSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_PDEATHSIG);
+			VERIFY(sc.op.operation() == ProcessOp::SET_PDEATHSIG);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_res);
 			VERIFY(!sc.bool_setting.has_value());
@@ -626,8 +614,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_PTRACER, 1, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::SetPTracerSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_PTRACER);
+			VERIFY(sc.op.operation() == ProcessOp::SET_PTRACER);
 			VERIFY(sc.res.has_value());
 			VERIFY(!sc.bool_res);
 			VERIFY(!sc.bool_setting.has_value());
@@ -644,8 +631,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_GET_SECCOMP);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::GET_SECCOMP);
+			VERIFY(sc.op.operation() == ProcessOp::GET_SECCOMP);
 			VERIFY(!sc.res);
 			VERIFY(!sc.bool_res);
 			VERIFY(!sc.bool_setting.has_value());
@@ -661,8 +647,7 @@ const auto TESTS = std::array{
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_SET_SECCOMP, SECCOMP_MODE_STRICT);
 		}, ENTRY_VERIFY_CB(prctl::SetSecCompSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_SECCOMP);
+			VERIFY(sc.op.operation() == ProcessOp::SET_SECCOMP);
 			VERIFY(sc.res);
 			VERIFY(!sc.bool_res);
 			VERIFY(!sc.bool_setting.has_value());
@@ -687,8 +672,7 @@ const auto TESTS = std::array{
 			prog.filter = &filter;
 			prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog);
 		}, ENTRY_VERIFY_CB(prctl::SetSecCompSystemCall, {
-			VERIFY(sc.op.operation() ==
-					clues::item::ProcessOp::SET_SECCOMP);
+			VERIFY(sc.op.operation() == ProcessOp::SET_SECCOMP);
 			VERIFY(sc.res);
 			VERIFY(!sc.bool_res);
 			VERIFY(!sc.bool_setting.has_value());
