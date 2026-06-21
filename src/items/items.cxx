@@ -188,5 +188,6 @@ template class CLUES_API IntValueT<int>;
 template class CLUES_API IntValueT<uint32_t>;
 template class CLUES_API IntValueT<unsigned long>;
 template class CLUES_API IntValueT<off_t>;
+template class CLUES_API IntValueT<int8_t>;
 
 } // end ns

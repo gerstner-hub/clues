@@ -313,6 +313,7 @@ using Uint32Value = IntValueT<uint32_t>;
 using ULongValue  = IntValueT<unsigned long>;
 using LongValue   = IntValueT<long>;
 using SizeValue   = IntValueT<size_t>;
+using Int8Value   = IntValueT<int8_t>;
 using OffsetValue = IntValueT<kernel_off_t>;
 
 /// A 0/1 integer representing a boolean value.
