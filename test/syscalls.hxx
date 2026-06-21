@@ -1,6 +1,7 @@
 // C++
 #include <cstdlib>
 #include <cstring>
+#include <format>
 #include <iostream>
 #include <map>
 #include <type_traits>
@@ -197,8 +198,12 @@ static int syscall32(const clues::SystemCallNrI386 nr,
 	long _5 = cast_to_long(t5);
 	long _6 = cast_to_long(t6);
 
-	if (!fits_in32(_1) || !fits_in32(_2) || !fits_in32(_3) || !fits_in32(_4) || !fits_in32(_5) || !fits_in32(_6)) {
-		throw cosmos::RuntimeError{"too large syscall32 parameters"};
+	if (!fits_in32(_1) || !fits_in32(_2) || !fits_in32(_3) ||
+			!fits_in32(_4) || !fits_in32(_5) || !fits_in32(_6)) {
+		const auto fit_values = std::format("{} {} {} {} {} {}",
+			fits_in32(_1), fits_in32(_2), fits_in32(_3),
+			fits_in32(_4), fits_in32(_5), fits_in32(_6));
+		throw cosmos::RuntimeError{"too large syscall32 parameters: "s + fit_values};
 	}
 
 	register long eax asm("eax") = cosmos::to_integral(nr);
