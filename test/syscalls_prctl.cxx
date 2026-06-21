@@ -754,8 +754,11 @@ const auto TESTS = std::array{
 			/*
 			 * on some environments this fails due to lacking
 			 * kernel support or smth.
+			 *
+			 * store this information for the GET test below
 			 */
-			(void)sc;
+			test_ctx_flags["set-speculation-ctrl-worked"] = sc.hasResultValue();
+
 		}), IgnoreCalls{}, {
 			I386_CROSS_ABI(IgnoreCalls{}, []() {
 				syscall32(SyscallNr32::PRCTL, PR_SET_SPECULATION_CTRL,
@@ -773,7 +776,7 @@ const auto TESTS = std::array{
 			VERIFY(!sc.int_res);
 			VERIFY(sc.misfeature.misfeature() == clues::item::SpeculationCtrlMisfeature::STORE_BYPASS);
 		}), EXIT_VERIFY_CB(prctl::GetSpeculationControlSystemCall, {
-			if (sc.hasResultValue()) {
+			if (sc.hasResultValue() && test_ctx_flags["set-speculation-ctrl-worked"]) {
 				using clues::item::SpeculationCtrlSetting;
 				VERIFY(sc.setting.settings() == SpeculationCtrlSetting::Settings{SpeculationCtrlSetting::FORCE_DISABLE, SpeculationCtrlSetting::PRCTL});
 			}
