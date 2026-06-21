@@ -459,9 +459,10 @@ public:
 protected:
 
 	void runTests() {
-		if (cosmos::proc::get_env_var("CLUES_TEST_PRINT_LINES") != std::nullopt) {
+		/* this context on error always makes sense so enable it unconditionally */
+		//if (cosmos::proc::get_env_var("CLUES_TEST_PRINT_LINES") != std::nullopt) {
 			m_print_lines = true;
-		}
+		//}
 
 		if (m_argv.size() > 1) {
 			m_limit_arg = m_argv[1];
