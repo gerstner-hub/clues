@@ -786,6 +786,51 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_GET_SPECULATION_CTRL, PR_SPEC_STORE_BYPASS, 0, 0, 0);
 			})
 		}, "PR_GET_SPECULATION_CTRL"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			int8_t state = SYSCALL_DISPATCH_FILTER_ALLOW;
+			prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, 0x1234, 0xff00, &state);
+			prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_OFF, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetSyscallUserDispatchSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_SYSCALL_USER_DISPATCH);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.mode.mode() == clues::item::SyscallUserDispatchMode::DISPATCH_ON);
+			VERIFY(sc.offset->ptr() == ForeignPtr{0x1234});
+			VERIFY(sc.size->value() == 0xff00);
+			VERIFY(sc.on_off_switch->ptr() != ForeignPtr::NO_POINTER);
+		}), EXIT_VERIFY_CB(prctl::SetSyscallUserDispatchSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto state = alloc_struct32<int8_t>();
+				*state = SYSCALL_DISPATCH_FILTER_ALLOW;
+				syscall32(SyscallNr32::PRCTL, PR_SET_SYSCALL_USER_DISPATCH,
+						PR_SYS_DISPATCH_ON, (uint32_t)0x1234, (uint32_t)0xff00, state);
+				prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_OFF);
+			})
+		}, "PR_SET_SYSCALL_USER_DISPATCH(DISPATCH_ON)"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_OFF, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetSyscallUserDispatchSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_SYSCALL_USER_DISPATCH);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.mode.mode() == clues::item::SyscallUserDispatchMode::DISPATCH_OFF);
+			VERIFY(!sc.offset);
+			VERIFY(!sc.size);
+			VERIFY(!sc.on_off_switch);
+		}), EXIT_VERIFY_CB(prctl::SetSyscallUserDispatchSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_SYSCALL_USER_DISPATCH,
+						PR_SYS_DISPATCH_OFF, 0, 0, 0);
+			})
+		}, "PR_SET_SYSCALL_USER_DISPATCH(DISPATCH_OFF)"
 	},
 };
 

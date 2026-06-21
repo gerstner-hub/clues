@@ -478,4 +478,39 @@ protected: // data
 	Settings m_settings{};
 };
 
+/// Enum for the PR_SET_SYSCALL_USER_DISPATCH prctl().
+class CLUES_API SyscallUserDispatchMode :
+		public ValueInParameter {
+public: // types
+
+	enum class Mode : long {
+		/// Enable the mechanism using additional parameters as configuration.
+		DISPATCH_ON = PR_SYS_DISPATCH_ON,
+		/// Disable the mechanism for the calling thread.
+		DISPATCH_OFF = PR_SYS_DISPATCH_OFF
+	};
+
+	using enum Mode;
+
+public: // functions
+
+	explicit SyscallUserDispatchMode() :
+			ValueInParameter{"mode", "system call user dispatch mode"} {
+	}
+
+	Mode mode() const {
+		return m_mode;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Mode m_mode{};
+};
+
 } // end ns

@@ -644,6 +644,45 @@ protected: // functions
 	}
 };
 
+/// Specialization of PrCtlSystemCall for PR_SET_SYSCALL_USER_DISPATCH.
+/**
+ * This type uses the `res` success status return value from the base class.
+ *
+ * The additional optional parameters are only used for
+ * SyscallUserDispatchMode::DISPATCH_ON.
+ **/
+class CLUES_API SetSyscallUserDispatchSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit SetSyscallUserDispatchSystemCall() :
+			PrCtlSystemCall{} {
+		setSuccessReturn();
+		addParameters(mode);
+	}
+
+public: // data
+
+	item::SyscallUserDispatchMode mode;
+	/// Memory location of code which will be excluded from the mechanism.
+	std::optional<item::GenericPointerValue> offset;
+	/// Size of the code area found at `offset`.
+	std::optional<item::ULongValue> size;
+	/// Userspace switch which decides whether the mechanism is in effect or not.
+	std::optional<item::GenericPointerValue> on_off_switch;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee &) override;
+
+	void prepareNewSystemCall() override {
+		offset.reset();
+		size.reset();
+		on_off_switch.reset();
+		dropParameters(2);
+	}
+};
+
 } // end ns prctl
 
 } // end ns

@@ -170,6 +170,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 			return make_shared<GetSpeculationControlSystemCall>();
 		case SET_SPECULATION_CTRL:
 			return make_shared<SetSpeculationControlSystemCall>();
+		case SET_SYSCALL_USER_DISPATCH:
+			return make_shared<SetSyscallUserDispatchSystemCall>();
 		default: return make_shared<PrCtlSystemCall>();
 	}
 }
@@ -351,6 +353,18 @@ bool SetSecCompSystemCall::check2ndPass(const Tracee&) {
 	if (mode.mode() == item::SecCompMode::FILTER) {
 		filter.emplace();
 		addParameters(*filter);
+		return true;
+	}
+
+	return false;
+}
+
+bool SetSyscallUserDispatchSystemCall::check2ndPass(const Tracee &) {
+	if (mode.mode() == item::SyscallUserDispatchMode::DISPATCH_ON) {
+		offset.emplace("offset", "offset of exempt code area");
+		size.emplace("size", "size of exempt code area");
+		on_off_switch.emplace("switch", "location of a fast on/off switch for the mechanism");
+		addParameters(*offset, *size, *on_off_switch);
 		return true;
 	}
 

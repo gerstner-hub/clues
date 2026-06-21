@@ -359,6 +359,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			/* in some environments it is forbidden to disable this */
 			R"(prctl\(op=PR_SET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH, setting=0x8 \(PR_SPEC_FORCE_DISABLE\)\) = (0 \(success\)|1 \(EPERM\)))",
 			R"(prctl\(op=PR_GET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH\) = {hex} \(PR_[A-Z]+.*\) \(setting\))",
+			R"(prctl\(op=PR_SET_SYSCALL_USER_DISPATCH, mode=PR_SYS_DISPATCH_ON, offset={addr}, size={decimal}, switch={addr}\) = 0 \(success\))",
+			R"(prctl\(op=PR_SET_SYSCALL_USER_DISPATCH, mode=PR_SYS_DISPATCH_OFF\) = 0 \(success\))",
 
 	}},
 #ifdef CLUES_HAVE_PIPE1

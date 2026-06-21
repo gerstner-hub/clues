@@ -268,4 +268,16 @@ void SpeculationCtrlSetting::processValue(const Tracee&) {
 	m_settings = Settings{valueAs<long>()};
 }
 
+std::string SyscallUserDispatchMode::str() const {
+	switch (cosmos::to_integral(m_mode)) {
+		CASE_ENUM_TO_STR(PR_SYS_DISPATCH_ON);
+		CASE_ENUM_TO_STR(PR_SYS_DISPATCH_OFF);
+		default: return "PR_SYS_???";
+	}
+}
+
+void SyscallUserDispatchMode::processValue(const Tracee&) {
+	m_mode = Mode{valueAs<long>()};
+}
+
 } // end ns

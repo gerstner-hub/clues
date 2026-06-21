@@ -143,6 +143,11 @@ int main() {
 	prctl(PR_SET_SPECULATION_CTRL, PR_SPEC_INDIRECT_BRANCH, PR_SPEC_FORCE_DISABLE, 0, 0);
 	prctl(PR_GET_SPECULATION_CTRL, PR_SPEC_INDIRECT_BRANCH, 0, 0);
 
+	int8_t sys_dispatch = SYSCALL_DISPATCH_FILTER_ALLOW;
+
+	prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, main, 4096, &sys_dispatch);
+	prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_OFF, 0, 0, 0);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even
