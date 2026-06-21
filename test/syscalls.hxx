@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <type_traits>
 #include <vector>
 
@@ -98,6 +99,11 @@ constexpr cosmos::FileNum FIRST_FD{4};
 constexpr cosmos::FileNum SECOND_FD{5};
 constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x70000000;
 constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 2;
+/*
+ * global test state which can be used to carry over information from one test
+ * case to another.
+ */
+static std::map<std::string, bool> test_ctx_flags;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
