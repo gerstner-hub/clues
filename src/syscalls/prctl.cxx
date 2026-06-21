@@ -78,6 +78,7 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 	 * GET/SET_FP_EXC PowerPC only
 	 * MPX_ENABLE/DISABLE_MANAGEMENT: dropped in kernel 5.4.
 	 * PAC_RESET_KEYS: arm64 only
+	 * PR_SVE_GET_VL, PR_SVE_SET_VL: arm64 only
 	 */
 
 	switch (op.operation()) {
