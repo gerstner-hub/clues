@@ -358,7 +358,7 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_SECUREBITS\) = {hex} \(SECBIT_KEEP_CAPS\) \(bits\))",
 			/* in some environments it is forbidden to disable this */
 			R"(prctl\(op=PR_SET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH, setting=0x8 \(PR_SPEC_FORCE_DISABLE\)\) = (0 \(success\)|1 \(EPERM\)))",
-			R"(prctl\(op=PR_GET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH\) = 0x9 \(PR_SPEC_PRCTL|PR_SPEC_FORCE_DISABLE\) \(setting\))",
+			R"(prctl\(op=PR_GET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH\) = {hex} \(PR_[A-Z]+.*\) \(setting\))",
 
 	}},
 #ifdef CLUES_HAVE_PIPE1
