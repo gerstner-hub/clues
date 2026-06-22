@@ -280,4 +280,16 @@ void SyscallUserDispatchMode::processValue(const Tracee&) {
 	m_mode = Mode{valueAs<long>()};
 }
 
+std::string TaggedAddressControl::str() const {
+	switch (cosmos::to_integral(m_mode)) {
+		case 0: return "0";
+		CASE_ENUM_TO_STR(PR_TAGGED_ADDR_ENABLE);
+		default: return "PR_TAGGED_???";
+	}
+}
+
+void TaggedAddressControl::processValue(const Tracee&) {
+	m_mode = Mode{valueAs<long>()};
+}
+
 } // end ns

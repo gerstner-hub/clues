@@ -683,6 +683,64 @@ protected: // functions
 	}
 };
 
+/// Specialization of PrCtlSystemCall for PR_GET_TAGGED_ADDR_CTRL.
+/**
+ * This type uses the dedicated `mode` return value in the derived type. There
+ * are no additional parameters.
+ **/
+class CLUES_API GetTaggedAddrControlSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit GetTaggedAddrControlSystemCall() :
+			mode{ItemType::RETVAL} {
+		setReturnItem(mode);
+	}
+
+public: // data
+
+	item::TaggedAddressControl mode;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee &) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to reset */
+	}
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_TAGGED_ADDR_CTRL.
+/**
+ * This type uses the `res` success status return from the base class.
+ **/
+class CLUES_API SetTaggedAddrControlSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit SetTaggedAddrControlSystemCall() :
+			mode{ItemType::PARAM_IN} {
+		setSuccessReturn();
+		addParameters(mode);
+	}
+
+public: // data
+
+	item::TaggedAddressControl mode;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee &) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to reset */
+	}
+};
+
 } // end ns prctl
 
 } // end ns

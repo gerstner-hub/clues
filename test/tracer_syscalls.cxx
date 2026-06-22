@@ -361,7 +361,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH\) = {hex} \(PR_[A-Z]+.*\) \(setting\))",
 			R"(prctl\(op=PR_SET_SYSCALL_USER_DISPATCH, mode=PR_SYS_DISPATCH_ON, offset={addr}, size={decimal}, switch={addr}\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_SYSCALL_USER_DISPATCH, mode=PR_SYS_DISPATCH_OFF\) = 0 \(success\))",
-
+			R"(prctl\(op=PR_SET_TAGGED_ADDR_CTRL, mode=PR_TAGGED_ADDR_ENABLE\) = (0|22))",
+			R"(prctl\(op=PR_GET_TAGGED_ADDR_CTRL\) = (22|PR_TAGGED_ADDR_ENABLE))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

@@ -513,4 +513,39 @@ protected: // data
 	Mode m_mode{};
 };
 
+/// Enum for the PR_SET_TAGGED_ADDR_CTRL prctl().
+class CLUES_API TaggedAddressControl :
+		public ValueParameter {
+public: // types
+
+	enum class Mode : long {
+		/// Addresses must be untagged.
+		UNTAGGED = 0,
+		/// Addresses may be tagged, with exceptions.
+		TAGGED_ADDR_ENABLE = PR_TAGGED_ADDR_ENABLE,
+	};
+
+	using enum Mode;
+
+public: // functions
+
+	explicit TaggedAddressControl(const ItemType type) :
+			ValueParameter{type, "mode", "tagged userspace addresses mode"} {
+	}
+
+	Mode mode() const {
+		return m_mode;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Mode m_mode{};
+};
+
 } // end ns

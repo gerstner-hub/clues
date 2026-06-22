@@ -831,6 +831,48 @@ const auto TESTS = std::array{
 						PR_SYS_DISPATCH_OFF, 0, 0, 0);
 			})
 		}, "PR_SET_SYSCALL_USER_DISPATCH(DISPATCH_OFF)"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_TAGGED_ADDR_CTRL, PR_TAGGED_ADDR_ENABLE, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetTaggedAddrControlSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_TAGGED_ADDR_CTRL);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.mode.mode() == clues::item::TaggedAddressControl::TAGGED_ADDR_ENABLE);
+		}), EXIT_VERIFY_CB(prctl::SetTaggedAddrControlSystemCall, {
+			test_ctx_flags["set-user-dispatch-worked"] = sc.hasResultValue();
+			if (sc.hasErrorCode()) {
+				/* when the kernel has no support for this
+				 * then it should return EINVAL */
+				VERIFY(sc.error()->errorCode() == cosmos::Errno::INVALID_ARG);
+			}
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_TAGGED_ADDR_CTRL,
+						PR_TAGGED_ADDR_ENABLE, 0, 0, 0);
+			})
+		}, "PR_SET_TAGGED_ADDR_CTRL"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_GET_TAGGED_ADDR_CTRL, 0, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::GetTaggedAddrControlSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_TAGGED_ADDR_CTRL);
+			VERIFY(!sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(prctl::GetTaggedAddrControlSystemCall, {
+			if (test_ctx_flags["set-user-dispatch-worked"]) {
+				VERIFY(sc.hasResultValue());
+				VERIFY(sc.mode.mode() ==
+						clues::item::TaggedAddressControl::TAGGED_ADDR_ENABLE);
+			}
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_GET_TAGGED_ADDR_CTRL,
+						0, 0, 0, 0);
+			})
+		}, "PR_SET_TAGGED_ADDR_CTRL"
 	},
 };
 

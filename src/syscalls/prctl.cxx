@@ -172,6 +172,10 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 			return make_shared<SetSpeculationControlSystemCall>();
 		case SET_SYSCALL_USER_DISPATCH:
 			return make_shared<SetSyscallUserDispatchSystemCall>();
+		case GET_TAGGED_ADDR_CTRL:
+			return make_shared<GetTaggedAddrControlSystemCall>();
+		case SET_TAGGED_ADDR_CTRL:
+			return make_shared<SetTaggedAddrControlSystemCall>();
 		default: return make_shared<PrCtlSystemCall>();
 	}
 }
