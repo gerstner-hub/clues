@@ -66,6 +66,16 @@ protected: // functions
  * Some commonly used parameter and return types are shared by derived types
  * so check the class documentation for what to expect.
  *
+ * The following operations are covered by the base class type:
+ *
+ * - GET_DUMPABLE, SET_DUMPABLE
+ * - GET_IO_FLUSHER
+ * - GET_KEEPCAPS, SET_KEEPCAPS
+ * - GET_NO_NEW_PRIVS, SET_NO_NEW_PRIVS
+ * - SET_CHILD_SUBREAPER
+ * - GET_SECCOMP
+ * - TASK_PERF_EVENTS_ENABLE, TASK_PERF_EVENTS_DISABLE
+ *
  * The following operations are covered by derived types:
  *
  * - SET_MM: prctl::MemoryMapSystemCall
@@ -77,6 +87,15 @@ protected: // functions
  * - PR_GET_NAME/PR_SET_NAME: prctl::NameSystemCall
  * - PR_SET_VMA: prctl::VirtualMemoryAttrSystemCall
  * - PR_SET_PDEATHSIG, PR_GET_PDEATHSIG: prctl::ParentDeathSignalSystemCall
+ * - PR_SET_PTRACER: prctl::SetPTracerSystemCall
+ * - PR_SET_SECCOMP: prctl::SetSecCompSystemCall
+ * - PR_GET_SECUREBITS: prctl::GetSecureBitsSystemCall
+ * - PR_SET_SECUREBITS: prctl::SetSecureBitsSystemCall
+ * - PR_GET_SPECULATION_CTRL: prctl::GetSpeculationControlSystemCall
+ * - PR_SET_SPECULATION_CTRL: prctl::SetSpeculationControlSystemCall
+ * - PR_SET_SYSCALL_USER_DISPATCH: prctl::SetSyscallUserDispatchSystemCall
+ * - PR_GET_TAGGED_ADDR_CTRL: prctl::GetTaggedAddrControlSystemCall
+ * - PR_SET_TAGGED_ADDR_CTRL: prctl::SetTaggedAddrControlSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -96,6 +115,9 @@ protected: // functions
  * The following operations use the `int_res` return value:
  *
  * - GET_SECCOMP
+ *
+ * The `res` success status is used by various derived types and the base
+ * class implementation alike.
  **/
 struct CLUES_API PrCtlSystemCall :
 		public SystemCall {

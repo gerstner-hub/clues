@@ -363,6 +363,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_SET_SYSCALL_USER_DISPATCH, mode=PR_SYS_DISPATCH_OFF\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_TAGGED_ADDR_CTRL, mode=PR_TAGGED_ADDR_ENABLE\) = (0|22))",
 			R"(prctl\(op=PR_GET_TAGGED_ADDR_CTRL\) = (22|PR_TAGGED_ADDR_ENABLE))",
+			R"(prctl\(op=PR_TASK_PERF_EVENTS_ENABLE\) = 0)",
+			R"(prctl\(op=PR_TASK_PERF_EVENTS_DISABLE\) = 0)",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

@@ -873,6 +873,36 @@ const auto TESTS = std::array{
 						0, 0, 0, 0);
 			})
 		}, "PR_SET_TAGGED_ADDR_CTRL"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_TASK_PERF_EVENTS_ENABLE);
+		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::TASK_PERF_EVENTS_ENABLE);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_TASK_PERF_EVENTS_ENABLE);
+			})
+		}, "PR_TASK_PERF_EVENTS_ENABLE"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_TASK_PERF_EVENTS_DISABLE);
+		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::TASK_PERF_EVENTS_DISABLE);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_TASK_PERF_EVENTS_DISABLE);
+			})
+		}, "PR_TASK_PERF_EVENTS_DISABLE"
 	},
 };
 

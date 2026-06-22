@@ -176,6 +176,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 			return make_shared<GetTaggedAddrControlSystemCall>();
 		case SET_TAGGED_ADDR_CTRL:
 			return make_shared<SetTaggedAddrControlSystemCall>();
+		case TASK_PERF_EVENTS_ENABLE: /* fallthrough */
+		case TASK_PERF_EVENTS_DISABLE: /* fallthrough */
 		default: return make_shared<PrCtlSystemCall>();
 	}
 }
