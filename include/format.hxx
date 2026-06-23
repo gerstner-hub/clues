@@ -136,6 +136,9 @@ inline std::string enumeration(const cosmos::SignalNr nr) {
 	return format::signal(nr);
 }
 
+inline std::string enumeration(const ForeignPtr ptr) {
+	return format::pointer(ptr);
+}
 
 template<typename T>
 /// Tells us whether format::enumeration() exists for type T.
