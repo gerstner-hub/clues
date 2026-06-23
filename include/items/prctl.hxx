@@ -548,4 +548,72 @@ protected: // data
 	Mode m_mode{};
 };
 
+/// Enum for the PR_GET_THP_DISABLE prctl().
+class CLUES_API THPDisableState :
+		public ReturnValue {
+public: // types
+
+	enum class Config : int {
+		UNSPECIFIED = 0,
+		DISABLED = 1,
+		DISABLED_EXCEPT_ADVISED = 3
+	};
+
+	using enum Config;
+
+public: // functions
+
+	explicit THPDisableState() :
+			ReturnValue{"config", "THP-disable config"} {
+	}
+
+	Config config() const {
+		return m_config;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Config m_config{};
+};
+
+/// Flags for the PR_SET_THP_DISABLE prctl().
+class CLUES_API THPDisableFlags :
+		public ValueInParameter {
+public: // types
+
+	enum class Flag : long {
+		THP_DISABLE_EXCEPT_ADVICED = PR_THP_DISABLE_EXCEPT_ADVISED
+	};
+
+	using enum Flag;
+
+	using Flags = cosmos::BitMask<Flag>;
+
+public: // functions
+
+	explicit THPDisableFlags() :
+			ValueInParameter{"flags", "THP-disable flags"} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Flags m_flags{};
+};
+
 } // end ns

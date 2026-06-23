@@ -903,6 +903,59 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_TASK_PERF_EVENTS_DISABLE);
 			})
 		}, "PR_TASK_PERF_EVENTS_DISABLE"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_THP_DISABLE, 1, PR_THP_DISABLE_EXCEPT_ADVISED, 0, 0);
+			prctl(PR_GET_THP_DISABLE, 0, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::GetTHPDisableSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_THP_DISABLE);
+			VERIFY(!sc.res);
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(prctl::GetTHPDisableSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.config.config() == clues::item::THPDisableState::DISABLED_EXCEPT_ADVISED);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				prctl(PR_SET_THP_DISABLE, 1, PR_THP_DISABLE_EXCEPT_ADVISED, 0, 0);
+				syscall32(SyscallNr32::PRCTL, PR_GET_THP_DISABLE, 0, 0, 0, 0);
+			})
+		}, "PR_GET_THP_DISABLE"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_THP_DISABLE, 10, PR_THP_DISABLE_EXCEPT_ADVISED, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetTHPDisableSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_THP_DISABLE);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.thp_disable.value() == true);
+			VERIFY(sc.flags.has_value());
+			VERIFY(sc.flags->flags() == clues::item::THPDisableFlags::THP_DISABLE_EXCEPT_ADVICED);
+		}), EXIT_VERIFY_CB(prctl::SetTHPDisableSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_THP_DISABLE, 1, PR_THP_DISABLE_EXCEPT_ADVISED, 0, 0);
+			})
+		}, "PR_GET_THP_DISABLE(thp_disable=true)"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_THP_DISABLE, 0, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetTHPDisableSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_THP_DISABLE);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.thp_disable.value() == false);
+			VERIFY(!sc.flags);
+		}), EXIT_VERIFY_CB(prctl::SetTHPDisableSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_THP_DISABLE, 0, 0, 0, 0);
+			})
+		}, "PR_GET_THP_DISABLE(thp_disable=false)"
 	},
 };
 

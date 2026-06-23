@@ -292,4 +292,28 @@ void TaggedAddressControl::processValue(const Tracee&) {
 	m_mode = Mode{valueAs<long>()};
 }
 
+std::string THPDisableState::str() const {
+	using enum Config;
+	switch (m_config) {
+		CASE_ENUM_TO_STR(UNSPECIFIED);
+		CASE_ENUM_TO_STR(DISABLED);
+		CASE_ENUM_TO_STR(DISABLED_EXCEPT_ADVISED);
+		default: return "???";
+	}
+}
+
+void THPDisableState::processValue(const Tracee&) {
+	m_config = Config{valueAs<int>()};
+}
+
+std::string THPDisableFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+	BITFLAGS_ADD(PR_THP_DISABLE_EXCEPT_ADVISED);
+	return BITFLAGS_STR();
+}
+
+void THPDisableFlags::processValue(const Tracee&) {
+	m_flags = Flags{valueAs<long>()};
+}
+
 } // end ns

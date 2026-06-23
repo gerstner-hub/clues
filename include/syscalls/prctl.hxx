@@ -763,6 +763,71 @@ protected: // functions
 	}
 };
 
+/// Specialization of PrCtlSystemCall for PR_GET_THP_DISABLE.
+class CLUES_API GetTHPDisableSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit GetTHPDisableSystemCall() {
+		setReturnItem(config);
+	}
+
+public: // data
+
+	item::THPDisableState config;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee &) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to reset */
+	}
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_THP_DISABLE.
+/**
+ * The return type for this variant of prctl() is always the `res` success
+ * status from the base class.
+ *
+ * The `flags` optional parameter is only available if `thp_disable.value() ==
+ * true`.
+ **/
+class CLUES_API SetTHPDisableSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit SetTHPDisableSystemCall() :
+			thp_disable{"thp_disable"} {
+		setSuccessReturn();
+		addParameters(thp_disable);
+	}
+
+public: // data
+
+	item::BoolValue thp_disable;
+	std::optional<item::THPDisableFlags> flags;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee &) override {
+		if (thp_disable.value() == true) {
+			flags.emplace();
+			addParameters(*flags);
+			return true;
+		}
+
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		dropParameters(2);
+		flags.reset();
+	}
+};
+
 } // end ns prctl
 
 } // end ns

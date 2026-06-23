@@ -154,6 +154,11 @@ int main() {
 	prctl(PR_TASK_PERF_EVENTS_ENABLE);
 	prctl(PR_TASK_PERF_EVENTS_DISABLE);
 
+	prctl(PR_SET_THP_DISABLE, 1, PR_THP_DISABLE_EXCEPT_ADVISED, 0, 0);
+	prctl(PR_GET_THP_DISABLE, 0, 0, 0, 0);
+	prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
+	prctl(PR_SET_THP_DISABLE, 0, 0, 0, 0);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even
