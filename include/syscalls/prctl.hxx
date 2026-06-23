@@ -371,7 +371,7 @@ public: // functions
 public: // data
 
 	/// Current child-subreaper setting filled in by the kernel.
-	item::PointerToScalar<long> is_subreaper;
+	item::PointerToScalar<int> is_subreaper;
 
 protected: // functions
 
