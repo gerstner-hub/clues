@@ -48,7 +48,7 @@ struct StringVector :
  * tracer output.
  */
 const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
-	{"{addr}", R"(0x[0-9a-f]+)"},
+	{"{addr}", R"((0x[0-9a-f]+)|NULL)"},
 	{"{hex}", R"(0x[0-9a-f]+)"},
 	{"{fd}", R"([0-9]+)"},
 	{"{bitmask}", R"(0x[0-9a-f]+)"},
