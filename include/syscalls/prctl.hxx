@@ -96,6 +96,9 @@ protected: // functions
  * - PR_SET_SYSCALL_USER_DISPATCH: prctl::SetSyscallUserDispatchSystemCall
  * - PR_GET_TAGGED_ADDR_CTRL: prctl::GetTaggedAddrControlSystemCall
  * - PR_SET_TAGGED_ADDR_CTRL: prctl::SetTaggedAddrControlSystemCall
+ * - PR_GET_THP_DISABLE: prctl::GetTHPDisableSystemCall
+ * - PR_SET_THP_DISABLE: prctl::SetTHPDisableSystemCall
+ * - PR_GET_TID_ADDRESS: prctl::GetTIDAddressSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -825,6 +828,36 @@ protected: // functions
 	void prepareNewSystemCall() override {
 		dropParameters(2);
 		flags.reset();
+	}
+};
+
+/// Specialization of PrCtlSystemCall for PR_GET_TID_ADDRESS.
+/**
+ * The return type for this variant of prctl() is always the `res` success
+ * status from the base class.
+ **/
+class CLUES_API GetTIDAddressSystemCall :
+		public PrCtlSystemCall {
+public: // functions
+
+	explicit GetTIDAddressSystemCall() :
+			addr{"addrp", "pointer to int*"} {
+		setSuccessReturn();
+		addParameters(addr);
+	}
+
+public: // data
+
+	item::PointerToScalar<ForeignPtr> addr;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee &) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to reset */
 	}
 };
 

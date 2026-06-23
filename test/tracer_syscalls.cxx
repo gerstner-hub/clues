@@ -374,6 +374,7 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_THP_DISABLE\) = (DISABLED_EXCEPT_ADVISED|UNSPECIFIED) \(config\))",
 			R"(prctl\(op=PR_SET_THP_DISABLE, thp_disable=true, flags=0x0 \(\)\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_THP_DISABLE, thp_disable=false\) = 0 \(success\))",
+			R"(prctl\(op=PR_GET_TID_ADDRESS, addrp={addr} → \[{addr}\]\) = (22|0))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

@@ -161,6 +161,11 @@ int main() {
 	prctl(PR_SET_THP_DISABLE, 1, 0, 0, 0);
 	prctl(PR_SET_THP_DISABLE, 0, 0, 0, 0);
 
+	int *addr = nullptr;
+	/* this can return EINVAL when the kernel is lacking
+	 * CONFIG_CHECKPOINT_RESTORE */
+	prctl(PR_GET_TID_ADDRESS, &addr, 0, 0, 0);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even

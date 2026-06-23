@@ -971,6 +971,32 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_SET_THP_DISABLE, 0, 0, 0, 0);
 			})
 		}, "PR_GET_THP_DISABLE(thp_disable=false)"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			int *addr = nullptr;
+			prctl(PR_GET_TID_ADDRESS, &addr, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::GetTIDAddressSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_TID_ADDRESS);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(!sc.addr.value());
+		}), EXIT_VERIFY_CB(prctl::GetTIDAddressSystemCall, {
+			if (sc.hasErrorCode()) {
+				/* when the kernel lacks
+				 * CONFIG_CHECKPOINT_RESTORE it returns EINVAL
+				 * here */
+				VERIFY(sc.error()->errorCode() == cosmos::Errno::INVALID_ARG);
+			} else {
+				VERIFY(sc.hasResultValue());
+				VERIFY(sc.addr.value() != ForeignPtr::NO_POINTER);
+			}
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto ptr = alloc_struct32<int**>();
+				syscall32(SyscallNr32::PRCTL, PR_GET_TID_ADDRESS, ptr, 0, 0, 0);
+			})
+		}, "PR_GET_TID_ADDRESS"
 	},
 };
 
