@@ -166,6 +166,9 @@ int main() {
 	 * CONFIG_CHECKPOINT_RESTORE */
 	prctl(PR_GET_TID_ADDRESS, &addr, 0, 0, 0);
 
+	prctl(PR_SET_TIMERSLACK, 500);
+	prctl(PR_GET_TIMERSLACK);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even

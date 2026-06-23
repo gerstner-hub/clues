@@ -101,6 +101,11 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 					ItemType::RETVAL);
 			setReturnItem(*int_res);
 			break;
+		} case GET_TIMERSLACK: {
+			int_res.emplace("slack", "current timer slack",
+					ItemType::RETVAL);
+			setReturnItem(*int_res);
+			break;
 		} default: {
 			break;
 		}
@@ -179,6 +184,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 		case GET_THP_DISABLE: return make_shared<GetTHPDisableSystemCall>();
 		case SET_THP_DISABLE: return make_shared<SetTHPDisableSystemCall>();
 		case GET_TID_ADDRESS: return make_shared<GetTIDAddressSystemCall>();
+		case SET_TIMERSLACK: return make_shared<SetTimerSlackSystemCall>();
+		case GET_TIMERSLACK: /* fallthrough */
 		case TASK_PERF_EVENTS_ENABLE: /* fallthrough */
 		case TASK_PERF_EVENTS_DISABLE: /* fallthrough */
 		default: return make_shared<PrCtlSystemCall>();

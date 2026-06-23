@@ -99,6 +99,7 @@ protected: // functions
  * - PR_GET_THP_DISABLE: prctl::GetTHPDisableSystemCall
  * - PR_SET_THP_DISABLE: prctl::SetTHPDisableSystemCall
  * - PR_GET_TID_ADDRESS: prctl::GetTIDAddressSystemCall
+ * - PR_SET_TIMERSLACK: prctl::SetTimerSlackSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -118,6 +119,7 @@ protected: // functions
  * The following operations use the `int_res` return value:
  *
  * - GET_SECCOMP
+ * - GET_TIMERSLACK
  *
  * The `res` success status is used by various derived types and the base
  * class implementation alike.
@@ -757,16 +759,27 @@ public: // functions
 public: // data
 
 	item::PointerToScalar<ForeignPtr> addr;
+};
 
-protected: // functions
+/// Specialization of PrCtlSystemCall for PR_SET_TIMERSLACK.
+/**
+ * The return type for this variant of prctl() is always the `res` success
+ * status from the base class.
+ **/
+class CLUES_API SetTimerSlackSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
 
-	bool check2ndPass(const Tracee &) override {
-		return false;
+	explicit SetTimerSlackSystemCall() :
+			slack{"slack", "new current timer slack", ItemType::PARAM_IN} {
+		setSuccessReturn();
+		addParameters(slack);
 	}
 
-	void prepareNewSystemCall() override {
-		/* nothing to reset */
-	}
+public: // data
+
+	/// The new timer slack to set or 0 to use the default.
+	item::ULongValue slack;
 };
 
 } // end ns prctl

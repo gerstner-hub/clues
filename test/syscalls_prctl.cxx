@@ -997,6 +997,39 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_GET_TID_ADDRESS, ptr, 0, 0, 0);
 			})
 		}, "PR_GET_TID_ADDRESS"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_TIMERSLACK, 500, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetTimerSlackSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_TIMERSLACK);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(!sc.int_res);
+			VERIFY(sc.slack.value() == 500);
+		}), EXIT_VERIFY_CB(prctl::SetTimerSlackSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_TIMERSLACK, 500, 0, 0, 0);
+			})
+		}, "PR_SET_TIMERSLACK"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_TIMERSLACK, 500, 0, 0, 0);
+			prctl(PR_GET_TIMERSLACK);
+		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_TIMERSLACK);
+			VERIFY(!sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting.has_value());
+			VERIFY(sc.int_res.has_value());
+		}), EXIT_VERIFY_CB(PrCtlSystemCall, {
+			VERIFY(sc.int_res->value() == 500);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				prctl(PR_SET_TIMERSLACK, 500, 0, 0, 0);
+				syscall32(SyscallNr32::PRCTL, PR_GET_TIMERSLACK);
+			})
+		}, "PR_GET_TIMERSLACK"
 	},
 };
 
