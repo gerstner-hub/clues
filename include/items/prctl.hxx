@@ -588,7 +588,9 @@ class CLUES_API THPDisableFlags :
 public: // types
 
 	enum class Flag : long {
+#ifdef PR_THP_DISABLE_EXCEPT_ADVISED
 		THP_DISABLE_EXCEPT_ADVICED = PR_THP_DISABLE_EXCEPT_ADVISED
+#endif
 	};
 
 	using enum Flag;

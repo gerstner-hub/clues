@@ -308,7 +308,9 @@ void THPDisableState::processValue(const Tracee&) {
 
 std::string THPDisableFlags::str() const {
 	BITFLAGS_FORMAT_START(m_flags);
+#ifdef PR_THP_DISABLE_EXCEPT_ADVISED
 	BITFLAGS_ADD(PR_THP_DISABLE_EXCEPT_ADVISED);
+#endif
 	return BITFLAGS_STR();
 }
 

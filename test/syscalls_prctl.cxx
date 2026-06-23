@@ -9,6 +9,13 @@ namespace {
 
 using clues::item::ProcessOp;
 
+#ifndef PR_THP_DISABLE_EXCEPT_ADVISED
+/* if there's no support for this then transparently use 0 as flags */
+#define PR_THP_DISABLE_EXCEPT_ADVISED 0
+#else
+#	define HAVE_EXCEPT_ADVISED
+#endif
+
 const auto TESTS = std::array{
 #ifdef COSMOS_X86
 	TestSpec{SystemCallNr::ARCH_PRCTL, []() {
@@ -914,7 +921,11 @@ const auto TESTS = std::array{
 			VERIFY(!sc.int_res);
 		}), EXIT_VERIFY_CB(prctl::GetTHPDisableSystemCall, {
 			VERIFY(sc.hasResultValue());
+#ifdef HAVE_EXCEPT_ADVISED
 			VERIFY(sc.config.config() == clues::item::THPDisableState::DISABLED_EXCEPT_ADVISED);
+#else
+			VERIFY(sc.config.config() == clues::item::THPDisableState::DISABLED);
+#endif
 		}), IgnoreCalls{1}, {
 			I386_CROSS_ABI(IgnoreCalls{1}, []() {
 				prctl(PR_SET_THP_DISABLE, 1, PR_THP_DISABLE_EXCEPT_ADVISED, 0, 0);
@@ -931,7 +942,11 @@ const auto TESTS = std::array{
 			VERIFY(!sc.int_res);
 			VERIFY(sc.thp_disable.value() == true);
 			VERIFY(sc.flags.has_value());
+#ifdef HAVE_EXCEPT_ADVISED
 			VERIFY(sc.flags->flags() == clues::item::THPDisableFlags::THP_DISABLE_EXCEPT_ADVICED);
+#else
+			VERIFY(sc.flags->flags().none());
+#endif
 		}), EXIT_VERIFY_CB(prctl::SetTHPDisableSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}), IgnoreCalls{0}, {

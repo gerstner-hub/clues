@@ -4,6 +4,9 @@
 #include <utility>
 #include <vector>
 
+// Linux
+#include <sys/prctl.h> // for PR_THP_DISABLE_EXCEPT_ADVISED
+
 // clues
 #include <clues/arch.hxx>
 
@@ -365,8 +368,10 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_TAGGED_ADDR_CTRL\) = (22|PR_TAGGED_ADDR_ENABLE))",
 			R"(prctl\(op=PR_TASK_PERF_EVENTS_ENABLE\) = 0)",
 			R"(prctl\(op=PR_TASK_PERF_EVENTS_DISABLE\) = 0)",
+#ifdef PR_THP_DISABLE_EXCEPT_ADVISED
 			R"(prctl\(op=PR_SET_THP_DISABLE, thp_disable=true, flags=0x2 \(PR_THP_DISABLE_EXCEPT_ADVISED\)\) = 0 \(success\))",
-			R"(prctl\(op=PR_GET_THP_DISABLE\) = DISABLED_EXCEPT_ADVISED \(config\))",
+#endif
+			R"(prctl\(op=PR_GET_THP_DISABLE\) = (DISABLED_EXCEPT_ADVISED|UNSPECIFIED) \(config\))",
 			R"(prctl\(op=PR_SET_THP_DISABLE, thp_disable=true, flags=0x0 \(\)\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_THP_DISABLE, thp_disable=false\) = 0 \(success\))",
 	}},
