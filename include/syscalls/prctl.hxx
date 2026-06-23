@@ -204,6 +204,21 @@ protected: // functions
 	void setSuccessReturn();
 };
 
+/// Base type for specialized prctl() system call types that have no dynamic parameters.
+class CLUES_API FixedPrCtlSystemCall :
+		public PrCtlSystemCall {
+
+protected: // functions
+
+	bool check2ndPass(const Tracee &) override {
+		return false;
+	}
+
+	void prepareNewSystemCall() override {
+		/* nothing to reset */
+	}
+};
+
 /* nested namespace for all PrCtlSystemCall specializations */
 namespace prctl {
 
@@ -361,11 +376,10 @@ protected: // functions
  * For return value the `res` success status is used by this system call.
  **/
 class CLUES_API GetChildSubReaperSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit GetChildSubReaperSystemCall() :
-			PrCtlSystemCall{},
 			is_subreaper{"subreaper", "is child-subreaper"} {
 		addParameters(is_subreaper);
 		setSuccessReturn();
@@ -375,16 +389,6 @@ public: // data
 
 	/// Current child-subreaper setting filled in by the kernel.
 	item::PointerToScalar<int> is_subreaper;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to reset */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for the PR_SET_VMA operation.
@@ -392,11 +396,10 @@ protected: // functions
  * This uses the `res` success status as return value.
  **/
 class CLUES_API VirtualMemoryAttrSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit VirtualMemoryAttrSystemCall() :
-			PrCtlSystemCall{},
 			attr{},
 			addr{"addr", "memory area start address"},
 			size{"size", "extent of memory area"},
@@ -416,16 +419,6 @@ public: // data
 	 * be compatible with future extensions of the API */
 	/// The name for VirtualMemoryAttr::ANON_NAME.
 	std::optional<item::StringData> name;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to reset */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_GET_NAME and PR_SET_NAME.
@@ -489,11 +482,10 @@ protected: // functions
  * This system call uses the `res` exit status return value.
  **/
 class CLUES_API SetPTracerSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
-	explicit SetPTracerSystemCall() :
-			PrCtlSystemCall{} {
+	explicit SetPTracerSystemCall() {
 		setSuccessReturn();
 		addParameters(pid);
 	}
@@ -502,16 +494,6 @@ public: // data
 
 	/// The new signal to set for PR_SET_PDEATHSIG.
 	item::PTracerProcessID pid;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to reset */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_SET_SECCOMP.
@@ -551,11 +533,10 @@ protected: // functions
  * secure bits bitmask.
  **/
 class CLUES_API GetSecureBitsSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit GetSecureBitsSystemCall() :
-			PrCtlSystemCall{},
        			bits{ItemType::RETVAL} {
 		setReturnItem(bits);
 	}
@@ -563,16 +544,6 @@ public: // functions
 public: // data
 
 	item::SecureBits bits;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to clean up */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_SET_SECUREBITS.
@@ -581,11 +552,10 @@ protected: // functions
  * status.
  **/
 class CLUES_API SetSecureBitsSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit SetSecureBitsSystemCall() :
-			PrCtlSystemCall{},
 			bits{ItemType::PARAM_IN} {
 		addParameters(bits);
 		setSuccessReturn();
@@ -594,16 +564,6 @@ public: // functions
 public: // data
 
 	item::SecureBits bits;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to clean up */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_GET_SPECULATION_CTRL.
@@ -612,11 +572,10 @@ protected: // functions
  * optional parameters.
  **/
 class CLUES_API GetSpeculationControlSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit GetSpeculationControlSystemCall() :
-			PrCtlSystemCall{},
 			setting{ItemType::RETVAL} {
 		addParameters(misfeature);
 		setReturnItem(setting);
@@ -626,16 +585,6 @@ public: // data
 
 	item::SpeculationCtrlMisfeature misfeature;
 	item::SpeculationCtrlSetting setting;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to clean up */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_SET_SPECULATION_CTRL.
@@ -643,11 +592,10 @@ protected: // functions
  * This type uses the `res` success status return value from the base class.
  **/
 class CLUES_API SetSpeculationControlSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit SetSpeculationControlSystemCall() :
-			PrCtlSystemCall{},
 			setting{ItemType::PARAM_IN} {
 		addParameters(misfeature, setting);
 		setSuccessReturn();
@@ -657,16 +605,6 @@ public: // data
 
 	item::SpeculationCtrlMisfeature misfeature;
 	item::SpeculationCtrlSetting setting;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee&) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to clean up */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_SET_SYSCALL_USER_DISPATCH.
@@ -714,7 +652,7 @@ protected: // functions
  * are no additional parameters.
  **/
 class CLUES_API GetTaggedAddrControlSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit GetTaggedAddrControlSystemCall() :
@@ -725,16 +663,6 @@ public: // functions
 public: // data
 
 	item::TaggedAddressControl mode;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee &) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to reset */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_SET_TAGGED_ADDR_CTRL.
@@ -742,7 +670,7 @@ protected: // functions
  * This type uses the `res` success status return from the base class.
  **/
 class CLUES_API SetTaggedAddrControlSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit SetTaggedAddrControlSystemCall() :
@@ -754,21 +682,11 @@ public: // functions
 public: // data
 
 	item::TaggedAddressControl mode;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee &) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to reset */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_GET_THP_DISABLE.
 class CLUES_API GetTHPDisableSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit GetTHPDisableSystemCall() {
@@ -778,16 +696,6 @@ public: // functions
 public: // data
 
 	item::THPDisableState config;
-
-protected: // functions
-
-	bool check2ndPass(const Tracee &) override {
-		return false;
-	}
-
-	void prepareNewSystemCall() override {
-		/* nothing to reset */
-	}
 };
 
 /// Specialization of PrCtlSystemCall for PR_SET_THP_DISABLE.
@@ -837,7 +745,7 @@ protected: // functions
  * status from the base class.
  **/
 class CLUES_API GetTIDAddressSystemCall :
-		public PrCtlSystemCall {
+		public FixedPrCtlSystemCall {
 public: // functions
 
 	explicit GetTIDAddressSystemCall() :
