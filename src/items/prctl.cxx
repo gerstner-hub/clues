@@ -318,4 +318,17 @@ void THPDisableFlags::processValue(const Tracee&) {
 	m_flags = Flags{valueAs<long>()};
 }
 
+std::string TimingMode::str() const {
+	using enum Mode;
+	switch (cosmos::to_integral(m_mode)) {
+		CASE_ENUM_TO_STR(PR_TIMING_STATISTICAL);
+		CASE_ENUM_TO_STR(PR_TIMING_TIMESTAMP);
+		default: return "PR_TIMING_???";
+	}
+}
+
+void TimingMode::processValue(const Tracee&) {
+	m_mode = Mode{valueAs<int>()};
+}
+
 } // end ns

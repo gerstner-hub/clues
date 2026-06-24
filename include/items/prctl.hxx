@@ -618,4 +618,37 @@ protected: // data
 	Flags m_flags{};
 };
 
+/// Enum for the PR_GET_TIMING and PR_SET_TIMING prctl().
+class CLUES_API TimingMode :
+		public ValueParameter {
+public: // types
+
+	enum class Mode : int {
+		STATISTICAL = PR_TIMING_STATISTICAL,
+		TIMESTAMP = PR_TIMING_TIMESTAMP
+	};
+
+	using enum Mode;
+
+public: // functions
+
+	explicit TimingMode(const ItemType type) :
+			ValueParameter{type, "mode", "timing mode"} {
+	}
+
+	Mode mode() const {
+		return m_mode;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Mode m_mode{};
+};
+
 } // end ns

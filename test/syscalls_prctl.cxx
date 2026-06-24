@@ -1030,6 +1030,38 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_GET_TIMERSLACK);
 			})
 		}, "PR_GET_TIMERSLACK"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_TIMING, PR_TIMING_STATISTICAL);
+		}, ENTRY_VERIFY_CB(prctl::SetTimingModeSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_TIMING);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.int_res);
+			VERIFY(sc.mode.mode() == clues::item::TimingMode::STATISTICAL);
+		}), EXIT_VERIFY_CB(prctl::SetTimingModeSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_TIMING, PR_TIMING_STATISTICAL);
+			})
+		}, "PR_SET_TIMING"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_GET_TIMING);
+		}, ENTRY_VERIFY_CB(prctl::GetTimingModeSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_TIMING);
+			VERIFY(!sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(prctl::GetTimingModeSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.mode.mode() == clues::item::TimingMode::STATISTICAL);
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_GET_TIMING);
+			})
+		}, "PR_GET_TIMING"
 	},
 };
 

@@ -100,6 +100,8 @@ protected: // functions
  * - PR_SET_THP_DISABLE: prctl::SetTHPDisableSystemCall
  * - PR_GET_TID_ADDRESS: prctl::GetTIDAddressSystemCall
  * - PR_SET_TIMERSLACK: prctl::SetTimerSlackSystemCall
+ * - PR_GET_TIMING: prctl::GetTimingModeSystemCall
+ * - PR_SET_TIMING: prctl::SetTimingModeSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -780,6 +782,47 @@ public: // data
 
 	/// The new timer slack to set or 0 to use the default.
 	item::ULongValue slack;
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_TIMING.
+/**
+ * The return type for this variant of prctl() is always the `res` success
+ * status from the base class.
+ **/
+class CLUES_API SetTimingModeSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+
+	explicit SetTimingModeSystemCall() :
+			mode{ItemType::PARAM_IN} {
+		setSuccessReturn();
+		addParameters(mode);
+	}
+
+public: // data
+
+	/// The new timing mode to set.
+	item::TimingMode mode;
+};
+
+/// Specialization of PrCtlSystemCall for PR_GET_TIMING.
+/**
+ * This class uses the specialized TimingMode return value and otherwise has
+ * no additional parameters.
+ **/
+class CLUES_API GetTimingModeSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+
+	explicit GetTimingModeSystemCall() :
+			mode{ItemType::RETVAL} {
+		setReturnItem(mode);
+	}
+
+public: // data
+
+	/// The current timing mode which is active.
+	item::TimingMode mode;
 };
 
 } // end ns prctl

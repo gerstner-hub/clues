@@ -169,6 +169,9 @@ int main() {
 	prctl(PR_SET_TIMERSLACK, 500);
 	prctl(PR_GET_TIMERSLACK);
 
+	prctl(PR_SET_TIMING, PR_TIMING_STATISTICAL);
+	prctl(PR_GET_TIMING);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even
