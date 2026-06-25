@@ -381,6 +381,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_TIMING\) = PR_TIMING_STATISTICAL \(mode\))",
 			R"(prctl\(op=PR_SET_TSC, access=PR_TSC_ENABLE\) = 0 \(success\))",
 			R"(prctl\(op=PR_GET_TSC, access={addr} → [PR_TSC_ENABLE]\) = 0 \(success\))",
+			R"(prctl\(op=PR_SET_MDWE, mask={hex} \(PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT\)\) = 0 \(success\))",
+			R"(prctl\(op=PR_GET_MDWE\) = {hex} \(PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT\) \(mask\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

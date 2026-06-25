@@ -104,6 +104,8 @@ protected: // functions
  * - PR_SET_TIMING: prctl::SetTimingModeSystemCall
  * - PR_GET_TSC: prctl::GetTSCAccessSystemCall
  * - PR_SET_TSC: prctl::SetTSCAccessSystemCall
+ * - PR_GET_MDWE: prctl::GetMemDenyWriteExecSystemCall
+ * - PR_SET_MDWE: prctl::SetMemDenyWriteExecSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -870,6 +872,48 @@ public: // data
 
 	/// Out pointer to The current TSC access mode.
 	item::TSCAccessPtr access;
+};
+
+/// Specialization of PrCtlSystemCall for PR_GET_MDWE.
+/**
+ * This uses a specialized MemDenyWriteExecProtectionMask return value and no
+ * additional parameters.
+ **/
+class CLUES_API GetMemDenyWriteExecSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+
+	explicit GetMemDenyWriteExecSystemCall() :
+			mask{ItemType::RETVAL} {
+		setReturnItem(mask);
+	}
+
+public: // data
+
+	item::MemDenyWriteExecProtectionMask mask;
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_MDWE.
+/**
+ * The return type for this variant of prctl() is always the `res` success
+ * status from the base class.
+ *
+ * One additional parameter specifies the new bitmask for mem-deny-exec
+ * protection.
+ **/
+class CLUES_API SetMemDenyWriteExecSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+
+	explicit SetMemDenyWriteExecSystemCall() :
+			mask{ItemType::PARAM_IN} {
+		setSuccessReturn();
+		addParameters(mask);
+	}
+
+public: // data
+
+	item::MemDenyWriteExecProtectionMask mask;
 };
 
 } // end ns prctl

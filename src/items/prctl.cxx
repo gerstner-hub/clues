@@ -364,4 +364,15 @@ void TSCAccessPtr::updateData(const Tracee &tracee) {
 	}
 }
 
+std::string MemDenyWriteExecProtectionMask::str() const {
+	BITFLAGS_FORMAT_START(m_mask);
+	BITFLAGS_ADD(PR_MDWE_REFUSE_EXEC_GAIN);
+	BITFLAGS_ADD(PR_MDWE_NO_INHERIT);
+	return BITFLAGS_STR();
+}
+
+void MemDenyWriteExecProtectionMask::processValue(const Tracee&) {
+	m_mask = Mask{valueAs<int>()};
+}
+
 } // end ns

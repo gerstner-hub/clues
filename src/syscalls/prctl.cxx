@@ -79,6 +79,8 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 	 * MPX_ENABLE/DISABLE_MANAGEMENT: dropped in kernel 5.4.
 	 * PAC_RESET_KEYS: arm64 only
 	 * PR_SVE_GET_VL, PR_SVE_SET_VL: arm64 only
+	 * PR_GET_UNALIGN, PR_SET_UNALIGN: power, alpha, sh, etc. only
+	 * PR_RISCV_SET_ICACHE_FLUSH_CTX: RISC-V only
 	 */
 
 	switch (op.operation()) {
@@ -188,6 +190,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 		case SET_TIMING: return make_shared<SetTimingModeSystemCall>();
 		case SET_TSC: return make_shared<SetTSCAccessSystemCall>();
 		case GET_TSC: return make_shared<GetTSCAccessSystemCall>();
+		case GET_MDWE: return make_shared<GetMemDenyWriteExecSystemCall>();
+		case SET_MDWE: return make_shared<SetMemDenyWriteExecSystemCall>();
 		case SET_TIMERSLACK: return make_shared<SetTimerSlackSystemCall>();
 		case GET_TIMERSLACK: /* fallthrough */
 		case TASK_PERF_EVENTS_ENABLE: /* fallthrough */

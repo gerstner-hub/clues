@@ -716,4 +716,39 @@ protected: // data
 	Access m_access{};
 };
 
+/// Bitmask for the PR_SET_MDWE and PR_GET_MDWE prctl().
+class CLUES_API MemDenyWriteExecProtectionMask :
+		public ValueParameter {
+public: // types
+
+	enum class Flag : int {
+		REFUSE_EXEC_GAIN = PR_MDWE_REFUSE_EXEC_GAIN,
+		NO_INHERIT       = PR_MDWE_NO_INHERIT
+	};
+
+	using enum Flag;
+
+	using Mask = cosmos::BitMask<Flag>;
+
+public: // functions
+
+	explicit MemDenyWriteExecProtectionMask(const ItemType type) :
+			ValueParameter{type, "mask", "protection mask"} {
+	}
+
+	Mask mask() const {
+		return m_mask;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Mask m_mask{};
+};
+
 } // end ns

@@ -176,6 +176,9 @@ int main() {
 	int setting;
 	prctl(PR_GET_TSC, &setting);
 
+	prctl(PR_SET_MDWE, PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT, 0, 0, 0);
+	prctl(PR_GET_MDWE, 0, 0, 0, 0);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even

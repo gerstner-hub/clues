@@ -1096,6 +1096,44 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_SET_TSC, PR_TSC_ENABLE);
 			})
 		}, "PR_SET_TSC"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_MDWE, PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT, 0, 0, 0);
+			prctl(PR_GET_MDWE, 0, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::GetMemDenyWriteExecSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_MDWE);
+			VERIFY(!sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(prctl::GetMemDenyWriteExecSystemCall, {
+			VERIFY(sc.hasResultValue());
+			using enum clues::item::MemDenyWriteExecProtectionMask::Flag;
+			using Mask = clues::item::MemDenyWriteExecProtectionMask::Mask;
+			VERIFY(sc.mask.mask() == Mask{REFUSE_EXEC_GAIN, NO_INHERIT});
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				prctl(PR_SET_MDWE, PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT, 0, 0, 0);
+				syscall32(SyscallNr32::PRCTL, PR_GET_MDWE, 0, 0, 0, 0);
+			})
+		}, "PR_GET_MDWE"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_MDWE, PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT, 0, 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::SetMemDenyWriteExecSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_MDWE);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.int_res);
+			using enum clues::item::MemDenyWriteExecProtectionMask::Flag;
+			using Mask = clues::item::MemDenyWriteExecProtectionMask::Mask;
+			VERIFY(sc.mask.mask() == Mask{REFUSE_EXEC_GAIN, NO_INHERIT});
+		}), EXIT_VERIFY_CB(prctl::SetMemDenyWriteExecSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_MDWE, PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT, 0, 0, 0);
+			})
+		}, "PR_SET_MDWE"
 	},
 };
 
