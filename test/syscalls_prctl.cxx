@@ -1062,6 +1062,40 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_GET_TIMING);
 			})
 		}, "PR_GET_TIMING"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			int setting;
+			prctl(PR_GET_TSC, &setting);
+		}, ENTRY_VERIFY_CB(prctl::GetTSCAccessSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_TSC);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.int_res);
+		}), EXIT_VERIFY_CB(prctl::GetTSCAccessSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.access.access() == clues::item::TSCAccessPtr::ENABLE);
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto setting = alloc_struct32<int>();
+				syscall32(SyscallNr32::PRCTL, PR_GET_TSC, setting);
+			})
+		}, "PR_GET_TSC"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_TSC, PR_TSC_ENABLE);
+		}, ENTRY_VERIFY_CB(prctl::SetTSCAccessSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::SET_TSC);
+			VERIFY(sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.int_res);
+			VERIFY(sc.access.access() == clues::item::TSCAccess::ENABLE);
+		}), EXIT_VERIFY_CB(prctl::SetTSCAccessSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+				syscall32(SyscallNr32::PRCTL, PR_SET_TSC, PR_TSC_ENABLE);
+			})
+		}, "PR_SET_TSC"
 	},
 };
 

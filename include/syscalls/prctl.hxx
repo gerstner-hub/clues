@@ -102,6 +102,8 @@ protected: // functions
  * - PR_SET_TIMERSLACK: prctl::SetTimerSlackSystemCall
  * - PR_GET_TIMING: prctl::GetTimingModeSystemCall
  * - PR_SET_TIMING: prctl::SetTimingModeSystemCall
+ * - PR_GET_TSC: prctl::GetTSCAccessSystemCall
+ * - PR_SET_TSC: prctl::SetTSCAccessSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -823,6 +825,51 @@ public: // data
 
 	/// The current timing mode which is active.
 	item::TimingMode mode;
+};
+
+/// Specialization of PrCtlSystemCall for PR_SET_TSC.
+/**
+ * The return type for this variant of prctl() is always the `res` success
+ * status from the base class.
+ **/
+class CLUES_API SetTSCAccessSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+
+	explicit SetTSCAccessSystemCall() :
+			access{ItemType::PARAM_IN} {
+		setSuccessReturn();
+		addParameters(access);
+	}
+
+public: // data
+
+	/// The new TSC access mode.
+	item::TSCAccess access;
+};
+
+/// Specialization of PrCtlSystemCall for PR_GET_TSC.
+/**
+ * The return type for this variant of prctl() is always the `res` success
+ * status from the base class.
+ *
+ * The additional parameter is apointer to the a variable where to store the
+ * current TSC access mode.
+ **/
+class CLUES_API GetTSCAccessSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+
+	explicit GetTSCAccessSystemCall() :
+			access{} {
+		setSuccessReturn();
+		addParameters(access);
+	}
+
+public: // data
+
+	/// Out pointer to The current TSC access mode.
+	item::TSCAccessPtr access;
 };
 
 } // end ns prctl

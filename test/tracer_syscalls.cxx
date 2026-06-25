@@ -379,6 +379,8 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_TIMERSLACK\) = {decimal} \(slack\))",
 			R"(prctl\(op=PR_SET_TIMING, mode=PR_TIMING_STATISTICAL\) = 0 \(success\))",
 			R"(prctl\(op=PR_GET_TIMING\) = PR_TIMING_STATISTICAL \(mode\))",
+			R"(prctl\(op=PR_SET_TSC, access=PR_TSC_ENABLE\) = 0 \(success\))",
+			R"(prctl\(op=PR_GET_TSC, access={addr} → [PR_TSC_ENABLE]\) = 0 \(success\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

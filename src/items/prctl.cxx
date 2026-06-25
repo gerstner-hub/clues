@@ -331,4 +331,37 @@ void TimingMode::processValue(const Tracee&) {
 	m_mode = Mode{valueAs<int>()};
 }
 
+std::string TSCAccess::str() const {
+	return to_str(m_access);
+}
+
+std::string TSCAccess::to_str(const Access acc) {
+	using enum Access;
+	switch (cosmos::to_integral(acc)) {
+		CASE_ENUM_TO_STR(PR_TSC_ENABLE);
+		CASE_ENUM_TO_STR(PR_TSC_SIGSEGV);
+		default: return "PR_TSC_???";
+	}
+}
+
+void TSCAccess::processValue(const Tracee&) {
+	m_access = Access{valueAs<int>()};
+}
+
+std::string TSCAccessPtr::scalarToString() const {
+	return TSCAccess::to_str(m_access);
+}
+
+void TSCAccessPtr::updateData(const Tracee &tracee) {
+	m_access = Access{0};
+
+	if (!m_call->hasResultValue())
+		return;
+
+	PointerToScalar<int>::updateData(tracee);
+	if (m_val) {
+		m_access = Access{*m_val};
+	}
+}
+
 } // end ns

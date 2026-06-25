@@ -172,6 +172,10 @@ int main() {
 	prctl(PR_SET_TIMING, PR_TIMING_STATISTICAL);
 	prctl(PR_GET_TIMING);
 
+	prctl(PR_SET_TSC, PR_TSC_ENABLE);
+	int setting;
+	prctl(PR_GET_TSC, &setting);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even

@@ -651,4 +651,69 @@ protected: // data
 	Mode m_mode{};
 };
 
+/// Enum for the PR_SET_TSC prctl().
+class CLUES_API TSCAccess :
+		public ValueParameter {
+public: // types
+
+	enum class Access : int {
+		ENABLE = PR_TSC_ENABLE,
+		SEGV   = PR_TSC_SIGSEGV
+	};
+
+	using enum Access;
+
+public: // functions
+
+	explicit TSCAccess(const ItemType type) :
+			ValueParameter{type, "access", "timestamp counter access"} {
+	}
+
+	Access access() const {
+		return m_access;
+	}
+
+	std::string str() const override;
+
+	static std::string to_str(const Access acc);
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Access m_access{};
+};
+
+/// Pointer-to-enum for the PR_GET_TSC prctl().
+class CLUES_API TSCAccessPtr :
+		public PointerToScalar<int> {
+public: // types
+
+	using Access = TSCAccess::Access;
+
+	using enum Access;
+
+public: // functions
+
+	explicit TSCAccessPtr() :
+			PointerToScalar<int>{"access", "pointer to timestamp counter access"} {
+	}
+
+	Access access() const {
+		return m_access;
+	}
+
+protected: // functions
+
+	std::string scalarToString() const override;
+
+	void updateData(const Tracee &tracee) override;
+
+protected: // data
+
+	Access m_access{};
+};
+
 } // end ns

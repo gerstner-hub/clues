@@ -186,6 +186,8 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 		case GET_TID_ADDRESS: return make_shared<GetTIDAddressSystemCall>();
 		case GET_TIMING: return make_shared<GetTimingModeSystemCall>();
 		case SET_TIMING: return make_shared<SetTimingModeSystemCall>();
+		case SET_TSC: return make_shared<SetTSCAccessSystemCall>();
+		case GET_TSC: return make_shared<GetTSCAccessSystemCall>();
 		case SET_TIMERSLACK: return make_shared<SetTimerSlackSystemCall>();
 		case GET_TIMERSLACK: /* fallthrough */
 		case TASK_PERF_EVENTS_ENABLE: /* fallthrough */
