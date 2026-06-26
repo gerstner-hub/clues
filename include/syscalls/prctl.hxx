@@ -18,10 +18,12 @@
 
 namespace clues {
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
 #ifdef CLUES_HAVE_ARCH_PRCTL
 
 /// x86-specific prctl() extension.
-struct CLUES_API ArchPrctlSystemCall :
+struct ArchPrctlSystemCall :
 		public SystemCall {
 
 	ArchPrctlSystemCall() :
@@ -130,7 +132,7 @@ protected: // functions
  * The `res` success status is used by various derived types and the base
  * class implementation alike.
  **/
-struct CLUES_API PrCtlSystemCall :
+struct PrCtlSystemCall :
 		public SystemCall {
 
 	explicit PrCtlSystemCall() :
@@ -213,7 +215,7 @@ protected: // functions
 };
 
 /// Base type for specialized prctl() system call types that have no dynamic parameters.
-class CLUES_API FixedPrCtlSystemCall :
+class FixedPrCtlSystemCall :
 		public PrCtlSystemCall {
 
 protected: // functions
@@ -234,7 +236,7 @@ namespace prctl {
 /**
  * All of the SET_MM sub-operations use the `res` success status result.
  **/
-class CLUES_API MemoryMapSystemCall :
+class MemoryMapSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -272,7 +274,7 @@ protected: // functions
 /**
  * This prctl operation always uses the `res` success status return value.
  **/
-class CLUES_API MachineCheckKillSystemCall :
+class MachineCheckKillSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -302,7 +304,7 @@ protected: // functions
  * This prctl operation has no additional parameters and always returns
  * `policy_res`.
  **/
-class CLUES_API MachineCheckKillGetSystemCall :
+class MachineCheckKillGetSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -332,7 +334,7 @@ protected: // functions
  * This prctl operation uses `bool_res` for AmbientCapOp::CAP_AMBIENT_IS_SET,
  * otherwise the `res` success status.
  **/
-class CLUES_API CapAmbientSystemCall :
+class CapAmbientSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -359,7 +361,7 @@ protected: // functions
  * This prctl operation uses `bool_res` for CAPBSET_READ, otherwise the `res`
  * success status.
  **/
-class CLUES_API CapBSetSystemCall :
+class CapBSetSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -383,7 +385,7 @@ protected: // functions
 /**
  * For return value the `res` success status is used by this system call.
  **/
-class CLUES_API GetChildSubReaperSystemCall :
+class GetChildSubReaperSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -403,7 +405,7 @@ public: // data
 /**
  * This uses the `res` success status as return value.
  **/
-class CLUES_API VirtualMemoryAttrSystemCall :
+class VirtualMemoryAttrSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -437,7 +439,7 @@ public: // data
  *
  * This uses the `res` success status as return value.
  **/
-class CLUES_API NameSystemCall :
+class NameSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -462,7 +464,7 @@ protected: // functions
 /**
  * This system call uses the `res` exit status return value.
  **/
-class CLUES_API ParentDeathSignalSystemCall :
+class ParentDeathSignalSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -489,7 +491,7 @@ protected: // functions
 /**
  * This system call uses the `res` exit status return value.
  **/
-class CLUES_API SetPTracerSystemCall :
+class SetPTracerSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -508,7 +510,7 @@ public: // data
 /**
  * This system call uses the `res` exit status return value.
  **/
-class CLUES_API SetSecCompSystemCall :
+class SetSecCompSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -540,7 +542,7 @@ protected: // functions
  * This call takes no additional parameters and always returns `bits`, the
  * secure bits bitmask.
  **/
-class CLUES_API GetSecureBitsSystemCall :
+class GetSecureBitsSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -559,7 +561,7 @@ public: // data
  * This call takes a SecureBits parameter and always returns a `res` success
  * status.
  **/
-class CLUES_API SetSecureBitsSystemCall :
+class SetSecureBitsSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -579,7 +581,7 @@ public: // data
  * This type uses `setting` as return value and none of the base class
  * optional parameters.
  **/
-class CLUES_API GetSpeculationControlSystemCall :
+class GetSpeculationControlSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -599,7 +601,7 @@ public: // data
 /**
  * This type uses the `res` success status return value from the base class.
  **/
-class CLUES_API SetSpeculationControlSystemCall :
+class SetSpeculationControlSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -622,7 +624,7 @@ public: // data
  * The additional optional parameters are only used for
  * SyscallUserDispatchMode::DISPATCH_ON.
  **/
-class CLUES_API SetSyscallUserDispatchSystemCall :
+class SetSyscallUserDispatchSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -659,7 +661,7 @@ protected: // functions
  * This type uses the dedicated `mode` return value in the derived type. There
  * are no additional parameters.
  **/
-class CLUES_API GetTaggedAddrControlSystemCall :
+class GetTaggedAddrControlSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -677,7 +679,7 @@ public: // data
 /**
  * This type uses the `res` success status return from the base class.
  **/
-class CLUES_API SetTaggedAddrControlSystemCall :
+class SetTaggedAddrControlSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -693,7 +695,7 @@ public: // data
 };
 
 /// Specialization of PrCtlSystemCall for PR_GET_THP_DISABLE.
-class CLUES_API GetTHPDisableSystemCall :
+class GetTHPDisableSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -714,7 +716,7 @@ public: // data
  * The `flags` optional parameter is only available if `thp_disable.value() ==
  * true`.
  **/
-class CLUES_API SetTHPDisableSystemCall :
+class SetTHPDisableSystemCall :
 		public PrCtlSystemCall {
 public: // functions
 
@@ -752,7 +754,7 @@ protected: // functions
  * The return type for this variant of prctl() is always the `res` success
  * status from the base class.
  **/
-class CLUES_API GetTIDAddressSystemCall :
+class GetTIDAddressSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -772,7 +774,7 @@ public: // data
  * The return type for this variant of prctl() is always the `res` success
  * status from the base class.
  **/
-class CLUES_API SetTimerSlackSystemCall :
+class SetTimerSlackSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -793,7 +795,7 @@ public: // data
  * The return type for this variant of prctl() is always the `res` success
  * status from the base class.
  **/
-class CLUES_API SetTimingModeSystemCall :
+class SetTimingModeSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -814,7 +816,7 @@ public: // data
  * This class uses the specialized TimingMode return value and otherwise has
  * no additional parameters.
  **/
-class CLUES_API GetTimingModeSystemCall :
+class GetTimingModeSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -834,7 +836,7 @@ public: // data
  * The return type for this variant of prctl() is always the `res` success
  * status from the base class.
  **/
-class CLUES_API SetTSCAccessSystemCall :
+class SetTSCAccessSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -858,7 +860,7 @@ public: // data
  * The additional parameter is apointer to the a variable where to store the
  * current TSC access mode.
  **/
-class CLUES_API GetTSCAccessSystemCall :
+class GetTSCAccessSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -879,7 +881,7 @@ public: // data
  * This uses a specialized MemDenyWriteExecProtectionMask return value and no
  * additional parameters.
  **/
-class CLUES_API GetMemDenyWriteExecSystemCall :
+class GetMemDenyWriteExecSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -901,7 +903,7 @@ public: // data
  * One additional parameter specifies the new bitmask for mem-deny-exec
  * protection.
  **/
-class CLUES_API SetMemDenyWriteExecSystemCall :
+class SetMemDenyWriteExecSystemCall :
 		public FixedPrCtlSystemCall {
 public: // functions
 
@@ -915,6 +917,8 @@ public: // data
 
 	item::MemDenyWriteExecProtectionMask mask;
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns prctl
 

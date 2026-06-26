@@ -19,12 +19,14 @@
 
 namespace clues {
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
 /// Wrapper for the clone() and clone2() system calls.
 /**
  * For clone3() a separate wrapper type is used, since the two variants of
  * clone system calls differ too much from each other.
  **/
-struct CLUES_API CloneSystemCall :
+struct CloneSystemCall :
 		public SystemCall {
 
 	CloneSystemCall() :
@@ -84,7 +86,7 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
-struct CLUES_API Clone3SystemCall :
+struct Clone3SystemCall :
 		public SystemCall {
 	Clone3SystemCall() :
 			SystemCall{SystemCallNr::CLONE3},
@@ -106,7 +108,7 @@ protected: // functions
 	void updateFDTracking(const Tracee &proc) override;
 };
 
-struct CLUES_API ForkSystemCall :
+struct ForkSystemCall :
 		public SystemCall {
 
 	ForkSystemCall() :
@@ -118,7 +120,7 @@ struct CLUES_API ForkSystemCall :
 	item::ProcessID pid;
 };
 
-struct CLUES_API ExecveSystemCall :
+struct ExecveSystemCall :
 		public SystemCall {
 
 	ExecveSystemCall() :
@@ -136,7 +138,7 @@ struct CLUES_API ExecveSystemCall :
 	item::SuccessResult result;
 };
 
-struct CLUES_API ExecveAtSystemCall :
+struct ExecveAtSystemCall :
 		public SystemCall {
 
 	ExecveAtSystemCall() :
@@ -229,7 +231,7 @@ using GetPIDSystemCall  = GetXIDSystemCall<item::ProcessID>;
 using GetPPIDSystemCall = GetXIDSystemCall<item::ProcessID>;
 using GetTIDSystemCall  = GetXIDSystemCall<item::ThreadID>;
 
-struct CLUES_API GetPGIDSystemCall :
+struct GetPGIDSystemCall :
 		GetXIDSystemCall<item::ProcessGroupID> {
 	explicit GetPGIDSystemCall() :
 			GetXIDSystemCall{SystemCallNr::GETPGID},
@@ -240,7 +242,7 @@ struct CLUES_API GetPGIDSystemCall :
 	item::ProcessID pid; ///< the PID to get the process group ID for.
 };
 
-struct CLUES_API GetSIDSystemCall :
+struct GetSIDSystemCall :
 		GetXIDSystemCall<item::SessionID> {
 	explicit GetSIDSystemCall() :
 			GetXIDSystemCall{SystemCallNr::GETSID},
@@ -251,7 +253,7 @@ struct CLUES_API GetSIDSystemCall :
 	item::ProcessID pid; ///< the PID to get the session ID for.
 };
 
-struct CLUES_API SetSIDSystemCall :
+struct SetSIDSystemCall :
 		public SystemCall {
 	explicit SetSIDSystemCall() :
 			SystemCall{SystemCallNr::SETSID},
@@ -262,7 +264,7 @@ struct CLUES_API SetSIDSystemCall :
 	item::SessionID new_sid;
 };
 
-struct CLUES_API Wait4SystemCall :
+struct Wait4SystemCall :
 		public SystemCall {
 	Wait4SystemCall() :
 			SystemCall{SystemCallNr::WAIT4},
@@ -281,5 +283,7 @@ struct CLUES_API Wait4SystemCall :
 	/* return value */
 	item::ProcessID event_pid;
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

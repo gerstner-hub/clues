@@ -8,7 +8,9 @@
 
 namespace clues {
 
-struct CLUES_API AlarmSystemCall :
+CLUES_DEFAULT_VISIBILITY_ON;
+
+struct AlarmSystemCall :
 		public SystemCall {
 
 	AlarmSystemCall() :
@@ -24,7 +26,7 @@ struct CLUES_API AlarmSystemCall :
 };
 
 /// Type for and old sigaction().
-struct CLUES_API SigActionSystemCall :
+struct SigActionSystemCall :
 		public SystemCall {
 
 	explicit SigActionSystemCall(const SystemCallNr nr = SystemCallNr::SIGACTION) :
@@ -44,7 +46,7 @@ struct CLUES_API SigActionSystemCall :
 };
 
 /// Type for the current rt_sigaction() system call.
-struct CLUES_API RtSigActionSystemCall :
+struct RtSigActionSystemCall :
 		public SigActionSystemCall {
 
 	explicit RtSigActionSystemCall() :
@@ -63,7 +65,7 @@ struct CLUES_API RtSigActionSystemCall :
 };
 
 /// Type for old sigprocmask().
-struct CLUES_API SigProcMaskSystemCall :
+struct SigProcMaskSystemCall :
 		public SystemCall {
 
 	explicit SigProcMaskSystemCall(const SystemCallNr nr = SystemCallNr::SIGPROCMASK) :
@@ -84,7 +86,7 @@ struct CLUES_API SigProcMaskSystemCall :
 };
 
 /// Type for the current rt_sigprocmask().
-struct CLUES_API RtSigProcMaskSystemCall :
+struct RtSigProcMaskSystemCall :
 		public SigProcMaskSystemCall {
 
 	explicit RtSigProcMaskSystemCall() :
@@ -97,7 +99,7 @@ struct CLUES_API RtSigProcMaskSystemCall :
 	item::SizeValue sigset_size;
 };
 
-struct CLUES_API TgKillSystemCall :
+struct TgKillSystemCall :
 		public SystemCall {
 
 	TgKillSystemCall() :
@@ -116,5 +118,7 @@ struct CLUES_API TgKillSystemCall :
 	/* return value */
 	item::SuccessResult result;
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

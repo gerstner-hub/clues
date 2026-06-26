@@ -14,7 +14,9 @@
 
 namespace clues::item {
 
-class CLUES_API FcntlOperation :
+CLUES_DEFAULT_VISIBILITY_ON;
+
+class FcntlOperation :
 		public item::ValueInParameter {
 public: // types
 
@@ -95,7 +97,7 @@ protected: // data
 };
 
 /// Flags used with `fcntl()` to set and get file descriptor flags.
-struct CLUES_API FileDescFlagsValue :
+struct FileDescFlagsValue :
 		public SystemCallItem {
 	explicit FileDescFlagsValue(ItemType type) :
 			SystemCallItem{type, "fdflags", "file descriptor flags"} {
@@ -117,7 +119,7 @@ protected: // data
 };
 
 /// Corresponds to `struct flock` Used with fcntl() `F_*LK` operations.
-class CLUES_API FLockParameter :
+class FLockParameter :
 		public PointerValue {
 public: // functions
 	explicit FLockParameter() :
@@ -154,7 +156,7 @@ protected: // data
  * Accordingly the type contains either a cosmos::ProcessID or
  * cosmos::ProcessGroupID.
  **/
-class CLUES_API FileDescOwner :
+class FileDescOwner :
 		public SystemCallItem {
 public: // functions
 
@@ -191,7 +193,7 @@ protected: // data
 };
 
 /// The structure used with the F_GETOWN_EX and F_SETOWN_EX `fcntl()` operations.
-class CLUES_API ExtFileDescOwner :
+class ExtFileDescOwner :
 		public SystemCallItem {
 public: // functions
 	explicit ExtFileDescOwner(const ItemType type) :
@@ -214,7 +216,7 @@ protected: // data
 };
 
 /// The value used with F_GETLEASE and F_SETLEASE `fcntl()` operations.
-class CLUES_API LeaseType :
+class LeaseType :
 		public SystemCallItem {
 public: // functions
 
@@ -238,7 +240,7 @@ protected: // data
 };
 
 /// The value used with F_NOTIFY `fcntl()` operations.
-class CLUES_API DNotifySettings :
+class DNotifySettings :
 		public ValueInParameter {
 public: // types
 
@@ -277,7 +279,7 @@ protected: // data
 };
 
 /// The enum value used with file seal operations in the `fcntl()` system call.
-class CLUES_API FileSealSettings :
+class FileSealSettings :
 		public ValueParameter {
 public: // functions
 
@@ -309,7 +311,7 @@ protected: // data
  * reason both GET and SET operations operate on pointers to `uint64_t` passed
  * in a second `fcntl()` argument.
  **/
-class CLUES_API ReadWriteHint :
+class ReadWriteHint :
 		public SystemCallItem {
 public: // types
 
@@ -335,5 +337,7 @@ protected:
 
 	Hint m_hint = Hint::LIFE_NOT_SET;
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

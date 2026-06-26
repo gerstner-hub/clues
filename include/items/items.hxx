@@ -13,6 +13,8 @@
 
 namespace clues::item {
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
 /// Base class for a system call return values.
 class ReturnValue :
 		public SystemCallItem {
@@ -74,7 +76,7 @@ public: // functions
  * perform more complex operations on the tracee to gather the data as
  * appropriate.
  **/
-class CLUES_API PointerValue :
+class PointerValue :
 		public SystemCallItem {
 public: // functions
 
@@ -129,7 +131,7 @@ public: // functions
 	}
 };
 
-class CLUES_API GenericPointerValue :
+class GenericPointerValue :
 		public PointerValue {
 public: // functions
 
@@ -154,7 +156,7 @@ protected: // functions
  * system calls. They are accompanied by another system call parameter
  * denoting the number of bytes found in the buffer.
  **/
-class CLUES_API BufferPointer :
+class BufferPointer :
 		public PointerValue {
 public: // functions
 
@@ -218,7 +220,7 @@ protected: // data
  * match the system call's pointed-to type.
  **/
 template <typename INT>
-class CLUES_API PointerToScalar :
+class PointerToScalar :
 		public PointerValue {
 public: // functions
 
@@ -274,7 +276,7 @@ protected: // data
 
 /// A simple scalar in/out/return value parameter.
 template <typename INT>
-class CLUES_API IntValueT :
+class IntValueT :
 		public ValueParameter {
 public: // functions
 
@@ -317,7 +319,7 @@ using Int8Value   = IntValueT<int8_t>;
 using OffsetValue = IntValueT<kernel_off_t>;
 
 /// A 0/1 integer representing a boolean value.
-class CLUES_API BoolValue :
+class BoolValue :
 		public ValueParameter {
 public: // functions
 
@@ -384,6 +386,8 @@ struct UnusedItem :
 	}
 };
 
-CLUES_API extern UnusedItem unused;
+extern UnusedItem unused;
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

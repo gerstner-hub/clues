@@ -36,96 +36,98 @@ enum class Flag {
 
 using Flags = cosmos::BitMask<Flag>;
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
 /// Returns a string like "SIGINT (Interrupted)" for the given signal number.
 /**
  * If `verbose` is set then a human-readable description of the signal is
  * added in parantheses, otherwise just the short signal name is returned.
  **/
-CLUES_API std::string signal(const cosmos::SignalNr signal, const bool verbose=false);
+std::string signal(const cosmos::SignalNr signal, const bool verbose=false);
 
 /// Returns a string like "{SIGINT (Interrupted), SIGQUIT (Quit), ...}".
-CLUES_API std::string signal_set(const cosmos::SigSet &set);
+std::string signal_set(const cosmos::SigSet &set);
 
 /// Returns a string like "SA_NOCLDSTOP|SA_NOCLDWAIT|..."
-CLUES_API std::string saflags(const int flags);
+std::string saflags(const int flags);
 
 /// Returns a human readable limit string like "5 * 1024" or "RLIM64_INFINITY"
-CLUES_API std::string limit(const uint64_t lim);
+std::string limit(const uint64_t lim);
 
 /// Returns a string label for the corresponding C constant like SI_USER
-CLUES_API std::string si_code(const cosmos::SigInfo::Source src);
+std::string si_code(const cosmos::SigInfo::Source src);
 
 /// Returns a string label for the corresponding C constant like SYS_SECCOMP
-CLUES_API std::string si_reason(const cosmos::SigInfo::SysData::Reason reason);
+std::string si_reason(const cosmos::SigInfo::SysData::Reason reason);
 
 /// Returns a string label for the corresponding C constant like POLL_IN
-CLUES_API std::string si_reason(const cosmos::SigInfo::PollData::Reason reason);
+std::string si_reason(const cosmos::SigInfo::PollData::Reason reason);
 
 /// Returns a string label for the corresponding C constant like ILL_OPC
-CLUES_API std::string si_reason(const cosmos::SigInfo::IllData::Reason reason);
+std::string si_reason(const cosmos::SigInfo::IllData::Reason reason);
 
 /// Returns a string label for the corresponding C constant like FPE_INTDIV
-CLUES_API std::string si_reason(const cosmos::SigInfo::FPEData::Reason reason);
+std::string si_reason(const cosmos::SigInfo::FPEData::Reason reason);
 
 /// Returns a string label for the corresponding C constant like SEGV_MAPPERR
-CLUES_API std::string si_reason(const cosmos::SigInfo::SegfaultData::Reason reason);
+std::string si_reason(const cosmos::SigInfo::SegfaultData::Reason reason);
 
 /// Returns a string label for the corresponding C constant like BUS_ADRALN
-CLUES_API std::string si_reason(const cosmos::SigInfo::BusData::Reason reason);
+std::string si_reason(const cosmos::SigInfo::BusData::Reason reason);
 
 /// Returns a string label for the corresponding C constant like AUDIT_ARCH_X86_64
-CLUES_API std::string ptrace_arch(const cosmos::ptrace::Arch arch);
+std::string ptrace_arch(const cosmos::ptrace::Arch arch);
 
 /// Returns a string label for the corresponding C constant like CLD_EXITED
-CLUES_API std::string child_event(const cosmos::SigInfo::ChildData::Event event);
+std::string child_event(const cosmos::SigInfo::ChildData::Event event);
 
 /// Returns a string label for the corresponding C constant like POLLIN
-CLUES_API std::string poll_event(const cosmos::PollEvent event);
+std::string poll_event(const cosmos::PollEvent event);
 
 /// Returns a string like POLLIN|POLLPRI|...
-CLUES_API std::string poll_events(const cosmos::PollEvents events);
+std::string poll_events(const cosmos::PollEvents events);
 
 /// Returns a string like "10 (SIGINT) {si_code=<code> si_timerid=<id> ...}"
-CLUES_API std::string sig_info(const cosmos::SigInfo &info);
+std::string sig_info(const cosmos::SigInfo &info);
 
 /// Returns a literal string like "S_IFSOCK" matching `type`.
-CLUES_API std::string_view file_type(const cosmos::FileType type);
+std::string_view file_type(const cosmos::FileType type);
 
 /// Returns an octal number string like "0644" corresponding to `mode`.
-CLUES_API std::string file_mode_numeric(const cosmos::FileModeBits mode);
+std::string file_mode_numeric(const cosmos::FileModeBits mode);
 
 /// Returns a string like "rwxr-xr-x" corresponding to `mode`.
-CLUES_API std::string file_mode_symbolic(const cosmos::FileModeBits mode);
+std::string file_mode_symbolic(const cosmos::FileModeBits mode);
 
 /// returns a string like "0x10:0x05" corresponding to `id`.
-CLUES_API std::string device_id(const cosmos::DeviceID id);
+std::string device_id(const cosmos::DeviceID id);
 
 /// returns a string like {10s 500ns} corresponding to `ts`.
-CLUES_API std::string timespec(const struct timespec &ts, const bool only_secs = false);
+std::string timespec(const struct timespec &ts, const bool only_secs = false);
 
 /// returns a string like {10s 100µ} corresponding to `tv`.
-CLUES_API std::string timeval(const struct timeval &tv, const bool only_secs = false);
+std::string timeval(const struct timeval &tv, const bool only_secs = false);
 
 /// returns a string like "text \x08"
-CLUES_API std::string buffer(const uint8_t *buffer, const size_t len,
+std::string buffer(const uint8_t *buffer, const size_t len,
 		const Flags flags = {});
 
 /// translates a character like \n into its string representation "\n".
-CLUES_API std::string control_char(const char ch);
+std::string control_char(const char ch);
 
 /// formats a pointer like "0x1234" or NULL if `!ptr`.
-CLUES_API std::string pointer(const ForeignPtr ptr);
+std::string pointer(const ForeignPtr ptr);
 
 /// formats a pointer to data in the form of "0x123456 → [<data>]".
-CLUES_API std::string pointer(const ForeignPtr ptr,
+std::string pointer(const ForeignPtr ptr,
 		const std::string_view data,
 		const Flags flags = {});
 
 /// returns a label for `info.type`.
-CLUES_API std::string_view fd_type(const FDInfo &info);
+std::string_view fd_type(const FDInfo &info);
 
 /// formats the given FDInfo object in a user friendly way.
-CLUES_API std::string fd_info(const FDInfo &info);
+std::string fd_info(const FDInfo &info);
 
 /*
  * the following are helpers for template programming to obtain a label for
@@ -145,6 +147,8 @@ template<typename T>
 constexpr bool has_enum_formatter = requires(T t) {
 	enumeration(t);
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 /// Returns a debug string showing basic info about the given ptrace event.
 std::string event(const cosmos::ChildState &state);

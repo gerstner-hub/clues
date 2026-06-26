@@ -19,8 +19,10 @@
 
 namespace clues::item {
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
 /// Pointer to pipefd[2] array in pipe() system calls.
-class CLUES_API PipeEnds :
+class PipeEnds :
 		public PointerOutValue {
 public: // functions
 
@@ -67,7 +69,7 @@ protected: // data
 };
 
 /// Flags used in Pipe2SystemCall.
-class CLUES_API PipeFlags :
+class PipeFlags :
 		public ValueInParameter {
 public: // types
 
@@ -114,7 +116,7 @@ protected: // data
  * type which takes care of the differences between input and output I/O
  * vectors.
  **/
-class CLUES_API IOVectorBase :
+class IOVectorBase :
 		public PointerValue {
 public: // types
 
@@ -192,7 +194,7 @@ protected: // data
  * according payload after system call exit into the Buffer::data member of
  * the individual vector buffers.
  **/
-class CLUES_API ReadVector :
+class ReadVector :
 		public IOVectorBase {
 public: // functions
 
@@ -224,7 +226,7 @@ protected: // data
  * valid payload data, this type will fetch contents into Buffer::data already
  * during system call entry.
  **/
-class CLUES_API WriteVector :
+class WriteVector :
 		public IOVectorBase {
 public: // functions
 
@@ -262,7 +264,7 @@ protected: // functions
  * which case the DEFER_FILL flag will be set for this item, to make the low
  * order bits available the time processValue() is called.
  **/
-class CLUES_API CombinedOffsetValue :
+class CombinedOffsetValue :
 		public SystemCallItem {
 public: // data
 
@@ -292,7 +294,7 @@ protected: // data
 };
 
 /// Bitmask flags used in preadv2() and pwritev2().
-class CLUES_API ReadWriteFlags :
+class ReadWriteFlags :
 		public ValueInParameter {
 public: // types
 
@@ -322,7 +324,7 @@ protected: // data
 };
 
 /// Seek direction for use with lseek() type system calls.
-class CLUES_API Whence :
+class Whence :
 		public ValueInParameter {
 public: // types
 
@@ -350,5 +352,7 @@ protected: // data
 
 	SeekType m_type = SeekType{0};
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

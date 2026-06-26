@@ -13,9 +13,11 @@
 
 namespace clues::item {
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
 #ifdef CLUES_HAVE_ARCH_PRCTL
 /// The `op` parameter to the arch_prctl system call.
-class CLUES_API ArchOpParameter :
+class ArchOpParameter :
 		public ValueInParameter {
 public: // types
 
@@ -53,7 +55,7 @@ protected: // data
 #endif
 
 /// An enum describing the concrete `prctl()` operation to be carried out.
-class CLUES_API ProcessOp :
+class ProcessOp :
 		public ValueInParameter {
 public: // types
 
@@ -159,7 +161,7 @@ protected: // data
 };
 
 /// Sub-operation enum value for prctl(PR_CAP_AMBIENT, subop).
-class CLUES_API AmbientCapOp :
+class AmbientCapOp :
 		public ValueInParameter {
 public: // types
 
@@ -195,7 +197,7 @@ protected: // data
 };
 
 /// Sub-operation enum value for prctl(PR_MCE_KILL, subop).
-class CLUES_API MachineCheckOp :
+class MachineCheckOp :
 		public ValueInParameter {
 public: // types
 
@@ -229,7 +231,7 @@ protected: // data
 };
 
 /// Policy enum value for prctl(PR_MCE_KILL, PCR_ME_KILL_SET, policy).
-class CLUES_API MachineCheckPolicy :
+class MachineCheckPolicy :
 		public ValueParameter {
 public: // types
 
@@ -263,7 +265,7 @@ protected: // data
 };
 
 /// Sub-operation enum value for prctl(PR_SET_MM, op).
-class CLUES_API MemoryMapOp :
+class MemoryMapOp :
 		public ValueInParameter {
 public: // types
 
@@ -315,7 +317,7 @@ protected: // data
  * additional system call parameter which specifies the amount of data found
  * at the pointer this points to.
  **/
-class CLUES_API MemoryMapStruct :
+class MemoryMapStruct :
 		public PointerInValue {
 public: // functions
 
@@ -345,7 +347,7 @@ protected: // data
 };
 
 /// Attribute to set via the PR_SET_VMA prctl().
-class CLUES_API VirtualMemoryAttr :
+class VirtualMemoryAttr :
 		public ValueInParameter {
 public: // types
 
@@ -379,7 +381,7 @@ protected: // data
 };
 
 /// Specialized ProcessID for the SetPTracerSystemCall.
-class CLUES_API PTracerProcessID :
+class PTracerProcessID :
 		public ProcessID {
 public: // functions
 
@@ -397,7 +399,7 @@ public: // functions
 };
 
 /// Enum for the PR_GET_SPECULATION_CTRL and PR_SET_SPECULATION_CTRL prctls().
-class CLUES_API SpeculationCtrlMisfeature :
+class SpeculationCtrlMisfeature :
 		public ValueInParameter {
 public: // types
 
@@ -436,7 +438,7 @@ protected: // data
  * It is not fully clear at first that this is actually a bitmask. Only the
  * PR_SPEC_PRCTL bit is currently used in addition to one of the setting bits.
  **/
-class CLUES_API SpeculationCtrlSetting :
+class SpeculationCtrlSetting :
 		public ValueParameter {
 public: // types
 
@@ -479,7 +481,7 @@ protected: // data
 };
 
 /// Enum for the PR_SET_SYSCALL_USER_DISPATCH prctl().
-class CLUES_API SyscallUserDispatchMode :
+class SyscallUserDispatchMode :
 		public ValueInParameter {
 public: // types
 
@@ -514,7 +516,7 @@ protected: // data
 };
 
 /// Enum for the PR_SET_TAGGED_ADDR_CTRL prctl().
-class CLUES_API TaggedAddressControl :
+class TaggedAddressControl :
 		public ValueParameter {
 public: // types
 
@@ -549,7 +551,7 @@ protected: // data
 };
 
 /// Enum for the PR_GET_THP_DISABLE prctl().
-class CLUES_API THPDisableState :
+class THPDisableState :
 		public ReturnValue {
 public: // types
 
@@ -583,7 +585,7 @@ protected: // data
 };
 
 /// Flags for the PR_SET_THP_DISABLE prctl().
-class CLUES_API THPDisableFlags :
+class THPDisableFlags :
 		public ValueInParameter {
 public: // types
 
@@ -619,7 +621,7 @@ protected: // data
 };
 
 /// Enum for the PR_GET_TIMING and PR_SET_TIMING prctl().
-class CLUES_API TimingMode :
+class TimingMode :
 		public ValueParameter {
 public: // types
 
@@ -652,7 +654,7 @@ protected: // data
 };
 
 /// Enum for the PR_SET_TSC prctl().
-class CLUES_API TSCAccess :
+class TSCAccess :
 		public ValueParameter {
 public: // types
 
@@ -687,7 +689,7 @@ protected: // data
 };
 
 /// Pointer-to-enum for the PR_GET_TSC prctl().
-class CLUES_API TSCAccessPtr :
+class TSCAccessPtr :
 		public PointerToScalar<int> {
 public: // types
 
@@ -717,7 +719,7 @@ protected: // data
 };
 
 /// Bitmask for the PR_SET_MDWE and PR_GET_MDWE prctl().
-class CLUES_API MemDenyWriteExecProtectionMask :
+class MemDenyWriteExecProtectionMask :
 		public ValueParameter {
 public: // types
 
@@ -750,5 +752,7 @@ protected: // data
 
 	Mask m_mask{};
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

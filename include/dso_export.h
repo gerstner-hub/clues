@@ -11,3 +11,17 @@
 #else
 #	define CLUES_API
 #endif
+
+/*
+ * These macros can be used to change visibility of a group of symbols until
+ * the OFF macro appears again.
+ *
+ * This only works on GCC / clang but these are our main target compilers so
+ * far.
+ */
+
+#define CLUES_DEFAULT_VISIBILITY_ON \
+	    _Pragma("GCC visibility push(default)")
+
+#define CLUES_DEFAULT_VISIBILITY_OFF \
+	    _Pragma("GCC visibility pop")

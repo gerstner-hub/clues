@@ -18,7 +18,9 @@
 
 namespace clues::item {
 
-class CLUES_API ProcessID :
+CLUES_DEFAULT_VISIBILITY_ON;
+
+class ProcessID :
 		public SystemCallItem {
 public: // functions
 
@@ -50,7 +52,7 @@ protected: // data
 	cosmos::ProcessID m_pid = cosmos::ProcessID::INVALID;
 };
 
-class CLUES_API ProcessGroupID :
+class ProcessGroupID :
 		public SystemCallItem {
 public: // functions
 
@@ -82,7 +84,7 @@ protected: // data
 	cosmos::ProcessGroupID m_pgid = cosmos::ProcessGroupID::INVALID;
 };
 
-class CLUES_API SessionID :
+class SessionID :
 		public SystemCallItem {
 public: // functions
 
@@ -114,7 +116,7 @@ protected: // data
 	cosmos::SessionID m_sid = cosmos::SessionID::INVALID;
 };
 
-class CLUES_API ThreadID :
+class ThreadID :
 		public SystemCallItem {
 public: // functions
 
@@ -139,7 +141,7 @@ protected: // data
 	cosmos::ThreadID m_tid = cosmos::ThreadID::INVALID;
 };
 
-class CLUES_API ExitStatus :
+class ExitStatus :
 		public SystemCallItem {
 public: // functions
 
@@ -160,7 +162,7 @@ protected: // data
 	cosmos::ExitStatus m_status = cosmos::ExitStatus::INVALID;
 };
 
-class CLUES_API WaitOptions :
+class WaitOptions :
 		public ValueInParameter {
 public: // functions
 
@@ -186,7 +188,7 @@ protected: // data
 };
 
 /// Pointer to a `struct rusage` to be filled in.
-class CLUES_API ResourceUsage :
+class ResourceUsage :
 		public PointerOutValue {
 public: // functions
 
@@ -228,7 +230,7 @@ protected: // data
 };
 
 /// Pointer to an int containing wait() status result data.
-class CLUES_API WaitStatus :
+class WaitStatus :
 		public PointerToScalar<int> {
 public: // functions
 
@@ -255,5 +257,7 @@ protected: // data
 
 	std::optional<cosmos::WaitStatus> m_status;
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
