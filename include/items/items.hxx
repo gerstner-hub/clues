@@ -2,6 +2,7 @@
 
 // C++
 #include <vector>
+#include <cstddef>
 
 // clues
 #include <clues/arch.hxx>
@@ -211,7 +212,7 @@ protected: // data
 
 	const SystemCallItem &m_size_par;
 	const bool m_is_binary = false;
-	std::vector<uint8_t> m_data;
+	std::vector<std::byte> m_data;
 };
 
 /// A pointer to an integral data type which will be filled in by the kernel.

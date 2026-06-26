@@ -505,7 +505,7 @@ std::string control_char(const char ch) {
 	}
 }
 
-std::string buffer(const uint8_t *buffer, const size_t len,
+std::string buffer(const std::byte *buffer, const size_t len,
 		const Flags flags) {
 	std::stringstream ss;
 	ss << '"';

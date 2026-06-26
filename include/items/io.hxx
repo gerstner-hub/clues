@@ -142,7 +142,7 @@ public: // types
 		 *   	- the kernel returned less data than `len`.
 		 * 	- the system call failed.
 		 **/
-		std::vector<uint8_t> data;
+		std::vector<std::byte> data;
 	};
 
 public: // functions

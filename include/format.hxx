@@ -109,7 +109,7 @@ std::string timespec(const struct timespec &ts, const bool only_secs = false);
 std::string timeval(const struct timeval &tv, const bool only_secs = false);
 
 /// returns a string like "text \x08"
-std::string buffer(const uint8_t *buffer, const size_t len,
+std::string buffer(const std::byte *buffer, const size_t len,
 		const Flags flags = {});
 
 /// translates a character like \n into its string representation "\n".

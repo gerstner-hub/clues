@@ -1691,8 +1691,9 @@ const auto TESTS = std::array{
 			VERIFY(sc.buf.data().size() == 9);
 			std::string s;
 			for (const auto byte: sc.buf.data()) {
-				if (byte)
-					s.push_back(byte);
+				const auto ch = static_cast<char>(byte);
+				if (ch)
+					s.push_back(ch);
 			}
 			VERIFY(s == "abcdefgh");
 			VERIFY(sc.count.value() == 9);
@@ -1926,8 +1927,9 @@ const auto TESTS = std::array{
 			VERIFY(sc.buf.data().size() == 9);
 			std::string s;
 			for (const auto byte: sc.buf.data()) {
-				if (byte)
-					s.push_back(byte);
+				const auto ch = static_cast<char>(byte);
+				if (ch)
+					s.push_back(ch);
 			}
 			VERIFY(s == "abcdefgh");
 			VERIFY(sc.count.value() == 9);
