@@ -337,7 +337,7 @@ void parse_proc_file(const cosmos::ProcessID pid, const std::string_view subpath
 		}
 	}
 
-	if (fs.fail()) {
+	if (fs.bad() || (fs.fail() && !fs.eof())) {
 		throw cosmos::RuntimeError{"failed to read proc file"};
 	}
 }
