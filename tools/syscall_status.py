@@ -16,7 +16,7 @@ syscall_lines = subprocess.check_output([clues, "--list-syscalls"]).splitlines()
 num_syscalls = len(syscall_lines)
 covered_syscalls = 0
 
-with open(basedir / "src" / "SystemCall.cxx") as code_fd:
+with open(basedir / "src" / "SystemCallDB.cxx") as code_fd:
     in_create_syscall = False
     for line in code_fd.readlines():
         line = line.strip()
@@ -25,7 +25,7 @@ with open(basedir / "src" / "SystemCall.cxx") as code_fd:
                 in_create_syscall = False
             elif line.find("SystemCallNr::") != -1:
                 covered_syscalls += 1
-        elif line.find("create_syscall(const SystemCallNr") != -1:
+        elif line.find("create_syscall(const SystemCallInfo") != -1:
             in_create_syscall = True
 
 print(f"Currently {covered_syscalls} of {num_syscalls} are supported by libclues")
