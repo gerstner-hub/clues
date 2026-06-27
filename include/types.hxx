@@ -149,6 +149,14 @@ inline ForeignPtr increment(const ForeignPtr ptr) {
 	return ForeignPtr{raw + sizeof(T)};
 }
 
+/// Increment the foreign pointer by `count` elements of type T .
+template <typename T>
+inline ForeignPtr add(const ForeignPtr ptr, const size_t count) {
+	const auto raw = cosmos::to_integral(ptr);
+
+	return ForeignPtr{raw + (count * sizeof(T))};
+}
+
 } // end ns
 
 /// Support for increment of ForeignPtr to the next word boundary.

@@ -303,6 +303,19 @@ public: // functions
 		return m_engine;
 	}
 
+	/// Returns the currently executing system call, if any.
+	/**
+	 * This accessor is provided to allow modification of the system call
+	 * object during system call stops. The EventConsumer callback
+	 * signatures pass `const SystemCall &`, which is proper for most of
+	 * the cases, but sometimes you might want to e.g. fetch additional
+	 * data from the tracee, in which case this accessor provides a
+	 * modifiable instance of the SystemCall object.
+	 **/
+	SystemCallPtr currentSystemCall() {
+		return m_current_syscall;
+	}
+
 protected: // constants
 
 	/// Array of signals that cause tracee stop.

@@ -201,6 +201,22 @@ public: // functions
 
 	std::string str() const override;
 
+	/// Fetch any remaining data from the tracee.
+	/**
+	 * In case only part of the buffer was fetched from the Tracee, fetch
+	 * all remaining data and fill the buffer returned from `data()` with
+	 * it.
+	 *
+	 * This is only safe to do during the associated system call stop
+	 * when the partial buffer was filled, otherwise there is no
+	 * guarantee that the Tracee memory is still in the proper state to
+	 * read from.
+	 *
+	 * In case fetching the missing data fails an exception is thrown. The
+	 * original buffer data and size will remain intact in this case.
+	 **/
+	virtual void fetchRemainingData(const Tracee &proc);
+
 protected: // functions
 
 	void processValue(const Tracee &) override;

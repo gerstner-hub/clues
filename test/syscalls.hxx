@@ -41,7 +41,7 @@ using namespace std::string_literals;
 
 using clues::SystemCall;
 using clues::Tracee;
-using TraceVerifyCB = std::function<void (const Tracee &, const SystemCall &, bool &good)>;
+using TraceVerifyCB = std::function<void (Tracee &, const SystemCall &, bool &good)>;
 using SyscallInvoker = std::function<void (void)>;
 using clues::SystemCallNr;
 using clues::ForeignPtr;
@@ -114,21 +114,21 @@ static std::map<std::string, bool> test_ctx_flags;
 
 #define VERIFY_FALSE(expr) VERIFY(!(expr))
 
-#define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const Tracee &tracee, const SystemCall &_sc, bool &good) { \
+#define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](Tracee &tracee, const SystemCall &_sc, bool &good) { \
 	(void)tracee; \
 	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
 }
 
-#define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](const Tracee &tracee, const SystemCall &_sc, bool &good) { \
+#define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](Tracee &tracee, const SystemCall &_sc, bool &good) { \
 	(void)tracee; \
 	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
 	__VA_ARGS__ \
 }
 
-#define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](const Tracee &tracee, const SystemCall &_sc, bool &good) { \
+#define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](Tracee &tracee, const SystemCall &_sc, bool &good) { \
 	(void)tracee; \
 	good = true; \
 	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \

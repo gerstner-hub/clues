@@ -123,6 +123,24 @@ void BufferPointer::updateData(const Tracee &tracee) {
 	fillBuffer(tracee);
 }
 
+void BufferPointer::fetchRemainingData(const Tracee &tracee) {
+	const auto to_fetch = availableBytes() - m_data.size();
+
+	if (!to_fetch)
+		return;
+
+	const auto old_size = m_data.size();
+	m_data.resize(availableBytes());
+
+	try {
+		const auto tracee_ptr = add<std::byte>(asPtr(), old_size);
+		tracee.readBlob(tracee_ptr, reinterpret_cast<char*>(m_data.data() + old_size), to_fetch);
+	} catch (const std::exception &) {
+		m_data.resize(old_size);
+		throw;
+	}
+}
+
 void BufferPointer::fillBuffer(const Tracee &tracee) {
 	const auto to_fetch = std::min(tracee.maxBufferPrefetch(), availableBytes());
 	m_data.resize(to_fetch);
