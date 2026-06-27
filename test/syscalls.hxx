@@ -1,4 +1,5 @@
 // C++
+#include <charconv>
 #include <cstdlib>
 #include <cstring>
 #include <format>
@@ -10,8 +11,11 @@
 // cosmos
 #include <cosmos/compiler.hxx>
 #include <cosmos/error/RuntimeError.hxx>
+#include <cosmos/fs/filesystem.hxx>
+#include <cosmos/fs/types.hxx>
 #include <cosmos/memory.hxx>
 #include <cosmos/proc/process.hxx>
+#include <cosmos/string.hxx>
 
 // clues
 #include <clues/private/kernel/iovec.hxx>
@@ -92,6 +96,59 @@ struct TestSpec {
 	}
 };
 
+/// An entry read from /proc/<pid>/maps
+struct TraceeMemoryRange {
+	uintptr_t start = 0;
+	uintptr_t end = 0;
+	std::string access;
+	off_t offset = 0;
+	cosmos::DeviceID dev{0};
+	cosmos::Inode inode{0};
+	std::string path;
+
+	bool matches(const clues::ForeignPtr ptr) const {
+		const auto raw_ptr = cosmos::to_integral(ptr);
+		return raw_ptr >= start && raw_ptr < end;
+	}
+};
+
+struct MemoryRangeVector :
+		public std::vector<TraceeMemoryRange> {
+	bool isStackPointer(const clues::ForeignPtr ptr) const {
+		return containedInObjects(ptr, {"[stack]"});
+	}
+
+	bool isHeapPointer(const clues::ForeignPtr ptr) const {
+		return containedInObjects(ptr, {"[heap]"});
+	}
+
+	bool isVariablePointer(const clues::ForeignPtr ptr) const {
+		return containedInObjects(ptr, {"[heap]", "[stack]"});
+	}
+
+	bool containedInObjects(const clues::ForeignPtr ptr,
+			const std::initializer_list<std::string_view> paths) const {
+		auto matches_paths = [paths](const std::string &path) -> bool {
+			for (const auto cand: paths) {
+				if (path == cand)
+					return true;
+			}
+
+			return false;
+		};
+
+		for (const auto &range: *this) {
+			if (!matches_paths(range.path))
+				continue;
+
+			if (range.matches(ptr))
+				return true;
+		}
+
+		return false;
+	}
+};
+
 /*
  * the first file descriptor number which will be used in tracee context.
  * used for comparison of file descriptor values observed.
@@ -105,6 +162,13 @@ constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 2;
  * case to another.
  */
 static std::map<std::string, bool> test_ctx_flags;
+/*
+ * this is updated for each tracee child process to contain its memory areas
+ * from /proc/<pid>/maps.
+ * it can be used to verify pointers observed during tracing are coming from
+ * legit memory areas.
+ */
+static MemoryRangeVector tracee_mem_ranges;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
@@ -329,7 +393,8 @@ protected:
 		m_ran_cbs = true;
 	}
 
-	void attached(clues::Tracee &) override {
+	void attached(clues::Tracee &proc) override {
+		parseMemoryMap(proc);
 		m_creator->signalChild();
 	}
 
@@ -345,6 +410,8 @@ protected:
 			}
 		}
 	}
+
+	void parseMemoryMap(const Tracee &proc) const;
 
 public:
 
@@ -390,6 +457,62 @@ protected:
 	// for emulation targets this is set to the expected ABI
 	clues::ABI m_abi = clues::ABI::UNKNOWN;
 };
+
+void SyscallTracer::parseMemoryMap(const Tracee &proc) const {
+
+	auto from_hex = [](const std::string &s, auto &val) {
+		std::from_chars(s.data(), s.data() + s.size(), val, 16);
+	};
+
+	auto parser = [from_hex](const std::string &line) -> bool {
+		TraceeMemoryRange range;
+		const auto parts = cosmos::split(line, " ");
+		/* <memory-range> <access-bits> <offset> <dev-major>:<dev-minor> <inocde> [<path>] */
+		if (parts.size() < 5 || parts.size() > 6)
+			return false;
+
+		const auto addrs = cosmos::split(parts[0], "-");
+
+		if (addrs.size() != 2)
+			return false;
+
+		from_hex(addrs[0], range.start);
+		from_hex(addrs[1], range.end);
+		range.access = parts[1];
+		from_hex(parts[2], range.offset);
+
+		/* maj:min dev id */
+
+		const auto devids = cosmos::split(parts[3], ":");
+		if (devids.size() != 2)
+			return false;
+
+		unsigned int min, maj;
+
+		from_hex(devids[0], maj);
+		from_hex(devids[1], min);
+
+		range.dev = cosmos::fs::make_device(cosmos::DeviceMajor{maj}, cosmos::DeviceMinor{min});
+
+		ino_t inode;
+
+		/* inode */
+		from_hex(parts[4], inode);
+
+		range.inode = cosmos::Inode{inode};
+
+		if (parts.size() == 6) {
+			range.path = parts[5];
+		}
+
+		tracee_mem_ranges.emplace_back(range);
+
+		return false;
+	};
+
+	tracee_mem_ranges.clear();
+	clues::parse_proc_file(proc, "maps", parser);
+}
 
 template <typename SC>
 const SC& downcast(const SystemCall &sc) {
