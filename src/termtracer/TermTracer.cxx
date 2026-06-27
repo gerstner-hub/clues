@@ -359,6 +359,10 @@ void TermTracer::printPar(std::ostream &trace, const SystemCallItem &par) const 
 
 		if (value.size() > m_par_truncation_len) {
 			value.resize(m_par_truncation_len);
+			if (value[0] == '"') {
+				// terminate quotes before the ellipsis
+				value += '"';
+			}
 			value += "...";
 		}
 
