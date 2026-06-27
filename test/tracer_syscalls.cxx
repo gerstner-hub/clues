@@ -361,10 +361,12 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_SET_SECUREBITS, bits={hex} \(SECBIT_NOROOT|SECBIT_NO_CAP_AMBIENT_RAISE\)\) = 1 \(EPERM\) \(errno\))",
 			R"(prctl\(op=PR_GET_SECUREBITS\) = {hex} \(SECBIT_KEEP_CAPS\) \(bits\))",
 			/* in some environments it is forbidden to disable this */
-			R"(prctl\(op=PR_SET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH, setting=0x8 \(PR_SPEC_FORCE_DISABLE\)\) = (0 \(success\)|1 \(EPERM\)))",
-			R"(prctl\(op=PR_GET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH\) = {hex} \(PR_[A-Z]+.*\) \(setting\))",
+			R"(prctl\(op=PR_SET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH, setting=0x8 \(PR_SPEC_FORCE_DISABLE\)\) = (0 \(success\)|1 \(EPERM\)|19 \(ENODEV\)))",
+			R"(prctl\(op=PR_GET_SPECULATION_CTRL, misfeature=PR_SPEC_INDIRECT_BRANCH\) = ({hex} \(PR_[A-Z]+.*\) \(setting\)|19 \(ENODEV\)))",
+#ifdef COSMOS_X86
 			R"(prctl\(op=PR_SET_SYSCALL_USER_DISPATCH, mode=PR_SYS_DISPATCH_ON, offset={addr}, size={decimal}, switch={addr}\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_SYSCALL_USER_DISPATCH, mode=PR_SYS_DISPATCH_OFF\) = 0 \(success\))",
+#endif
 			R"(prctl\(op=PR_SET_TAGGED_ADDR_CTRL, mode=PR_TAGGED_ADDR_ENABLE\) = (0|22))",
 			R"(prctl\(op=PR_GET_TAGGED_ADDR_CTRL\) = (22|PR_TAGGED_ADDR_ENABLE))",
 			R"(prctl\(op=PR_TASK_PERF_EVENTS_ENABLE\) = 0)",

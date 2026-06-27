@@ -803,6 +803,7 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_GET_SPECULATION_CTRL, PR_SPEC_STORE_BYPASS, 0, 0, 0);
 			})
 		}, "PR_GET_SPECULATION_CTRL"
+#ifdef COSMOS_X86
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			int8_t state = SYSCALL_DISPATCH_FILTER_ALLOW;
 			prctl(PR_SET_SYSCALL_USER_DISPATCH, PR_SYS_DISPATCH_ON, 0x1234, 0xff00, &state);
@@ -848,8 +849,9 @@ const auto TESTS = std::array{
 						PR_SYS_DISPATCH_OFF, 0, 0, 0);
 			})
 		}, "PR_SET_SYSCALL_USER_DISPATCH(DISPATCH_OFF)"
+#endif
 	}, TestSpec{SystemCallNr::PRCTL, []() {
-			prctl(PR_SET_TAGGED_ADDR_CTRL, PR_TAGGED_ADDR_ENABLE, 0, 0, 0);
+			prctl(PR_SET_TAGGED_ADDR_CTRL, PR_TAGGED_ADDR_ENABLE, 0, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::SetTaggedAddrControlSystemCall, {
 			VERIFY(sc.op.operation() == ProcessOp::SET_TAGGED_ADDR_CTRL);
 			VERIFY(sc.res.has_value());
@@ -871,6 +873,7 @@ const auto TESTS = std::array{
 			})
 		}, "PR_SET_TAGGED_ADDR_CTRL"
 	}, TestSpec{SystemCallNr::PRCTL, []() {
+			prctl(PR_SET_TAGGED_ADDR_CTRL, PR_TAGGED_ADDR_ENABLE, 0, 0, 0, 0);
 			prctl(PR_GET_TAGGED_ADDR_CTRL, 0, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::GetTaggedAddrControlSystemCall, {
 			VERIFY(sc.op.operation() == ProcessOp::GET_TAGGED_ADDR_CTRL);
@@ -884,12 +887,13 @@ const auto TESTS = std::array{
 				VERIFY(sc.mode.mode() ==
 						clues::item::TaggedAddressControl::TAGGED_ADDR_ENABLE);
 			}
-		}), IgnoreCalls{0}, {
-			I386_CROSS_ABI(IgnoreCalls{0}, []() {
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				prctl(PR_SET_TAGGED_ADDR_CTRL, PR_TAGGED_ADDR_ENABLE, 0, 0, 0, 0);
 				syscall32(SyscallNr32::PRCTL, PR_GET_TAGGED_ADDR_CTRL,
 						0, 0, 0, 0);
 			})
-		}, "PR_SET_TAGGED_ADDR_CTRL"
+		}, "PR_GET_TAGGED_ADDR_CTRL"
 	}, TestSpec{SystemCallNr::PRCTL, []() {
 			prctl(PR_TASK_PERF_EVENTS_ENABLE);
 		}, ENTRY_VERIFY_CB(PrCtlSystemCall, {

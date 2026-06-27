@@ -442,6 +442,7 @@ protected:
 	}
 
 	void check32BitMemMap(const SystemCall &call) {
+#ifdef COSMOS_X86
 		/*
 		 * for 32-bit cross ABI emulation tracing we place
 		 * memory into a specially mmap'ed 32-bit memory area.
@@ -472,6 +473,7 @@ protected:
 		range.end = range.start + mmap_call.length.value();
 		range.access = "rw-p";
 		tracee_32bit_ranges.emplace_back(range);
+#endif
 	}
 
 public:
