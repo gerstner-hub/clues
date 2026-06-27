@@ -5,6 +5,9 @@
 #include <asm/prctl.h>
 #endif
 
+// clues
+#include <clues/private/kernel/filter.hxx>
+
 namespace {
 
 using clues::item::ProcessOp;
@@ -692,6 +695,13 @@ const auto TESTS = std::array{
 			VERIFY(filter_prog != nullptr);
 			VERIFY(filter_prog->len == 1);
 			VERIFY(filter_prog->filter != nullptr);
+			const clues::ForeignPtr filter_prog_ptr{reinterpret_cast<uintptr_t>(
+					filter_prog->filter)};
+			if (!sc.is32BitEmulationABI()) {
+				VERIFY(tracee_mem_ranges.isVariablePointer(filter_prog_ptr));
+			} else {
+				VERIFY(tracee_32bit_ranges.containedAnywhere(filter_prog_ptr));
+			}
 			VERIFY(filters.size() == 1);
 			const auto &filter = filters[0];
 			VERIFY(filter.k == 10);
@@ -700,10 +710,10 @@ const auto TESTS = std::array{
 			VERIFY(sc.hasErrorCode());
 		}), IgnoreCalls{0}, {
 			I386_CROSS_ABI(IgnoreCalls{2}, []() {
-				auto prog = alloc_struct32<struct sock_fprog>();
+				auto prog = alloc_struct32<clues::sock_fprog32>();
 				auto filter = alloc_struct32<struct sock_filter>();
 				prog->len = 1;
-				prog->filter = filter;
+				prog->filter = static_cast<uint32_t>(reinterpret_cast<intptr_t>(filter));
 				*filter = BPF_JUMP(BPF_JMP | BPF_JA, 10, 0, 0);
 				syscall32(SyscallNr32::PRCTL, PR_SET_SECCOMP, SECCOMP_MODE_FILTER, prog);
 			})
