@@ -230,6 +230,20 @@ protected: // functions
 	}
 };
 
+/// Catch-all type for unknown prctl operations.
+class UnknownPrCtlSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+	explicit UnknownPrCtlSystemCall() {
+		setSuccessReturn();
+		addParameters(unknown);
+	}
+
+public: // data
+
+	item::UnknownItem unknown;
+};
+
 /* nested namespace for all PrCtlSystemCall specializations */
 namespace prctl {
 

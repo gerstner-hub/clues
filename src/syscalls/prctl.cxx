@@ -195,9 +195,21 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 		case GET_AUXV: return make_shared<GetAuxVectorSystemCall>();
 		case SET_TIMERSLACK: return make_shared<SetTimerSlackSystemCall>();
 		case GET_TIMERSLACK: /* fallthrough */
-		case TASK_PERF_EVENTS_ENABLE: /* fallthrough */
-		case TASK_PERF_EVENTS_DISABLE: /* fallthrough */
-		default: return make_shared<PrCtlSystemCall>();
+		case TASK_PERF_EVENTS_ENABLE:
+		case TASK_PERF_EVENTS_DISABLE:
+		case GET_DUMPABLE:
+		case SET_DUMPABLE:
+		case GET_IO_FLUSHER:
+		case SET_IO_FLUSHER:
+		case GET_NO_NEW_PRIVS:
+		case SET_NO_NEW_PRIVS:
+		case GET_KEEPCAPS:
+		case SET_KEEPCAPS:
+		case SET_CHILD_SUBREAPER:
+		case GET_SECCOMP:
+			return make_shared<PrCtlSystemCall>();
+		default: 
+			return make_shared<UnknownPrCtlSystemCall>();
 	}
 }
 

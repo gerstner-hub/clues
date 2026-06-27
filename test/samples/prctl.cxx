@@ -182,6 +182,9 @@ int main() {
 	char buffer[4096];
 	prctl(PR_GET_AUXV, buffer, sizeof(buffer), 0, 0);
 
+	unsigned int bits;
+	prctl(PR_GET_UNALIGN, &bits, 0, 0 ,0);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even
