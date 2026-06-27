@@ -5,6 +5,9 @@
 #include <clues/items/items.hxx>
 #include <clues/items/process.hxx>
 
+// cosmos
+#include <cosmos/proc/AuxVector.hxx>
+
 // Linux
 #ifdef CLUES_HAVE_ARCH_PRCTL
 #	include <asm/prctl.h>
@@ -751,6 +754,37 @@ protected: // functions
 protected: // data
 
 	Mask m_mask{};
+};
+
+/// auxv buffer for PR_GET_AUXV.
+/**
+ * This specializes BufferPointer to provide a cosmos::AuxVector member for
+ * inspecting the actual auxv data returned by the kernel. Beware that the
+ * data might be truncated due to the Tracee max buffer prefetch setting.
+ **/
+class AuxVectorBuffer :
+		public BufferPointer {
+public: // functions
+	explicit AuxVectorBuffer(const SystemCallItem &size_par) :
+			BufferPointer{size_par, ItemType::PARAM_OUT,
+				"auxv", "pointer to auxv buffer", /*is_binary=*/true} {
+	}
+
+	const std::optional<cosmos::AuxVector>& vector() const {
+		return m_auxv;
+	}
+
+	virtual void fetchRemainingData(const Tracee &) override;
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+	void updateData(const Tracee &) override;
+
+protected: // data
+
+	std::optional<cosmos::AuxVector> m_auxv;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

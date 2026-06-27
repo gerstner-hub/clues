@@ -375,4 +375,24 @@ void MemDenyWriteExecProtectionMask::processValue(const Tracee&) {
 	m_mask = Mask{valueAs<int>()};
 }
 
+void AuxVectorBuffer::processValue(const Tracee &proc) {
+	BufferPointer::processValue(proc);
+	m_auxv.reset();
+}
+
+void AuxVectorBuffer::updateData(const Tracee &proc) {
+	BufferPointer::updateData(proc);
+	if (!m_data.empty()) {
+		/* remove possible excess bytes which are unusable due to truncation */
+		const auto cut_off_bytes = m_data.size() % (sizeof(unsigned long) * 2);
+		m_auxv.emplace(cosmos::AuxVector{m_data.data(), m_data.size() - cut_off_bytes});
+	}
+}
+
+void AuxVectorBuffer::fetchRemainingData(const Tracee &proc) {
+	BufferPointer::fetchRemainingData(proc);
+	// now we can look at the complete vector
+	m_auxv.emplace(cosmos::AuxVector{m_data.data(), m_data.size()});
+}
+
 } // end ns

@@ -59,6 +59,7 @@ const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
 	// Optionally a suffix ending in (...) if the string was truncated.
 	{"{string}", R"("(?:\\.|[^"\\])*(\.\.\.)?")"},
 	{"{bool}", R"((false|true))"},
+	{"{buffer}", R"("[^"]+"(\.\.\.)?)"},
 };
 
 struct TestSpec {
@@ -383,6 +384,7 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_GET_TSC, access={addr} → [PR_TSC_ENABLE]\) = 0 \(success\))",
 			R"(prctl\(op=PR_SET_MDWE, mask={hex} \(PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT\)\) = 0 \(success\))",
 			R"(prctl\(op=PR_GET_MDWE\) = {hex} \(PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT\) \(mask\))",
+			R"(prctl\(op=PR_GET_AUXV, auxv={buffer}, size={decimal}\) = {decimal} \(bytes\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

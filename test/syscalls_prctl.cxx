@@ -1134,6 +1134,37 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::PRCTL, PR_SET_MDWE, PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT, 0, 0, 0);
 			})
 		}, "PR_SET_MDWE"
+	}, TestSpec{SystemCallNr::PRCTL, []() {
+			char buffer[2048];
+			prctl(PR_GET_AUXV, buffer, sizeof(buffer), 0, 0);
+		}, ENTRY_VERIFY_CB(prctl::GetAuxVectorSystemCall, {
+			VERIFY(sc.op.operation() == ProcessOp::GET_AUXV);
+			VERIFY(!sc.res.has_value());
+			VERIFY(!sc.bool_res);
+			VERIFY(!sc.bool_setting);
+			VERIFY(!sc.int_res);
+			VERIFY(sc.buffer_size.value() == 2048);
+		}), EXIT_VERIFY_CB(prctl::GetAuxVectorSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.filled_size.value() > 100 && sc.filled_size.value() < 20000);
+			/* fetch the full aux vector in case it was only
+			 * partially read */
+			auto &rw_sc = dynamic_cast<clues::prctl::GetAuxVectorSystemCall&>(*tracee.currentSystemCall());
+			rw_sc.aux_vector.fetchRemainingData(tracee);
+			auto aux_vector = sc.aux_vector.vector();
+			VERIFY(aux_vector.has_value());
+			const auto aux_map = aux_vector->asMap();
+			VERIFY(aux_map.size() > 10 && aux_map.size() < 1000);
+			const auto uid = aux_vector->lookupValue(cosmos::AuxVector::UID);
+			VERIFY(uid.has_value());
+			VERIFY(std::get<cosmos::UserID>(*uid) == cosmos::proc::get_real_user_id());
+			std::cerr << "num aux entries: " << aux_map.size() << "\n";
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto buffer = alloc32<char*>(2048);
+				syscall32(SyscallNr32::PRCTL, PR_GET_AUXV, buffer, 2048, 0, 0);
+			})
+		}, "PR_GET_AUXV"
 	},
 };
 

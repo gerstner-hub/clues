@@ -192,6 +192,7 @@ SystemCallPtr PrCtlSystemCall::createSystemCall(const SystemCallInfo &info) {
 		case GET_TSC: return make_shared<GetTSCAccessSystemCall>();
 		case GET_MDWE: return make_shared<GetMemDenyWriteExecSystemCall>();
 		case SET_MDWE: return make_shared<SetMemDenyWriteExecSystemCall>();
+		case GET_AUXV: return make_shared<GetAuxVectorSystemCall>();
 		case SET_TIMERSLACK: return make_shared<SetTimerSlackSystemCall>();
 		case GET_TIMERSLACK: /* fallthrough */
 		case TASK_PERF_EVENTS_ENABLE: /* fallthrough */

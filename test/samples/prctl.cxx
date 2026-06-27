@@ -179,6 +179,9 @@ int main() {
 	prctl(PR_SET_MDWE, PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT, 0, 0, 0);
 	prctl(PR_GET_MDWE, 0, 0, 0, 0);
 
+	char buffer[4096];
+	prctl(PR_GET_AUXV, buffer, sizeof(buffer), 0, 0);
+
 	/*
 	 * only execute this call after everything else, because afterwards we
 	 * no longer can execute arbitrary system calls, not even

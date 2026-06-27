@@ -108,6 +108,7 @@ protected: // functions
  * - PR_SET_TSC: prctl::SetTSCAccessSystemCall
  * - PR_GET_MDWE: prctl::GetMemDenyWriteExecSystemCall
  * - PR_SET_MDWE: prctl::SetMemDenyWriteExecSystemCall
+ * - PR_GET_AUXV: prctl::GetAuxVectorSystemCall
  *
  * The following operations use the `bool_setting`:
  *
@@ -916,6 +917,33 @@ public: // functions
 public: // data
 
 	item::MemDenyWriteExecProtectionMask mask;
+};
+
+/// Specialization of PrCtlSystemCall for PR_GET_AUXV.
+/**
+ * The `aux_vector` member provides full access to the auxiliary vector data
+ * via the cosmos::AuxVector API.
+ *
+ * The `filled_size` return value contains the number of bytes actually filled
+ * in.
+ **/
+class GetAuxVectorSystemCall :
+		public FixedPrCtlSystemCall {
+public: // functions
+
+	explicit GetAuxVectorSystemCall() :
+			aux_vector{buffer_size},
+			buffer_size{"size", "size of aux vector buffer"},
+			filled_size{"bytes", "filled bytes", ItemType::RETVAL} {
+		setReturnItem(filled_size);
+		addParameters(aux_vector, buffer_size);
+	}
+
+public: // data
+
+	item::AuxVectorBuffer aux_vector;
+	item::ULongValue buffer_size;
+	item::SizeValue filled_size;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
