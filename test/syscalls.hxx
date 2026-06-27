@@ -147,7 +147,18 @@ struct MemoryRangeVector :
 
 		return false;
 	}
+
+	bool containedAnywhere(const clues::ForeignPtr ptr) const {
+		for (const auto &range: *this) {
+			if (range.matches(ptr))
+				return true;
+		}
+
+		return false;
+	}
 };
+
+MemoryRangeVector parse_memory_map(const Tracee &proc);
 
 /*
  * the first file descriptor number which will be used in tracee context.
@@ -169,6 +180,13 @@ static std::map<std::string, bool> test_ctx_flags;
  * legit memory areas.
  */
 static MemoryRangeVector tracee_mem_ranges;
+/*
+ * this contains specially mapped 32-bit memory areas for 32-bit cross ABI
+ * emulation tracing. These are updating during tracing runtime as soon as
+ * mmap() calls with MAP_32BIT are observed during ignored system call
+ * sequences. See SyscallTracer::check32BitMemMap().
+ */
+static MemoryRangeVector tracee_32bit_ranges;
 
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
@@ -380,6 +398,7 @@ protected:
 			}
 			return;
 		} else if (m_current_call++ != cosmos::to_integral(m_ignore_calls)) {
+			check32BitMemMap(call);
 			// we haven't reached the system call under test yet
 			return;
 		}
@@ -394,7 +413,8 @@ protected:
 	}
 
 	void attached(clues::Tracee &proc) override {
-		parseMemoryMap(proc);
+		tracee_mem_ranges = parse_memory_map(proc);
+		tracee_32bit_ranges.clear();
 		m_creator->signalChild();
 	}
 
@@ -411,7 +431,38 @@ protected:
 		}
 	}
 
-	void parseMemoryMap(const Tracee &proc) const;
+	void check32BitMemMap(const SystemCall &call) {
+		/*
+		 * for 32-bit cross ABI emulation tracing we place
+		 * memory into a specially mmap'ed 32-bit memory area.
+		 * this happens during the ignored system call phase.
+		 *
+		 * check for this situation to extract the memory
+		 * range returned by the kernel to use it for pointer
+		 * verification in tests.
+		 */
+		if (call.callNr() != SystemCallNr::MMAP)
+			return;
+		const auto &mmap_call = dynamic_cast<const clues::MmapSystemCall&>(call);
+		const auto flags = mmap_call.flags.flags();
+		using enum cosmos::mem::MapFlag;
+		if (!flags.allOf({INTO_32BIT, ANONYMOUS}) ||
+				mmap_call.flags.type() != cosmos::mem::MapType::PRIVATE)
+			return;
+		if (mmap_call.offset.value() != 0)
+			return;
+		if (mmap_call.fd.fd() != cosmos::FileNum::INVALID)
+			return;
+
+		/*
+		 * synthesize a TraceeMemoryRange from this
+		 */
+		TraceeMemoryRange range;
+		range.start = cosmos::to_integral(mmap_call.addr.ptr());
+		range.end = range.start + mmap_call.length.value();
+		range.access = "rw-p";
+		tracee_32bit_ranges.emplace_back(range);
+	}
 
 public:
 
@@ -458,13 +509,15 @@ protected:
 	clues::ABI m_abi = clues::ABI::UNKNOWN;
 };
 
-void SyscallTracer::parseMemoryMap(const Tracee &proc) const {
+MemoryRangeVector parse_memory_map(const Tracee &proc) {
+
+	MemoryRangeVector ret;
 
 	auto from_hex = [](const std::string &s, auto &val) {
 		std::from_chars(s.data(), s.data() + s.size(), val, 16);
 	};
 
-	auto parser = [from_hex](const std::string &line) -> bool {
+	auto parser = [from_hex, &ret](const std::string &line) -> bool {
 		TraceeMemoryRange range;
 		const auto parts = cosmos::split(line, " ");
 		/* <memory-range> <access-bits> <offset> <dev-major>:<dev-minor> <inocde> [<path>] */
@@ -505,13 +558,13 @@ void SyscallTracer::parseMemoryMap(const Tracee &proc) const {
 			range.path = parts[5];
 		}
 
-		tracee_mem_ranges.emplace_back(range);
+		ret.emplace_back(range);
 
 		return false;
 	};
 
-	tracee_mem_ranges.clear();
 	clues::parse_proc_file(proc, "maps", parser);
+	return ret;
 }
 
 template <typename SC>
