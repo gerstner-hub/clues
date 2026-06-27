@@ -123,7 +123,17 @@ struct MemoryRangeVector :
 	}
 
 	bool isVariablePointer(const clues::ForeignPtr ptr) const {
-		return containedInObjects(ptr, {"[heap]", "[stack]"});
+		return containedInObjects(ptr, {
+				"[heap]",
+				"[stack]",
+#ifdef __SANITIZE_ADDRESS__
+				/* when running with address sanitizer then
+				 * the memory is arranged differently in a lot
+				 * of anonymous memory mappings, so be more
+				 * forgiving in this context */
+				"",
+#endif
+		});
 	}
 
 	bool containedInObjects(const clues::ForeignPtr ptr,
