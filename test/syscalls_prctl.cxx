@@ -1,5 +1,5 @@
 // test
-#include "syscalls.hxx"
+#include "utils/syscalls.hxx"
 
 #ifdef CLUES_HAVE_ARCH_PRCTL
 #include <asm/prctl.h>

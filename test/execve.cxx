@@ -15,8 +15,8 @@
 #include <clues/Tracee.hxx>
 
 // Test
-#include "TestBase.hxx"
-#include "TraceeCreator.hxx"
+#include "utils/TestBase.hxx"
+#include "utils/TraceeCreator.hxx"
 
 /*
  * This test covers the various execve() scenarios:

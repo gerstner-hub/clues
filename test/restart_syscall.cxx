@@ -20,8 +20,8 @@
 #include <cosmos/proc/SigAction.hxx>
 
 // Test
-#include "TestBase.hxx"
-#include "TraceeCreator.hxx"
+#include "utils/TestBase.hxx"
+#include "utils/TraceeCreator.hxx"
 
 /*
  * The purpose of this test is to observe an interrupted system call and see

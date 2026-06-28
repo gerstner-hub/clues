@@ -11,8 +11,8 @@
 #include <clues/arch.hxx>
 
 // Test
-#include "TestBase.hxx"
-#include "TracerInvoker.hxx"
+#include "utils/TestBase.hxx"
+#include "utils/TracerInvoker.hxx"
 
 /*
  * This tests the command line tracer `clues` on an application level by

@@ -10,8 +10,8 @@
 #include <clues/Tracee.hxx>
 
 // Test
-#include "TestBase.hxx"
-#include "TraceeCreator.hxx"
+#include "utils/TestBase.hxx"
+#include "utils/TraceeCreator.hxx"
 
 /*
  * This test verified whether detaching from a forked child works during the

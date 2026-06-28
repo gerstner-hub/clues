@@ -10,7 +10,7 @@
 #include <clues/utils.hxx>
 
 // Test
-#include "TestBase.hxx"
+#include "utils/TestBase.hxx"
 
 class MiscTest : public cosmos::TestBase {
 	void runTests() override {

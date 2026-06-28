@@ -5,8 +5,8 @@
 #include <vector>
 
 // Test
-#include "TestBase.hxx"
-#include "TracerInvoker.hxx"
+#include "utils/TestBase.hxx"
+#include "utils/TracerInvoker.hxx"
 
 using namespace std::string_literals;
 
