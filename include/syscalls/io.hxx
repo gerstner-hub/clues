@@ -124,15 +124,9 @@ struct CLUES_API PReadVSystemCall :
 
 	explicit PReadVSystemCall(const SystemCallNr nr = SystemCallNr::PREADV) :
 			ReadVSystemCall{nr},
-			offset_lower{},
-			offset{offset_lower} {
-		addParameters(offset_lower, offset);
+			offset{} {
+		addParameters(offset.lowerPar(), offset);
 	}
-
-protected: // data
-
-	/// The low order bits used by `offset`.
-	item::UnusedItem offset_lower;
 
 public: // data
 
@@ -149,15 +143,9 @@ struct CLUES_API PWriteVSystemCall :
 
 	explicit PWriteVSystemCall(const SystemCallNr nr = SystemCallNr::PWRITEV) :
 			WriteVSystemCall{nr},
-			offset_lower{},
-			offset{offset_lower} {
-		addParameters(offset_lower, offset);
+			offset{} {
+		addParameters(offset.lowerPar(), offset);
 	}
-
-protected: // data
-
-	/// The low order bits used by `offset`.
-	item::UnusedItem offset_lower;
 
 public: // data
 
@@ -294,9 +282,9 @@ struct CLUES_API LLSeekSystemCall :
 
 	explicit LLSeekSystemCall() :
 			SystemCall{SystemCallNr::LLSEEK},
-			offset{offset_lower, /*needs_defer=*/true},
+			offset{item::CombinedOffsetValue::HIGH_THEN_LOW},
 			new_offset{"result", "new 64-bit offset"} {
-		setParameters(fd, offset, offset_lower, new_offset, whence);
+		setParameters(fd, offset, offset.lowerPar(), new_offset, whence);
 		setReturnItem(result);
 	}
 
@@ -305,11 +293,6 @@ struct CLUES_API LLSeekSystemCall :
 	item::PointerToScalar<off_t> new_offset;
 	item::Whence whence;
 	item::SuccessResult result;
-
-protected: // data
-
-	/// The low order bits used by `offset`.
-	item::UnusedItem offset_lower;
 };
 
 } // end ns

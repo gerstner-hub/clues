@@ -247,32 +247,47 @@ protected: // functions
  * - preadv(), preadv2()
  * - pwritev(), pwritev2()
  * - llseek()
+ * - fadvise(), fadvise64_64() (on 32-bit ABIs)
  *
- * In these cases the lower 32 bits for the offset are found in the first
- * system call parameter and the upper 32 bits are found in the following
- * system call parameter.
+ * In these cases the lower 32 bits for the offset are often found in the
+ * first system call parameter and the upper 32 bits are found in the
+ * following system call parameter (sometimes the other way around).
  *
  * This item types combines both parameters into a single 64-bit offset again.
  * For this purpose the first system call register containing the low order
- * bits needs to be covered by an instance of `UnusedItem`, which will be
- * passed to the constructor of CombinedOffsetValue.
+ * bits is kept as a member of type `UnusedItem`, i.e. this item is actually
+ * comprised of itself and a child item.
  *
- * By default this type expects that the high order bits are appearing first
+ * By default this type expects that the low order bits are appearing first
  * in the order of system call arguments. This way processing of the arguments
  * can take place the usual way. If this does not fit the system call
- * signature then `need_defer` needs to be passed during construction time, in
- * which case the DEFER_FILL flag will be set for this item, to make the low
- * order bits available the time processValue() is called.
+ * signature then `Ordering::LOW_THEN_HIGH` needs to be passed during
+ * construction time, in which case the DEFER_FILL flag will be set for this
+ * item, to make the low order bits available the time processValue() is
+ * called.
  **/
 class CombinedOffsetValue :
 		public SystemCallItem {
+public: // types
+
+	enum class Ordering {
+		/// low-order 32-bits come first in the system call arg list.
+		LOW_THEN_HIGH,
+		/// high-order 32-bit come first in the system call arg list.
+		HIGH_THEN_LOW
+	};
+
+	using enum Ordering;
+
 public: // data
 
-	explicit CombinedOffsetValue(const SystemCallItem &lower_bits, const bool needs_defer = false) :
+	explicit CombinedOffsetValue(const Ordering order = LOW_THEN_HIGH, const std::string_view long_desc = "") :
 			SystemCallItem{ItemType::PARAM_IN,
-				"offset", "read/write offset"},
-				m_lower_bits_par{lower_bits} {
-		if (needs_defer) {
+				"offset",
+				long_desc.empty() ? "read/write offset" : long_desc},
+			m_order{order},
+			m_lower_bits{} {
+		if (order == HIGH_THEN_LOW) {
 			m_flags.set(Flag::DEFER_FILL);
 		}
 	}
@@ -283,13 +298,26 @@ public: // data
 
 	std::string str() const override;
 
+	SystemCallItem& lowerPar() {
+		return m_lower_bits;
+	}
+
+	const SystemCallItem& lowerPar() const {
+		return m_lower_bits;
+	}
+
+	Ordering order() const {
+		return m_order;
+	}
+
 protected: // functions
 
 	void processValue(const Tracee &tracee) override;
 
 protected: // data
 
-	const SystemCallItem &m_lower_bits_par;
+	const Ordering m_order;
+	UnusedItem m_lower_bits;
 	off_t m_offset = 0;
 };
 

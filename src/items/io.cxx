@@ -176,7 +176,7 @@ void ReadWriteFlags::processValue(const Tracee &) {
 
 void CombinedOffsetValue::processValue(const Tracee &) {
 	off_t upper = valueAs<off_t>() << 32;
-	off_t lower = m_lower_bits_par.valueAs<off_t>();
+	off_t lower = m_lower_bits.valueAs<off_t>();
 
 	m_offset = lower | upper;
 }
