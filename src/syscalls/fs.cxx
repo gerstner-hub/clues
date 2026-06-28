@@ -1,3 +1,6 @@
+// cosmos
+#include <cosmos/compiler.hxx>
+
 // clues
 #include <clues/logger.hxx>
 #include <clues/syscalls/fs.hxx>
@@ -235,6 +238,88 @@ void OpenAtSystemCall::updateFDTracking(const Tracee &proc) {
 
 void CloseSystemCall::updateFDTracking(const Tracee &proc) {
 	dropFD(proc, fd.fd());
+}
+
+FAdviseSystemCall::FAdviseSystemCall(const SystemCallNr nr) :
+		SystemCall{nr},
+		off_variant{std::monostate{}},
+		size_variant{std::monostate{}} {
+	setReturnItem(result);
+	// the ordering of parameters depends on the ABI / Architecture.
+#ifdef COSMOS_I386
+	m_is_native_64 = false;
+#else
+	setupPars64();
+
+#endif
+}
+
+void FAdviseSystemCall::setupPars64() {
+	m_is_native_64 = true;
+	auto &off = off_variant.emplace<0>(item::OffsetValue{"offset", "start offset of the byte range"});
+	auto &size = size_variant.emplace<0>(item::SizeValue{"size", "size of the byte range"});
+	setParameters(fd, off, size, advice);
+}
+
+void FAdviseSystemCall::prepareNewSystemCall() {
+	switch (abi()) {
+		case ABI::AARCH64: {
+			// keep the fixed parameters from construction time
+			return;
+		} case ABI::X86_64: {
+			// in case we switched between 32 bit / 64 bit,
+			// reconstruct everything with 64 bit native parameters.
+			if (!m_is_native_64) {
+				setupPars64();
+			}
+			return;
+		} case ABI::I386: {
+			m_is_native_64 = false;
+			using enum item::CombinedOffsetValue::Ordering;
+			const auto size_is_64 = this->callNr() == SystemCallNr::FADVISE64_64;
+			item::CombinedOffsetValue *size64 = nullptr;
+			item::SizeValue *size32 = nullptr;
+
+			if (size_is_64) {
+				size64 = &size_variant.emplace<1>(
+					item::CombinedOffsetValue{LOW_THEN_HIGH, "size of the byte range"});
+			} else {
+				size32 = &size_variant.emplace<0>(item::SizeValue{"size", "size of the byte range"});
+			}
+
+			auto &offset64 = off_variant.emplace<1>(
+				item::CombinedOffsetValue{LOW_THEN_HIGH, "start offset of the byte range"});
+
+			if (size_is_64) {
+				setParameters(fd, offset64.lowerPar(), offset64,
+						size64->lowerPar(), *size64, advice);
+
+			} else {
+				setParameters(fd, offset64.lowerPar(), offset64,
+						*size32, advice);
+			}
+
+			return;
+		} default: {
+			throw cosmos::RuntimeError{"unsupported ABI"};
+		}
+	}
+}
+
+off_t FAdviseSystemCall::offset() const {
+	if (auto *off = std::get_if<item::OffsetValue>(&off_variant)) {
+		return off->value();
+	} else {
+		return std::get<item::CombinedOffsetValue>(off_variant).value();
+	}
+}
+
+off_t FAdviseSystemCall::size() const {
+	if (auto *size = std::get_if<item::SizeValue>(&size_variant)) {
+		return size->value();
+	} else {
+		return std::get<item::CombinedOffsetValue>(size_variant).value();
+	}
 }
 
 } // end ns

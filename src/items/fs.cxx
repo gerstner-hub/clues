@@ -470,4 +470,20 @@ void DirEntries::parseEntries64(const size_t bytes) {
 	}
 }
 
+void AccessAdvice::processValue(const Tracee &) {
+	m_advice = cosmos::FileDescriptor::AccessAdvice{valueAs<int>()};
+}
+
+std::string AccessAdvice::str() const {
+	switch (cosmos::to_integral(m_advice)) {
+		CASE_ENUM_TO_STR(POSIX_FADV_NORMAL);
+		CASE_ENUM_TO_STR(POSIX_FADV_SEQUENTIAL);
+		CASE_ENUM_TO_STR(POSIX_FADV_RANDOM);
+		CASE_ENUM_TO_STR(POSIX_FADV_NOREUSE);
+		CASE_ENUM_TO_STR(POSIX_FADV_WILLNEED);
+		CASE_ENUM_TO_STR(POSIX_FADV_DONTNEED);
+		default: return "POSIX_FADV_???";
+	}
+}
+
 } // end ns

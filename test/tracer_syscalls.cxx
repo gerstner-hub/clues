@@ -387,6 +387,16 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(prctl\(op=PR_SET_MDWE, mask={hex} \(PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT\)\) = 0 \(success\))",
 			R"(prctl\(op=PR_GET_MDWE\) = {hex} \(PR_MDWE_REFUSE_EXEC_GAIN|PR_MDWE_NO_INHERIT\) \(mask\))",
 			R"(prctl\(op=PR_GET_AUXV, auxv={buffer}, size={decimal}\) = {decimal} \(bytes\))",
+	}}, TestSpec{"fadvise", "fadvise64,fadvise64_64", {
+#ifdef COSMOS_I386
+		R"(fadvise64_64\(fd={fd}, offset=4294967328, offset=4294967300, advice=POSIX_FADV_SEQUENTIAL\) = 0 \(success\))",
+		R"(fadvise64_64\(fd={fd}, offset=4294967424, offset=4294967360, advice=POSIX_FADV_RANDOM\) = 0 \(success\))",
+#elif defined(COSMOS_X86_64)
+		R"(fadvise64_64\(fd={fd}, offset=4294967424, offset=4294967360, advice=POSIX_FADV_RANDOM\) = 0 \(success\))",
+#endif
+#if defined(COSMOS_X86_64) || defined(COSMOS_AARCH64)
+		R"(fadvise64\(fd={fd}, offset=4294967328, size=4294967300, advice=POSIX_FADV_SEQUENTIAL\) = 0 \(success\))",
+#endif
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

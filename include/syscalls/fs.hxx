@@ -1,11 +1,15 @@
 #pragma once
 
+// C++
+#include <variant>
+
 // clues
-#include <clues/SystemCall.hxx>
 #include <clues/items/fs.hxx>
+#include <clues/items/io.hxx>
 #include <clues/items/signal.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/sysnrs/generic.hxx>
+#include <clues/SystemCall.hxx>
 
 namespace clues {
 
@@ -233,7 +237,7 @@ protected: // functions
 struct GetDentsSystemCall :
 		public SystemCall {
 
-	GetDentsSystemCall(const SystemCallNr nr) :
+	explicit GetDentsSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
 			size{"size", "dirent size in bytes"},
 			ret_bytes{"bytes", "bytes returned in dirent", ItemType::RETVAL} {
@@ -245,6 +249,46 @@ struct GetDentsSystemCall :
 	item::DirEntries dirent; ///< struct linux_dirent*.
 	item::UintValue size; ///< size of `dirent` buffer provided by tracee.
 	item::SizeValue ret_bytes; ///< number of bytes filled in `dirent` buffer.
+};
+
+/// Type to handle various flavors of `fadvise()`.
+/**
+ * There exist three variants of the system call which differ in the type of
+ * the `size` argument. The reason is an ABI glitch which happened in the
+ * FADVISE64 system call on I386, where the 32-bit `size_t` was used, which is
+ * not 64-bit capable, obviously. Therefore on I386 FADVISE64_64 exists, which
+ * uses an actual `off_t` for `size`.
+ *
+ * Furthermore there exist different orderings on different ABIs, e.g. on
+ * AARCH64 the order is different than on X86.
+ *
+ * To seamlessly access the size and offset in an ABI-agnostic manner, utilize
+ * the `size()` and `offset()` member functions.
+ **/
+struct FAdviseSystemCall :
+		public SystemCall {
+
+	explicit FAdviseSystemCall(const SystemCallNr nr);
+
+	off_t offset() const;
+
+	off_t size() const;
+
+	item::FileDescriptor fd; // I/O file descriptor.
+	std::variant<item::OffsetValue, item::CombinedOffsetValue, std::monostate> off_variant; ///< starting point of the data area the advice is for.
+	std::variant<item::SizeValue, item::CombinedOffsetValue, std::monostate> size_variant; ///< length of the data area the advice is for.
+	item::AccessAdvice advice; ///< the actual advice.
+
+	item::SuccessResult result;
+
+protected:
+
+	/// Sets up the canonical native 64-bit variant of the system call.
+	void setupPars64();
+
+	void prepareNewSystemCall() override;
+
+	bool m_is_native_64 = true;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

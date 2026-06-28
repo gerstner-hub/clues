@@ -9,6 +9,7 @@
 
 // cosmos
 #include <cosmos/fs/DirEntry.hxx>
+#include <cosmos/fs/FileDescriptor.hxx>
 #include <cosmos/fs/FileStatus.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/utils.hxx>
@@ -280,6 +281,34 @@ protected: // data
 	std::vector<Entry> m_entries;
 	/// the raw buffer backing m_entries
 	std::unique_ptr<char[]> m_buffer;
+};
+
+/// Enum value used with FAdviseSystemCall.
+class AccessAdvice :
+		public ValueInParameter {
+public: // types
+
+	using enum cosmos::FileDescriptor::AccessAdvice;
+
+public: // functions
+
+	explicit AccessAdvice() :
+			ValueInParameter{"advice", "access pattern advice"} {
+	}
+
+	std::string str() const override;
+
+	auto advice() const {
+		return m_advice;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+protected: // data
+
+	cosmos::FileDescriptor::AccessAdvice m_advice{0};
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

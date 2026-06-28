@@ -525,6 +525,48 @@ const auto TESTS = std::array{
 			})
 		},
 		"CREAT"
+	}, TestSpec{SystemCallNr::FADVISE64, []() {
+		auto fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0640);
+#ifdef COSMOS_X86_64
+		syscall(SYS_fadvise64, fd, (1LL << 32) + 123, 4096, POSIX_FADV_NOREUSE);
+#elif defined(COSMOS_I386)
+		syscall(SYS_fadvise64, fd, 123, 1, 4096, POSIX_FADV_NOREUSE);
+#elif defined(COSMOS_AARCH64)
+		syscall(SYS_fadvise64, fd, (1LL << 32) + 123, 4096, POSIX_FADV_NOREUSE);
+#else
+#	error "unsupported ABI"
+#endif
+		}, ENTRY_VERIFY_CB(FAdviseSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.offset() == (1LL << 32) + 123);
+			VERIFY(sc.size() == 4096);
+			VERIFY(sc.advice.advice() == cosmos::FileDescriptor::AccessAdvice::NOREUSE);
+		}), EXIT_VERIFY_CB(FAdviseSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0640);
+				syscall32(SyscallNr32::FADVISE64, fd, 123, 1, 4096, POSIX_FADV_NOREUSE);
+			})
+		},
+	}, TestSpec{SystemCallNr::FADVISE64_64, []() {
+#ifdef COSMOS_I386
+			auto fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0640);
+			syscall(SYS_fadvise64_64, fd, 128, 1, 64, 2, POSIX_FADV_RANDOM);
+#endif
+		}, ENTRY_VERIFY_CB(FAdviseSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.offset() == (1LL << 32) + 128);
+			VERIFY(sc.size() == (1LL << 33) + 64);
+			VERIFY(sc.advice.advice() == cosmos::FileDescriptor::AccessAdvice::RANDOM);
+		}), EXIT_VERIFY_CB(FAdviseSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0640);
+				syscall32(SyscallNr32::FADVISE64_64, fd, 128, 1, 64, 2, POSIX_FADV_RANDOM);
+			})
+		}, "", {clues::ABI::I386}
 	},
 };
 
