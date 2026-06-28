@@ -9,7 +9,9 @@
 
 namespace clues {
 
-struct CLUES_API AccessSystemCall :
+CLUES_DEFAULT_VISIBILITY_ON;
+
+struct AccessSystemCall :
 		public SystemCall {
 
 	AccessSystemCall() :
@@ -25,7 +27,7 @@ struct CLUES_API AccessSystemCall :
 };
 
 // this is an earlier variant of faccessat() which doesn't take a flags argument
-struct CLUES_API FAccessAtSystemCall :
+struct FAccessAtSystemCall :
 		public SystemCall {
 
 	explicit FAccessAtSystemCall(const SystemCallNr nr = SystemCallNr::FACCESSAT) :
@@ -43,7 +45,7 @@ struct CLUES_API FAccessAtSystemCall :
 };
 
 // follow-up variant of faccessat() supporting an additional flags argument, introduced in Linux 5.8
-struct CLUES_API FAccessAt2SystemCall :
+struct FAccessAt2SystemCall :
 		public FAccessAtSystemCall {
 
 	FAccessAt2SystemCall() :
@@ -54,7 +56,7 @@ struct CLUES_API FAccessAt2SystemCall :
 	item::AtFlagsValue flags;
 };
 
-struct CLUES_API FcntlSystemCall :
+struct FcntlSystemCall :
 		public SystemCall {
 
 	explicit FcntlSystemCall(const SystemCallNr sysnr) :
@@ -103,7 +105,7 @@ protected: // functions
 	void updateFDTracking(const Tracee &proc) override;
 };
 
-struct CLUES_API FstatSystemCall :
+struct FstatSystemCall :
 		public SystemCall {
 
 	explicit FstatSystemCall(const SystemCallNr nr) :
@@ -117,7 +119,7 @@ struct CLUES_API FstatSystemCall :
 	item::SuccessResult result;
 };
 
-struct CLUES_API FstatAtSystemCall :
+struct FstatAtSystemCall :
 		public SystemCall {
 
 	explicit FstatAtSystemCall(const SystemCallNr nr) :
@@ -153,7 +155,7 @@ struct StatSystemCallT :
 using StatSystemCall = StatSystemCallT;
 using LstatSystemCall = StatSystemCallT;
 
-struct CLUES_API OpenSystemCall :
+struct OpenSystemCall :
 		public SystemCall {
 
 	OpenSystemCall() :
@@ -181,7 +183,7 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
-struct CLUES_API OpenAtSystemCall :
+struct OpenAtSystemCall :
 		public SystemCall {
 
 	OpenAtSystemCall() :
@@ -211,7 +213,7 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
-struct CLUES_API CloseSystemCall :
+struct CloseSystemCall :
 		public SystemCall {
 
 	CloseSystemCall() :
@@ -228,7 +230,7 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
-struct CLUES_API GetDentsSystemCall :
+struct GetDentsSystemCall :
 		public SystemCall {
 
 	GetDentsSystemCall(const SystemCallNr nr) :
@@ -244,5 +246,7 @@ struct CLUES_API GetDentsSystemCall :
 	item::UintValue size; ///< size of `dirent` buffer provided by tracee.
 	item::SizeValue ret_bytes; ///< number of bytes filled in `dirent` buffer.
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

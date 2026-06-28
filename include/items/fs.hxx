@@ -21,10 +21,12 @@
 
 namespace clues::item {
 
+CLUES_DEFAULT_VISIBILITY_ON
+
 using AtSemantics = cosmos::NamedBool<struct at_semantics_t, false>;
 
 /// Base class for file descriptor system call items.
-class CLUES_API FileDescriptor :
+class FileDescriptor :
 		public SystemCallItem {
 
 public: // functions
@@ -72,7 +74,7 @@ protected: // data
 };
 
 /// The flags passed to calls like open().
-class CLUES_API OpenFlagsValue :
+class OpenFlagsValue :
 		public SystemCallItem {
 public:
 	explicit OpenFlagsValue(const ItemType type = ItemType::PARAM_IN) :
@@ -100,7 +102,7 @@ protected: // data
 };
 
 /// Flags for system calls with at semantics like linkat(), faccessat().
-class CLUES_API AtFlagsValue :
+class AtFlagsValue :
 		public SystemCallItem {
 public: // types
 
@@ -137,7 +139,7 @@ protected: // data
 };
 
 /// The mode parameter in access().
-class CLUES_API AccessModeParameter :
+class AccessModeParameter :
 		public item::ValueInParameter {
 public:
 	explicit AccessModeParameter() :
@@ -160,7 +162,7 @@ protected: // data
 };
 
 /// File access mode passed e.g. to open(), chmod().
-class CLUES_API FileModeParameter :
+class FileModeParameter :
 		public item::ValueInParameter {
 public:
 
@@ -186,7 +188,7 @@ protected: // data
 };
 
 /// The stat structure used in stat() & friends.
-class CLUES_API StatParameter :
+class StatParameter :
 		public PointerOutValue {
 public: // functions
 	explicit StatParameter() :
@@ -227,7 +229,7 @@ protected: // data
 };
 
 /// A range of directory entries from getdents().
-class CLUES_API DirEntries :
+class DirEntries :
 		public PointerOutValue {
 public: // types
 
@@ -279,5 +281,7 @@ protected: // data
 	/// the raw buffer backing m_entries
 	std::unique_ptr<char[]> m_buffer;
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
