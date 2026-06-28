@@ -3,6 +3,7 @@ import os
 Import('env')
 
 tests = env.GatherSources(suffixes=['.cxx'], recursive=False)
+env.Append(CCFLAGS=["-Itest"])
 
 test_env = env.Clone()
 static_lib_sources = []
