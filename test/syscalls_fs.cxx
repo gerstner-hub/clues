@@ -567,7 +567,21 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::FADVISE64_64, fd, 128, 1, 64, 2, POSIX_FADV_RANDOM);
 			})
 		}, "", {clues::ABI::I386}
-	},
+	}, TestSpec{SystemCallNr::UMASK, []() {
+			umask(0011);
+			umask(0077);
+		}, ENTRY_VERIFY_CB(UmaskSystemCall, {
+			VERIFY(sc.new_mask.mode() == cosmos::FileMode{cosmos::ModeT{0077}});
+		}), EXIT_VERIFY_CB(UmaskSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.old_mask.mode() == cosmos::FileMode{cosmos::ModeT{0011}});
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				umask(0011);
+				syscall32(SyscallNr32::UMASK, 0077);
+			})
+		}
+	}
 };
 
 } // end ns

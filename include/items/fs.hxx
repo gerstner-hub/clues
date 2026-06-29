@@ -164,11 +164,13 @@ protected: // data
 
 /// File access mode passed e.g. to open(), chmod().
 class FileModeParameter :
-		public item::ValueInParameter {
+		public item::ValueParameter {
 public:
 
-	FileModeParameter() :
-			item::ValueInParameter{"mode", "file-mode"} {
+	explicit FileModeParameter(const std::string_view short_desc = "mode",
+			const std::string_view long_desc = "file-mode",
+			const ItemType type = ItemType::PARAM_IN) :
+			item::ValueParameter{type, short_desc, long_desc} {
 	}
 
 	std::string str() const override;

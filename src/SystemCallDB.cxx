@@ -126,6 +126,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::PRCTL:           return new_multi_sys<PrCtlSystemCall>(info);
 	case SystemCallNr::FADVISE64:       /* fallthrough */
 	case SystemCallNr::FADVISE64_64:    return new_sys<FAdviseSystemCall>(nr);
+	case SystemCallNr::UMASK:           return new_sys<UmaskSystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }

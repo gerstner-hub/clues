@@ -406,6 +406,9 @@ const std::vector<TestSpec> TEST_SPECS{
 	TestSpec{"pipe", "pipe2", {
 		R"(pipe2\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\], flags=0x[0-9a-f]+ \(O_CLOEXEC\|O_DIRECT\)\) = 0)"
 	}},
+	TestSpec{{}, "umask", {
+		R"(umask\(mask=0o077 \(---rwxrwx\)\) = 0o027 \(----w-rwx\) \(old_mask\))",
+	}},
 #ifdef CLUES_HAVE_FORK
 	TestSpec{{}, "fork", {
 		R"(fork\(\) = [0-9])"

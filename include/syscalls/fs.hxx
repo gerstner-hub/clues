@@ -291,6 +291,24 @@ protected:
 	bool m_is_native_64 = true;
 };
 
+struct UmaskSystemCall :
+		public SystemCall {
+
+	explicit UmaskSystemCall() :
+			SystemCall{SystemCallNr::UMASK},
+			new_mask{"mask", "new umask value"},
+			old_mask{"old_mask", "old umask value", ItemType::RETVAL} {
+		addParameters(new_mask);
+		setReturnItem(old_mask);
+	}
+
+	/// The new umask to apply.
+	item::FileModeParameter new_mask;
+
+	/// Return value containing the previous mask in effect.
+	item::FileModeParameter old_mask;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
