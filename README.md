@@ -89,7 +89,7 @@ available on `x86_64` are currently implemented, for the others only the
 system call name and its return value are decoded, ignoring the reset of the
 system call parameters.
 
-At the moment **85 of 470 system calls** present in the supported ABIs are
+At the moment **86 of 470 system calls** present in the supported ABIs are
 implemented in libclues.
 
 Apart from that the `clues` command line utility is missing a lot of the
