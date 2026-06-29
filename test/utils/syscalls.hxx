@@ -355,6 +355,8 @@ protected:
 		range.end = range.start + mmap_call.length.value();
 		range.access = "rw-p";
 		tracee_32bit_ranges.emplace_back(range);
+#else
+		(void)call;
 #endif
 	}
 
