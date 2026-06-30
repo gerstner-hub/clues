@@ -1,11 +1,13 @@
 #pragma once
 
 // C++
+#include <memory>
 #include <vector>
 
 // cosmos
 #include <cosmos/BitMask.hxx>
 #include <cosmos/random.hxx>
+#include <cosmos/uname.hxx>
 
 // clues
 #include <clues/items/items.hxx>
@@ -123,6 +125,64 @@ protected: // functions
 protected: // data
 
 	Flags m_flags;
+};
+
+/// Parameter taking care of the different `struct utsname` structures used in uname() system calls.
+/**
+ * There exist three different versions of this struct. The oldest one only
+ * provides 8 bytes per string. Only the newest version offers the
+ * `domainname` field. This system call item converts the kernel data into a
+ * common cosmos::Uname type. The `domainname` field will be kept as an empty
+ * string in the case of OLDOLDUNAME.
+ **/
+class CLUES_API UnameStruct :
+		public PointerOutValue {
+public: // types
+
+	/// Specialized cosmos::Uname with a means to modify the contained buffer.
+	struct Uname :
+		public cosmos::Uname {
+
+		Uname() :
+			cosmos::Uname{false} {
+		}
+
+	protected:
+		friend class UnameStruct;
+		auto& buf() {
+			return m_buf;
+		}
+	};
+
+public: // functions
+
+	explicit UnameStruct() :
+			PointerOutValue{"utsname", "struct utsname*"} {
+	}
+
+	/// Access to the converted struct utsname data.
+	/**
+	 * This can be a nullptr in case fetching the data from the tracee
+	 * failed for some reason.
+	 **/
+	const std::unique_ptr<Uname>& uname() const {
+		return m_uname;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override {
+		m_uname.reset();
+		PointerOutValue::processValue(proc);
+	}
+
+	void updateData(const Tracee &) override;
+
+protected: // data
+
+	std::unique_ptr<Uname> m_uname;
 };
 
 } // end ns

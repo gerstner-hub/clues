@@ -1,7 +1,20 @@
 // test
 #include "utils/syscalls.hxx"
 
+// Linux
+#include <sys/utsname.h>
+
 namespace {
+
+/* common verify function for the three uname system calls */
+void check_uname(const cosmos::Uname &uts, bool &good) {
+	VERIFY(uts.sysName() == "Linux");
+	VERIFY(!uts.nodeName().empty());
+	VERIFY(!uts.release().empty());
+	VERIFY(!uts.version().empty());
+	VERIFY(!uts.machine().empty());
+	/* domainname can be empty */
+}
 
 const auto TESTS = std::array{
 	TestSpec{SystemCallNr::GETRANDOM, []() {
@@ -24,6 +37,66 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::GETRANDOM, buffer, 16, GRND_NONBLOCK);
 			})
 		}
+	}, TestSpec{SystemCallNr::UNAME, []() {
+			struct utsname uts;
+			uname(&uts);
+		}, ENTRY_VERIFY_CB(UnameSystemCall, {
+			// only output parameters
+			(void)sc;
+		}), EXIT_VERIFY_CB(UnameSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.utsname.uname());
+			check_uname(*sc.utsname.uname(), good);
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto uts = alloc_struct32<struct utsname>();
+				syscall32(SyscallNr32::UNAME, uts);
+			})
+		}
+	}, TestSpec{SystemCallNr::OLDUNAME, []() {
+#ifdef COSMOS_I386
+			/* use the current utsname struct, it is big enough */
+			struct utsname uts;
+			syscall(SYS_olduname, &uts);
+#endif
+		}, ENTRY_VERIFY_CB(UnameSystemCall, {
+			// only output parameters
+			(void)sc;
+		}), EXIT_VERIFY_CB(UnameSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.utsname.uname());
+			check_uname(*sc.utsname.uname(), good);
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				/* use the current utsname struct, it is big enough */
+				auto uts = alloc_struct32<struct utsname>();
+				syscall32(SyscallNr32::OLDUNAME, uts);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	}, TestSpec{SystemCallNr::OLDOLDUNAME, []() {
+#ifdef COSMOS_I386
+			/* use the current utsname struct, it is big enough */
+			struct utsname uts;
+			syscall(SYS_oldolduname, &uts);
+#endif
+		}, ENTRY_VERIFY_CB(UnameSystemCall, {
+			// only output parameters
+			(void)sc;
+		}), EXIT_VERIFY_CB(UnameSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.utsname.uname());
+			check_uname(*sc.utsname.uname(), good);
+		}), IgnoreCalls{0}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				/* use the current utsname struct, it is big enough */
+				auto uts = alloc_struct32<struct utsname>();
+				syscall32(SyscallNr32::OLDOLDUNAME, uts);
+			})
+		},
+		"",
+		{clues::ABI::I386}
 	},
 };
 

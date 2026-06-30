@@ -398,6 +398,13 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(fadvise64\(fd={fd}, offset=4294967328, size=4294967300, advice=POSIX_FADV_SEQUENTIAL\) = 0 \(success\))",
 #endif
 	}},
+	TestSpec{"uname", "uname,olduname,oldolduname", {
+		R"(uname\(utsname=\{sysname="Linux", nodename={string}, release={string}, version={string}, machine={string}, domainname={string}\}\) = 0 \(success\))",
+#ifdef COSMOS_X86
+		R"(olduname\(utsname=\{sysname="Linux", nodename={string}, release={string}, version={string}, machine={string}\}\) = 0 \(success\))",
+		R"(oldolduname\(utsname=\{sysname="Linux", nodename={string}, release={string}, version={string}, machine={string}\}\) = 0 \(success\))",
+#endif
+	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {
 		R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"

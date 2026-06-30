@@ -152,4 +152,25 @@ struct CLUES_API RSeqSystemCall :
 	item::SuccessResult result;
 };
 
+/// Uname system information system call.
+/**
+ * This type covers three variants of uname() system calls present in Linux.
+ * item::UnameStruct will provide access to a cosmos::Uname structure to
+ * inspect the individual fields returned by the kernel. In case an older
+ * uname system call was used, unused fields will be empty.
+ **/
+struct CLUES_API UnameSystemCall :
+		public SystemCall {
+
+	explicit UnameSystemCall(const SystemCallNr nr) :
+			SystemCall{nr} {
+		setReturnItem(result);
+		addParameters(utsname);
+	}
+
+	item::UnameStruct utsname;
+
+	item::SuccessResult result;
+};
+
 } // end ns
