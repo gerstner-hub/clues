@@ -946,8 +946,8 @@ class GetAuxVectorSystemCall :
 public: // functions
 
 	explicit GetAuxVectorSystemCall() :
-			aux_vector{buffer_size},
 			buffer_size{"size", "size of aux vector buffer"},
+			aux_vector{buffer_size},
 			filled_size{"bytes", "filled bytes", ItemType::RETVAL} {
 		setReturnItem(filled_size);
 		addParameters(aux_vector, buffer_size);
@@ -955,8 +955,8 @@ public: // functions
 
 public: // data
 
-	item::AuxVectorBuffer aux_vector;
 	item::ULongValue buffer_size;
+	item::AuxVectorBuffer aux_vector;
 	item::SizeValue filled_size;
 };
 
