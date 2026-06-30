@@ -20,7 +20,7 @@ run_env.ConfigureRunForLib('libclues')
 if env['sanitizer']:
     run_env['ENV']['ASAN_OPTIONS'] = 'detect_odr_violation=0'
 
-need_helpers = ("execve.cxx", "tracer.cxx", "syscalls.cxx", "syscalls_prctl.cxx", "syscalls_fs.cxx")
+need_helpers = ("execve.cxx", "tracer.cxx", "syscalls.cxx", "syscalls_prctl.cxx", "syscalls_fs.cxx", "syscalls_other.cxx")
 need_samples = ("detach.cxx", "tracer_syscalls.cxx")
 need_tracer = ("tracer.cxx", "tracer_syscalls.cxx")
 
