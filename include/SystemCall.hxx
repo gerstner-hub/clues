@@ -220,7 +220,7 @@ protected: // data
 	/// Current system call info during entry/exit processing, nullptr otherwise.
 	const SystemCallInfo *m_info = nullptr;
 	/// The return value of the system call.
-	SystemCallItemPtr m_return;
+	SystemCallItemPtr m_return = nullptr;
 	/// If the system call fails, this is the error code.
 	std::optional<ErrnoResult> m_error;
 	/// The array of system call parameters, if any.
