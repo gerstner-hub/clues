@@ -21,6 +21,9 @@ void check_faccessat_entry(const SC &access_sc, bool &good) {
 	VERIFY(access_sc.mode.checks() == checks);
 };
 
+const auto LINKPATH = "/tmp/clues-syscall-fs-symlink";
+const auto LINKTARGET = "/test/link/target";
+
 const auto TESTS = std::array{
 #ifdef CLUES_HAVE_ACCESS
 	TestSpec{SystemCallNr::ACCESS, []() {
@@ -581,7 +584,37 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::UMASK, 0077);
 			})
 		}
+	},
+#ifdef CLUES_HAVE_READLINK /* not available on aarch64 */
+	TestSpec{SystemCallNr::READLINK, []() {
+			if (symlink(LINKTARGET, LINKPATH) < 0) {
+
+			}
+			char buf[1024];
+			if (readlink(LINKPATH, buf, sizeof(buf)) < 0) {
+
+			}
+			unlink(LINKPATH);
+		}, ENTRY_VERIFY_CB(ReadLinkSystemCall, {
+			VERIFY(*sc.path.data() == LINKPATH);
+			VERIFY(sc.bufsiz.value() == 1024);
+			VERIFY(is_valid_variable_ptr(sc, sc.buf.ptr()));
+		}), EXIT_VERIFY_CB(ReadLinkSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.filled_bytes.value() == strlen(LINKTARGET));
+			VERIFY(*sc.buf.data() == LINKTARGET);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				if (symlink(LINKTARGET, LINKPATH) < 0) {
+
+				}
+				auto buf = alloc32<char*>(1024);
+				auto linkpath = alloc_str32(LINKPATH);
+				syscall32(SyscallNr32::READLINK, linkpath, buf, 1024);
+			})
+		}
 	}
+#endif
 };
 
 } // end ns

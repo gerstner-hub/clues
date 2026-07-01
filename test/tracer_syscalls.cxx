@@ -405,6 +405,11 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(oldolduname\(utsname=\{sysname="Linux", nodename={string}, release={string}, version={string}, machine={string}\}\) = 0 \(success\))",
 #endif
 	}},
+	TestSpec{"readlink", "readlink,readlinkat", {
+#ifdef CLUES_HAVE_READLINK
+		R"(readlink\(path={string}, buf="/our/test/symlink/content", bufsiz=4096\) = 25 \(bytes\))",
+#endif
+	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {
 		R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"

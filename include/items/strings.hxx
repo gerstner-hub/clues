@@ -8,13 +8,13 @@ namespace clues::item {
 
 /// c-string style system call data.
 class CLUES_API StringData :
-		public SystemCallItem {
+		public PointerValue {
 public: // functions
 	explicit StringData(
 		const std::string_view short_name = "string",
 		const std::string_view long_name = {},
 		const ItemType type = ItemType::PARAM_IN) :
-			SystemCallItem{type, short_name, long_name} {
+			PointerValue{type, short_name, long_name} {
 	}
 
 	std::string str() const override;
@@ -36,11 +36,42 @@ protected: // functions
 
 	void updateData(const Tracee &proc) override;
 
-	void fetch(const Tracee &);
+	void fetch(const Tracee &, const size_t max = SIZE_MAX);
 
 protected: // data
 
 	std::optional<std::string> m_str;
+};
+
+/// An out string parameter with size limitation, possibly without terminator.
+/**
+ * While many string parameters in the kernel API are null terminated by
+ * contract (e.g. file system paths), some string out parameters are
+ * accompanied by a buffer size parameter and the data might not be null
+ * terminated, like is the case with the readlink family of system calls.
+ *
+ * This type introduces the coupling to the buffer size similar to what
+ * the BufferPointer type does for arbitrary data.
+ **/
+class CLUES_API StringBuffer :
+		public StringData {
+public: // functions
+
+	explicit StringBuffer(
+		const std::string_view short_name,
+		const std::string_view long_name,
+		const SystemCallItem &size_par) :
+		StringData{short_name, long_name, ItemType::PARAM_OUT},
+		m_size_par(size_par) {
+	}
+
+protected: // functions
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	const SystemCallItem &m_size_par;
 };
 
 /// A nullptr-terminated array of pointers to c-strings.

@@ -9,11 +9,7 @@ namespace clues::item {
 
 std::string StringData::str() const {
 	if (!m_str) {
-		if (isZero()) {
-			return "NULL";
-		} else {
-			return "<invalid>";
-		}
+		return PointerValue::formatBadPointer();
 	} else if (m_str->empty()) {
 		return "\"\"";
 	} else {
@@ -21,13 +17,25 @@ std::string StringData::str() const {
 	}
 }
 
-void StringData::fetch(const Tracee &proc) {
+void StringData::fetch(const Tracee &proc, const size_t max) {
 	m_str.emplace();
 	// fetch the string from the Tracee's address space.
 	try {
-		proc.readString(asPtr(), *m_str);
+		proc.readString(asPtr(), *m_str, max);
 	} catch (...) {
 		m_str.reset();
+	}
+}
+
+void StringData::updateData(const Tracee &proc) {
+	if (m_call->hasResultValue()) {
+		fetch(proc);
+	}
+}
+
+void StringBuffer::updateData(const Tracee &proc) {
+	if (m_call->hasResultValue()) {
+		fetch(proc, m_size_par.valueAs<size_t>());
 	}
 }
 
@@ -86,12 +94,6 @@ std::string StringArrayData::str() const {
 	ret += "]";
 
 	return ret;
-}
-
-void StringData::updateData(const Tracee &proc) {
-	if (m_call->hasResultValue()) {
-		fetch(proc);
-	}
 }
 
 } // end ns

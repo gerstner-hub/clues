@@ -130,6 +130,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::OLDOLDUNAME:     /* fallthrough */
 	case SystemCallNr::OLDUNAME:        /* fallthrough */
 	case SystemCallNr::UNAME:           return new_sys<UnameSystemCall>(nr);
+	case SystemCallNr::READLINK:        return new_sys<ReadLinkSystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }

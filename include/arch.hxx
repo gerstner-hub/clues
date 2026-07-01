@@ -68,4 +68,9 @@ using kernel_off_t = off_t;
 #	define CLUES_HAVE_ALARM
 #endif
 
+/* aarch64 only comes with readlinkat */
+#ifdef SYS_readlink
+#	define CLUES_HAVE_READLINK
+#endif
+
 } // end ns

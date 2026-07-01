@@ -309,6 +309,31 @@ struct UmaskSystemCall :
 	item::FileModeParameter old_mask;
 };
 
+struct ReadLinkSystemCall :
+		public SystemCall {
+
+	explicit ReadLinkSystemCall() :
+			SystemCall{SystemCallNr::READLINK},
+			filled_bytes{"bytes", "number of bytes placed into buf", ItemType::RETVAL},
+			path{"path"},
+			buf{"buf", "buffer to place symlink target into", filled_bytes},
+			bufsiz{"bufsiz", "size of buf"} {
+		setReturnItem(filled_bytes);
+		setParameters(path, buf, bufsiz);
+	}
+
+	/* return value */
+	/// number of bytes placed into `buf`.
+	item::SizeValue filled_bytes;
+
+	/* parameters */
+	item::StringData path;
+	/// This buffer will store `filled_bytes` characters upon system call exit.
+	item::StringBuffer buf;
+	/// The capacity of the tracee memory pointed at by `buf`.
+	item::SizeValue bufsiz;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
