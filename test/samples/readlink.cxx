@@ -19,4 +19,15 @@ int main() {
 	char target[PATH_MAX];
 	syscall(SYS_readlink, link_path.c_str(), target, PATH_MAX);
 #endif
+
+	int dirfd = open(dir.path().c_str(), O_RDONLY|O_DIRECTORY);
+
+	if (dirfd < 0)
+		return 1;
+
+	if (readlinkat(dirfd, "link", target, PATH_MAX) < 0) {
+
+	}
+
+	close(dirfd);
 }

@@ -312,8 +312,8 @@ struct UmaskSystemCall :
 struct ReadLinkSystemCall :
 		public SystemCall {
 
-	explicit ReadLinkSystemCall() :
-			SystemCall{SystemCallNr::READLINK},
+	explicit ReadLinkSystemCall(const SystemCallNr nr = SystemCallNr::READLINK) :
+			SystemCall{nr},
 			filled_bytes{"bytes", "number of bytes placed into buf", ItemType::RETVAL},
 			path{"path"},
 			buf{"buf", "buffer to place symlink target into", filled_bytes},
@@ -332,6 +332,19 @@ struct ReadLinkSystemCall :
 	item::StringBuffer buf;
 	/// The capacity of the tracee memory pointed at by `buf`.
 	item::SizeValue bufsiz;
+};
+
+struct ReadLinkAtSystemCall :
+		public ReadLinkSystemCall {
+
+	explicit ReadLinkAtSystemCall() :
+			ReadLinkSystemCall{SystemCallNr::READLINKAT},
+			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}} {
+		setParameters(dirfd, path, buf, bufsiz);
+	}
+
+	item::FileDescriptor dirfd;
+
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

@@ -409,6 +409,7 @@ const std::vector<TestSpec> TEST_SPECS{
 #ifdef CLUES_HAVE_READLINK
 		R"(readlink\(path={string}, buf="/our/test/symlink/content", bufsiz=4096\) = 25 \(bytes\))",
 #endif
+		R"(readlinkat\(fd={fd}, path="link", buf="/our/test/symlink/content", bufsiz=4096\) = 25 \(bytes\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

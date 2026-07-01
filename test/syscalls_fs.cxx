@@ -611,10 +611,44 @@ const auto TESTS = std::array{
 				auto buf = alloc32<char*>(1024);
 				auto linkpath = alloc_str32(LINKPATH);
 				syscall32(SyscallNr32::READLINK, linkpath, buf, 1024);
+				unlink(LINKPATH);
+			})
+		}
+	},
+#endif
+	TestSpec{SystemCallNr::READLINKAT, []() {
+			if (symlink(LINKTARGET, LINKPATH) < 0) {
+
+			}
+			int fd = open("/tmp", O_RDONLY|O_DIRECTORY);
+			char buf[1024];
+			if (readlinkat(fd, LINKPATH, buf, sizeof(buf)) < 0) {
+
+			}
+			unlink(LINKPATH);
+			close(fd);
+		}, ENTRY_VERIFY_CB(ReadLinkAtSystemCall, {
+			VERIFY(*sc.path.data() == LINKPATH);
+			VERIFY(sc.bufsiz.value() == 1024);
+			VERIFY(is_valid_variable_ptr(sc, sc.buf.ptr()));
+			VERIFY(sc.dirfd.fd() == FIRST_FD);
+		}), EXIT_VERIFY_CB(ReadLinkAtSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.filled_bytes.value() == strlen(LINKTARGET));
+			VERIFY(*sc.buf.data() == LINKTARGET);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{4}, []() {
+				if (symlink(LINKTARGET, LINKPATH) < 0) {
+
+				}
+				int fd = open("/tmp", O_RDONLY|O_DIRECTORY);
+				auto buf = alloc32<char*>(1024);
+				auto linkpath = alloc_str32(LINKPATH);
+				syscall32(SyscallNr32::READLINKAT, fd, linkpath, buf, 1024);
+				unlink(LINKPATH);
 			})
 		}
 	}
-#endif
 };
 
 } // end ns
