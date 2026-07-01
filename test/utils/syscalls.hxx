@@ -196,6 +196,17 @@ static MemoryRangeVector tracee_mem_ranges;
  */
 static MemoryRangeVector tracee_32bit_ranges;
 
+static bool is_valid_variable_ptr(const clues::SystemCall &sc, const clues::ForeignPtr ptr) {
+	if (tracee_mem_ranges.isVariablePointer(ptr))
+		return true;
+
+	if (sc.is32BitEmulationABI()) {
+		return tracee_32bit_ranges.containedAnywhere(ptr);
+	}
+
+	return false;
+}
+
 #define VERIFY(...) if (!(__VA_ARGS__)) { \
 	std::cerr << "check |" << #__VA_ARGS__ << "| failed\n"; \
 	good = false; \
@@ -498,6 +509,9 @@ std::string exiter;
 
 template <typename TEST_ARRAY>
 void SyscallTest<TEST_ARRAY>::runTests() {
+	// suppress unused function warning
+	(void)is_valid_variable_ptr;
+
 	exiter = findHelper("exiter");
 
 	if (m_argv.size() == 2) {
