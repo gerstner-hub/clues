@@ -14,9 +14,9 @@ int main() {
 	const auto link_path = dir.path() + "/link";
 
 	cosmos::fs::make_symlink("/our/test/symlink/content", link_path);
+	char target[PATH_MAX];
 
 #ifdef COSMOS_X86
-	char target[PATH_MAX];
 	syscall(SYS_readlink, link_path.c_str(), target, PATH_MAX);
 #endif
 
