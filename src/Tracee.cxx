@@ -42,8 +42,9 @@ class ContainerFiller {
 	using ptr_type = typename CONTAINER::pointer;
 public: // functions
 
-	explicit ContainerFiller(CONTAINER &container) :
-			m_container{container} {
+	explicit ContainerFiller(CONTAINER &container, const size_t max) :
+			m_container{container},
+			m_max{max} {
 	}
 
 	bool operator()(long word) {
@@ -53,12 +54,17 @@ public: // functions
 		typename CONTAINER::value_type item;
 
 		for (size_t numitem = 0; numitem < sizeof(word) / ITEM_SIZE; numitem++) {
+
 			std::memcpy(&item, word_ptr + numitem, sizeof(item));
 			if (item == 0)
 				// termination found
 				return false;
 
 			m_container.push_back(item);
+
+			if (++m_filled == m_max)
+				// maximum number of items reached
+				return false;
 		}
 
 		return true;
@@ -66,6 +72,8 @@ public: // functions
 
 protected:
 	CONTAINER &m_container;
+	const size_t m_max = 0;
+	size_t m_filled = 0;
 	static constexpr size_t ITEM_SIZE = sizeof(typename CONTAINER::value_type);
 };
 
@@ -968,15 +976,15 @@ void Tracee::fillData(ForeignPtr addr, FILLER &filler) const {
 	} while (filler(word));
 }
 
-void Tracee::readString(const ForeignPtr addr, std::string &out) const {
-	return readVector(addr, out);
+void Tracee::readString(const ForeignPtr addr, std::string &out, const size_t max) const {
+	return readVector(addr, out, max);
 }
 
 template <typename VECTOR>
-void Tracee::readVector(const ForeignPtr addr, VECTOR &out) const {
+void Tracee::readVector(const ForeignPtr addr, VECTOR &out, const size_t max) const {
 	out.clear();
 
-	ContainerFiller<VECTOR> filler{out};
+	ContainerFiller<VECTOR> filler{out, max};
 	fillData(addr, filler);
 }
 
@@ -1082,10 +1090,12 @@ void Tracee::dropFD(const cosmos::FileNum fd) const {
 
 // explicit template instantiations
 #if !defined(COSMOS_I386) && !defined(COSMOS_X32)
-template void Tracee::readVector<std::vector<uintptr_t>>(const ForeignPtr, std::vector<uintptr_t>&) const;
+template void Tracee::readVector<std::vector<uintptr_t>>(const ForeignPtr,
+		std::vector<uintptr_t>&, const size_t) const;
 #endif
 /* for 32-bit emulation */
-template void Tracee::readVector<std::vector<uint32_t>>(const ForeignPtr, std::vector<uint32_t>&) const;
+template void Tracee::readVector<std::vector<uint32_t>>(const ForeignPtr,
+		std::vector<uint32_t>&, const size_t) const;
 
 } // end ns
 

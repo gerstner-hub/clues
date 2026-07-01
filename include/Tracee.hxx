@@ -207,7 +207,7 @@ public: // functions
 	 * Read from the tracee's address space starting at `addr` into the
 	 * C++ string object `out`.
 	 **/
-	void readString(const ForeignPtr addr, std::string &out) const;
+	void readString(const ForeignPtr addr, std::string &out, const size_t max = SIZE_MAX) const;
 
 	/// Reads an arbitrary binary blob of fixed length from the tracee.
 	void readBlob(const ForeignPtr addr, char *buffer, const size_t bytes) const;
@@ -256,7 +256,7 @@ public: // functions
 
 	/// Reads in a zero terminated array of data items into the STL-vector like parameter `out`.
 	template <typename VECTOR>
-	void readVector(const ForeignPtr pointer, VECTOR &out) const;
+	void readVector(const ForeignPtr pointer, VECTOR &out, const size_t max = SIZE_MAX) const;
 
 	/// Returns whether the tracee is a child process created by us.
 	/**
