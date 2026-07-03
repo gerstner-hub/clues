@@ -13,6 +13,7 @@ std::string WaitOptions::str() const {
 	BITFLAGS_ADD(WCONTINUED);
 	BITFLAGS_ADD(WNOHANG);
 	BITFLAGS_ADD(WNOWAIT);
+	BITFLAGS_ADD(WUNTRACED);
 	BITFLAGS_ADD(__WALL);
 	BITFLAGS_ADD(__WCLONE);
 	BITFLAGS_ADD(__WNOTHREAD);
@@ -80,4 +81,19 @@ std::string WaitStatus::scalarToString() const {
 		return "?!?";
 	}
 }
+
+std::string WaitID::str() const {
+	switch (cosmos::to_integral(m_type)) {
+		CASE_ENUM_TO_STR(P_PID);
+		CASE_ENUM_TO_STR(P_PIDFD);
+		CASE_ENUM_TO_STR(P_PGID);
+		CASE_ENUM_TO_STR(P_ALL);
+		default: return "P_???";
+	}
+}
+
+void WaitID::processValue(const Tracee &) {
+	m_type = valueAs<Type>();
+}
+
 } // end ns

@@ -14,6 +14,7 @@
 #include <clues/items/items.hxx>
 #include <clues/items/process.hxx>
 #include <clues/items/strings.hxx>
+#include <clues/items/signal.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
 
@@ -282,6 +283,46 @@ struct Wait4SystemCall :
 
 	/* return value */
 	item::ProcessID event_pid;
+};
+
+struct WaitIDSystemCall :
+		public SystemCall {
+	WaitIDSystemCall() :
+			SystemCall{SystemCallNr::WAITID} {
+		setReturnItem(res);
+		addParameters(idtype);
+	}
+
+	/* parameters */
+
+	item::WaitID idtype;
+
+	// for idtype == PID
+	std::optional<item::ProcessID> id_pid;
+	// for idtype == PGID
+	std::optional<item::ProcessGroupID> id_pgid;
+	// for idtype == PIDFD
+	std::optional<item::FileDescriptor> id_pidfd;
+
+	/// Child wait status change event information.
+	/**
+	 * On system call exit this will provide the
+	 * cosmos::SigInfo::ChildData sub-structure containing more detailed
+	 * information about the event that occurred.
+	 **/
+	item::SigInfo siginfo;
+	item::WaitOptions options;
+	/* extra fifth argument not exposed in the POSIX API */
+	item::ResourceUsage rusage;
+
+	/* return value */
+	item::SuccessResult res;
+
+protected: // functions
+
+	bool check2ndPass(const Tracee&) override;
+
+	void prepareNewSystemCall() override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

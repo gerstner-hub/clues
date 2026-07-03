@@ -2,6 +2,7 @@
 
 // Linux
 #include <sys/prctl.h>
+#include <sys/wait.h>
 
 // C++
 #include <optional>
@@ -256,6 +257,41 @@ protected: // functions
 protected: // data
 
 	std::optional<cosmos::WaitStatus> m_status;
+};
+
+/// Wait ID type used with WaitIDSystemCall.
+class WaitID :
+		public ValueInParameter {
+public: // types
+
+	enum class Type : std::underlying_type<idtype_t>::type {
+		PID   = P_PID,
+		PIDFD = P_PIDFD,
+		PGID  = P_PGID,
+		ALL   = P_ALL
+	};
+
+	using enum Type;
+
+public: // functions
+
+	explicit WaitID() :
+			ValueInParameter{"idtype", "wait ID type"} {
+	}
+
+	Type type() const {
+		return m_type;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Type m_type{0};
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

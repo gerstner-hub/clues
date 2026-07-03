@@ -6,14 +6,17 @@
 // cosmos
 #include <cosmos/proc/types.hxx>
 #include <cosmos/proc/SigAction.hxx>
+#include <cosmos/proc/SigInfo.hxx>
 
 // clues
 #include <clues/items/items.hxx>
 
 namespace clues::item {
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
 /// The operation to performed on a signal set.
-class CLUES_API SigSetOperation :
+class SigSetOperation :
 		public ValueInParameter {
 public: // types
 
@@ -47,7 +50,7 @@ protected: // data
 };
 
 /// A signal number specification.
-class CLUES_API SignalNumber :
+class SignalNumber :
 		public ValueParameter {
 public: // functions
 	explicit SignalNumber(const ItemType type = ItemType::PARAM_IN) :
@@ -72,7 +75,7 @@ protected: // data
 };
 
 /// The struct sigaction used in various signal related system calls.
-class CLUES_API SigActionParameter :
+class SigActionParameter :
 		public PointerValue {
 public: // functions
 	explicit SigActionParameter(
@@ -98,7 +101,7 @@ protected: // data
 };
 
 /// A set of POSIX signals for setting or masking in the context of various system calls.
-class CLUES_API SigSetParameter :
+class SigSetParameter :
 		public PointerValue {
 public: // functions
 
@@ -122,5 +125,44 @@ protected: // data
 
 	std::optional<cosmos::SigSet> m_sigset;
 };
+
+/// Signal information struct.
+/**
+ * This is currently used with WaitIDSystemCall.
+ **/
+class SigInfo :
+		public PointerOutValue {
+public: // functions
+
+	explicit SigInfo() :
+		PointerOutValue{"infop", "struct siginfo_t*"} {
+
+	}
+
+	std::string str() const override;
+
+	/// Provides access to the SigInfo data.
+	/**
+	 * This can be std::nullopt in case the system call or reading
+	 * Tracee memory failed.
+	 **/
+	const std::optional<cosmos::SigInfo>& info() const{
+		return m_info;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_info.reset();
+	}
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<cosmos::SigInfo> m_info;
+};
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

@@ -54,6 +54,7 @@ const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
 	{"{bitmask}", R"(0x[0-9a-f]+)"},
 	{"{decimal}", R"([0-9]+)"},
 	{"{pid}", R"([0-9]+)"},
+	{"{uid}", R"([0-9]+)"},
 	// match a string surrounded by double-quotes, also supporting
 	// embedded escaped \" characters.
 	// Optionally a suffix ending in (...) if the string was truncated.
@@ -410,6 +411,10 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(readlink\(path={string}, buf="/our/test/symlink/content", bufsiz=4096\) = 25 \(bytes\))",
 #endif
 		R"(readlinkat\(fd={fd}, path="link", buf="/our/test/symlink/content", bufsiz=4096\) = 25 \(bytes\))",
+	}},
+	TestSpec{{}, "waitid", {
+		R"(waitid\(idtype=P_PID, pid={pid}, infop=\{si_signo=SIGCHLD, si_code=1 \(CLD_EXITED\), si_pid={pid}, si_uid={uid}, si_status=10 \(exit code\), si_utime={decimal}, si_stime={decimal}\}, options=0x4 \(WEXITED\), rusage=NULL\) = 0 \(success\))",
+		R"(waitid\(idtype=P_ALL, infop=\{si_signo=SIGCHLD, si_code=2 \(CLD_KILLED\), si_pid={pid}, si_uid={uid}, si_status=9 \(SIGKILL\), si_utime={decimal}, si_stime={decimal}\}, options=0x4 \(WEXITED\), rusage=NULL\) = 0 \(success\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

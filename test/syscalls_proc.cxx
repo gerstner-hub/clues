@@ -3,6 +3,18 @@
 
 namespace {
 
+/*
+* fork() is not available on all ABIs and libc's
+* fork() can create additional syscall noise, so
+* directly use clone3() for this purpose.
+*/
+pid_t plain_fork() {
+	struct clone_args cl;
+	cosmos::zero_object(cl);
+	cl.exit_signal = SIGCHLD;
+	return syscall(SYS_clone3, &cl, sizeof(cl));
+}
+
 const auto TESTS = std::array{
 	TestSpec{SystemCallNr::CLONE, []() {
 			pid_t child_tid = 9000;
@@ -411,15 +423,7 @@ const auto TESTS = std::array{
 			})
 		}
 	}, TestSpec{SystemCallNr::WAIT4, []() {
-			/*
-			 * fork() is not available on all ABIs and libc's
-			 * fork() can create additional syscall noise, so
-			 * directly use clone3() for this purpose.
-			 */
-			struct clone_args cl;
-			cosmos::zero_object(cl);
-			cl.exit_signal = SIGCHLD;
-			if (const auto pid = syscall(SYS_clone3, &cl, sizeof(cl)); pid == 0) {
+			if (const auto pid = plain_fork(); pid == 0) {
 				::_exit(10);
 			} else {
 				int status;
@@ -447,6 +451,43 @@ const auto TESTS = std::array{
 					auto status = alloc_struct32<int>();
 					auto ru = alloc_struct32<struct rusage>();
 					syscall32(SyscallNr32::WAIT4, pid, status, WCONTINUED, ru);
+				}
+			})
+		}
+	}, TestSpec{SystemCallNr::WAITID, []() {
+			if (const auto pid = plain_fork(); pid == 0) {
+				::_exit(10);
+			} else {
+				siginfo_t sinfo;
+				::waitid(P_PID, pid, &sinfo, WEXITED);
+			}
+		}, ENTRY_VERIFY_CB(WaitIDSystemCall, {
+			VERIFY(sc.idtype.type() == clues::item::WaitID::PID);
+			VERIFY(!sc.id_pgid);
+			VERIFY(!sc.id_pidfd);
+			VERIFY(sc.id_pid.has_value());
+			VERIFY(!sc.siginfo.info());
+			VERIFY(sc.options.options() == cosmos::WaitFlag::WAIT_FOR_EXITED);
+			VERIFY(!sc.rusage.usage());
+		}), EXIT_VERIFY_CB(WaitIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.siginfo.info().has_value());
+			const auto &info = *sc.siginfo.info();
+			VERIFY(info.sigNr() == cosmos::signal::CHILD);
+			const auto child_data = *info.childData();
+			VERIFY(child_data.exited());
+			VERIFY(child_data.child.uid == cosmos::proc::get_real_user_id());
+			VERIFY(*child_data.status == cosmos::ExitStatus{10});
+			VERIFY(child_data.user_time.has_value());
+			VERIFY(child_data.system_time.has_value());
+			VERIFY(!sc.rusage.usage());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				if (const auto pid = plain_fork(); pid == 0) {
+					::_exit(10);
+				} else {
+					auto sinfo = alloc_struct32<siginfo_t>();
+					syscall32(SyscallNr32::WAITID, P_PID, pid, sinfo, WEXITED, nullptr);
 				}
 			})
 		}

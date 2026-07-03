@@ -98,4 +98,43 @@ void Clone3SystemCall::updateFDTracking(const Tracee &proc) {
 	}
 }
 
+bool WaitIDSystemCall::check2ndPass(const Tracee&) {
+	using Type = item::WaitID::Type;
+
+	auto setup_pars = [this](auto &dynpar) {
+		addParameters(dynpar, siginfo, options, rusage);
+	};
+
+	switch (idtype.type()) {
+		case Type::PID: {
+			id_pid.emplace(ItemType::PARAM_IN, "pid", "process id");
+			setup_pars(*id_pid);
+			break;
+		} case Type::PGID: {
+			id_pgid.emplace(ItemType::PARAM_IN, "pgid", "process group id");
+			setup_pars(*id_pgid);
+			break;
+		} case Type::PIDFD: {
+			id_pidfd.emplace(ItemType::PARAM_IN, item::AtSemantics{false},
+					"pidfd", "pid file descriptor");
+			setup_pars(*id_pidfd);
+			break;
+		} case Type::ALL: {
+			/* id parameter remains unused in this case */
+			setup_pars(item::unused);
+			break;
+		} default:
+			throw cosmos::RuntimeError{"unsupported WaitID encountered"};
+	}
+
+	return true;
+}
+
+void WaitIDSystemCall::prepareNewSystemCall() {
+	dropParameters(1);
+	id_pid.reset();
+	id_pgid.reset();
+	id_pidfd.reset();
+}
+
 } // end ns

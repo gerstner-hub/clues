@@ -4,6 +4,7 @@
 #include <clues/logger.hxx>
 #include <clues/macros.h>
 #include <clues/private/kernel/sigaction.hxx>
+#include <clues/private/kernel/siginfo.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 
@@ -178,6 +179,117 @@ std::string SigSetParameter::str() const {
 		return format::signal_set(*m_sigset);
 	} else {
 		return "NULL";
+	}
+}
+
+std::string SigInfo::str() const {
+	if (!m_info) {
+		/* Linux allows this to be NULL */
+		return formatBadPointer();
+	}
+
+	return format::sig_info(*m_info);
+}
+
+static void copy32to64(const kernel_siginfo32 &info32, siginfo_t &info64) {
+	info64.si_signo = info32.si_signo;
+	info64.si_code = info32.si_code;
+
+	const auto &sifields32  = info32._sifields;
+
+	auto convert_ptr = [](const compat_uptr_t compat_ptr) {
+		using SiValPtr = decltype(info64.si_value.sival_ptr);
+		return (SiValPtr)(uintptr_t)compat_ptr;
+	};
+
+	switch (info64.si_code) {
+		case SI_TIMER: {
+			const auto &data = sifields32._timer;
+			info64.si_timerid = data._tid;
+			info64.si_overrun = data._overrun;
+			info64.si_value.sival_ptr = convert_ptr(data._sigval.sival_ptr);
+			break;
+		} case SI_QUEUE: {
+			const auto &data = sifields32._rt;
+			info64.si_pid = data._pid;
+			info64.si_uid = data._uid;
+			info64.si_value.sival_ptr = convert_ptr(data._sigval.sival_ptr);
+			break;
+		}
+	}
+
+	switch (info32.si_signo) {
+		case SIGCHLD: {
+			const auto &data = sifields32._sigchld;
+			info64.si_status = data._status;
+			info64.si_utime = data._utime;
+			info64.si_stime = data._stime;
+			info64.si_pid = data._pid;
+			info64.si_uid = data._uid;
+			break;
+		}
+		case SIGILL: [[ fallthrough ]];
+		case SIGFPE:
+		case SIGSEGV:
+		case SIGBUS:
+		case SIGTRAP:
+		/*case SIGEMT:*/ {
+			const auto &data = sifields32._sigfault;
+			info64.si_addr = convert_ptr(data._addr);
+			info64.si_addr_lsb = data._addr_lsb;
+			info64.si_lower = convert_ptr(data._addr_bnd._lower);
+			info64.si_upper = convert_ptr(data._addr_bnd._upper);
+			info64.si_pkey = data._addr_pkey._pkey;
+			/*
+			 * there's still `_perf` data in `info32` but it's
+			 * unclear what it corresponds to.
+			 */
+			break;
+		}
+		case SIGPOLL: {
+			const auto &data = sifields32._sigpoll;
+			info64.si_band = data._band;
+			info64.si_fd = data._fd;
+			break;
+		}
+		case SIGSYS: {
+			const auto &data = sifields32._sigsys;
+			info64.si_call_addr = convert_ptr(data._call_addr);
+			info64.si_syscall = data._syscall;
+			info64.si_arch = data._arch;
+			break;
+		}
+		default: break;
+	}
+}
+
+void SigInfo::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue())
+		return;
+
+	if (m_call->is32BitEmulationABI()) {
+		/* here we have more work to do, we need to convert the 32-bit
+		 * data into siginfo_t data */
+		kernel_siginfo32 info32;
+
+		if (!proc.readStruct(this->ptr(), info32)) {
+			return;
+		}
+
+		m_info.emplace(/* with zero init*/);
+
+		/*
+		 * now we need to copy over the individual fields depending on
+		 * the signal number.
+		 */
+		copy32to64(info32, *m_info->raw());
+	} else {
+		m_info.emplace(cosmos::no_init);
+
+		if (!proc.readStruct(this->ptr(), *m_info->raw())) {
+			m_info.reset();
+			return;
+		}
 	}
 }
 
