@@ -218,22 +218,37 @@ static bool is_valid_variable_ptr(const clues::SystemCall &sc, const clues::Fore
 #define ENTRY_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](Tracee &tracee, const SystemCall &_sc, bool &good) { \
 	(void)tracee; \
 	good = true; \
-	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
-	__VA_ARGS__ \
+	try { \
+		const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
+		__VA_ARGS__ \
+	} catch (...) { \
+		good = false; \
+		throw; \
+	} \
 }
 
 #define ENTRY_VERIFY_CB_CAPTURE(CAPTURE, SYSTEM_CALL_TYPE, ...) [CAPTURE](Tracee &tracee, const SystemCall &_sc, bool &good) { \
 	(void)tracee; \
 	good = true; \
-	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
-	__VA_ARGS__ \
+	try { \
+		const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
+		__VA_ARGS__ \
+	} catch (...) { \
+		good = false; \
+		throw; \
+	} \
 }
 
 #define EXIT_VERIFY_CB(SYSTEM_CALL_TYPE, ...) [](Tracee &tracee, const SystemCall &_sc, bool &good) { \
 	(void)tracee; \
 	good = true; \
-	const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
-	__VA_ARGS__ \
+	try { \
+		const auto &sc = downcast<clues::SYSTEM_CALL_TYPE>(_sc); \
+		__VA_ARGS__ \
+	} catch (...) { \
+		good = false; \
+		throw; \
+	} \
 }
 
 /*
