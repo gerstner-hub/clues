@@ -338,13 +338,13 @@ std::string sig_info(const cosmos::SigInfo &info) {
 			format::si_reason(data.reason), data.addr);
 	};
 
-	ss << info.sigNr() << " {";
+	ss << "{si_signo=" << format::signal(info.sigNr().raw());
 	if (info.source() != SigInfo::Source::KERNEL ||
 			info.raw()->si_code == SI_KERNEL) {
-		ss << "si_code=" << format::si_code(info.source());
+		ss << ", si_code=" << format::si_code(info.source());
 	} else {
 		// we have to use the raw number instead
-		ss << "si_code=" << info.raw()->si_code;
+		ss << ", si_code=" << info.raw()->si_code;
 	}
 
 	if (auto user_data = info.userSigData(); user_data) {
@@ -372,7 +372,7 @@ std::string sig_info(const cosmos::SigInfo &info) {
 		add_process_ctx(child_data->child);
 		ss << ", si_status=" << info.raw()->si_status;
 		if (child_data->signal) {
-			ss << " (" << *child_data->signal << ")";
+			ss << " (" << format::signal(child_data->signal->raw()) << ")";
 		} else {
 			ss << " (exit code)";
 		}

@@ -447,7 +447,7 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 }
 
 void TermTracer::signaled(Tracee &tracee, const cosmos::SigInfo &info) {
-	traceStream(tracee) << "-- " << clues::format::sig_info(info) << " --\n";
+	traceStream(tracee) << "-- " << clues::format::signal(info.sigNr().raw()) << " " << clues::format::sig_info(info) << " --\n";
 }
 
 void TermTracer::attached(Tracee &tracee) {
