@@ -323,6 +323,39 @@ protected: // data
 	Flags m_flags{0};
 };
 
+class PIDFDGetFDFlags :
+	public ValueInParameter {
+public: // types
+
+	/* no flags defined yet */
+	enum class Flag : int {
+	};
+
+	using enum Flag;
+
+	using Flags = cosmos::BitMask<Flag>;
+
+public: // functions
+
+	explicit PIDFDGetFDFlags() :
+			ValueInParameter{"flags", "open flags"} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_flags = valueAs<Flags>();
+	}
+
+protected: // data
+
+	Flags m_flags{0};
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

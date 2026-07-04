@@ -422,7 +422,10 @@ const std::vector<TestSpec> TEST_SPECS{
 	}},
 #endif
 	TestSpec{"pidfd", "pidfd_open", {
-		R"(pidfd_open\(pid={pid}, flags=0x800 \(PIDFD_NONBLOCK\)\) = 3 \(fd\))",
+		R"(pidfd_open\(pid={pid}, flags=0x800 \(PIDFD_NONBLOCK\)\) = {fd} \(fd\))",
+	}},
+	TestSpec{"pidfd", "pidfd_getfd", {
+		R"(pidfd_getfd\(fd={fd}, fd=0, flags=0\) = {fd} \(fd\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {

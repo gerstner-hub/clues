@@ -1,5 +1,6 @@
 // clues
 #include <clues/syscalls/process.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues {
 
@@ -138,7 +139,43 @@ void WaitIDSystemCall::prepareNewSystemCall() {
 }
 
 void PIDFDOpenSystemCall::updateFDTracking(const Tracee &proc) {
-	trackFD(proc, FDInfo{FDInfo::PID_FD, new_fd.fd()});
+	auto info = FDInfo{FDInfo::PID_FD, new_fd.fd()};
+
+	if (flags.flags()[cosmos::ProcessFile::OpenFlag::NONBLOCK]) {
+		info.flags.emplace(cosmos::OpenFlag::NONBLOCK);
+	}
+
+	trackFD(proc, std::move(info));
+}
+
+void PIDFDGetFDSystemCall::updateFDTracking(const Tracee &proc) {
+	/*
+	 * it's difficult in this context, since we can duplicate an arbitrary
+	 * target file descriptor and we're not necessarily tracing the target
+	 * process, so races can occur.
+	 *
+	 * best we can do is looking up our own /proc to determine the new
+	 * descriptor type.
+	 */
+
+	try {
+		const auto our_fd = new_fd.fd();
+		for (auto &info: get_fd_infos(proc.pid())) {
+			if (info.fd == our_fd) {
+				trackFD(proc, std::move(info));
+				break;
+			}
+		}
+
+	} catch (...) {
+		/*
+		 * Probably the tracee died unexpectedly. Let's use an unknown
+		 * FD type in this case.
+		 */
+		trackFD(proc, FDInfo{FDInfo::UNKNOWN, new_fd.fd()});
+		return;
+	}
+
 }
 
 } // end ns

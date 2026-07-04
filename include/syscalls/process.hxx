@@ -364,6 +364,27 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
+struct PIDFDGetFDSystemCall :
+		public SystemCall {
+
+	PIDFDGetFDSystemCall() :
+			SystemCall{SystemCallNr::PIDFD_GETFD},
+			new_fd{ItemType::RETVAL} {
+		setReturnItem(new_fd);
+		setParameters(pidfd, targetfd, flags);
+	}
+
+	item::FileDescriptor pidfd;
+	item::FileDescriptor targetfd;
+	item::PIDFDGetFDFlags flags;
+
+	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

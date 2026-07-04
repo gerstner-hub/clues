@@ -135,6 +135,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::READLINK:        return new_sys<ReadLinkSystemCall>();
 	case SystemCallNr::READLINKAT:      return new_sys<ReadLinkAtSystemCall>();
 	case SystemCallNr::PIDFD_OPEN:      return new_sys<PIDFDOpenSystemCall>();
+	case SystemCallNr::PIDFD_GETFD:     return new_sys<PIDFDGetFDSystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }
