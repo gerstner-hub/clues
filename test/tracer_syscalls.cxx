@@ -427,6 +427,9 @@ const std::vector<TestSpec> TEST_SPECS{
 	TestSpec{"pidfd", "pidfd_getfd", {
 		R"(pidfd_getfd\(fd={fd}, fd=0, flags=0\) = {fd} \(fd\))",
 	}},
+	TestSpec{"pidfd", "pidfd_send_signal", {
+		R"(pidfd_send_signal\(fd={pid}, signum=SIGKILL, infop=NULL, flags=0x2 \(PIDFD_SIGNAL_THREAD_GROUP\)\) = 0 \(success\))",
+	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {
 		R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"

@@ -385,6 +385,23 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
+struct PIDFDSendSignalSystemCall :
+		public SystemCall {
+
+	PIDFDSendSignalSystemCall() :
+			SystemCall{SystemCallNr::PIDFD_SEND_SIGNAL} {
+		setReturnItem(res);
+		setParameters(pidfd, sig, siginfo, flags);
+	}
+
+	item::FileDescriptor pidfd;
+	item::SignalNumber sig;
+	item::SigInfo siginfo;
+	item::PIDFDSendSignalFlags flags;
+
+	item::SuccessResult res;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

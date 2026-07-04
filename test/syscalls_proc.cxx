@@ -15,7 +15,7 @@ pid_t plain_fork() {
 	return syscall(SYS_clone3, &cl, sizeof(cl));
 }
 
-void pidfd_getfd_from_child(std::function<void (int)> getfd) {
+void pidfd_call_for_child(std::function<void (int)> cb) {
 	if (const auto child = plain_fork(); child == 0) {
 		// block for the parent to fetch an FD
 		cosmos::signal::pause();
@@ -23,8 +23,8 @@ void pidfd_getfd_from_child(std::function<void (int)> getfd) {
 	} else {
 		int fd = syscall(SYS_pidfd_open, child, 0);
 		if (fd > 0) {
-			/* try to clone our child's stdin */
-			getfd(fd);
+			/* perform operation on child */
+			cb(fd);
 			cosmos::signal::send(cosmos::ProcessID{child}, cosmos::signal::KILL);
 			::wait(NULL);
 		}
@@ -553,7 +553,7 @@ const auto TESTS = std::array{
 			})
 		}
 	}, TestSpec{SystemCallNr::PIDFD_GETFD, []() {
-			pidfd_getfd_from_child([](int pidfd) {
+			pidfd_call_for_child([](int pidfd) {
 				int child_in = syscall(SYS_pidfd_getfd, pidfd, 0, 0);
 				close(child_in);
 			});
@@ -566,9 +566,28 @@ const auto TESTS = std::array{
 			VERIFY(sc.new_fd.fd() == SECOND_FD);
 		}), IgnoreCalls{2}, {
 			I386_CROSS_ABI(IgnoreCalls{2}, []() {
-				pidfd_getfd_from_child([](int pidfd) {
+				pidfd_call_for_child([](int pidfd) {
 					int child_in = syscall32(SyscallNr32::PIDFD_GETFD, pidfd, 0, 0);
 					close(child_in);
+				});
+			})
+		}
+	}, TestSpec{SystemCallNr::PIDFD_SEND_SIGNAL, []() {
+			pidfd_call_for_child([](int pidfd) {
+				syscall(SYS_pidfd_send_signal, pidfd, SIGKILL, nullptr, 0);
+			});
+		}, ENTRY_VERIFY_CB(PIDFDSendSignalSystemCall, {
+			VERIFY(sc.pidfd.fd() == FIRST_FD);
+			VERIFY(sc.sig.nr() == cosmos::SignalNr::KILL);
+			VERIFY(!sc.siginfo.info());
+			VERIFY(sc.flags.flags().raw() == 0);
+		}), EXIT_VERIFY_CB(PIDFDSendSignalSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				pidfd_call_for_child([](int pidfd) {
+					syscall32(SyscallNr32::PIDFD_SEND_SIGNAL,
+							pidfd, SIGKILL, nullptr, 0);
 				});
 			})
 		}

@@ -110,4 +110,15 @@ void PIDFDOpenFlags::processValue(const Tracee &) {
 	m_flags = valueAs<Flags>();
 }
 
+std::string PIDFDSendSignalFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+#ifdef PIDFD_SIGNAL_THREAD  /* all three since kernel 6.9 */
+	BITFLAGS_ADD(PIDFD_SIGNAL_THREAD);
+	BITFLAGS_ADD(PIDFD_SIGNAL_THREAD_GROUP);
+	BITFLAGS_ADD(PIDFD_SIGNAL_PROCESS_GROUP);
+#endif
+
+	return BITFLAGS_STR();
+}
+
 } // end ns

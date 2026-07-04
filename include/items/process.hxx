@@ -356,6 +356,37 @@ protected: // data
 	Flags m_flags{0};
 };
 
+class PIDFDSendSignalFlags :
+	public ValueInParameter {
+public: // types
+
+	using enum cosmos::signal::SendFlag;
+
+	using Flags = cosmos::signal::SendFlags;
+
+public: // functions
+
+	explicit PIDFDSendSignalFlags() :
+			ValueInParameter{"flags", "signal scope flags"} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_flags = valueAs<Flags>();
+	}
+
+protected: // data
+
+	Flags m_flags{0};
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
