@@ -59,6 +59,7 @@ const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
 	// embedded escaped \" characters.
 	// Optionally a suffix ending in (...) if the string was truncated.
 	{"{string}", R"("(?:\\.|[^"\\])*(\.\.\.)?")"},
+	{"{bitlabels}", R"(\([^)]*\))"},
 	{"{bool}", R"((false|true))"},
 	{"{buffer}", R"("[^"]+"(\.\.\.)?)"},
 };
@@ -428,7 +429,7 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(pidfd_getfd\(fd={fd}, fd=0, flags=0\) = {fd} \(fd\))",
 	}},
 	TestSpec{"pidfd", "pidfd_send_signal", {
-		R"(pidfd_send_signal\(fd={pid}, signum=SIGKILL, infop=NULL, flags=0x2 \(PIDFD_SIGNAL_THREAD_GROUP\)\) = 0 \(success\))",
+		R"(pidfd_send_signal\(fd={pid}, signum=SIGKILL, infop=NULL, flags={hex} {bitlabels}\) = 0 \(success\))",
 	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {
