@@ -100,6 +100,8 @@ public: // types
 		UNKNOWN
 	};
 
+	using enum Type;
+
 public: // functions
 
 	FDInfo() = default;

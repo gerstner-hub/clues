@@ -137,4 +137,8 @@ void WaitIDSystemCall::prepareNewSystemCall() {
 	id_pidfd.reset();
 }
 
+void PIDFDOpenSystemCall::updateFDTracking(const Tracee &proc) {
+	trackFD(proc, FDInfo{FDInfo::PID_FD, new_fd.fd()});
+}
+
 } // end ns

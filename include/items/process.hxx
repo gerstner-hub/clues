@@ -8,6 +8,7 @@
 #include <optional>
 
 // cosmos
+#include <cosmos/proc/ProcessFile.hxx>
 #include <cosmos/proc/process.hxx>
 #include <cosmos/proc/ResourceUsage.hxx>
 #include <cosmos/proc/types.hxx>
@@ -292,6 +293,34 @@ protected: // functions
 protected: // data
 
 	Type m_type{0};
+};
+
+class PIDFDOpenFlags :
+		public ValueInParameter {
+public: // types
+
+	using Flags = cosmos::ProcessFile::OpenFlags;
+	using enum cosmos::ProcessFile::OpenFlag;
+
+public: // functions
+
+	explicit PIDFDOpenFlags() :
+			ValueInParameter{"flags", "pidfd open flags"} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	Flags m_flags{0};
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

@@ -421,6 +421,9 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(waitpid\(pid={pid}, wstatus={addr} → [WIFEXITED && WEXITSTATUS == 10], options=0x8 \(WCONTINUED\)\) = {pid} \(pid\))",
 	}},
 #endif
+	TestSpec{"pidfd", "pidfd_open", {
+		R"(pidfd_open\(pid={pid}, flags=0x800 \(PIDFD_NONBLOCK\)\) = 3 \(fd\))",
+	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {
 		R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"

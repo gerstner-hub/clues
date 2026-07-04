@@ -96,4 +96,18 @@ void WaitID::processValue(const Tracee &) {
 	m_type = valueAs<Type>();
 }
 
+std::string PIDFDOpenFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+	BITFLAGS_ADD(PIDFD_NONBLOCK);
+#ifdef PIDFD_THREAD /* since kernel 6.9 */
+	BITFLAGS_ADD(PIDFD_THREAD);
+#endif
+
+	return BITFLAGS_STR();
+}
+
+void PIDFDOpenFlags::processValue(const Tracee &) {
+	m_flags = valueAs<Flags>();
+}
+
 } // end ns

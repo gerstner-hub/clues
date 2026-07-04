@@ -343,6 +343,27 @@ protected: // functions
 	void prepareNewSystemCall() override;
 };
 
+struct PIDFDOpenSystemCall :
+		public SystemCall {
+
+	PIDFDOpenSystemCall() :
+			SystemCall{SystemCallNr::PIDFD_OPEN},
+			pid{ItemType::PARAM_IN},
+			new_fd{ItemType::RETVAL} {
+		setReturnItem(new_fd);
+		addParameters(pid, flags);
+	}
+
+	item::ProcessID pid;
+	item::PIDFDOpenFlags flags;
+
+	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

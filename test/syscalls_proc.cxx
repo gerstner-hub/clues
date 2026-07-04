@@ -523,7 +523,20 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
-	}
+	}, TestSpec{SystemCallNr::PIDFD_OPEN, []() {
+			syscall(SYS_pidfd_open, getppid(), PIDFD_NONBLOCK);
+		}, ENTRY_VERIFY_CB(PIDFDOpenSystemCall, {
+			VERIFY(sc.pid.pid() == cosmos::proc::get_own_pid());
+			VERIFY(sc.flags.flags() == cosmos::ProcessFile::OpenFlag::NONBLOCK);
+		}), EXIT_VERIFY_CB(PIDFDOpenSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				syscall32(SyscallNr32::PIDFD_OPEN, getppid(), PIDFD_NONBLOCK);
+			})
+		}
+	},
 };
 
 } // end ns
