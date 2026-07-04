@@ -285,6 +285,24 @@ struct Wait4SystemCall :
 	item::ProcessID event_pid;
 };
 
+struct WaitPIDSystemCall :
+		public SystemCall {
+
+	WaitPIDSystemCall() :
+			SystemCall{SystemCallNr::WAITPID},
+			pid{ItemType::PARAM_IN, "pid to wait for"},
+			event_pid{ItemType::RETVAL, "pid of child with status change"} {
+		setReturnItem(event_pid);
+		setParameters(pid, wstatus, options);
+	}
+
+	item::ProcessID pid;
+	item::WaitStatus wstatus;
+	item::WaitOptions options;
+
+	item::ProcessID event_pid;
+};
+
 struct WaitIDSystemCall :
 		public SystemCall {
 	WaitIDSystemCall() :

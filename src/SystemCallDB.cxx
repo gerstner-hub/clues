@@ -108,6 +108,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::STAT:            return new_sys<StatSystemCall>(nr);
 	case SystemCallNr::TGKILL:          return new_sys<TgKillSystemCall>();
 	case SystemCallNr::WAIT4:           return new_sys<Wait4SystemCall>();
+	case SystemCallNr::WAITID:          return new_sys<WaitIDSystemCall>();
+	case SystemCallNr::WAITPID:         return new_sys<WaitPIDSystemCall>();
 	case SystemCallNr::WRITE:           return new_sys<WriteSystemCall>();
 	case SystemCallNr::PIPE:            return new_sys<PipeSystemCall>();
 	case SystemCallNr::PIPE2:           return new_sys<Pipe2SystemCall>();
@@ -132,7 +134,6 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::UNAME:           return new_sys<UnameSystemCall>(nr);
 	case SystemCallNr::READLINK:        return new_sys<ReadLinkSystemCall>();
 	case SystemCallNr::READLINKAT:      return new_sys<ReadLinkAtSystemCall>();
-	case SystemCallNr::WAITID:          return new_sys<WaitIDSystemCall>();
 	default:                            return new_sys<UnknownSystemCall>(nr);
 	}
 }

@@ -491,7 +491,39 @@ const auto TESTS = std::array{
 				}
 			})
 		}
-	},
+	}, TestSpec{SystemCallNr::WAITPID, []() {
+#ifdef COSMOS_I386
+			if (const auto pid = plain_fork(); pid == 0) {
+				::_exit(10);
+			} else {
+				int status;
+				::syscall(SYS_waitpid, pid, &status, WCONTINUED);
+			}
+#endif
+		}, ENTRY_VERIFY_CB(WaitPIDSystemCall, {
+			VERIFY(cosmos::to_integral(sc.pid.pid()) > 0);
+			VERIFY(!sc.wstatus.status());
+			VERIFY(sc.options.options() == cosmos::WaitFlag::WAIT_FOR_CONTINUED);
+		}), EXIT_VERIFY_CB(WaitPIDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(cosmos::to_integral(sc.event_pid.pid()) > 0);
+			VERIFY(sc.wstatus.status().has_value());
+			const auto status = *sc.wstatus.status();
+			VERIFY(status.exited());
+			VERIFY(status.status() == cosmos::ExitStatus{10});
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				if (const auto pid = plain_fork(); pid == 0) {
+					::_exit(10);
+				} else {
+					auto status = alloc32<int*>(sizeof(int));;
+					syscall32(SyscallNr32::WAITPID, pid, status, WCONTINUED);
+				}
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	}
 };
 
 } // end ns

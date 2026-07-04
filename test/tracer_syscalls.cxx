@@ -416,6 +416,11 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(waitid\(idtype=P_PID, pid={pid}, infop=\{si_signo=SIGCHLD, si_code=1 \(CLD_EXITED\), si_pid={pid}, si_uid={uid}, si_status=10 \(exit code\), si_utime={decimal}, si_stime={decimal}\}, options=0x4 \(WEXITED\), rusage=NULL\) = 0 \(success\))",
 		R"(waitid\(idtype=P_ALL, infop=\{si_signo=SIGCHLD, si_code=2 \(CLD_KILLED\), si_pid={pid}, si_uid={uid}, si_status=9 \(SIGKILL\), si_utime={decimal}, si_stime={decimal}\}, options=0x4 \(WEXITED\), rusage=NULL\) = 0 \(success\))",
 	}},
+#ifdef COSMOS_X86
+	TestSpec{{}, "waitpid", {
+		R"(waitpid\(pid={pid}, wstatus={addr} → [WIFEXITED && WEXITSTATUS == 10], options=0x8 \(WCONTINUED\)\) = {pid} \(pid\))",
+	}},
+#endif
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {
 		R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"
