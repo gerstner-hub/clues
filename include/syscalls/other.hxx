@@ -10,6 +10,33 @@
 
 namespace clues {
 
+/// A system call which is not yet implemented in libclues.
+/**
+ * A basically valid system call nr was encountered, but libclues does not yet
+ * provide support for this particular system call.
+ **/
+struct CLUES_API NotImplementedSystemCall :
+		public SystemCall {
+	explicit NotImplementedSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+			result{"result", ""} {
+		setReturnItem(result);
+		addParameters(item);
+	}
+
+	item::ReturnValue result;
+	item::UnsupportedItem item;
+};
+
+/// A system call which is unknown to libclues.
+/**
+ * A system call number not known by libclues was encountered. This can mean
+ * one of two things:
+ *
+ * - a new system call was implemented in the kernel libclues does not yet know
+ *   of.
+ * - an invalid system call number was passed by the tracee.
+ **/
 struct CLUES_API UnknownSystemCall :
 		public SystemCall {
 	explicit UnknownSystemCall(const SystemCallNr nr) :
@@ -21,6 +48,24 @@ struct CLUES_API UnknownSystemCall :
 
 	item::ReturnValue result;
 	item::UnknownItem item;
+};
+
+/// A system call no longer supported by the kernel.
+/**
+ * This type is used for dropped system call numbers that still have a system
+ * call number assigned, but that are no longer implemented in the kernel.
+ **/
+struct CLUES_API DroppedSystemCall :
+		public SystemCall {
+	explicit DroppedSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+			result{"result", ""} {
+		setReturnItem(result);
+		addParameters(item);
+	}
+
+	item::ReturnValue result;
+	item::DroppedItem item;
 };
 
 // This covers both getrlimit() and setrlimit() which use the same data structures

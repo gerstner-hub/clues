@@ -139,8 +139,30 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::PIDFD_SEND_SIGNAL: return new_sys<PIDFDSendSignalSystemCall>();
 	case SystemCallNr::EVENTFD:         return new_sys<EventFDSystemCall>();
 	case SystemCallNr::EVENTFD2:        return new_sys<EventFD2SystemCall>();
-	default:                            return new_sys<UnknownSystemCall>(nr);
-	}
+	case SystemCallNr::AFS_SYSCALL:     [[fallthrough]];
+	case SystemCallNr::PUTPMSG:
+	case SystemCallNr::GETPMSG:
+	case SystemCallNr::VSERVER:
+	case SystemCallNr::BREAK:
+	case SystemCallNr::FTIME:
+	case SystemCallNr::GTTY:
+	case SystemCallNr::LOCK:
+	case SystemCallNr::MPX:
+	case SystemCallNr::PROF:
+	case SystemCallNr::ULIMIT:
+	case SystemCallNr::STTY:
+	case SystemCallNr::SECURITY:
+	case SystemCallNr::TUXCALL:         return new_sys<DroppedSystemCall>(nr);
+	default: {
+		if (nr == SystemCallNr::UNKNOWN) {
+			/* either a new system call we don't know about yet,
+			 * or an invalid system call number */
+			return new_sys<UnknownSystemCall>(nr);
+		} else {
+			/* known but not yet implemented system call */
+			return new_sys<NotImplementedSystemCall>(nr);
+		}
+	}}
 }
 
 } // end anon ns

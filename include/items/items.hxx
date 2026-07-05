@@ -373,7 +373,33 @@ struct UnknownItem :
 	}
 
 	std::string str() const override {
-		return "<yet unsupported system call>";
+		return "<unsupported or invalid system call>";
+	}
+};
+
+/// Item used together with NotImplementedSystemCall.
+struct UnsupportedItem :
+		public ValueInParameter {
+
+	UnsupportedItem() :
+			ValueInParameter{"unknown"} {
+	}
+
+	std::string str() const override {
+		return "<not yet supported system call>";
+	}
+};
+
+/// Item used together with DroppedSystemCall.
+struct DroppedItem :
+		public ValueInParameter {
+
+	DroppedItem() :
+			ValueInParameter{"unknown"} {
+	}
+
+	std::string str() const override {
+		return "<legacy system call no longer available in the kernel>";
 	}
 };
 
