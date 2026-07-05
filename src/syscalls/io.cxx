@@ -17,4 +17,26 @@ void PipeSystemCall::updateFDTracking(const Tracee &proc) {
 	}
 }
 
+void EventFDSystemCall::updateFDTracking(const Tracee &proc) {
+	trackFD(proc, FDInfo{FDInfo::EVENT_FD, new_fd.fd()});
+}
+
+void EventFD2SystemCall::updateFDTracking(const Tracee &proc) {
+	FDInfo info{FDInfo::EVENT_FD, new_fd.fd()};
+
+	info.flags.emplace();
+
+	using enum cosmos::EventFile::Flag;
+
+	const auto evflags = this->flags.flags();
+	if (evflags[CLOSE_ON_EXEC]) {
+		info.flags->set(cosmos::OpenFlag::CLOEXEC);
+	}
+	if (evflags[NONBLOCK]) {
+		info.flags->set(cosmos::OpenFlag::NONBLOCK);
+	}
+
+	trackFD(proc, std::move(info));
+}
+
 } // end ns

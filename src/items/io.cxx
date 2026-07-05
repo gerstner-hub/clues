@@ -200,4 +200,18 @@ std::string Whence::str() const {
 	}
 }
 
+std::string EventFDFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+
+	BITFLAGS_ADD(EFD_CLOEXEC);
+	BITFLAGS_ADD(EFD_NONBLOCK);
+	BITFLAGS_ADD(EFD_SEMAPHORE);
+
+	return BITFLAGS_STR();
+}
+
+void EventFDFlags::processValue(const Tracee &) {
+	m_flags = valueAs<Flags>();
+}
+
 } // end ns

@@ -1308,7 +1308,36 @@ const auto TESTS = std::array{
 				});
 			})
 		}
-	},
+	}, TestSpec{SystemCallNr::EVENTFD, []() {
+			int fd = syscall(SYS_eventfd, 14);
+			close(fd);
+		}, ENTRY_VERIFY_CB(EventFDSystemCall, {
+			VERIFY(sc.initval.value() == 14);
+		}), EXIT_VERIFY_CB(EventFDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				int fd = syscall32(SyscallNr32::EVENTFD, 14);
+				close(fd);
+			})
+		}
+	}, TestSpec{SystemCallNr::EVENTFD2, []() {
+			int fd = eventfd(14, EFD_CLOEXEC);
+			close(fd);
+		}, ENTRY_VERIFY_CB(EventFD2SystemCall, {
+			VERIFY(sc.initval.value() == 14);
+			VERIFY(sc.flags.flags() == cosmos::EventFile::Flag::CLOSE_ON_EXEC);
+		}), EXIT_VERIFY_CB(EventFDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				int fd = syscall32(SyscallNr32::EVENTFD2, 14, EFD_CLOEXEC);
+				close(fd);
+			})
+		}
+	}
 };
 
 } // end anon ns

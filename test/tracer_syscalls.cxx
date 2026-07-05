@@ -431,6 +431,12 @@ const std::vector<TestSpec> TEST_SPECS{
 	TestSpec{"pidfd", "pidfd_send_signal", {
 		R"(pidfd_send_signal\(fd={pid}, signum=SIGKILL, infop=NULL, flags={hex} {bitlabels}\) = 0 \(success\))",
 	}},
+	TestSpec{"eventfd", "eventfd,eventfd2", {
+#ifdef SYS_eventfd
+		R"(eventfd\(initval=10\) = 3 \(fd\))",
+#endif
+		R"(eventfd2\(initval=10, flags=0x80000 \(EFD_CLOEXEC\)\) = 3 \(fd\))",
+	}},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{{}, "pipe", {
 		R"(pipe\(pipefd=0x[0-9a-f]+ → \[[0-9]+, [0-9]+\]\) = 0)"

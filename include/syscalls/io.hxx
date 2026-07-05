@@ -8,7 +8,9 @@
 
 namespace clues {
 
-struct CLUES_API WriteSystemCall :
+CLUES_DEFAULT_VISIBILITY_ON;
+
+struct WriteSystemCall :
 		public SystemCall {
 	explicit WriteSystemCall(const SystemCallNr nr = SystemCallNr::WRITE) :
 			SystemCall{nr},
@@ -26,7 +28,7 @@ struct CLUES_API WriteSystemCall :
 	item::SizeValue written;
 };
 
-struct CLUES_API ReadSystemCall :
+struct ReadSystemCall :
 		public SystemCall {
 	explicit ReadSystemCall(const SystemCallNr nr = SystemCallNr::READ) :
 			SystemCall{nr},
@@ -45,7 +47,7 @@ struct CLUES_API ReadSystemCall :
 };
 
 /// vector read system call using a range of struct iovec.
-struct CLUES_API ReadVSystemCall :
+struct ReadVSystemCall :
 		public SystemCall {
 
 	explicit ReadVSystemCall(const SystemCallNr nr = SystemCallNr::READV) :
@@ -65,7 +67,7 @@ struct CLUES_API ReadVSystemCall :
 };
 
 /// vector write system call using a range of struct iovec.
-struct CLUES_API WriteVSystemCall :
+struct WriteVSystemCall :
 		public SystemCall {
 
 	explicit WriteVSystemCall(const SystemCallNr nr = SystemCallNr::WRITEV) :
@@ -88,7 +90,7 @@ struct CLUES_API WriteVSystemCall :
 /**
  * This has the same signature as read(), only with an added `off_t` parameter.
  **/
-struct CLUES_API PRead64SystemCall :
+struct PRead64SystemCall :
 		public ReadSystemCall {
 	PRead64SystemCall() :
 			ReadSystemCall{SystemCallNr::PREAD64},
@@ -103,7 +105,7 @@ struct CLUES_API PRead64SystemCall :
 /**
  * This has the same signature as write(), only with an added `off_t` parameter.
  **/
-struct CLUES_API PWrite64SystemCall :
+struct PWrite64SystemCall :
 		public WriteSystemCall {
 	PWrite64SystemCall() :
 			WriteSystemCall{SystemCallNr::PWRITE64},
@@ -119,7 +121,7 @@ struct CLUES_API PWrite64SystemCall :
  * This has the same signature as ReadVSystemCall, only with an additional
  * `off_t`.
  **/
-struct CLUES_API PReadVSystemCall :
+struct PReadVSystemCall :
 		public ReadVSystemCall {
 
 	explicit PReadVSystemCall(const SystemCallNr nr = SystemCallNr::PREADV) :
@@ -138,7 +140,7 @@ public: // data
  * This has the same signature as WriteVSystemCall, only with an additional
  * `off_t`.
  **/
-struct CLUES_API PWriteVSystemCall :
+struct PWriteVSystemCall :
 		public WriteVSystemCall {
 
 	explicit PWriteVSystemCall(const SystemCallNr nr = SystemCallNr::PWRITEV) :
@@ -157,7 +159,7 @@ public: // data
  * This wraps preadv2(), which accepts additional flags allowing more precise
  * control over the read operation.
  **/
-struct CLUES_API PReadV2SystemCall :
+struct PReadV2SystemCall :
 		public PReadVSystemCall {
 
 	explicit PReadV2SystemCall() :
@@ -173,7 +175,7 @@ struct CLUES_API PReadV2SystemCall :
  * This wraps pwritev2(), which accepts additional flags allowing more precise
  * control over the write operation.
  **/
-struct CLUES_API PWriteV2SystemCall :
+struct PWriteV2SystemCall :
 		public PWriteVSystemCall {
 
 	explicit PWriteV2SystemCall() :
@@ -197,7 +199,7 @@ struct CLUES_API PWriteV2SystemCall :
 // combined with file descriptor tracking we could route to specializations
 // for file descriptor specific operations. But this might not always work
 // perfectly (e.g. when attaching to a ForeignTracee).
-struct CLUES_API IoCtlSystemCall :
+struct IoCtlSystemCall :
 		public SystemCall {
 
 	IoCtlSystemCall() :
@@ -219,7 +221,7 @@ struct CLUES_API IoCtlSystemCall :
 };
 
 /// The classic `pipe()` system call without flags.
-struct CLUES_API PipeSystemCall :
+struct PipeSystemCall :
 		public SystemCall {
 
 	explicit PipeSystemCall(const SystemCallNr nr = SystemCallNr::PIPE) :
@@ -242,7 +244,7 @@ protected: // functions
 	void updateFDTracking(const Tracee &proc) override;
 };
 
-struct CLUES_API Pipe2SystemCall :
+struct Pipe2SystemCall :
 		public PipeSystemCall {
 
 	explicit Pipe2SystemCall() :
@@ -253,7 +255,7 @@ struct CLUES_API Pipe2SystemCall :
 	item::PipeFlags flags;
 };
 
-struct CLUES_API LSeekSystemCall :
+struct LSeekSystemCall :
 		public SystemCall {
 
 	explicit LSeekSystemCall() :
@@ -277,7 +279,7 @@ struct CLUES_API LSeekSystemCall :
  * (long long). Similarly, to report back the new offset, an out parameter is
  * used to write it into user space memory.
  **/
-struct CLUES_API LLSeekSystemCall :
+struct LLSeekSystemCall :
 		public SystemCall {
 
 	explicit LLSeekSystemCall() :
@@ -294,5 +296,42 @@ struct CLUES_API LLSeekSystemCall :
 	item::Whence whence;
 	item::SuccessResult result;
 };
+
+struct EventFDSystemCall :
+		public SystemCall {
+
+	explicit EventFDSystemCall(const SystemCallNr nr = SystemCallNr::EVENTFD) :
+			SystemCall{nr},
+			initval{"initval", "initial value"},
+			new_fd{ItemType::RETVAL} {
+		setParameters(initval);
+		setReturnItem(new_fd);
+	}
+
+	item::UintValue initval;
+
+	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
+};
+
+struct EventFD2SystemCall :
+		public EventFDSystemCall {
+
+	explicit EventFD2SystemCall() :
+			EventFDSystemCall{SystemCallNr::EVENTFD2} {
+		addParameters(flags);
+	}
+
+	item::EventFDFlags flags;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
+};
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

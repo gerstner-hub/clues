@@ -9,6 +9,7 @@
 
 // cosmos
 #include <cosmos/BitMask.hxx>
+#include <cosmos/io/EventFile.hxx>
 #include <cosmos/io/StreamIO.hxx>
 
 // clues
@@ -379,6 +380,34 @@ protected: // functions
 protected: // data
 
 	SeekType m_type = SeekType{0};
+};
+
+class EventFDFlags :
+		public ValueInParameter {
+public: // types
+
+	using enum cosmos::EventFile::Flag;
+	using Flags = cosmos::EventFile::Flags;
+
+public: // functions
+
+	explicit EventFDFlags() :
+			ValueInParameter{"flags", "creation flags"} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	Flags m_flags{0};
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
