@@ -1308,7 +1308,9 @@ const auto TESTS = std::array{
 				});
 			})
 		}
-	}, TestSpec{SystemCallNr::EVENTFD, []() {
+	},
+#ifdef SYS_eventfd
+	TestSpec{SystemCallNr::EVENTFD, []() {
 			int fd = syscall(SYS_eventfd, 14);
 			close(fd);
 		}, ENTRY_VERIFY_CB(EventFDSystemCall, {
@@ -1322,7 +1324,9 @@ const auto TESTS = std::array{
 				close(fd);
 			})
 		}
-	}, TestSpec{SystemCallNr::EVENTFD2, []() {
+	},
+#endif
+	TestSpec{SystemCallNr::EVENTFD2, []() {
 			int fd = eventfd(14, EFD_CLOEXEC);
 			close(fd);
 		}, ENTRY_VERIFY_CB(EventFD2SystemCall, {
