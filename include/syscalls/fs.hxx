@@ -159,6 +159,51 @@ struct StatSystemCallT :
 using StatSystemCall = StatSystemCallT;
 using LstatSystemCall = StatSystemCallT;
 
+/// Type to handle statfs() and statfs64().
+struct StatFSSystemCall :
+		public SystemCall {
+
+	explicit StatFSSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+			path{"path"} {
+		setReturnItem(result);
+		setParameters(path, buf);
+	}
+
+	item::StringData path;
+	/* for statfs64 this contains the size of `buf` */
+	std::optional<item::SizeValue> size;
+	item::StatFSParameter buf;
+
+	item::SuccessResult result;
+
+protected: // functions
+
+	void prepareNewSystemCall() override;
+};
+
+/// Type to handle fstatfs() and fstatfs64().
+struct FStatFSSystemCall :
+		public SystemCall {
+
+	explicit FStatFSSystemCall(const SystemCallNr nr) :
+			SystemCall{nr} {
+		setReturnItem(result);
+		setParameters(fd, buf);
+	}
+
+	item::FileDescriptor fd;
+	/* for fstatfs64 this contains the size of `buf` */
+	std::optional<item::SizeValue> size;
+	item::StatFSParameter buf;
+
+	item::SuccessResult result;
+
+protected: // functions
+
+	void prepareNewSystemCall() override;
+};
+
 struct OpenSystemCall :
 		public SystemCall {
 

@@ -11,6 +11,7 @@
 #include <cosmos/fs/DirEntry.hxx>
 #include <cosmos/fs/FileDescriptor.hxx>
 #include <cosmos/fs/FileStatus.hxx>
+#include <cosmos/fs/FileSystemStatus.hxx>
 #include <cosmos/fs/filesystem.hxx>
 #include <cosmos/utils.hxx>
 
@@ -311,6 +312,37 @@ protected: // functions
 protected: // data
 
 	cosmos::FileDescriptor::AccessAdvice m_advice{0};
+};
+
+class StatFSParameter :
+		public PointerOutValue {
+public: // functions
+
+	explicit StatFSParameter() :
+			PointerOutValue{"buf", "struct statfs"} {
+	}
+
+	std::string str() const override;
+
+	const std::optional<cosmos::FileSystemStatus>& status() const {
+		return m_stat;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_stat.reset();
+	}
+
+	void updateData(const Tracee &proc) override;
+
+	bool isStatFS64() const;
+
+	bool isRegularStatFS() const;
+
+protected: // data
+
+	std::optional<cosmos::FileSystemStatus> m_stat;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

@@ -1,6 +1,8 @@
 // test
 #include "utils/syscalls.hxx"
 
+#include <clues/private/kernel/statfs.hxx>
+
 // Linux
 #include <fcntl.h>
 #include <unistd.h>
@@ -648,7 +650,113 @@ const auto TESTS = std::array{
 				unlink(LINKPATH);
 			})
 		}
+	}, TestSpec{SystemCallNr::STATFS, []() {
+			struct statfs st;
+#ifdef COSMOS_I386
+			syscall(SYS_statfs, "/proc", &st);
+#else
+			statfs("/proc", &st);
+#endif
+		}, ENTRY_VERIFY_CB(StatFSSystemCall, {
+			VERIFY(sc.path.data() == "/proc");
+			VERIFY(!sc.buf.status());
+		}), EXIT_VERIFY_CB(StatFSSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.buf.status().has_value());
+			const auto &st = *sc.buf.status();
+			VERIFY(st.valid());
+			VERIFY(st.fsType() == cosmos::FileSystemStatus::Magic::PROC);
+			VERIFY(st.nameLen() >= 255);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto st = alloc_struct32<clues::statfs>();
+				auto path = alloc_str32("/proc");
+				syscall32(SyscallNr32::STATFS, path, st);
+			})
+		},
+	}, TestSpec{SystemCallNr::FSTATFS, []() {
+			struct statfs st;
+			int fd = open("/proc", O_RDONLY|O_DIRECTORY);
+#ifdef COSMOS_I386
+			syscall(SYS_fstatfs, fd, &st);
+#else
+			fstatfs(fd, &st);
+#endif
+		}, ENTRY_VERIFY_CB(FStatFSSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(!sc.buf.status());
+		}), EXIT_VERIFY_CB(FStatFSSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.buf.status().has_value());
+			const auto &st = *sc.buf.status();
+			VERIFY(st.valid());
+			VERIFY(st.fsType() == cosmos::FileSystemStatus::Magic::PROC);
+			VERIFY(st.nameLen() >= 255);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int fd = open("/proc", O_RDONLY|O_DIRECTORY);
+				auto st = alloc_struct32<clues::statfs>();
+				syscall32(SyscallNr32::FSTATFS, fd, st);
+			})
+		},
+	},
+#ifdef COSMOS_X86
+	TestSpec{SystemCallNr::FSTATFS64, []() {
+#	ifdef COSMOS_I386
+			struct statfs st;
+			int fd = open("/proc", O_RDONLY|O_DIRECTORY);
+			fstatfs(fd, &st);
+#	endif
+		}, ENTRY_VERIFY_CB(FStatFSSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			VERIFY(sc.size.has_value());
+			VERIFY(sc.size->value() == sizeof(clues::statfs64));
+			VERIFY(!sc.buf.status());
+		}), EXIT_VERIFY_CB(FStatFSSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.buf.status().has_value());
+			const auto &st = *sc.buf.status();
+			VERIFY(st.valid());
+			VERIFY(st.fsType() == cosmos::FileSystemStatus::Magic::PROC);
+			VERIFY(st.nameLen() >= 255);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int fd = open("/proc", O_RDONLY|O_DIRECTORY);
+				auto st = alloc_struct32<clues::statfs64>();
+				syscall32(SyscallNr32::FSTATFS64, fd, sizeof(*st), st);
+			})
+		},
+		"",
+		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::STATFS64, []() {
+#	ifdef COSMOS_I386
+			struct statfs st;
+			statfs("/proc", &st);
+#	endif
+		}, ENTRY_VERIFY_CB(StatFSSystemCall, {
+			VERIFY(sc.path.data() == "/proc");
+			VERIFY(sc.size.has_value());
+			VERIFY(sc.size->value() == sizeof(clues::statfs64));
+			VERIFY(!sc.buf.status());
+		}), EXIT_VERIFY_CB(StatFSSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.buf.status().has_value());
+			const auto &st = *sc.buf.status();
+			VERIFY(st.valid());
+			VERIFY(st.fsType() == cosmos::FileSystemStatus::Magic::PROC);
+			VERIFY(st.nameLen() >= 255);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto st = alloc_struct32<clues::statfs64>();
+				auto path = alloc_str32("/proc");
+				syscall32(SyscallNr32::STATFS64, path, sizeof(*st), st);
+			})
+		},
+		"",
+		{clues::ABI::I386}
 	}
+#endif // COSMOS_X86
 };
 
 } // end ns

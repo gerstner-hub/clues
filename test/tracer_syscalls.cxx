@@ -453,6 +453,16 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(fork\(\) = [0-9])"
 	}},
 #endif
+	TestSpec{"statfs", "statfs,fstatfs", {
+		R"(statfs\(path="/proc", buf=\{f_type=PROC, f_bsize=4096, f_blocks=0, f_bfree=0, f_bavail=0, f_files=0, f_ffree=0, f_fsid={decimal}:{decimal}, f_namelen=255, f_frsize=4096, f_flags={bitmask} {bitlabels}\}\) = 0 \(success\))",
+		R"(fstatfs\(fd=3, buf=\{f_type=PROC, f_bsize=4096, f_blocks=0, f_bfree=0, f_bavail=0, f_files=0, f_ffree=0, f_fsid={decimal}:{decimal}, f_namelen=255, f_frsize=4096, f_flags={bitmask} {bitlabels}\}\) = 0 \(success\))",
+	}},
+#ifdef COSMOS_I386
+	TestSpec{"statfs", "statfs64,fstatfs64", {
+		R"(statfs64\(path="/proc", size=84, buf=\{f_type=PROC, f_bsize=4096, f_blocks=0, f_bfree=0, f_bavail=0, f_files=0, f_ffree=0, f_fsid={decimal}:{decimal}, f_namelen=255, f_frsize=4096, f_flags={bitmask} {bitlabels}\}\) = 0 \(success\))",
+		R"(fstatfs64\(fd=3, size=84, buf=\{f_type=PROC, f_bsize=4096, f_blocks=0, f_bfree=0, f_bavail=0, f_files=0, f_ffree=0, f_fsid={decimal}:{decimal}, f_namelen=255, f_frsize=4096, f_flags={bitmask} {bitlabels}\}\) = 0 \(success\))",
+	}},
+#endif
 #ifdef COSMOS_I386
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

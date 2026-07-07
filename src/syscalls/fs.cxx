@@ -322,4 +322,32 @@ off_t FAdviseSystemCall::size() const {
 	}
 }
 
+void FStatFSSystemCall::prepareNewSystemCall() {
+	if (callNr() == SystemCallNr::FSTATFS64) {
+		if (!size) {
+			size.emplace("size", "size of struct statfs64");
+			setParameters(fd, *size, buf);
+		}
+	} else {
+		if (size.has_value()) {
+			size.reset();
+			setParameters(fd, buf);
+		}
+	}
+}
+
+void StatFSSystemCall::prepareNewSystemCall() {
+	if (callNr() == SystemCallNr::STATFS64) {
+		if (!size) {
+			size.emplace("size", "size of struct statfs64");
+			setParameters(path, *size, buf);
+		}
+	} else {
+		if (size.has_value()) {
+			size.reset();
+			setParameters(path, buf);
+		}
+	}
+}
+
 } // end ns

@@ -17,8 +17,9 @@
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 // private
-#include <clues/private/kernel/stat.hxx>
 #include <clues/private/kernel/dirent.hxx>
+#include <clues/private/kernel/statfs.hxx>
+#include <clues/private/kernel/stat.hxx>
 #include <clues/private/utils.hxx>
 
 namespace clues::item {
@@ -274,7 +275,7 @@ void StatParameter::updateData(const Tracee &proc) {
 
 		auto &raw = *m_stat->raw();
 		/*
-		 * to be layout agnostic simply copy over field-by-field
+		 * to be layout-agnostic simply copy over field-by-field
 		 */
 		raw.st_dev = st.dev;
 		raw.st_ino = st.ino;
@@ -483,6 +484,236 @@ std::string AccessAdvice::str() const {
 		CASE_ENUM_TO_STR(POSIX_FADV_WILLNEED);
 		CASE_ENUM_TO_STR(POSIX_FADV_DONTNEED);
 		default: return "POSIX_FADV_???";
+	}
+}
+
+namespace {
+
+std::string_view fstype2str(const cosmos::FileSystemStatus::Magic magic) {
+	/* there is no complete list of C literals for these constants, so use
+	 * the abbreviated libcosmos ones */
+	using enum cosmos::FileSystemStatus::Magic;
+
+	switch (magic) {
+		CASE_ENUM_TO_STR(ADFS);
+		CASE_ENUM_TO_STR(AFFS);
+		CASE_ENUM_TO_STR(AFS);
+		CASE_ENUM_TO_STR(ANON_INODE_FS);
+		CASE_ENUM_TO_STR(AUTOFS);
+		CASE_ENUM_TO_STR(BDEVFS);
+		CASE_ENUM_TO_STR(BEFS);
+		CASE_ENUM_TO_STR(BFS);
+		CASE_ENUM_TO_STR(BINFMTFS);
+		CASE_ENUM_TO_STR(BPF_FS);
+		CASE_ENUM_TO_STR(BTRFS);
+		CASE_ENUM_TO_STR(BTRFS_TEST);
+		CASE_ENUM_TO_STR(CGROUP);
+		CASE_ENUM_TO_STR(CGROUP2);
+		CASE_ENUM_TO_STR(CIFS);
+		CASE_ENUM_TO_STR(CODA);
+		CASE_ENUM_TO_STR(COH);
+		CASE_ENUM_TO_STR(CRAMFS);
+		CASE_ENUM_TO_STR(DEBUGFS);
+		CASE_ENUM_TO_STR(DEVFS);
+		CASE_ENUM_TO_STR(DEVPTS);
+		CASE_ENUM_TO_STR(ECRYPTFS);
+		CASE_ENUM_TO_STR(EFIVARFS);
+		CASE_ENUM_TO_STR(EFS);
+		CASE_ENUM_TO_STR(EXT);
+		CASE_ENUM_TO_STR(EXT2_OLD);
+		CASE_ENUM_TO_STR(EXT2_3_4);
+		CASE_ENUM_TO_STR(F2FS);
+		CASE_ENUM_TO_STR(FUSE);
+		CASE_ENUM_TO_STR(FUTEXFS);
+		CASE_ENUM_TO_STR(HFS);
+		CASE_ENUM_TO_STR(HOSTFS);
+		CASE_ENUM_TO_STR(HPFS);
+		CASE_ENUM_TO_STR(HUGETLBFS);
+		CASE_ENUM_TO_STR(ISOFS);
+		CASE_ENUM_TO_STR(JFFS2);
+		CASE_ENUM_TO_STR(JFS);
+		CASE_ENUM_TO_STR(MINIX);
+		CASE_ENUM_TO_STR(MINIX_2);
+		CASE_ENUM_TO_STR(MINIX2);
+		CASE_ENUM_TO_STR(MINIX2_2);
+		CASE_ENUM_TO_STR(MINIX3);
+		CASE_ENUM_TO_STR(MQUEUE);
+		CASE_ENUM_TO_STR(MSDOS);
+		CASE_ENUM_TO_STR(MTD_INODE_FS);
+		CASE_ENUM_TO_STR(NCP);
+		CASE_ENUM_TO_STR(NFS);
+		CASE_ENUM_TO_STR(NILFS);
+		CASE_ENUM_TO_STR(NSFS);
+		CASE_ENUM_TO_STR(NTFS_SB);
+		CASE_ENUM_TO_STR(OCFS2);
+		CASE_ENUM_TO_STR(OPENPROM);
+		CASE_ENUM_TO_STR(OVERLAYFS);
+		CASE_ENUM_TO_STR(PIPEFS);
+		CASE_ENUM_TO_STR(PROC);
+		CASE_ENUM_TO_STR(PSTOREFS);
+		CASE_ENUM_TO_STR(QNX4);
+		CASE_ENUM_TO_STR(QNX6);
+		CASE_ENUM_TO_STR(RAMFS);
+		CASE_ENUM_TO_STR(REISERFS);
+		CASE_ENUM_TO_STR(ROMFS);
+		CASE_ENUM_TO_STR(SECURITYFS);
+		CASE_ENUM_TO_STR(SELINUX);
+		CASE_ENUM_TO_STR(SMACK);
+		CASE_ENUM_TO_STR(SMB);
+		CASE_ENUM_TO_STR(SMB2);
+		CASE_ENUM_TO_STR(SOCKFS);
+		CASE_ENUM_TO_STR(SQUASHFS);
+		CASE_ENUM_TO_STR(SYSFS);
+		CASE_ENUM_TO_STR(SYSV2);
+		CASE_ENUM_TO_STR(SYSV4);
+		CASE_ENUM_TO_STR(TMPFS);
+		CASE_ENUM_TO_STR(TRACEFS);
+		CASE_ENUM_TO_STR(UDF);
+		CASE_ENUM_TO_STR(UFS);
+		CASE_ENUM_TO_STR(USBDEVICE);
+		CASE_ENUM_TO_STR(V9FS);
+		CASE_ENUM_TO_STR(VXFS);
+		CASE_ENUM_TO_STR(XENFS);
+		CASE_ENUM_TO_STR(XENIX);
+		CASE_ENUM_TO_STR(XFS);
+		CASE_ENUM_TO_STR(XIAFS);
+		default: return "???_MAGIC";
+	}
+}
+
+std::string mount_opts2str(const cosmos::FileSystemStatus::MountOptions opts) {
+	BITFLAGS_FORMAT_START(opts);
+
+	BITFLAGS_ADD(ST_MANDLOCK);
+	BITFLAGS_ADD(ST_NOATIME);
+	BITFLAGS_ADD(ST_NODEV);
+	BITFLAGS_ADD(ST_NODIRATIME);
+	BITFLAGS_ADD(ST_NOEXEC);
+	BITFLAGS_ADD(ST_NOSUID);
+	BITFLAGS_ADD(ST_RDONLY);
+	BITFLAGS_ADD(ST_RELATIME);
+	BITFLAGS_ADD(ST_SYNCHRONOUS);
+	BITFLAGS_ADD(ST_NOSYMFOLLOW);
+
+	return BITFLAGS_STR();
+}
+
+} // end anon ns
+
+std::string StatFSParameter::str() const {
+	if (!m_stat) {
+		return PointerValue::formatBadPointer();
+	}
+
+	const auto &st = *m_stat;
+
+	return std::format("{{f_type={}, f_bsize={}, f_blocks={}, f_bfree={}, "
+			"f_bavail={}, f_files={}, f_ffree={}, f_fsid={}:{}, "
+			"f_namelen={}, f_frsize={}, f_flags={}}}",
+		fstype2str(st.fsType()), st.blockSize(), st.totalBlocks(),
+		st.freeBlocks(), st.availableBlocks(), st.totalInodes(),
+		st.freeInodes(), st.id().__val[0], st.id().__val[1], st.nameLen(),
+		st.fragmentSize(), mount_opts2str(st.options())
+	);
+}
+
+bool StatFSParameter::isStatFS64() const {
+	switch (m_call->callNr()) {
+		case SystemCallNr::FSTATFS64: /* fallthrough */
+		case SystemCallNr::STATFS64: return true;
+		default: return false;
+	}
+}
+
+bool StatFSParameter::isRegularStatFS() const {
+	switch (m_call->callNr()) {
+		case SystemCallNr::FSTATFS: /* fallthrough */
+		case SystemCallNr::STATFS: return true;
+		default: return false;
+	}
+}
+
+void StatFSParameter::updateData(const Tracee &proc) {
+#if defined(COSMOS_X86_64) || defined(COSMOS_AARCH64)
+	static_assert(sizeof(*m_stat->raw()) == sizeof(clues::statfs));
+#else
+	/*
+	 * on modern 32-bit we can still do the same for the stat64 family of
+	 * system calls, but only if the tracer is 32-bit as well...
+	 */
+	static_assert(sizeof(*m_stat->raw()) == sizeof(clues::statfs64));
+#endif
+	m_stat.emplace();
+
+#ifdef COSMOS_X86
+	auto fetch_and_copy = [this, &proc]<typename STATFS>() {
+		STATFS st;
+		if (!proc.readStruct(asPtr(), st)) {
+			m_stat.reset();
+			return;
+		}
+
+		auto &raw = *m_stat->raw();
+		/*
+		 * to be layout-agnostic simply copy over field-by-field
+		 */
+		raw.f_type = st.f_type;
+		raw.f_bsize = st.f_bsize;
+		raw.f_blocks = st.f_blocks;
+		raw.f_bfree = st.f_bfree;
+		raw.f_bavail = st.f_bavail;
+		raw.f_files = st.f_files;
+		raw.f_ffree = st.f_ffree;
+		static_assert(sizeof(raw.f_fsid) == sizeof(st.f_fsid), "fsid size mismatch");
+		std::memcpy(&raw.f_fsid, &st.f_fsid, sizeof(raw.f_fsid));
+		raw.f_namelen = st.f_namelen;
+		raw.f_frsize = st.f_frsize;
+		raw.f_flags = st.f_flags;
+	};
+#endif
+
+	switch (m_call->abi()) {
+		case ABI::X86_64: [[fallthrough]];
+		case ABI::X32:    [[fallthrough]];
+		case ABI::AARCH64: {
+			/*
+			 * there's only one type of stat
+			 * directly read into libcosmos's FileSystemStatus
+			 */
+			if (!proc.readStruct(asPtr(), *m_stat->raw())) {
+				m_stat.reset();
+			}
+			break;
+		} case ABI::I386: {
+#ifdef COSMOS_X86
+			/*
+			 * we have regular statfs using 32-bit fields and
+			 * statfs64 using some 64-bit fields. for cross ABI
+			 * tracing the private header already exposes a
+			 * properly aligned structure for us to work on.
+			 */
+			if (isStatFS64()) {
+				if (m_call->is32BitEmulationABI()) {
+					fetch_and_copy.operator()<clues::statfs64>();
+				} else {
+					if (!proc.readStruct(asPtr(), *m_stat->raw())) {
+						m_stat.reset();
+					}
+				}
+			} else if (isRegularStatFS()) {
+				if (m_call->is32BitEmulationABI()) {
+#	ifdef COSMOS_X86_64
+					fetch_and_copy.operator()<clues::statfs32>();
+#	endif
+				} else {
+					fetch_and_copy.operator()<clues::statfs>();
+				}
+			} else {
+				throw cosmos::RuntimeError{"unexpected syscall nr for struct statfs"};
+			}
+#endif
+			break;
+		} default: throw cosmos::RuntimeError{"unexpected ABI for struct statfs"};
 	}
 }
 
