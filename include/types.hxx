@@ -120,6 +120,13 @@ public: // data
 	cosmos::FileNum fd = cosmos::FileNum::INVALID; ///< the actual file descriptor number.
 	std::string path; ///< path to the file, if applicable
 	std::optional<cosmos::OpenMode> mode;
+	/// File descriptor creation flags.
+	/**
+	 * For files obtained via the open() family of system calls this
+	 * contains the open flags observed. For some other file descriptor
+	 * types common flags are translated into OpenFlags, typically CLOEXEC
+	 * and NONBLOCK.
+	 **/
 	std::optional<cosmos::OpenFlags> flags;
 	std::optional<cosmos::Inode> inode; ///< inode of the file, only filled by utils::get_fd_infos().
 };

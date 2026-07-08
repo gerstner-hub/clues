@@ -7,6 +7,7 @@
 #include <clues/private/kernel/siginfo.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
+#include <clues/private/utils.hxx>
 
 // cosmos
 #include <cosmos/formatting.hxx>
@@ -291,6 +292,19 @@ void SigInfo::updateData(const Tracee &proc) {
 			return;
 		}
 	}
+}
+
+void SignalFDFlags::processValue(const Tracee &) {
+	m_flags = valueAs<Flags>();
+}
+
+std::string SignalFDFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+
+	BITFLAGS_ADD(SFD_NONBLOCK);
+	BITFLAGS_ADD(SFD_CLOEXEC);
+
+	return BITFLAGS_STR();
 }
 
 } // end ns

@@ -1,8 +1,9 @@
 #pragma once
 
 // clues
-#include <clues/items/signal.hxx>
+#include <clues/items/fs.hxx>
 #include <clues/items/process.hxx>
+#include <clues/items/signal.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCall.hxx>
 
@@ -117,6 +118,47 @@ struct TgKillSystemCall :
 
 	/* return value */
 	item::SuccessResult result;
+};
+
+struct SignalFDSystemCall :
+		public SystemCall {
+
+	explicit SignalFDSystemCall(const SystemCallNr nr = SystemCallNr::SIGNALFD) :
+			SystemCall{nr},
+			mask{ItemType::PARAM_IN, "mask", "signals to process"},
+			sigset_size{"sigset_size", "sizeof(sigset_t)"},
+			new_fd{ItemType::RETVAL}	{
+		addParameters(fd, mask, sigset_size);
+		setReturnItem(new_fd);
+	}
+
+	item::FileDescriptor fd;
+	item::SigSetParameter mask;
+	// currently hard-coded to be 8
+	item::SizeValue sigset_size;
+
+	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
+};
+
+/// Newer variant of signalfd() accepting additional creation flags.
+struct SignalFD4SystemCall :
+		public SignalFDSystemCall {
+
+	SignalFD4SystemCall() :
+			SignalFDSystemCall{SystemCallNr::SIGNALFD4} {
+		addParameters(flags);
+	}
+
+
+	item::SignalFDFlags flags;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

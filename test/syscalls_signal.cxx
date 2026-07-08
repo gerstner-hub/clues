@@ -7,6 +7,23 @@
 
 namespace {
 
+void setup_sigset(sigset_t &ss) {
+	sigemptyset(&ss);
+	sigaddset(&ss, SIGINT);
+	sigaddset(&ss, SIGUSR1);
+}
+
+bool verify_sigset(const cosmos::SigSet &ss, const bool usr2 = false) {
+	if (
+		!ss.isSet(cosmos::signal::INTERRUPT) ||
+		!ss.isSet(cosmos::signal::USR1) ||
+		usr2 != ss.isSet(cosmos::signal::USR2)) {
+		return false;
+	}
+
+	return true;
+}
+
 const auto TESTS = std::array{
 	TestSpec{SystemCallNr::RT_SIGACTION, []() {
 			using sig_handler_t = void(*)(int);
@@ -148,6 +165,77 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::TGKILL, getpid(), gettid(), 0);
 			})
 		}
+	},
+#ifdef SYS_signalfd
+	TestSpec{SystemCallNr::SIGNALFD, []() {
+			sigset_t ss;
+			setup_sigset(ss);
+			int fd = syscall(SYS_signalfd, -1, &ss, 8);
+			close(fd);
+		}, ENTRY_VERIFY_CB(SignalFDSystemCall, {
+			VERIFY(sc.fd.fd() == cosmos::FileNum::INVALID);
+			const auto mask = *sc.mask.sigset();
+			VERIFY(verify_sigset(mask));
+			VERIFY(sc.sigset_size.value() == 8);
+		}), EXIT_VERIFY_CB(SignalFDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto ss = alloc_struct32<sigset_t>();
+				setup_sigset(*ss);
+				syscall32(SyscallNr32::SIGNALFD, -1, ss, 8);
+			})
+		}
+	},
+#endif
+	TestSpec{SystemCallNr::SIGNALFD4, []() {
+			sigset_t ss;
+			setup_sigset(ss);
+			int fd = signalfd(-1, &ss, SFD_CLOEXEC);
+			close(fd);
+		}, ENTRY_VERIFY_CB(SignalFD4SystemCall, {
+			VERIFY(sc.fd.fd() == cosmos::FileNum::INVALID);
+			const auto mask = *sc.mask.sigset();
+			VERIFY(verify_sigset(mask));
+			VERIFY(sc.sigset_size.value() == 8);
+			VERIFY(sc.flags.flags()[cosmos::SignalFD::Flag::CLOEXEC]);
+		}), EXIT_VERIFY_CB(SignalFD4SystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto ss = alloc_struct32<sigset_t>();
+				setup_sigset(*ss);
+				syscall32(SyscallNr32::SIGNALFD4, -1, ss, 8, SFD_CLOEXEC);
+			})
+		}
+	}, TestSpec{SystemCallNr::SIGNALFD4, []() {
+			sigset_t ss;
+			setup_sigset(ss);
+			int fd = signalfd(-1, &ss, SFD_CLOEXEC);
+			sigaddset(&ss, SIGUSR2);
+			fd = signalfd(fd, &ss, 0);
+			close(fd);
+		}, ENTRY_VERIFY_CB(SignalFD4SystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+			const auto mask = *sc.mask.sigset();
+			VERIFY(verify_sigset(mask, true));
+			VERIFY(sc.sigset_size.value() == 8);
+			VERIFY(sc.flags.flags().none());
+		}), EXIT_VERIFY_CB(SignalFD4SystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto ss = alloc_struct32<sigset_t>();
+				setup_sigset(*ss);
+				int fd = signalfd(-1, ss, SFD_CLOEXEC);
+				sigaddset(ss, SIGUSR2);
+				fd = syscall32(SyscallNr32::SIGNALFD4, fd, ss, 8, 0);
+			})
+		},
+		"reconfig"
 	},
 };
 

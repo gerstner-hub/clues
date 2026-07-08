@@ -7,6 +7,7 @@
 #include <cosmos/proc/types.hxx>
 #include <cosmos/proc/SigAction.hxx>
 #include <cosmos/proc/SigInfo.hxx>
+#include <cosmos/proc/SignalFD.hxx>
 
 // clues
 #include <clues/items/items.hxx>
@@ -161,6 +162,35 @@ protected: // functions
 protected: // data
 
 	std::optional<cosmos::SigInfo> m_info;
+};
+
+class SignalFDFlags :
+		public ValueInParameter {
+public: // types
+
+	using enum cosmos::SignalFD::Flag;
+
+	using Flags = cosmos::SignalFD::Flags;
+
+public: // functions
+
+	explicit SignalFDFlags() :
+			ValueInParameter{"flags", "signalfd() creation flags"} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+protected: // data
+
+	Flags m_flags{};
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

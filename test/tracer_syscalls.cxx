@@ -463,6 +463,14 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(fstatfs64\(fd=3, size=84, buf=\{f_type=PROC, f_bsize=4096, f_blocks=0, f_bfree=0, f_bavail=0, f_files=0, f_ffree=0, f_fsid={decimal}:{decimal}, f_namelen=255, f_frsize=4096, f_flags={bitmask} {bitlabels}\}\) = 0 \(success\))",
 	}},
 #endif
+	TestSpec{"signalfd", "signalfd,signalfd4", {
+#ifdef COSMOS_X86
+		R"(signalfd\(fd=-1, mask=\{SIGINT, SIGUSR1, SIGUSR2\}, sigset_size={decimal}\) = 3 \(fd\))",
+		R"(signalfd\(fd=3, mask=\{SIGINT, SIGUSR2\}, sigset_size={decimal}\) = 3 \(fd\))",
+#endif
+		R"(signalfd4\(fd=-1, mask=\{SIGINT, SIGUSR1\}, sigset_size={decimal}, flags=0x80000 \(SFD_CLOEXEC\)\) = 3 \(fd\))",
+		R"(signalfd4\(fd=3, mask=\{SIGINT, SIGUSR1, SIGUSR2\}, sigset_size={decimal}, flags=0x0 \(\)\) = 3 \(fd\))",
+	}},
 #ifdef COSMOS_I386
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"
