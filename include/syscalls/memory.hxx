@@ -57,6 +57,7 @@ public: // functions
 			offset{"offset"},
 			addr{"addr", "mapped memory address", ItemType::RETVAL} {
 		setReturnItem(addr);
+		setParameters(hint, length, protection, flags, fd, offset);
 	}
 
 	bool isOldMmap() const {

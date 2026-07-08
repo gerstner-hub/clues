@@ -15,11 +15,15 @@ void MmapSystemCall::prepareNewSystemCall() {
 	 * setup parameters for legacy / new variant of mmap()
 	 */
 	if (callNr() == SystemCallNr::MMAP2 || !implementsOldMmap()) {
-		old_args.reset();
-		setParameters(hint, length, protection, flags, fd, offset);
+		if (old_args) {
+			old_args.reset();
+			setParameters(hint, length, protection, flags, fd, offset);
+		}
 	} else {
-		old_args.emplace();
-		setParameters(*old_args);
+		if (!old_args) {
+			old_args.emplace();
+			setParameters(*old_args);
+		}
 	}
 }
 
