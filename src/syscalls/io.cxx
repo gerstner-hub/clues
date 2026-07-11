@@ -39,4 +39,41 @@ void EventFD2SystemCall::updateFDTracking(const Tracee &proc) {
 	trackFD(proc, std::move(info));
 }
 
+bool SelectSystemCall::isOldSelect() const {
+	return abi() == ABI::I386 && callNr() == SystemCallNr::SELECT;
+}
+
+void SelectSystemCall::prepareNewSystemCall() {
+	if (isOldSelect()) {
+		if (!old_args) {
+			old_args.emplace();
+			setParameters(*old_args);
+		}
+	} else if (old_args) {
+		old_args.reset();
+		setParameters(nfds, readfds, writefds, exceptfds, timeout);
+	}
+}
+
+bool SelectSystemCall::check2ndPass(const Tracee &proc) {
+	if (isOldSelect()) {
+		/*
+		 * abuse this callback to feed the old select args struct into
+		 * the individual new-style select parameters.
+		 */
+		const auto &old = *old_args;
+		nfds.fill(proc, static_cast<Word>(old.numFDs()));
+		readfds.fill(proc, static_cast<Word>(old.readSetPtr()));
+		writefds.fill(proc, static_cast<Word>(old.writeSetPtr()));
+		exceptfds.fill(proc, static_cast<Word>(old.exceptSetPtr()));
+		timeout.fill(proc, static_cast<Word>(old.timeoutPtr()));
+	}
+	return false;
+}
+
+void SelectSystemCall::updateFromOldArgs(const Tracee &proc) {
+	updateParameters(proc,
+			{nfds, readfds, writefds, exceptfds, timeout});
+}
+
 } // end ns

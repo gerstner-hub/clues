@@ -15,6 +15,15 @@
 
 namespace clues::item {
 
+void TimeSpecParameter::processValue(const Tracee &proc) {
+	m_remaining.reset();
+
+	if (this->isOut())
+		m_timespec.reset();
+	else
+		fetch(proc, m_timespec);
+}
+
 void TimeSpecParameter::updateData(const Tracee &proc) {
 	if (m_remain_semantics) {
 		/*
@@ -32,12 +41,15 @@ void TimeSpecParameter::updateData(const Tracee &proc) {
 
 		const auto error = *m_call->error();
 
-		if (!error.hasErrorCode() || error.errorCode() != cosmos::Errno::INTERRUPTED) {
+		if (!error.hasErrorCode() ||
+				error.errorCode() != cosmos::Errno::INTERRUPTED) {
 			return;
 		}
-	}
 
-	fetch(proc);
+		fetch(proc, m_remaining);
+	} else if (m_call->hasResultValue()) {
+		fetch(proc, m_timespec);
+	}
 }
 
 bool TimeSpecParameter::needTime32Conversion() const {
@@ -57,36 +69,108 @@ bool TimeSpecParameter::needTime32Conversion() const {
 	});
 }
 
-void TimeSpecParameter::fetch(const Tracee &proc) {
-	if (!m_timespec) {
-		m_timespec = timespec{};
+void TimeSpecParameter::fetch(const Tracee &proc,
+		std::optional<struct timespec> &spec) {
+	if (!spec) {
+		spec.emplace();
 	}
 
 	if (needTime32Conversion()) {
 		struct timespec32 ts32;
 		if (!proc.readStruct(asPtr(), ts32)) {
-			m_timespec.reset();
+			spec.reset();
 			return;
 		}
 
-		m_timespec->tv_sec = ts32.tv_sec;
-		m_timespec->tv_nsec = ts32.tv_nsec;
-	} else if (!proc.readStruct(asPtr(), *m_timespec)) {
-		m_timespec.reset();
+		spec->tv_sec = ts32.tv_sec;
+		spec->tv_nsec = ts32.tv_nsec;
+	} else if (!proc.readStruct(asPtr(), *spec)) {
+		spec.reset();
 	}
 }
 
 std::string TimeSpecParameter::str() const {
 	if (!m_timespec) {
-		if (m_remain_semantics) {
-			/* still show that a pointer was passed */
-			return format::pointer(asPtr());
-		} else {
-			return "NULL";
-		}
+		return formatBadPointer();
 	}
 
-	return format::timespec(*m_timespec);
+	auto ret =  format::timespec(*m_timespec);
+
+	if (m_remaining) {
+		ret += std::format(" → left: {}",
+			format::timespec(*m_remaining));
+	}
+
+	return ret;
+}
+
+
+void TimeValParameter::processValue(const Tracee &proc) {
+	m_remaining.reset();
+
+	if (this->isOut())
+		m_timeval.reset();
+	else
+		fetch(proc, m_timeval);
+}
+
+void TimeValParameter::updateData(const Tracee &proc) {
+	if (m_remain_semantics) {
+		fetch(proc, m_remaining);
+	} else if (m_call->hasResultValue()) {
+		fetch(proc, m_timeval);
+	}
+}
+
+bool TimeValParameter::needTime32Conversion() const {
+	/*
+	 * currently we only cover 32-bit emulation binaries on X86-64.
+	 */
+
+	if (!m_call->is32BitEmulationABI()) {
+		return false;
+	}
+
+	/* now we need to check which system call we're on */
+	return cosmos::in_list(m_call->callNr(), {
+		SystemCallNr::SELECT,
+		SystemCallNr::NEWSELECT,
+	});
+}
+
+void TimeValParameter::fetch(const Tracee &proc,
+		std::optional<struct timeval> &val) {
+	if (!val) {
+		val.emplace();
+	}
+
+	if (needTime32Conversion()) {
+		struct timeval32 tv32;
+		if (!proc.readStruct(asPtr(), tv32)) {
+			val.reset();
+			return;
+		}
+
+		val->tv_sec = tv32.tv_sec;
+		val->tv_usec = tv32.tv_usec;
+	} else if (!proc.readStruct(asPtr(), *val)) {
+		val.reset();
+	}
+}
+
+std::string TimeValParameter::str() const {
+	if (!m_timeval) {
+		return formatBadPointer();
+	}
+
+	auto ret = format::timeval(*m_timeval);
+
+	if (m_remaining) {
+		ret += std::format(" → left: {}",
+				format::timeval(*m_remaining));
+	}
+
+	return ret;
 }
 
 std::string ClockID::str() const {

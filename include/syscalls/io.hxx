@@ -4,6 +4,7 @@
 #include <clues/SystemCall.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/items/io.hxx>
+#include <clues/items/time.hxx>
 #include <clues/sysnrs/generic.hxx>
 
 namespace clues {
@@ -330,6 +331,74 @@ struct EventFD2SystemCall :
 protected: // functions
 
 	void updateFDTracking(const Tracee &) override;
+};
+
+/// select() system call handling.
+/**
+ * This type covers the single select() system call on x86_64 and other 64-bit
+ * ABIs as well as the "old" and "new" select() on i386. The old select()
+ * uses an argument struct which is transparently copied over by the
+ * implementation to the split member items to allow seamless processing of
+ * all types of select() by applications.
+ *
+ * For completeness `old_args` contains the actual combined select argument
+ * struct in case of the old select system call. The system call numbers map
+ * as follows depending on ABI:
+ *
+ * - SystemCallNr::SELECT: "old" select on ABI::I386, new select otherwise.
+ * - SystemCallNr::NEWSELECT: new select on ABI::I386, not available on other
+ *   ABIs.
+ **/
+struct SelectSystemCall :
+		public SystemCall {
+
+	explicit SelectSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+			nfds{"nfds", "highest numbered fd + 1"},
+			readfds{nfds, "readfds", "readable fd set"},
+			writefds{nfds, "writefds", "writable fd set"},
+			exceptfds{nfds, "exceptfds", "exceptional fd set"},
+			timeout{"timeout", "maximum wait time",
+				ItemType::PARAM_IN_OUT,
+				item::RemainSemantics{true}},
+			nready{"nready", "number of fds in all set that are ready", ItemType::RETVAL} {
+		setReturnItem(nready);
+		addParameters(nfds, readfds, writefds, exceptfds, timeout);
+	}
+
+	/// Returns whether this is the "old" select() system call on 32-bit ABIs.
+	/**
+	 * On 32-bit ABIs like I386 there exists an "old" select() system call
+	 * which has SystemCallNr::SELECT like on newer ABIs, but actually
+	 * uses a single struct as parameter, similar to the "old mmap" system
+	 * call. The modern select() has SystemCallNr::NEWSELECT instead.
+	 *
+	 * This type provides a generic view on both variants of select() such
+	 * that applications don't need to care about these details. If
+	 * necessary the original structure of the "old" select can be looked
+	 * up in the `old_args` member.
+	 **/
+	bool isOldSelect() const;
+
+	item::IntValue nfds;
+	item::FDSet readfds;
+	item::FDSet writefds;
+	item::FDSet exceptfds;
+	item::TimeValParameter timeout;
+
+	std::optional<item::OldSelectArgs> old_args;
+
+	item::IntValue nready;
+
+protected: // functions
+
+	void prepareNewSystemCall() override;
+
+	bool check2ndPass(const Tracee&) override;
+
+	friend class item::OldSelectArgs;
+
+	void updateFromOldArgs(const Tracee&);
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

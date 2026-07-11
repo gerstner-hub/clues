@@ -7,7 +7,9 @@
 #include <clues/logger.hxx>
 #include <clues/macros.h>
 #include <clues/private/kernel/iovec.hxx>
+#include <clues/private/kernel/select.hxx>
 #include <clues/private/utils.hxx>
+#include <clues/syscalls/io.hxx>
 #include <clues/Tracee.hxx>
 
 namespace clues::item {
@@ -212,6 +214,126 @@ std::string EventFDFlags::str() const {
 
 void EventFDFlags::processValue(const Tracee &) {
 	m_flags = valueAs<Flags>();
+}
+
+const fd_set* FDSet::Array::raw() const {
+	static_assert(NUM_ULONGS * sizeof(m_array[0]) == sizeof(fd_set),
+			"fd_set size mismatch");
+	return reinterpret_cast<const fd_set*>(m_array.data());
+}
+
+bool FDSet::Array::isSet(const cosmos::FileNum fd) const {
+	return FD_ISSET(cosmos::to_integral(fd), raw());
+}
+
+std::string FDSet::Array::str(const int max_fd) const {
+	std::string ret{"["};
+
+	bool first = true;
+
+	auto set = raw();
+
+	for (int fd = 0; fd < max_fd; fd++) {
+		if (FD_ISSET(fd, set)) {
+			if (first) {
+				first = false;
+			} else {
+				ret += ", ";
+			}
+
+			ret += std::to_string(fd);
+		}
+	}
+
+	return ret + "]";
+}
+
+void FDSet::processValue(const Tracee &proc) {
+	m_ev_set.reset();
+
+	if (isZero()) {
+		m_req_set.reset();
+		return;
+	}
+
+	m_req_set.emplace();
+
+	/*
+	 * this data structure should always be 1024 bits in size no matter
+	 * what ABI.
+	 */
+
+	if (!proc.readStruct(asPtr(), *m_req_set->raw())) {
+		m_req_set.reset();
+	}
+}
+
+void FDSet::updateData(const Tracee &proc) {
+	if (!m_req_set)
+		return;
+
+	if (!m_call->hasResultValue())
+		return;
+
+	m_ev_set.emplace();
+
+	if (!proc.readStruct(asPtr(), *m_ev_set->raw())) {
+		/* this is an unfortunate state, we failed to read the updated
+		 * set from the kernel ... */
+		m_ev_set.reset();
+	}
+}
+
+std::string FDSet::str() const {
+	if (!m_req_set) {
+		return formatBadPointer();
+	}
+
+	auto ret = m_req_set->str(maxFD());
+
+	if (m_ev_set) {
+		ret += " → " + m_ev_set->str(maxFD());
+	}
+
+	return ret;
+}
+
+void OldSelectArgs::processValue(const Tracee &proc) {
+	struct select_arg_struct args;
+
+	if (!proc.readStruct(asPtr(), args)) {
+		m_valid = false;
+		return;
+	}
+
+	nfds = args.nfds;
+	readfds = ForeignPtr(args.readset_p);
+	writefds = ForeignPtr(args.writeset_p);
+	exceptfds = ForeignPtr(args.exceptset_p);
+	timeout = ForeignPtr(args.timeval_p);
+
+	m_valid = true;
+}
+
+void OldSelectArgs::updateData(const Tracee &proc) {
+	/*
+	 * this is not so great, we need to update the new-style parameters of
+	 * the SelectSystemCall but only have a const pointer to it.
+	 */
+	auto &select_call = const_cast<SelectSystemCall&>(
+			dynamic_cast<const SelectSystemCall&>(*m_call));
+
+	select_call.updateFromOldArgs(proc);
+}
+
+std::string OldSelectArgs::str() const {
+	auto &select_call = dynamic_cast<const SelectSystemCall&>(*m_call);
+
+	return std::format("{{nfds={}, readfds={}, writefds={}, exceptds={}, timeout={}}}",
+		select_call.nfds.str(), select_call.readfds.str(),
+		select_call.writefds.str(), select_call.exceptfds.str(),
+		select_call.timeout.str());
+
 }
 
 } // end ns

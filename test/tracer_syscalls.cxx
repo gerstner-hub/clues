@@ -6,6 +6,7 @@
 
 // Linux
 #include <sys/prctl.h> // for PR_THP_DISABLE_EXCEPT_ADVISED
+#include <sys/syscall.h> // for SYS_ #ifdefs
 
 // clues
 #include <clues/arch.hxx>
@@ -471,6 +472,14 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(signalfd4\(fd=-1, mask=\{SIGINT, SIGUSR1\}, sigset_size={decimal}, flags=0x80000 \(SFD_CLOEXEC\)\) = 3 \(fd\))",
 		R"(signalfd4\(fd=3, mask=\{SIGINT, SIGUSR1, SIGUSR2\}, sigset_size={decimal}, flags=0x0 \(\)\) = 3 \(fd\))",
 	}},
+#ifdef SYS_select
+	TestSpec{"select", "select,newselect", {
+		R"((new)?select\(nfds=5, readfds=\[3\] → \[\], writefds=\[4\] → \[4\], exceptfds=NULL, timeout=\{50s, 100us\} → left: \{{decimal}s, {decimal}us\}\) = 1 \(nready\))",
+#	ifdef COSMOS_I386
+		R"(select\(args=\{nfds=5, readfds=\[3\] → \[\], writefds=\[4\] → \[4\], exceptds=NULL, timeout=\{50s, 100us\} → left: \{{decimal}s, {decimal}us\}\}\) = 1 \(nready\))",
+#	endif
+	}},
+#endif
 #ifdef COSMOS_I386
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

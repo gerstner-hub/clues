@@ -159,6 +159,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::FSTATFS64:       return new_sys<FStatFSSystemCall>(nr);
 	case SystemCallNr::SIGNALFD:        return new_sys<SignalFDSystemCall>();
 	case SystemCallNr::SIGNALFD4:       return new_sys<SignalFD4SystemCall>();
+	case SystemCallNr::SELECT:          [[ fallthrough ]];
+	case SystemCallNr::NEWSELECT:       return new_sys<SelectSystemCall>(nr);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

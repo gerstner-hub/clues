@@ -169,6 +169,16 @@ protected: // functions
 		addParameters(args...);
 	}
 
+	/*
+	 * this is currently a hack to support update in the context of
+	 * OldSelectArgs.
+	 */
+	void updateParameters(const Tracee &proc, std::initializer_list<std::reference_wrapper<SystemCallItem>> items) {
+		for (SystemCallItem &item: items) {
+			item.updateData(proc);
+		}
+	}
+
 	/// Remove currently present parameters starting at `start_index`.
 	void dropParameters(const size_t start_index = 0);
 

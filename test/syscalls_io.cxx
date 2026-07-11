@@ -5,7 +5,84 @@
 #include <sys/ioctl.h>
 #include <linux/fs.h>
 
+// clues
+#include <clues/private/kernel/time.hxx>
+#include <clues/private/kernel/select.hxx>
+
 namespace {
+
+using ABI = clues::ABI;
+
+void call_newselect(const int sysnr) {
+	int fd[2];
+	if (pipe(fd) < 0) {
+		return;
+	}
+
+	int readfd = fd[0];
+	int writefd = fd[1];
+
+	fd_set readset, writeset;
+
+	FD_ZERO(&readset);
+	FD_ZERO(&writeset);
+
+	FD_SET(readfd, &readset);
+	FD_SET(writefd, &writeset);
+
+	struct timeval tv;
+	tv.tv_sec = 50;
+	tv.tv_usec = 100;
+	syscall(sysnr, writefd + 1,
+			&readset, &writeset, nullptr, &tv);
+}
+
+void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
+		bool is_old_select=false) {
+	VERIFY(sc.nfds.value() ==
+			cosmos::to_integral(SECOND_FD) + 1);
+	VERIFY(sc.readfds.requestSet().has_value());
+	VERIFY(!sc.readfds.eventSet().has_value());
+	VERIFY(sc.writefds.requestSet().has_value());
+	VERIFY(!sc.writefds.eventSet().has_value());
+	VERIFY(!sc.exceptfds.requestSet().has_value());
+	VERIFY(!sc.exceptfds.eventSet().has_value());
+	VERIFY(sc.old_args.has_value() == is_old_select);
+	const auto &readset = *sc.readfds.requestSet();
+	const auto &writeset = *sc.writefds.requestSet();
+
+	VERIFY(readset.isSet(FIRST_FD));
+	VERIFY(!readset.isSet(SECOND_FD));
+	VERIFY(writeset.isSet(SECOND_FD));
+	VERIFY(!writeset.isSet(FIRST_FD));
+	VERIFY(sc.timeout.val().has_value());
+	VERIFY(!sc.timeout.remaining().has_value());
+	const auto &tv = *sc.timeout.val();
+	VERIFY(tv.tv_sec == 50);
+	VERIFY(tv.tv_usec == 100);
+}
+
+void verify_select_exit(const clues::SelectSystemCall &sc, bool &good,
+		bool is_old_select=false) {
+	VERIFY(sc.hasResultValue());
+	VERIFY(sc.readfds.requestSet().has_value());
+	VERIFY(sc.readfds.eventSet().has_value());
+	VERIFY(sc.writefds.requestSet().has_value());
+	VERIFY(sc.writefds.eventSet().has_value());
+	VERIFY(!sc.exceptfds.requestSet().has_value());
+	VERIFY(!sc.exceptfds.eventSet().has_value());
+	VERIFY(sc.old_args.has_value() == is_old_select);
+	const auto &readset = *sc.readfds.eventSet();
+	const auto &writeset = *sc.writefds.eventSet();
+
+	VERIFY(!readset.isSet(FIRST_FD));
+	VERIFY(!readset.isSet(SECOND_FD));
+	VERIFY(writeset.isSet(SECOND_FD));
+	VERIFY(!writeset.isSet(FIRST_FD));
+
+	VERIFY(sc.timeout.val().has_value());
+	VERIFY(sc.timeout.remaining().has_value());
+}
 
 const auto TESTS = std::array{
 
@@ -681,7 +758,7 @@ const auto TESTS = std::array{
 
 				syscall32(SyscallNr32::LLSEEK, fd, 1, 2, new_off, SEEK_SET);
 			})
-		}, "", {clues::ABI::I386}
+		}, "", {ABI::I386}
 	},
 #ifdef CLUES_HAVE_PIPE1
 	TestSpec{SystemCallNr::PIPE, []() {
@@ -772,7 +849,123 @@ const auto TESTS = std::array{
 				close(fd);
 			})
 		}
-	}
+	},
+#ifdef SYS_select
+	/* new select on non-legacy ABIs */
+	TestSpec{SystemCallNr::SELECT, []() {
+			call_newselect(SYS_select);
+		}, ENTRY_VERIFY_CB(SelectSystemCall, {
+			verify_select_entry(sc, good);
+		}), EXIT_VERIFY_CB(SelectSystemCall, {
+			verify_select_exit(sc, good);
+		}), IgnoreCalls{1}, {
+		}, "", {ABI::X86_64, ABI::AARCH64}
+	},
+	/* new select on legacy ABIs */
+	TestSpec{SystemCallNr::NEWSELECT, []() {
+#ifdef COSMOS_I386
+			call_newselect(SYS__newselect);
+#endif
+		}, ENTRY_VERIFY_CB(SelectSystemCall, {
+			verify_select_entry(sc, good);
+		}), EXIT_VERIFY_CB(SelectSystemCall, {
+			verify_select_exit(sc, good);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{4}, []() {
+				int fd[2];
+				if (pipe(fd) < 0) {
+					return;
+				}
+
+				int readfd = fd[0];
+				int writefd = fd[1];
+
+				auto readset = alloc_struct32<fd_set>();
+				auto writeset = alloc_struct32<fd_set>();;
+
+				FD_ZERO(readset);
+				FD_ZERO(writeset);
+
+				FD_SET(readfd, readset);
+				FD_SET(writefd, writeset);
+
+				auto tv = alloc_struct32<clues::timeval32>();
+				tv->tv_sec = 50;
+				tv->tv_usec = 100;
+				syscall32(SyscallNr32::NEWSELECT, writefd + 1,
+						readset, writeset, nullptr, tv);
+				}
+		)}, "", {ABI::I386}
+	},
+	/* old select on legacy ABIs */
+	TestSpec{SystemCallNr::SELECT, []() {
+#	ifdef COSMOS_I386
+			int fd[2];
+			if (pipe(fd) < 0) {
+				return;
+			}
+
+			int readfd = fd[0];
+			int writefd = fd[1];
+
+			fd_set readset, writeset;
+
+			FD_ZERO(&readset);
+			FD_ZERO(&writeset);
+
+			FD_SET(readfd, &readset);
+			FD_SET(writefd, &writeset);
+
+			struct timeval tv;
+			tv.tv_sec = 50;
+			tv.tv_usec = 100;
+			clues::select_arg_struct args;
+
+			args.nfds = writefd + 1;
+			args.readset_p = reinterpret_cast<uint32_t>(&readset);
+			args.writeset_p = reinterpret_cast<uint32_t>(&writeset);
+			args.exceptset_p = 0;
+			args.timeval_p = reinterpret_cast<uint32_t>(&tv);
+
+			syscall(SYS_select, &args);
+#	endif // I386
+		}, ENTRY_VERIFY_CB(SelectSystemCall, {
+			verify_select_entry(sc, good, true);
+		}), EXIT_VERIFY_CB(SelectSystemCall, {
+			verify_select_exit(sc, good, true);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				int fd[2];
+				if (pipe(fd) < 0) {
+					return;
+				}
+
+				int readfd = fd[0];
+				int writefd = fd[1];
+
+				auto readset = alloc_struct32<fd_set>();
+				auto writeset = alloc_struct32<fd_set>();;
+
+				FD_SET(readfd, readset);
+				FD_SET(writefd, writeset);
+
+				auto tv = alloc_struct32<clues::timeval32>();
+				tv->tv_sec = 50;
+				tv->tv_usec = 100;
+				auto args = alloc_struct32<
+					clues::select_arg_struct>();
+
+				args->nfds = writefd + 1;
+				args->readset_p = (uintptr_t)(readset);
+				args->writeset_p = (uintptr_t)(writeset);
+				args->exceptset_p = 0;
+				args->timeval_p = (uintptr_t)(tv);
+
+				syscall32(SyscallNr32::SELECT, args);
+			})
+		}, "oldselect", {ABI::I386}
+	},
+#endif // SYS_select
 };
 
 } // end anon ns

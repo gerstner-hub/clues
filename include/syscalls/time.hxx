@@ -33,7 +33,7 @@ struct CLUES_API ClockNanoSleepSystemCall :
 			SystemCall{SystemCallNr::CLOCK_NANOSLEEP},
 			time{"time", "requested sleep time"},
 			remaining{"rem", "remaining sleep time", ItemType::PARAM_OUT,
-				/*remain_semantics=*/true} {
+				item::RemainSemantics{true}} {
 		setReturnItem(result);
 		setParameters(clockid, flags, time, remaining);
 	}

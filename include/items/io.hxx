@@ -2,8 +2,10 @@
 
 // Linux
 #include <fcntl.h>
+#include <sys/select.h>
 
 // C++
+#include <array>
 #include <optional>
 #include <vector>
 
@@ -408,6 +410,155 @@ protected: // functions
 protected: // data
 
 	Flags m_flags{0};
+};
+
+/// File descriptor sets as used with SelectSystemCall.
+/**
+ * This data structure is an array allowing to store up to 1024 bits (for a
+ * maximum of 1024 file descriptors). This array is supposed to be comprised
+ * of `long` words for efficiency reasons. This means the size of the array
+ * differs between 32-bit and 64-bit targets.
+ *
+ * For the purposes of tracing we can always rely on our native word size even
+ * for cross-ABI tracing.
+ *
+ * This type of parameter is always used as an in/out value, so we need to
+ * update during system call entry and during system call exit alike. To allow
+ * inspection of the requested and matching file descriptor events this type
+ * provides the `requestSet()` and the `eventSet()` accessors. The latter is
+ * only available after system call exit.
+ *
+ * The pointer for an fdset is also allowed to be NULL.
+ **/
+class FDSet :
+		public PointerValue {
+public: // types
+
+	/// Type to represent the fd_set used in the kernel.
+	/**
+	 * There is no abstraction for this in libcosmos, since it only wraps
+	 * the modern epoll API. Thus we need a small wrapper here ourselves.
+	 **/
+	struct Array {
+
+		/// Checks whether the given file descriptor is present in the set.
+		bool isSet(const cosmos::FileNum fd) const;
+
+		/// Provides access to the POSIX-type corresponding to the set.
+		const fd_set* raw() const;
+
+		/// returns a string representation of the file descriptors in the set.
+		std::string str(const int max_fd) const;
+
+	protected: // functions
+
+		friend class FDSet;
+
+		fd_set* raw() {
+			return const_cast<fd_set*>(const_cast<const Array&>(*this).raw());
+		}
+
+	protected: // data
+
+		static constexpr size_t MAX_FD = 1024;
+		static constexpr size_t NUM_ULONGS = MAX_FD / (8 * sizeof(long));
+
+		std::array<long, NUM_ULONGS> m_array;
+	};
+
+public: // functions
+
+	/// Create a FDSet coupled to the given `nfds` parameter.
+	/**
+	 * `nfds` is required for the item to know what the largest file
+	 * descriptor in the set can be.
+	 **/
+	explicit FDSet(const SystemCallItem &nfds,
+			const std::string_view short_name,
+			const std::string_view long_name) :
+			PointerValue{ItemType::PARAM_IN_OUT, short_name, long_name},
+			m_nfds{nfds} {
+	}
+
+	const std::optional<Array>& requestSet() const {
+		return m_req_set;
+	}
+
+	const std::optional<Array>& eventSet() const {
+		return m_ev_set;
+	}
+
+	std::string str() const override;
+
+	int maxFD() const {
+		return m_nfds.valueAs<int>();
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	/// The requested set of file descriptors as observed on system call entry.
+	std::optional<Array> m_req_set;
+	/// The set of file descriptors with events as observed on system call exit.
+	std::optional<Array> m_ev_set;
+	const SystemCallItem &m_nfds;
+};
+
+/// Combined select() arguments for the old variant of select() on 32-bit ABIs like I386.
+class CLUES_API OldSelectArgs :
+		public PointerValue {
+public:
+
+	explicit OldSelectArgs() :
+			PointerValue{ItemType::PARAM_IN_OUT,
+				"args", "struct sel_args_struct*"} {
+	}
+
+	bool valid() const {
+		return m_valid;
+	}
+
+	int numFDs() const {
+		return nfds;
+	}
+
+	ForeignPtr readSetPtr() const {
+		return readfds;
+	}
+
+	ForeignPtr writeSetPtr() const {
+		return writefds;
+	}
+
+	ForeignPtr exceptSetPtr() const {
+		return exceptfds;
+	}
+
+	ForeignPtr timeoutPtr() const {
+		return timeout;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+	void updateData(const Tracee&) override;
+
+	std::string str() const override;
+
+protected: // data
+
+	bool m_valid = false;
+	int nfds = 0;
+	ForeignPtr readfds; // fd_set*
+	ForeignPtr writefds; // fd_set*
+	ForeignPtr exceptfds; // fd_set*
+	ForeignPtr timeout; // struct timeval32*
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

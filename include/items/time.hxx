@@ -5,6 +5,7 @@
 
 // cosmos
 #include <cosmos/time/types.hxx>
+#include <cosmos/utils.hxx>
 
 // clues
 #include <clues/items/items.hxx>
@@ -12,17 +13,21 @@
 
 namespace clues::item {
 
+CLUES_DEFAULT_VISIBILITY_ON;
+
+using RemainSemantics = cosmos::NamedBool<struct remain_sem_t, false>;
+
 /// The struct timespec used for various timing and timeout operations in system calls.
-class CLUES_API TimeSpecParameter :
-		public SystemCallItem {
+class TimeSpecParameter :
+		public PointerValue {
 public: // functions
 	explicit TimeSpecParameter(
 		const std::string_view short_name,
 		const std::string_view long_name = {},
 		const ItemType type = ItemType::PARAM_IN,
-		const bool remain_semantics = false) :
-			SystemCallItem{type, short_name, long_name},
-			m_remain_semantics{remain_semantics} {
+		const RemainSemantics remain = RemainSemantics{}) :
+			PointerValue{type, short_name, long_name},
+			m_remain_semantics{remain} {
 	}
 
 	std::string str() const override;
@@ -31,18 +36,17 @@ public: // functions
 		return m_timespec;
 	}
 
+	const std::optional<struct timespec>& remaining() const {
+		return m_remaining;
+	}
+
 protected: // functions
 
-	void processValue(const Tracee &proc) override {
-		if (this->isOut())
-			m_timespec.reset();
-		else
-			fetch(proc);
-	}
+	void processValue(const Tracee &proc) override;
 
 	void updateData(const Tracee &proc) override;
 
-	void fetch(const Tracee &proc);
+	void fetch(const Tracee &proc, std::optional<struct timespec> &spec);
 
 	/// Checks whether the current ABI context requires conversion of 32 bit to 64 bit.
 	bool needTime32Conversion() const;
@@ -50,10 +54,52 @@ protected: // functions
 protected: // data
 
 	std::optional<struct timespec> m_timespec;
-	bool m_remain_semantics = false;
+	std::optional<struct timespec> m_remaining;
+	RemainSemantics m_remain_semantics{};
 };
 
-class CLUES_API ClockID :
+/// The struct timeval used with older time-related system calls like select().
+class TimeValParameter :
+		public PointerValue {
+public: // functions
+	explicit TimeValParameter(
+		const std::string_view short_name,
+		const std::string_view long_name = {},
+		const ItemType type = ItemType::PARAM_IN,
+		const RemainSemantics remain = RemainSemantics{}) :
+			PointerValue{type, short_name, long_name},
+			m_remain_semantics{remain} {
+	}
+
+	std::string str() const override;
+
+	const std::optional<struct timeval>& val() const {
+		return m_timeval;
+	}
+
+	const std::optional<struct timeval>& remaining() const {
+		return m_remaining;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+	void fetch(const Tracee &proc, std::optional<struct timeval> &val);
+
+	/// Checks whether the current ABI context requires conversion of 32 bit to 64 bit.
+	bool needTime32Conversion() const;
+
+protected: // data
+
+	std::optional<struct timeval> m_timeval;
+	std::optional<struct timeval> m_remaining;
+	RemainSemantics m_remain_semantics{};
+};
+
+class ClockID :
 		public ValueInParameter {
 public: // functions
 	explicit ClockID() :
@@ -75,7 +121,7 @@ protected: // data
 	cosmos::ClockType m_type = cosmos::ClockType::INVALID;
 };
 
-class CLUES_API ClockNanoSleepFlags :
+class ClockNanoSleepFlags :
 		public ValueInParameter {
 public: // types
 
@@ -107,5 +153,7 @@ protected: // data
 
 	Flags m_flags;
 };
+
+CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
