@@ -15,8 +15,6 @@ namespace clues::item {
 
 CLUES_DEFAULT_VISIBILITY_ON;
 
-using RemainSemantics = cosmos::NamedBool<struct remain_sem_t, false>;
-
 /// The struct timespec used for various timing and timeout operations in system calls.
 class TimeSpecParameter :
 		public PointerValue {
@@ -24,20 +22,14 @@ public: // functions
 	explicit TimeSpecParameter(
 		const std::string_view short_name,
 		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN,
-		const RemainSemantics remain = RemainSemantics{}) :
-			PointerValue{type, short_name, long_name},
-			m_remain_semantics{remain} {
+		const ItemType type = ItemType::PARAM_IN) :
+			PointerValue{type, short_name, long_name} {
 	}
 
 	std::string str() const override;
 
 	const std::optional<struct timespec>& spec() const {
 		return m_timespec;
-	}
-
-	const std::optional<struct timespec>& remaining() const {
-		return m_remaining;
 	}
 
 protected: // functions
@@ -54,8 +46,30 @@ protected: // functions
 protected: // data
 
 	std::optional<struct timespec> m_timespec;
-	std::optional<struct timespec> m_remaining;
-	RemainSemantics m_remain_semantics{};
+};
+
+/// Specialization of TimeSpecParameter for "remaining sleep time" out pointers.
+/**
+ * This variant of TimeSpecParameter is used for "remaining sleep time"
+ * contexts where the kernel writes out the remaining time to sleep only
+ * during special system call interrupt contexts.
+ **/
+class RemainingTimeSpec :
+		public TimeSpecParameter {
+public: // functions
+
+	explicit RemainingTimeSpec(const std::string_view short_name,
+			const std::string_view long_name) :
+			TimeSpecParameter{short_name,
+				long_name,
+				ItemType::PARAM_OUT} {
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void updateData(const Tracee &proc) override;
 };
 
 /// The struct timeval used with older time-related system calls like select().
@@ -89,7 +103,6 @@ protected: // functions
 protected: // data
 
 	std::optional<struct timeval> m_timeval;
-	RemainSemantics m_remain_semantics{};
 };
 
 /// TimeValParameter which is updated with remaining sleep time on syscall exit.

@@ -13,14 +13,14 @@ struct CLUES_API NanoSleepSystemCall :
 	NanoSleepSystemCall() :
 			SystemCall{SystemCallNr::NANOSLEEP},
 			req_time{"req_time", "requested time"},
-			rem_time{"rem_time", "remaining time", ItemType::PARAM_OUT} {
+			rem_time{"rem_time", "remaining time"} {
 		setReturnItem(result);
 		setParameters(req_time, rem_time);
 	}
 
 	/* parameters */
 	item::TimeSpecParameter req_time;
-	item::TimeSpecParameter rem_time;
+	item::RemainingTimeSpec rem_time;
 
 	/* return value */
 	item::SuccessResult result;
@@ -32,8 +32,7 @@ struct CLUES_API ClockNanoSleepSystemCall :
 	ClockNanoSleepSystemCall() :
 			SystemCall{SystemCallNr::CLOCK_NANOSLEEP},
 			time{"time", "requested sleep time"},
-			remaining{"rem", "remaining sleep time", ItemType::PARAM_OUT,
-				item::RemainSemantics{true}} {
+			remaining{"rem", "remaining sleep time"} {
 		setReturnItem(result);
 		setParameters(clockid, flags, time, remaining);
 	}
@@ -42,7 +41,7 @@ struct CLUES_API ClockNanoSleepSystemCall :
 	item::ClockID clockid;
 	item::ClockNanoSleepFlags flags;
 	item::TimeSpecParameter time;
-	item::TimeSpecParameter remaining;
+	item::RemainingTimeSpec remaining;
 
 	/* return value */
 	item::SuccessResult result;

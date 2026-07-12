@@ -16,8 +16,6 @@
 namespace clues::item {
 
 void TimeSpecParameter::processValue(const Tracee &proc) {
-	m_remaining.reset();
-
 	if (this->isOut())
 		m_timespec.reset();
 	else
@@ -25,29 +23,7 @@ void TimeSpecParameter::processValue(const Tracee &proc) {
 }
 
 void TimeSpecParameter::updateData(const Tracee &proc) {
-	if (m_remain_semantics) {
-		/*
-		 * special logic for clock_nanosleep remain semantics &
-		 * similar cases:
-		 *
-		 * - on success, remaining time is not updated
-		 * - on special kernel error code, transparent restart will
-		 *   happen
-		 * - otherwise only if EINTR is observed will the time be
-		 *   updated
-		 */
-		if (m_call->hasResultValue())
-		       return;
-
-		const auto error = *m_call->error();
-
-		if (!error.hasErrorCode() ||
-				error.errorCode() != cosmos::Errno::INTERRUPTED) {
-			return;
-		}
-
-		fetch(proc, m_remaining);
-	} else if (m_call->hasResultValue()) {
+	if (m_call->hasResultValue()) {
 		fetch(proc, m_timespec);
 	}
 }
@@ -94,16 +70,40 @@ std::string TimeSpecParameter::str() const {
 		return formatBadPointer();
 	}
 
-	auto ret =  format::timespec(*m_timespec);
-
-	if (m_remaining) {
-		ret += std::format(" → left: {}",
-			format::timespec(*m_remaining));
-	}
-
-	return ret;
+	return format::timespec(*m_timespec);
 }
 
+std::string RemainingTimeSpec::str() const {
+	if (!m_timespec) {
+		return format::pointer(this->ptr());
+	}
+
+	return TimeSpecParameter::str();
+}
+
+void RemainingTimeSpec::updateData(const Tracee &proc) {
+	/*
+	 * special logic for clock_nanosleep remain semantics &
+	 * similar cases:
+	 *
+	 * - on success, remaining time is not updated
+	 * - on special kernel error code, transparent restart will
+	 *   happen
+	 * - otherwise only if EINTR is observed will the time be
+	 *   updated
+	 */
+	if (m_call->hasResultValue())
+	       return;
+
+	const auto error = *m_call->error();
+
+	if (!error.hasErrorCode() ||
+			error.errorCode() != cosmos::Errno::INTERRUPTED) {
+		return;
+	}
+
+	TimeSpecParameter::updateData(proc);
+}
 
 void TimeValParameter::processValue(const Tracee &proc) {
 	if (this->isOut())

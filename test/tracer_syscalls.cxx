@@ -116,7 +116,7 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(clock_nanosleep\(clockid=CLOCK_MONOTONIC, flags=TIMER_ABSTIME, time=\{{decimal}s, {decimal}ns\}, rem={addr}\) = 0)"
 	}},
 	TestSpec{{"nanosleep", "0", "500"}, "nanosleep", {
-			R"(nanosleep\(req_time=\{{decimal}s, {decimal}ns\}, rem_time=\{{decimal}s, {decimal}ns\}\) = 0)"
+			R"(nanosleep\(req_time=\{{decimal}s, {decimal}ns\}, rem_time={addr}\) = 0)"
 	}},
 	TestSpec{"clone", "clone,clone3", {
 			R"(clone\(flags={bitmask} \(CLONE_.*SIGCHLD\), stack={addr}, parent_tid={addr} → \[{decimal}\]\) = {pid})",
