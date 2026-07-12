@@ -106,8 +106,6 @@ std::string TimeSpecParameter::str() const {
 
 
 void TimeValParameter::processValue(const Tracee &proc) {
-	m_remaining.reset();
-
 	if (this->isOut())
 		m_timeval.reset();
 	else
@@ -115,9 +113,7 @@ void TimeValParameter::processValue(const Tracee &proc) {
 }
 
 void TimeValParameter::updateData(const Tracee &proc) {
-	if (m_remain_semantics) {
-		fetch(proc, m_remaining);
-	} else if (m_call->hasResultValue()) {
+	if (m_call->hasResultValue()) {
 		fetch(proc, m_timeval);
 	}
 }
@@ -163,12 +159,26 @@ std::string TimeValParameter::str() const {
 		return formatBadPointer();
 	}
 
-	auto ret = format::timeval(*m_timeval);
+	return format::timeval(*m_timeval);
+}
 
-	if (m_remaining) {
-		ret += std::format(" → left: {}",
-				format::timeval(*m_remaining));
+void TimeValInOutParameter::processValue(const Tracee &proc) {
+	m_remaining.reset();
+	TimeValParameter::processValue(proc);
+}
+
+void TimeValInOutParameter::updateData(const Tracee &proc) {
+	fetch(proc, m_remaining);
+}
+
+std::string TimeValInOutParameter::str() const {
+	auto ret = TimeValParameter::str();
+
+	if (!m_timeval || !m_remaining) {
+		return ret;
 	}
+
+	ret += std::format(" → left: {}", format::timeval(*m_remaining));
 
 	return ret;
 }

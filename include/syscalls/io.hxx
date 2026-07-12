@@ -358,10 +358,10 @@ struct SelectSystemCall :
 			readfds{nfds, "readfds", "readable fd set"},
 			writefds{nfds, "writefds", "writable fd set"},
 			exceptfds{nfds, "exceptfds", "exceptional fd set"},
-			timeout{"timeout", "maximum wait time",
-				ItemType::PARAM_IN_OUT,
-				item::RemainSemantics{true}},
-			nready{"nready", "number of fds in all set that are ready", ItemType::RETVAL} {
+			timeout{"timeout", "maximum wait time"},
+			nready{"nready",
+				"number of fds in all set that are ready",
+				ItemType::RETVAL} {
 		setReturnItem(nready);
 		addParameters(nfds, readfds, writefds, exceptfds, timeout);
 	}
@@ -384,7 +384,7 @@ struct SelectSystemCall :
 	item::FDSet readfds;
 	item::FDSet writefds;
 	item::FDSet exceptfds;
-	item::TimeValParameter timeout;
+	item::TimeValInOutParameter timeout;
 
 	std::optional<item::OldSelectArgs> old_args;
 

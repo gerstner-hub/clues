@@ -65,20 +65,14 @@ public: // functions
 	explicit TimeValParameter(
 		const std::string_view short_name,
 		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN,
-		const RemainSemantics remain = RemainSemantics{}) :
-			PointerValue{type, short_name, long_name},
-			m_remain_semantics{remain} {
+		const ItemType type = ItemType::PARAM_IN) :
+			PointerValue{type, short_name, long_name} {
 	}
 
 	std::string str() const override;
 
 	const std::optional<struct timeval>& val() const {
 		return m_timeval;
-	}
-
-	const std::optional<struct timeval>& remaining() const {
-		return m_remaining;
 	}
 
 protected: // functions
@@ -95,8 +89,43 @@ protected: // functions
 protected: // data
 
 	std::optional<struct timeval> m_timeval;
-	std::optional<struct timeval> m_remaining;
 	RemainSemantics m_remain_semantics{};
+};
+
+/// TimeValParameter which is updated with remaining sleep time on syscall exit.
+/**
+ * This specialization of TimeValParameter keeps a separate remaining timeout
+ * member which will be updated on system call exit. It is used for system
+ * calls that update the struct timespec upon system call exit to reflect the
+ * time not slept in timeout operations.
+ **/
+class TimeValInOutParameter :
+		public TimeValParameter {
+public: // functions
+
+	explicit TimeValInOutParameter(
+			const std::string_view short_name,
+			const std::string_view long_name = {}) :
+			TimeValParameter{short_name, long_name,
+				ItemType::PARAM_IN_OUT} {
+
+	}
+
+	const std::optional<struct timeval>& remaining() const {
+		return m_remaining;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<struct timeval> m_remaining;
 };
 
 class ClockID :
