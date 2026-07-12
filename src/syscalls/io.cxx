@@ -71,9 +71,14 @@ bool SelectSystemCall::check2ndPass(const Tracee &proc) {
 	return false;
 }
 
-void SelectSystemCall::updateFromOldArgs(const Tracee &proc) {
-	updateParameters(proc,
+void SelectSystemCall::postSystemCall(const Tracee &proc) {
+	if (old_args) {
+		/*
+		 * update the new-style parameters from the old args struct
+		 */
+		updateParameters(proc,
 			{nfds, readfds, writefds, exceptfds, timeout});
+	}
 }
 
 } // end ns

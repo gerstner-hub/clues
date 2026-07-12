@@ -199,6 +199,9 @@ protected: // functions
 	/// Perform any necessary actions before processing a new system call entry event.
 	virtual void prepareNewSystemCall() {}
 
+	/// Perform any necessary actions after completing a system call.
+	virtual void postSystemCall(const Tracee &) {}
+
 	/// Update file descriptor tracking.
 	/**
 	 * This function is called upon successful system call exit to track

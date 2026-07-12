@@ -547,7 +547,10 @@ protected: // functions
 
 	void processValue(const Tracee&) override;
 
-	void updateData(const Tracee&) override;
+	/*
+	 * update is handled via SelectSystemCall::postSystemCall()
+	 */
+	//void updateData(const Tracee&) override;
 
 	std::string str() const override;
 

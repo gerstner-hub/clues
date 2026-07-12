@@ -315,17 +315,6 @@ void OldSelectArgs::processValue(const Tracee &proc) {
 	m_valid = true;
 }
 
-void OldSelectArgs::updateData(const Tracee &proc) {
-	/*
-	 * this is not so great, we need to update the new-style parameters of
-	 * the SelectSystemCall but only have a const pointer to it.
-	 */
-	auto &select_call = const_cast<SelectSystemCall&>(
-			dynamic_cast<const SelectSystemCall&>(*m_call));
-
-	select_call.updateFromOldArgs(proc);
-}
-
 std::string OldSelectArgs::str() const {
 	auto &select_call = dynamic_cast<const SelectSystemCall&>(*m_call);
 

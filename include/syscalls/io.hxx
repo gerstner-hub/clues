@@ -396,9 +396,7 @@ protected: // functions
 
 	bool check2ndPass(const Tracee&) override;
 
-	friend class item::OldSelectArgs;
-
-	void updateFromOldArgs(const Tracee&);
+	void postSystemCall(const Tracee&) override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
