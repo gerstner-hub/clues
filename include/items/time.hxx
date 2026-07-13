@@ -48,6 +48,42 @@ protected: // data
 	std::optional<struct timespec> m_timespec;
 };
 
+/// TimeSpecParameter which is updated with remaining sleep time on syscall exit.
+/**
+ * This specialization of TimeSpecParameter keeps a separate remaining timeout
+ * member which will be updated on system call exit. It is used for system
+ * calls that update the struct timespec upon system call exit to reflect the
+ * time not slept in timeout operations.
+ **/
+class TimeSpecInOutParameter :
+		public TimeSpecParameter {
+public: // functions
+
+	explicit TimeSpecInOutParameter(
+			const std::string_view short_name,
+			const std::string_view long_name = {}) :
+			TimeSpecParameter{short_name, long_name,
+				ItemType::PARAM_IN_OUT} {
+
+	}
+
+	const std::optional<struct timespec>& remaining() const {
+		return m_remaining;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::optional<struct timespec> m_remaining;
+};
+
 /// Specialization of TimeSpecParameter for "remaining sleep time" out pointers.
 /**
  * This variant of TimeSpecParameter is used for "remaining sleep time"
@@ -109,7 +145,7 @@ protected: // data
 /**
  * This specialization of TimeValParameter keeps a separate remaining timeout
  * member which will be updated on system call exit. It is used for system
- * calls that update the struct timespec upon system call exit to reflect the
+ * calls that update the struct timeval upon system call exit to reflect the
  * time not slept in timeout operations.
  **/
 class TimeValInOutParameter :

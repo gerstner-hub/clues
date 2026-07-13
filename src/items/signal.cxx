@@ -7,11 +7,13 @@
 #include <clues/private/kernel/siginfo.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
+#include <clues/private/kernel/sigset.hxx>
 #include <clues/private/utils.hxx>
 
 // cosmos
 #include <cosmos/formatting.hxx>
 #include <cosmos/proc/signal.hxx>
+#include <cosmos/utils.hxx>
 
 namespace clues::item {
 
@@ -148,39 +150,83 @@ void SigActionParameter::processValue(const Tracee &proc) {
 	}
 }
 
+bool SigSetParameter::usesArgPack() const {
+	return cosmos::in_list(m_call->callNr(), {
+			SystemCallNr::PSELECT6,
+			SystemCallNr::PSELECT6_TIME64
+	});
+}
+
 void SigSetParameter::processValue(const Tracee &proc) {
-	if (proc.isEnterStop() && isOut()) {
+	auto reset_guard = cosmos::DeferGuard{[this]() {
 		m_sigset.reset();
+	}};
+
+	if (proc.isEnterStop() && isOut()) {
 		return;
 	}
 
 	if (!m_sigset) {
-		m_sigset = cosmos::SigSet{};
+		m_sigset.emplace();
 	}
 
 	if (m_call->callNr() == SystemCallNr::SIGPROCMASK) {
 		uint32_t mask;
 		/* legacy i386 sigprocmask() using a 32-bit sigset_t */
 		if (!proc.readStruct(asPtr(), mask)) {
-			m_sigset.reset();
 			return;
 		}
 
 		m_sigset->raw()->__val[0] = mask;
+		reset_guard.disarm();
+	} else if (usesArgPack()) {
+		auto fetch_argpack = [&proc, this](auto &pack) {
+			if (!proc.readStruct(asPtr(), pack))
+				return false;
+
+			ForeignPtr ssp = ForeignPtr{(uintptr_t)pack.sigset_p};
+
+			/* should always be a 64-bit sigset_t in this case */
+			if (!proc.readStruct(ssp, *m_sigset->raw())) {
+				return false;
+			}
+
+			m_sigset_size.emplace(pack.size);
+
+			return true;
+		};
+
+		if (m_call->is32BitEmulationABI()) {
+			clues::sigset_argpack32 pack;
+			if (!fetch_argpack(pack))
+				return;
+		} else {
+			clues::sigset_argpack pack;
+			if (!fetch_argpack(pack))
+				return;
+		}
 	} else {
 		if (!proc.readStruct(asPtr(), *m_sigset->raw())) {
-			m_sigset.reset();
 			return;
 		}
 	}
+
+	reset_guard.disarm();
 }
 
 std::string SigSetParameter::str() const {
-	if (m_sigset) {
-		return format::signal_set(*m_sigset);
-	} else {
-		return "NULL";
+	if (!m_sigset) {
+		return formatBadPointer();
 	}
+
+	auto ret = format::signal_set(*m_sigset);
+
+	if (usesArgPack()) {
+		ret = std::format("{{sigmask={}, sigsetsize={}}}",
+			ret, *m_sigset_size);
+	}
+
+	return ret;
 }
 
 std::string SigInfo::str() const {

@@ -122,9 +122,16 @@ protected: // functions
 
 	void processValue(const Tracee &proc) override;
 
+	bool usesArgPack() const;
+
 protected: // data
 
 	std::optional<cosmos::SigSet> m_sigset;
+	/*
+	 * used for pselect6() where sigset and its size are combined in a
+	 * struct "argument pack".
+	 */
+	std::optional<size_t> m_sigset_size;
 };
 
 /// Signal information struct.

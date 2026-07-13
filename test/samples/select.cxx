@@ -1,9 +1,12 @@
 #include <sys/select.h>
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <signal.h>
 
 #include "utils/syscall32.hxx"
 #include <clues/private/kernel/select.hxx>
+#include <clues/private/kernel/sigset.hxx>
+#include <clues/private/kernel/time.hxx>
 
 int main() {
 	int fd[2];
@@ -47,5 +50,30 @@ int main() {
 	syscall(SYS_select, &args);
 #else
 	syscall(SYS_select, writefd + 1, &readset, &writeset, NULL, &tv);
+#endif
+
+	struct timespec ts;
+	ts.tv_nsec = 100;
+	ts.tv_sec = 50;
+	FD_SET(readfd, &readset);
+	FD_SET(writefd, &writeset);
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set, SIGINT);
+	sigaddset(&set, SIGQUIT);
+	pselect(writefd + 1, &readset, &writeset, NULL, &ts, &set);
+
+#ifdef SYS_pselect6_time64
+	/* try the 64-bit timespec pselect as well */
+	clues::timespec64 ts64;
+	ts64.tv_sec = 50;
+	ts64.tv_nsec = 100;
+	FD_SET(readfd, &readset);
+	FD_SET(writefd, &writeset);
+	clues::sigset_argpack pack;
+	pack.sigset_p = &set;
+	pack.size = 8;
+	syscall(SYS_pselect6_time64, writefd + 1, &readset, &writeset, NULL,
+			&ts64, &pack);
 #endif
 }

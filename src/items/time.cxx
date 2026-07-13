@@ -41,7 +41,8 @@ bool TimeSpecParameter::needTime32Conversion() const {
 	return cosmos::in_list(m_call->callNr(), {
 			SystemCallNr::CLOCK_NANOSLEEP,
 			SystemCallNr::FUTEX,
-			SystemCallNr::NANOSLEEP
+			SystemCallNr::NANOSLEEP,
+			SystemCallNr::PSELECT6
 	});
 }
 
@@ -71,6 +72,27 @@ std::string TimeSpecParameter::str() const {
 	}
 
 	return format::timespec(*m_timespec);
+}
+
+void TimeSpecInOutParameter::processValue(const Tracee &proc) {
+	m_remaining.reset();
+	TimeSpecParameter::processValue(proc);
+}
+
+void TimeSpecInOutParameter::updateData(const Tracee &proc) {
+	fetch(proc, m_remaining);
+}
+
+std::string TimeSpecInOutParameter::str() const {
+	auto ret = TimeSpecParameter::str();
+
+	if (!m_timespec || !m_remaining) {
+		return ret;
+	}
+
+	ret += std::format(" → left: {}", format::timespec(*m_remaining));
+
+	return ret;
 }
 
 std::string RemainingTimeSpec::str() const {
@@ -130,7 +152,7 @@ bool TimeValParameter::needTime32Conversion() const {
 	/* now we need to check which system call we're on */
 	return cosmos::in_list(m_call->callNr(), {
 		SystemCallNr::SELECT,
-		SystemCallNr::NEWSELECT,
+		SystemCallNr::NEWSELECT
 	});
 }
 

@@ -8,6 +8,7 @@
 // clues
 #include <clues/private/kernel/time.hxx>
 #include <clues/private/kernel/select.hxx>
+#include <clues/private/kernel/sigset.hxx>
 
 namespace {
 
@@ -39,8 +40,74 @@ void call_newselect(const int sysnr) {
 			&readset, &writeset, nullptr, &tv);
 }
 
-void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
-		bool is_old_select=false) {
+template <class TIMESPEC=struct timespec>
+void call_pselect(const int sysnr=SYS_pselect6) {
+	int fd[2];
+	if (pipe(fd) < 0) {
+		return;
+	}
+
+	int readfd = fd[0];
+	int writefd = fd[1];
+	writefd = dup2(writefd, 1023);
+
+	fd_set readset, writeset;
+
+	FD_ZERO(&readset);
+	FD_ZERO(&writeset);
+
+	FD_SET(readfd, &readset);
+	FD_SET(writefd, &writeset);
+
+	TIMESPEC ts;
+	ts.tv_sec = 50;
+	ts.tv_nsec = 100;
+	sigset_t mask;
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGQUIT);
+	sigaddset(&mask, SIGINT);
+	clues::sigset_argpack pack;
+	pack.sigset_p = &mask;
+	pack.size = 8;
+	syscall(sysnr, writefd + 1, &readset, &writeset, nullptr, &ts, &pack);
+}
+
+#ifdef TEST_I386_EMU
+template <class TIMESPEC=struct timespec>
+void call_pselect32(const SyscallNr32 nr = SyscallNr32::PSELECT6) {
+	int fd[2];
+	if (pipe(fd) < 0) {
+		return;
+	}
+
+	int readfd = fd[0];
+	int writefd = fd[1];
+	writefd = dup2(writefd, 1023);
+
+	auto readset = alloc_struct32<fd_set>();
+	auto writeset = alloc_struct32<fd_set>();;
+
+	FD_SET(readfd, readset);
+	FD_SET(writefd, writeset);
+
+	auto ts32 = alloc_struct32<TIMESPEC>();
+	ts32->tv_sec = 50;
+	ts32->tv_nsec = 100;
+
+	auto ss = alloc_struct32<sigset_t>();
+	sigemptyset(ss);
+	sigaddset(ss, SIGINT);
+	sigaddset(ss, SIGQUIT);
+
+	auto pack = alloc_struct32<clues::sigset_argpack32>();
+	pack->sigset_p = (uint32_t)(uintptr_t)ss;
+	pack->size = 8;
+
+	syscall32(nr, writefd + 1, readset, writeset, NULL, ts32, pack);
+}
+#endif
+
+void verify_select_base_entry(const clues::SelectSystemCallBase &sc, bool &good) {
 	VERIFY(sc.nfds.value() == 1024);
 	VERIFY(sc.readfds.requestSet().has_value());
 	VERIFY(!sc.readfds.eventSet().has_value());
@@ -48,7 +115,6 @@ void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
 	VERIFY(!sc.writefds.eventSet().has_value());
 	VERIFY(!sc.exceptfds.requestSet().has_value());
 	VERIFY(!sc.exceptfds.eventSet().has_value());
-	VERIFY(sc.old_args.has_value() == is_old_select);
 	const auto &readset = *sc.readfds.requestSet();
 	const auto &writeset = *sc.writefds.requestSet();
 
@@ -57,6 +123,12 @@ void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
 	VERIFY(!writeset.isSet(SECOND_FD));
 	VERIFY(!writeset.isSet(FIRST_FD));
 	VERIFY(writeset.isSet(cosmos::FileNum{1023}));
+}
+
+void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
+		bool is_old_select=false) {
+	verify_select_base_entry(sc, good);
+	VERIFY(sc.old_args.has_value() == is_old_select);
 	VERIFY(sc.timeout.val().has_value());
 	VERIFY(!sc.timeout.remaining().has_value());
 	const auto &tv = *sc.timeout.val();
@@ -64,8 +136,7 @@ void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
 	VERIFY(tv.tv_usec == 100);
 }
 
-void verify_select_exit(const clues::SelectSystemCall &sc, bool &good,
-		bool is_old_select=false) {
+void verify_select_base_exit(const clues::SelectSystemCallBase &sc, bool &good) {
 	VERIFY(sc.hasResultValue());
 	VERIFY(sc.readfds.requestSet().has_value());
 	VERIFY(sc.readfds.eventSet().has_value());
@@ -73,7 +144,6 @@ void verify_select_exit(const clues::SelectSystemCall &sc, bool &good,
 	VERIFY(sc.writefds.eventSet().has_value());
 	VERIFY(!sc.exceptfds.requestSet().has_value());
 	VERIFY(!sc.exceptfds.eventSet().has_value());
-	VERIFY(sc.old_args.has_value() == is_old_select);
 	const auto &readset = *sc.readfds.eventSet();
 	const auto &writeset = *sc.writefds.eventSet();
 
@@ -82,8 +152,34 @@ void verify_select_exit(const clues::SelectSystemCall &sc, bool &good,
 	VERIFY(!writeset.isSet(SECOND_FD));
 	VERIFY(!writeset.isSet(FIRST_FD));
 	VERIFY(writeset.isSet(cosmos::FileNum{1023}));
+}
+
+void verify_select_exit(const clues::SelectSystemCall &sc, bool &good,
+		bool is_old_select=false) {
+	verify_select_base_exit(sc, good);
+	VERIFY(sc.old_args.has_value() == is_old_select);
 
 	VERIFY(sc.timeout.val().has_value());
+	VERIFY(sc.timeout.remaining().has_value());
+}
+
+void verify_pselect_entry(const clues::PSelectSystemCall &sc, bool &good) {
+	verify_select_base_entry(sc, good);
+	VERIFY(sc.timeout.spec().has_value());
+	VERIFY(!sc.timeout.remaining().has_value());
+	const auto &ts = *sc.timeout.spec();
+	VERIFY(ts.tv_sec == 50);
+	VERIFY(ts.tv_nsec == 100);
+	VERIFY(sc.sigmask.sigset().has_value());
+	const auto &set = *sc.sigmask.sigset();
+	VERIFY(set.isSet(cosmos::signal::INTERRUPT));
+	VERIFY(set.isSet(cosmos::signal::QUIT));
+	VERIFY(!set.isSet(cosmos::signal::SEGV));
+}
+
+void verify_pselect_exit(const clues::PSelectSystemCall &sc, bool &good) {
+	verify_select_base_exit(sc, good);
+	VERIFY(sc.timeout.spec().has_value());
 	VERIFY(sc.timeout.remaining().has_value());
 }
 
@@ -972,6 +1068,36 @@ const auto TESTS = std::array{
 		}, "oldselect", {ABI::I386}
 	},
 #endif // SYS_select
+	/* available on all ABIs, but uses 32-bit timespec on I386 */
+	TestSpec{SystemCallNr::PSELECT6, []() {
+			call_pselect<>();
+		}, ENTRY_VERIFY_CB(PSelectSystemCall, {
+			verify_pselect_entry(sc, good);
+		}), EXIT_VERIFY_CB(PSelectSystemCall, {
+			verify_pselect_exit(sc, good);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{7}, []() {
+				call_pselect32<clues::timespec32>();
+			})
+		}
+	},
+#ifdef COSMOS_X86
+	/* variant on I386 using 64-bit timespec */
+	TestSpec{SystemCallNr::PSELECT6_TIME64, []() {
+#ifdef COSMOS_I386
+			call_pselect<clues::timespec64>(SYS_pselect6_time64);
+#endif
+		}, ENTRY_VERIFY_CB(PSelectSystemCall, {
+			verify_pselect_entry(sc, good);
+		}), EXIT_VERIFY_CB(PSelectSystemCall, {
+			verify_pselect_exit(sc, good);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{7}, []() {
+				call_pselect32<clues::timespec64>(SyscallNr32::PSELECT6_TIME64);
+			})
+		}, "", {ABI::I386}
+	},
+#endif
 };
 
 } // end anon ns

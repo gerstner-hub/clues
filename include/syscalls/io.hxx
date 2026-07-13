@@ -5,6 +5,7 @@
 #include <clues/items/fs.hxx>
 #include <clues/items/io.hxx>
 #include <clues/items/time.hxx>
+#include <clues/items/signal.hxx>
 #include <clues/sysnrs/generic.hxx>
 
 namespace clues {
@@ -333,7 +334,37 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
-/// select() system call handling.
+/// Base class for select-based system calls.
+/**
+ * select() and pselect()-style system calls share many parameters and the
+ * return value, thus this base class is used to share code.
+ **/
+struct SelectSystemCallBase :
+		public SystemCall {
+	
+	explicit SelectSystemCallBase(const SystemCallNr nr) :
+			SystemCall{nr},
+			nfds{"nfds", "highest numbered fd + 1"},
+			readfds{nfds, "readfds", "readable fd set"},
+			writefds{nfds, "writefds", "writable fd set"},
+			exceptfds{nfds, "exceptfds", "exceptional fd set"},
+			nready{"nready",
+				"number of fds in all set that are ready",
+				ItemType::RETVAL} {
+		setReturnItem(nready);
+		addParameters(nfds, readfds, writefds, exceptfds);
+	}
+
+	item::IntValue nfds;
+	item::FDSet readfds;
+	item::FDSet writefds;
+	item::FDSet exceptfds;
+
+	// return value
+	item::IntValue nready;
+};
+
+/// Traditional select() system call handling.
 /**
  * This type covers the single select() system call on x86_64 and other 64-bit
  * ABIs as well as the "old" and "new" select() on i386. The old select()
@@ -350,20 +381,12 @@ protected: // functions
  *   ABIs.
  **/
 struct SelectSystemCall :
-		public SystemCall {
+		public SelectSystemCallBase {
 
 	explicit SelectSystemCall(const SystemCallNr nr) :
-			SystemCall{nr},
-			nfds{"nfds", "highest numbered fd + 1"},
-			readfds{nfds, "readfds", "readable fd set"},
-			writefds{nfds, "writefds", "writable fd set"},
-			exceptfds{nfds, "exceptfds", "exceptional fd set"},
-			timeout{"timeout", "maximum wait time"},
-			nready{"nready",
-				"number of fds in all set that are ready",
-				ItemType::RETVAL} {
-		setReturnItem(nready);
-		addParameters(nfds, readfds, writefds, exceptfds, timeout);
+			SelectSystemCallBase{nr},
+			timeout{"timeout", "maximum wait time"} {
+		addParameters(timeout);
 	}
 
 	/// Returns whether this is the "old" select() system call on 32-bit ABIs.
@@ -380,15 +403,9 @@ struct SelectSystemCall :
 	 **/
 	bool isOldSelect() const;
 
-	item::IntValue nfds;
-	item::FDSet readfds;
-	item::FDSet writefds;
-	item::FDSet exceptfds;
 	item::TimeValInOutParameter timeout;
 
 	std::optional<item::OldSelectArgs> old_args;
-
-	item::IntValue nready;
 
 protected: // functions
 
@@ -397,6 +414,39 @@ protected: // functions
 	bool check2ndPass(const Tracee&) override;
 
 	void postSystemCall(const Tracee&) override;
+};
+
+/// pselect() system call variant.
+/**
+ * This is very similar to the SelectSystemCall with the following
+ * differences:
+ *
+ * - a TimeSpecParameter is used for the timeout. Although the man page states
+ *   that this would never be updated on syscall exit, the kernel actually
+ *   does it the same way as with regular select().
+ * - an additional SigSetParameter is used to atomically replace the signal
+ *   mask while waiting for a select event. Because more than six system call
+ *   parameters would be needed to pass both the sigset_t* and the size_t for
+ *   the sigset size, a special "argument pack struct" is used in this case to
+ *   pass in both via a single pointer. SigSetParameter handles this
+ *   transparently.
+ * - no "old pselect" exists like for SelectSystemCall, but there is a time64
+ *   variant for old ABIs like I386. These differences are handled
+ *   transparently by the implementation.
+ **/
+struct PSelectSystemCall :
+		public SelectSystemCallBase {
+
+	explicit PSelectSystemCall(const SystemCallNr nr) :
+			SelectSystemCallBase{nr},
+			timeout{"timeout", "maximum wait time"},
+			sigmask{ItemType::PARAM_IN,
+				"sigset_argpack", "wait signal mask argument pack"} {
+		addParameters(timeout, sigmask);
+	}
+
+	item::TimeSpecInOutParameter timeout;
+	item::SigSetParameter sigmask;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
