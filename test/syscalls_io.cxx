@@ -21,6 +21,8 @@ void call_newselect(const int sysnr) {
 
 	int readfd = fd[0];
 	int writefd = fd[1];
+	/* test the highest fdset bit */
+	writefd = dup2(writefd, 1023);
 
 	fd_set readset, writeset;
 
@@ -39,8 +41,7 @@ void call_newselect(const int sysnr) {
 
 void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
 		bool is_old_select=false) {
-	VERIFY(sc.nfds.value() ==
-			cosmos::to_integral(SECOND_FD) + 1);
+	VERIFY(sc.nfds.value() == 1024);
 	VERIFY(sc.readfds.requestSet().has_value());
 	VERIFY(!sc.readfds.eventSet().has_value());
 	VERIFY(sc.writefds.requestSet().has_value());
@@ -53,8 +54,9 @@ void verify_select_entry(const clues::SelectSystemCall &sc, bool &good,
 
 	VERIFY(readset.isSet(FIRST_FD));
 	VERIFY(!readset.isSet(SECOND_FD));
-	VERIFY(writeset.isSet(SECOND_FD));
+	VERIFY(!writeset.isSet(SECOND_FD));
 	VERIFY(!writeset.isSet(FIRST_FD));
+	VERIFY(writeset.isSet(cosmos::FileNum{1023}));
 	VERIFY(sc.timeout.val().has_value());
 	VERIFY(!sc.timeout.remaining().has_value());
 	const auto &tv = *sc.timeout.val();
@@ -77,8 +79,9 @@ void verify_select_exit(const clues::SelectSystemCall &sc, bool &good,
 
 	VERIFY(!readset.isSet(FIRST_FD));
 	VERIFY(!readset.isSet(SECOND_FD));
-	VERIFY(writeset.isSet(SECOND_FD));
+	VERIFY(!writeset.isSet(SECOND_FD));
 	VERIFY(!writeset.isSet(FIRST_FD));
+	VERIFY(writeset.isSet(cosmos::FileNum{1023}));
 
 	VERIFY(sc.timeout.val().has_value());
 	VERIFY(sc.timeout.remaining().has_value());
@@ -858,7 +861,7 @@ const auto TESTS = std::array{
 			verify_select_entry(sc, good);
 		}), EXIT_VERIFY_CB(SelectSystemCall, {
 			verify_select_exit(sc, good);
-		}), IgnoreCalls{1}, {
+		}), IgnoreCalls{2}, {
 		}, "", {ABI::X86_64, ABI::AARCH64}
 	},
 	/* new select on legacy ABIs */
@@ -870,8 +873,8 @@ const auto TESTS = std::array{
 			verify_select_entry(sc, good);
 		}), EXIT_VERIFY_CB(SelectSystemCall, {
 			verify_select_exit(sc, good);
-		}), IgnoreCalls{1}, {
-			I386_CROSS_ABI(IgnoreCalls{4}, []() {
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
 				int fd[2];
 				if (pipe(fd) < 0) {
 					return;
@@ -879,6 +882,7 @@ const auto TESTS = std::array{
 
 				int readfd = fd[0];
 				int writefd = fd[1];
+				writefd = dup2(writefd, 1023);
 
 				auto readset = alloc_struct32<fd_set>();
 				auto writeset = alloc_struct32<fd_set>();;
@@ -907,6 +911,7 @@ const auto TESTS = std::array{
 
 			int readfd = fd[0];
 			int writefd = fd[1];
+			writefd = dup2(writefd, 1023);
 
 			fd_set readset, writeset;
 
@@ -933,8 +938,8 @@ const auto TESTS = std::array{
 			verify_select_entry(sc, good, true);
 		}), EXIT_VERIFY_CB(SelectSystemCall, {
 			verify_select_exit(sc, good, true);
-		}), IgnoreCalls{1}, {
-			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{6}, []() {
 				int fd[2];
 				if (pipe(fd) < 0) {
 					return;
@@ -942,6 +947,7 @@ const auto TESTS = std::array{
 
 				int readfd = fd[0];
 				int writefd = fd[1];
+				writefd = dup2(writefd, 1023);
 
 				auto readset = alloc_struct32<fd_set>();
 				auto writeset = alloc_struct32<fd_set>();;
