@@ -12,6 +12,25 @@
 
 namespace {
 
+using ABI = clues::ABI;
+
+void verify_clock_nanosleep_entry(const clues::ClockNanoSleepSystemCall &sc, bool &good) {
+	VERIFY(sc.clockid.type() == cosmos::ClockType::MONOTONIC);
+	using enum clues::item::ClockNanoSleepFlags::Flag;
+	using Flags = clues::item::ClockNanoSleepFlags::Flags;
+	VERIFY(sc.flags.flags() == Flags{ABSTIME});
+	const auto &sleep_time = *sc.time.spec();
+	VERIFY(sleep_time.tv_sec == 5);
+	VERIFY(sleep_time.tv_nsec == 500);
+}
+
+void verify_clock_nanosleep_exit(const clues::ClockNanoSleepSystemCall &sc, bool &good) {
+	VERIFY(!sc.hasErrorCode());
+	/* remain is unused when TIMER_ABSTIME is passed or
+	 * no EINTR occurred. */
+	VERIFY(!sc.remaining.spec());
+}
+
 const auto TESTS = std::array{
 #ifdef CLUES_HAVE_ALARM
 	TestSpec{SystemCallNr::ALARM, []() {
@@ -52,18 +71,9 @@ const auto TESTS = std::array{
 			 * stuff on 32-bit */
 			syscall(SYS_clock_nanosleep, CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
 		}, ENTRY_VERIFY_CB(ClockNanoSleepSystemCall, {
-			VERIFY(sc.clockid.type() == cosmos::ClockType::MONOTONIC);
-			using enum clues::item::ClockNanoSleepFlags::Flag;
-			using Flags = clues::item::ClockNanoSleepFlags::Flags;
-			VERIFY(sc.flags.flags() == Flags{ABSTIME});
-			const auto &sleep_time = *sc.time.spec();
-			VERIFY(sleep_time.tv_sec == 5);
-			VERIFY(sleep_time.tv_nsec == 500);
+			verify_clock_nanosleep_entry(sc, good);
 		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
-			VERIFY(!sc.hasErrorCode());
-			/* remain is unused when TIMER_ABSTIME is passed or
-			 * no EINTR occurred. */
-			VERIFY(!sc.remaining.spec());
+			verify_clock_nanosleep_exit(sc, good);
 		}), IgnoreCalls{0}, {
 			I386_CROSS_ABI(IgnoreCalls{1}, []() {
 				auto ts32 = alloc_struct32<clues::timespec32>();
@@ -75,7 +85,31 @@ const auto TESTS = std::array{
 						ts32, ts32);
 			})
 		}
-	}, TestSpec{SystemCallNr::CLOSE, []() {
+	},
+#ifdef COSMOS_X86
+	TestSpec{SystemCallNr::CLOCK_NANOSLEEP_TIME64, []() {
+#ifdef COSMOS_I386
+			struct timespec ts;
+			ts.tv_sec = 5;
+			ts.tv_nsec = 500;
+			syscall(SYS_clock_nanosleep_time64, CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
+#endif
+		}, ENTRY_VERIFY_CB(ClockNanoSleepSystemCall, {
+			verify_clock_nanosleep_entry(sc, good);
+		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
+			verify_clock_nanosleep_exit(sc, good);
+		}), IgnoreCalls{},  {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto ts = alloc_struct32<struct timespec>();
+				ts->tv_sec = 5;
+				ts->tv_nsec = 500;
+				syscall32(SyscallNr32::CLOCK_NANOSLEEP_TIME64,
+						CLOCK_MONOTONIC, TIMER_ABSTIME, ts, ts);
+			})
+		}, "", {ABI::I386}
+	},
+#endif
+	TestSpec{SystemCallNr::CLOSE, []() {
 			close(2);
 		}, ENTRY_VERIFY_CB(CloseSystemCall, {
 			VERIFY(sc.fd.fd() == cosmos::FileNum{2});
@@ -256,7 +290,7 @@ const auto TESTS = std::array{
 		}), IgnoreCalls{0}, {
 		},
 		"",
-		{clues::ABI::X86_64, clues::ABI::AARCH64}
+		{ABI::X86_64, ABI::AARCH64}
 	}, TestSpec{SystemCallNr::MMAP, []() {
 #ifdef COSMOS_I386
 			clues::mmap_arg_struct args;
@@ -308,7 +342,7 @@ const auto TESTS = std::array{
 			})
 		},
 		"legacy",
-		{clues::ABI::I386}
+		{ABI::I386}
 	}, TestSpec{SystemCallNr::MMAP2, []() {
 #ifdef COSMOS_I386
 			syscall(SYS_mmap2, nullptr, 1234,
@@ -338,7 +372,7 @@ const auto TESTS = std::array{
 			})
 		},
 		"",
-		{clues::ABI::I386}
+		{ABI::I386}
 	}, TestSpec{SystemCallNr::MPROTECT, []() {
 			auto mem = mmap(nullptr, 1024, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 			mprotect(mem, 1024, PROT_READ|PROT_WRITE);

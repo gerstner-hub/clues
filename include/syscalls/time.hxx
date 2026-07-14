@@ -29,8 +29,8 @@ struct CLUES_API NanoSleepSystemCall :
 struct CLUES_API ClockNanoSleepSystemCall :
 		public SystemCall {
 
-	ClockNanoSleepSystemCall() :
-			SystemCall{SystemCallNr::CLOCK_NANOSLEEP},
+	ClockNanoSleepSystemCall(const SystemCallNr nr = SystemCallNr::CLOCK_NANOSLEEP) :
+			SystemCall{nr},
 			time{"time", "requested sleep time"},
 			remaining{"rem", "remaining sleep time"} {
 		setReturnItem(result);

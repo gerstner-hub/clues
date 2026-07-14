@@ -112,8 +112,11 @@ const std::vector<TestSpec> TEST_SPECS{
 	TestSpec{{}, "break", {
 			R"(break\(req_addr=0x4711\) = {addr})"
 	}, "brk()"},
-	TestSpec{{"nanosleep", "0", "500"}, "clock_nanosleep", {
+	TestSpec{{"nanosleep", "0", "500"}, "clock_nanosleep,clock_nanosleep_time64", {
 			R"(clock_nanosleep\(clockid=CLOCK_MONOTONIC, flags=TIMER_ABSTIME, time=\{{decimal}s, {decimal}ns\}, rem={addr}\) = 0)"
+#ifdef CLUES_I386
+			R"(clock_nanosleep_time64\(clockid=CLOCK_MONOTONIC, flags=TIMER_ABSTIME, time=\{{decimal}s, {decimal}ns\}, rem=0xffe10a50\) = 0 \(success\))"
+#endif
 	}},
 	TestSpec{{"nanosleep", "0", "500"}, "nanosleep", {
 			R"(nanosleep\(req_time=\{{decimal}s, {decimal}ns\}, rem_time={addr}\) = 0)"

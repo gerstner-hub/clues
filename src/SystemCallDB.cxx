@@ -47,7 +47,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::ARCH_PRCTL:      return new_sys<ArchPrctlSystemCall>();
 #endif
 	case SystemCallNr::BRK:             return new_sys<BreakSystemCall>();
-	case SystemCallNr::CLOCK_NANOSLEEP: return new_sys<ClockNanoSleepSystemCall>();
+	case SystemCallNr::CLOCK_NANOSLEEP: [[ fallthrough ]];
+	case SystemCallNr::CLOCK_NANOSLEEP_TIME64: return new_sys<ClockNanoSleepSystemCall>(nr);
 	case SystemCallNr::CLONE:           return new_sys<CloneSystemCall>();
 	case SystemCallNr::CLONE3:          return new_sys<Clone3SystemCall>();
 	case SystemCallNr::CLOSE:           return new_sys<CloseSystemCall>();

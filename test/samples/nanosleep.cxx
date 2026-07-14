@@ -8,8 +8,10 @@
 #include <utils/types.hxx>
 
 void clock_sleep(struct timespec ts) {
-
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
+#ifdef SYS_clock_nanosleep_time64
+	syscall(SYS_clock_nanosleep_time64, CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
+#endif
 }
 
 void nano_sleep(struct timespec ts) {
