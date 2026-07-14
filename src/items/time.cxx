@@ -15,6 +15,9 @@
 
 namespace clues::item {
 
+static_assert(sizeof(struct timespec) == 16, "unexpected struct timespec size");
+static_assert(sizeof(struct timeval) == 16, "unexpected struct timespec size");
+
 void TimeSpecParameter::processValue(const Tracee &proc) {
 	if (this->isOut())
 		m_timespec.reset();
@@ -33,7 +36,7 @@ bool TimeSpecParameter::needTime32Conversion() const {
 	 * currently we only cover 32-bit emulation binaries on X86-64.
 	 */
 
-	if (!m_call->is32BitEmulationABI()) {
+	if (!m_call->is32BitEmulationABI() && m_call->abi() != ABI::I386) {
 		return false;
 	}
 
@@ -145,14 +148,15 @@ bool TimeValParameter::needTime32Conversion() const {
 	 * currently we only cover 32-bit emulation binaries on X86-64.
 	 */
 
-	if (!m_call->is32BitEmulationABI()) {
+	if (!m_call->is32BitEmulationABI() && m_call->abi() != ABI::I386) {
 		return false;
 	}
 
 	/* now we need to check which system call we're on */
 	return cosmos::in_list(m_call->callNr(), {
 		SystemCallNr::SELECT,
-		SystemCallNr::NEWSELECT
+		SystemCallNr::NEWSELECT,
+		SystemCallNr::PSELECT6
 	});
 }
 

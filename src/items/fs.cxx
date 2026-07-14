@@ -247,7 +247,7 @@ bool StatParameter::isRegularStat() const {
 
 void StatParameter::updateData(const Tracee &proc) {
 	if (!m_stat) {
-		m_stat = std::make_optional<cosmos::FileStatus>();
+		m_stat.emplace();
 	}
 
 #if defined(COSMOS_X86_64) || defined(COSMOS_AARCH64)
@@ -259,11 +259,10 @@ void StatParameter::updateData(const Tracee &proc) {
 	 */
 	static_assert(sizeof(*m_stat->raw()) == sizeof(stat64));
 #else
-	/*
-	 * on modern 32-bit we can still do the same for the stat64 family of
-	 * system calls, but only if the tracer is 32-bit as well...
-	 */
-	static_assert(sizeof(*m_stat->raw()) == sizeof(stat32_64));
+	/* on I386 with TIME_BITS=64 the `struct stat` exposed by glibc does
+	 * not match the kernel structure, because it now contains 64-bit
+	 * time_t, but on the kernel side only statx supports 64-bit times on
+	 * 32-bit ABIs */
 #endif
 
 	auto fetch_and_copy = [this, &proc]<typename STAT>() {

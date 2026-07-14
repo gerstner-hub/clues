@@ -8,6 +8,8 @@
 #include <clues/private/kernel/sigset.hxx>
 #include <clues/private/kernel/time.hxx>
 
+#include <utils/types.hxx>
+
 int main() {
 	int fd[2];
 	if (pipe(fd) < 0) {
@@ -25,7 +27,7 @@ int main() {
 	FD_SET(readfd, &readset);
 	FD_SET(writefd, &writeset);
 
-	struct timeval tv;
+	canon_timeval tv;
 	tv.tv_sec = 50;
 	tv.tv_usec = 100;
 

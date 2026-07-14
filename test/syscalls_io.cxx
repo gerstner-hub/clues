@@ -10,6 +10,9 @@
 #include <clues/private/kernel/select.hxx>
 #include <clues/private/kernel/sigset.hxx>
 
+// test
+#include <utils/types.hxx>
+
 namespace {
 
 using ABI = clues::ABI;
@@ -33,14 +36,14 @@ void call_newselect(const int sysnr) {
 	FD_SET(readfd, &readset);
 	FD_SET(writefd, &writeset);
 
-	struct timeval tv;
+	canon_timeval tv;
 	tv.tv_sec = 50;
 	tv.tv_usec = 100;
 	syscall(sysnr, writefd + 1,
 			&readset, &writeset, nullptr, &tv);
 }
 
-template <class TIMESPEC=struct timespec>
+template <class TIMESPEC=canon_timespec>
 void call_pselect(const int sysnr=SYS_pselect6) {
 	int fd[2];
 	if (pipe(fd) < 0) {
@@ -1017,7 +1020,7 @@ const auto TESTS = std::array{
 			FD_SET(readfd, &readset);
 			FD_SET(writefd, &writeset);
 
-			struct timeval tv;
+			canon_timeval tv;
 			tv.tv_sec = 50;
 			tv.tv_usec = 100;
 			clues::select_arg_struct args;

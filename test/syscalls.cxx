@@ -1,5 +1,6 @@
 // test
 #include "utils/syscalls.hxx"
+#include "utils/types.hxx"
 
 // Linux
 #include <sched.h>
@@ -44,7 +45,7 @@ const auto TESTS = std::array{
 			})
 		}
 	}, TestSpec{SystemCallNr::CLOCK_NANOSLEEP, []() {
-			struct timespec ts;
+			canon_timespec ts;
 			ts.tv_sec = 5;
 			ts.tv_nsec = 500;
 			/* avoid using the glibc wrapper, which does extra
@@ -56,7 +57,8 @@ const auto TESTS = std::array{
 			using Flags = clues::item::ClockNanoSleepFlags::Flags;
 			VERIFY(sc.flags.flags() == Flags{ABSTIME});
 			const auto &sleep_time = *sc.time.spec();
-			VERIFY(sleep_time.tv_sec == 5 && sleep_time.tv_nsec == 500);
+			VERIFY(sleep_time.tv_sec == 5);
+			VERIFY(sleep_time.tv_nsec == 500);
 		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
 			VERIFY(!sc.hasErrorCode());
 			/* remain is unused when TIMER_ABSTIME is passed or
@@ -88,7 +90,7 @@ const auto TESTS = std::array{
 	/* TODO cover more operations of futex() */
 	TestSpec{SystemCallNr::FUTEX, []() {
 			uint32_t fux = 123;
-			struct timespec ts;
+			canon_timespec ts;
 			ts.tv_sec = 5;
 			ts.tv_nsec = 500;
 			syscall(SYS_futex, &fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, &ts);
@@ -373,7 +375,7 @@ const auto TESTS = std::array{
 			})
 		}
 	}, TestSpec{SystemCallNr::NANOSLEEP, []() {
-			struct timespec ts;
+			canon_timespec ts;
 			ts.tv_sec = 0;
 			ts.tv_nsec = 500;
 			syscall(SYS_nanosleep, &ts, &ts);
