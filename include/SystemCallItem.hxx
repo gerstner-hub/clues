@@ -197,6 +197,9 @@ protected: // functions
 	/// Sets the system call context this item is a part of.
 	void setSystemCall(const SystemCall &sc) { m_call = &sc; }
 
+	/// Returns whether the current system call context uses 32-bit time_t.
+	bool usesTime32() const;
+
 protected: // data
 
 	/// The system call context this item part of.

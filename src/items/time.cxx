@@ -32,13 +32,9 @@ void TimeSpecParameter::updateData(const Tracee &proc) {
 }
 
 bool TimeSpecParameter::needTime32Conversion() const {
-	/*
-	 * currently we only cover 32-bit emulation binaries on X86-64.
-	 */
-
-	if (!m_call->is32BitEmulationABI() && m_call->abi() != ABI::I386) {
+	if (!usesTime32())
 		return false;
-	}
+
 
 	/* now we need to check which system call we're on */
 	return cosmos::in_list(m_call->callNr(), {
@@ -144,11 +140,8 @@ void TimeValParameter::updateData(const Tracee &proc) {
 }
 
 bool TimeValParameter::needTime32Conversion() const {
-	/*
-	 * currently we only cover 32-bit emulation binaries on X86-64.
-	 */
 
-	if (!m_call->is32BitEmulationABI() && m_call->abi() != ABI::I386) {
+	if (!usesTime32()) {
 		return false;
 	}
 
