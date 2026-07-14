@@ -4,10 +4,12 @@
 #include <cosmos/compiler.hxx>
 
 int main() {
+#ifdef COSMOS_X86
 	syscall(SYS_afs_syscall);
 	syscall(SYS_putpmsg);
 	syscall(SYS_getpmsg);
 	syscall(SYS_vserver);
+#endif
 #ifdef COSMOS_I386
 	syscall(SYS_break);
 	syscall(SYS_ftime);

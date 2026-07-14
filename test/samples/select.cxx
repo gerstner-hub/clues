@@ -50,7 +50,7 @@ int main() {
 	tv.tv_usec = 100;
 
 	syscall(SYS_select, &args);
-#else
+#elif defined(SYS_select)
 	syscall(SYS_select, writefd + 1, &readset, &writeset, NULL, &tv);
 #endif
 
