@@ -78,13 +78,15 @@ struct CLUES_API SetRobustListSystemCall :
 
 /// futex() system call with context-sensitive parameters and return values.
 /**
- * This is an `ioctl()` style system call or high complexity.
+ * This is an `ioctl()` style system call of high complexity.
+ *
+ * This class also covers futex_time64() on 32-bit ABIs.
  **/
 struct CLUES_API FutexSystemCall :
 		public SystemCall {
 
-	FutexSystemCall() :
-			SystemCall{SystemCallNr::FUTEX},
+	explicit FutexSystemCall(const SystemCallNr nr = SystemCallNr::FUTEX) :
+			SystemCall{nr},
 			futex_addr{"addr", "pointer to futex word"},
 			result{item::SuccessResult{}} {
 		/*

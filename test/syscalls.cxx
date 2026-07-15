@@ -31,6 +31,20 @@ void verify_clock_nanosleep_exit(const clues::ClockNanoSleepSystemCall &sc, bool
 	VERIFY(!sc.remaining.spec());
 }
 
+void verify_futex_exit(const clues::FutexSystemCall &sc, bool &good) {
+	using FuxOp = clues::item::FutexOperation;
+	VERIFY(sc.operation.command() == FuxOp::Command::WAIT);
+	using enum FuxOp::Flag;
+	using Flags = FuxOp::Flags;
+	VERIFY(sc.operation.flags() == Flags{REALTIME});
+	VERIFY(sc.value->value() == 1);
+	VERIFY(sc.timeout.has_value() == 1);
+	VERIFY(sc.timeout.has_value() == 1);
+	const auto &ts = *sc.timeout->spec();
+	VERIFY(ts.tv_sec == 5);
+	VERIFY(ts.tv_nsec == 500);
+}
+
 const auto TESTS = std::array{
 #ifdef CLUES_HAVE_ALARM
 	TestSpec{SystemCallNr::ALARM, []() {
@@ -98,7 +112,7 @@ const auto TESTS = std::array{
 			verify_clock_nanosleep_entry(sc, good);
 		}), EXIT_VERIFY_CB(ClockNanoSleepSystemCall, {
 			verify_clock_nanosleep_exit(sc, good);
-		}), IgnoreCalls{},  {
+		}), IgnoreCalls{}, {
 			I386_CROSS_ABI(IgnoreCalls{1}, []() {
 				auto ts = alloc_struct32<struct timespec>();
 				ts->tv_sec = 5;
@@ -129,17 +143,7 @@ const auto TESTS = std::array{
 			ts.tv_nsec = 500;
 			syscall(SYS_futex, &fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, &ts);
 		}, ENTRY_VERIFY_CB(FutexSystemCall, {
-			using FuxOp = clues::item::FutexOperation;
-			VERIFY(sc.operation.command() == FuxOp::Command::WAIT);
-			using enum FuxOp::Flag;
-			using Flags = FuxOp::Flags;
-			VERIFY(sc.operation.flags() == Flags{REALTIME});
-			VERIFY(sc.value->value() == 1);
-			VERIFY(sc.timeout.has_value() == 1);
-			VERIFY(sc.timeout.has_value() == 1);
-			const auto &ts = *sc.timeout->spec();
-			VERIFY(ts.tv_sec == 5);
-			VERIFY(ts.tv_nsec == 500);
+			verify_futex_exit(sc, good);
 		}), EXIT_VERIFY_CB(FutexSystemCall, {
 			/* contrary to what the man page says, CLOCK_REALTIME
 			 * is _not_ supported (or not anymore) with
@@ -154,7 +158,36 @@ const auto TESTS = std::array{
 				syscall32(SyscallNr32::FUTEX, fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, ts);
 			})
 		},
-	}, TestSpec{SystemCallNr::GETRLIMIT, []() {
+	},
+#ifdef COSMOS_X86
+	TestSpec{SystemCallNr::FUTEX_TIME64, []() {
+#ifdef COSMOS_I386
+			uint32_t fux = 123;
+			struct timespec ts;
+			ts.tv_sec = 5;
+			ts.tv_nsec = 500;
+			syscall(SYS_futex_time64, &fux, FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, &ts);
+#endif
+		}, ENTRY_VERIFY_CB(FutexSystemCall, {
+			verify_futex_exit(sc, good);
+		}), EXIT_VERIFY_CB(FutexSystemCall, {
+			/* contrary to what the man page says, CLOCK_REALTIME
+			 * is _not_ supported (or not anymore) with
+			 * FUTEX_WAIT. Thus is returns ENOSYS. */
+			VERIFY(sc.hasErrorCode());
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				auto fux = alloc_struct32<uint32_t>();
+				auto ts = alloc_struct32<struct timespec>();
+				ts->tv_sec = 5;
+				ts->tv_nsec = 500;
+				syscall32(SyscallNr32::FUTEX_TIME64, fux,
+						FUTEX_WAIT|FUTEX_CLOCK_REALTIME, 1, ts);
+			})
+		}, "", {ABI::I386}
+	},
+#endif
+	TestSpec{SystemCallNr::GETRLIMIT, []() {
 			struct rlimit lim;
 			syscall(SYS_getrlimit, RLIMIT_CORE, &lim);
 		}, ENTRY_VERIFY_CB(GetRlimitSystemCall, {

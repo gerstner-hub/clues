@@ -184,9 +184,12 @@ const std::vector<TestSpec> TEST_SPECS{
 			R"(fcntl(64)?\(fd=[0-9]+, op=F_ADD_SEALS, flags=0x2 \(F_SEAL_SHRINK\)\) = 0)",
 			R"(fcntl(64)?\(fd=[0-9]+, op=F_GET_SEALS\) = 0x2)",
 	}},
-	TestSpec{{}, "futex", {
-		R"(futex\(addr=0x[0-9a-f]+, op=0x1 \(FUTEX_WAKE\), nwakeup=[0-9]+\) = 0)",
-		R"(futex\(addr=0x[0-9a-f]+, op=0x100 \(FUTEX_WAIT\|FUTEX_CLOCK_REALTIME\), value=[0-9]+, timeout=\{[0-9]+s, [0-9]+ns\}\) = [0-9]+)"
+	TestSpec{"futex", "futex,futex_time64", {
+		R"(futex\(addr={addr}, op=0x1 \(FUTEX_WAKE\), nwakeup=[0-9]+\) = 0)",
+		R"(futex\(addr={addr}, op=0x100 \(FUTEX_WAIT\|FUTEX_CLOCK_REALTIME\), value=[0-9]+, timeout=\{[0-9]+s, [0-9]+ns\}\) = [0-9]+)",
+#ifdef COSMOS_I386
+		R"(futex_time64\(addr={addr}, op=0x80 \(FUTEX_WAIT|FUTEX_PRIVATE_FLAG\), value=1, timeout=\{1s, 100ns\}\) = 11 \(EAGAIN\) \(errno\))",
+#endif
 		/* TODO: cover more futex variants */
 	}},
 #ifdef CLUES_HAVE_LEGACY_GETDENTS

@@ -5,6 +5,9 @@
 #include <time.h>
 #include <signal.h>
 
+// test
+#include <utils/types.hxx>
+
 namespace {
 
 long futex(uint32_t *uaddr, int op, uint32_t val, const struct timespec *to = nullptr, uint32_t *uaddr2 = nullptr, uint32_t val3 = 0) {
@@ -40,6 +43,9 @@ int main() {
 	futex(&myfux, FUTEX_UNLOCK_PI, 0);
 	futex(&myfux, FUTEX_CMP_REQUEUE_PI, 10, 5, &myfux2, 200);
 	futex(&myfux, FUTEX_WAIT_REQUEUE_PI, 10, &ts, &myfux2);
+#ifdef SYS_futex_time64
+	syscall(SYS_futex_time64, &myfux, FUTEX_WAIT|FUTEX_PRIVATE_FLAG, 1, &ts);
+#endif
 
 	struct robust_list_head *rlist;
 	size_t rlist_size;

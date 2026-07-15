@@ -64,7 +64,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::FSTAT64:         return new_sys<FstatSystemCall>(nr);
 	case SystemCallNr::FSTATAT64:       [[fallthrough]];
 	case SystemCallNr::NEWFSTATAT:      return new_sys<FstatAtSystemCall>(nr);
-	case SystemCallNr::FUTEX:           return new_sys<FutexSystemCall>();
+	case SystemCallNr::FUTEX:           [[fallthrough]];
+	case SystemCallNr::FUTEX_TIME64:    return new_sys<FutexSystemCall>(nr);
 	case SystemCallNr::GETDENTS:        [[fallthrough]];
 	case SystemCallNr::GETDENTS64:      return new_sys<GetDentsSystemCall>(nr);
 	case SystemCallNr::GETUID:          [[fallthrough]];
