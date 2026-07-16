@@ -17,9 +17,9 @@ struct WriteSystemCall :
 	explicit WriteSystemCall(const SystemCallNr nr = SystemCallNr::WRITE) :
 			SystemCall{nr},
 			fd{},
-			buf{count, ItemType::PARAM_IN, "buf", "source buffer"},
-			count{"count", "buffer length"},
-			written{"bytes", "bytes written", ItemType::RETVAL} {
+			buf{count, ItemCfg{ItemType::PARAM_IN, "buf", "source buffer"}},
+			count{make_item_cfg("count", "buffer length")},
+			written{ItemCfg{ItemType::RETVAL, "bytes", "bytes written"}} {
 		setReturnItem(written);
 		setParameters(fd, buf, count);
 	}
@@ -35,9 +35,9 @@ struct ReadSystemCall :
 	explicit ReadSystemCall(const SystemCallNr nr = SystemCallNr::READ) :
 			SystemCall{nr},
 			fd{},
-			buf{read, ItemType::PARAM_OUT, "buf", "target buffer"},
-			count{"count", "buffer length"},
-			read{"bytes", "bytes read", ItemType::RETVAL} {
+			buf{read, ItemCfg{ItemType::PARAM_OUT, "buf", "target buffer"}},
+			count{make_item_cfg("count", "buffer length")},
+			read{ItemCfg{ItemType::RETVAL, "bytes", "bytes read"}} {
 		setReturnItem(read);
 		setParameters(fd, buf, count);
 	}
@@ -56,8 +56,8 @@ struct ReadVSystemCall :
 			SystemCall{nr},
 			fd{},
 			iov{iov_count, read},
-			iov_count{"iovcnt", "number of struct iovec*"},
-			read{"bytes", "bytes read", ItemType::RETVAL} {
+			iov_count{make_item_cfg("iovcnt", "number of struct iovec*")},
+			read{ItemCfg{ItemType::RETVAL, "bytes", "bytes read"}} {
 		setReturnItem(read);
 		setParameters(fd, iov, iov_count);
 	}
@@ -76,8 +76,8 @@ struct WriteVSystemCall :
 			SystemCall{nr},
        			fd{},
 			iov{iov_count},
-			iov_count{"iovcnt", "number of struct iovec*"},
-			written{"bytes", "bytes written", ItemType::RETVAL} {
+			iov_count{make_item_cfg("iovcnt", "number of struct iovec*")},
+			written{ItemCfg{ItemType::RETVAL, "bytes", "bytes written"}} {
 		setReturnItem(written);
 		setParameters(fd, iov, iov_count);
 	}
@@ -96,7 +96,7 @@ struct PRead64SystemCall :
 		public ReadSystemCall {
 	PRead64SystemCall() :
 			ReadSystemCall{SystemCallNr::PREAD64},
-       			offset{"offset", "read offset"} {
+       			offset{make_item_cfg("offset", "read offset")} {
 		addParameters(offset);
 	}
 
@@ -111,7 +111,7 @@ struct PWrite64SystemCall :
 		public WriteSystemCall {
 	PWrite64SystemCall() :
 			WriteSystemCall{SystemCallNr::PWRITE64},
-       			offset{"offset", "write offset"} {
+       			offset{make_item_cfg("offset", "write offset")} {
 		addParameters(offset);
 	}
 
@@ -206,7 +206,7 @@ struct IoCtlSystemCall :
 
 	IoCtlSystemCall() :
 			SystemCall{SystemCallNr::IOCTL},
-			request{"request", "ioctl request number"} {
+			request{make_item_cfg("request", "ioctl request number")} {
 		setReturnItem(result);
 		setParameters(fd, request);
 	}
@@ -262,8 +262,8 @@ struct LSeekSystemCall :
 
 	explicit LSeekSystemCall() :
 			SystemCall{SystemCallNr::LSEEK},
-			offset{"offset", "seek offset"},
-			new_offset{"offset", "resulting offset", ItemType::RETVAL} {
+			offset{make_item_cfg("offset", "seek offset")},
+			new_offset{ItemCfg{ItemType::RETVAL, "offset", "resulting offset"}} {
 		setParameters(fd, offset, whence);
 		setReturnItem(new_offset);
 	}
@@ -287,7 +287,7 @@ struct LLSeekSystemCall :
 	explicit LLSeekSystemCall() :
 			SystemCall{SystemCallNr::LLSEEK},
 			offset{item::CombinedOffsetValue::HIGH_THEN_LOW},
-			new_offset{"result", "new 64-bit offset"} {
+			new_offset{make_item_cfg("result", "new 64-bit offset")} {
 		setParameters(fd, offset, offset.lowerPar(), new_offset, whence);
 		setReturnItem(result);
 	}
@@ -304,8 +304,8 @@ struct EventFDSystemCall :
 
 	explicit EventFDSystemCall(const SystemCallNr nr = SystemCallNr::EVENTFD) :
 			SystemCall{nr},
-			initval{"initval", "initial value"},
-			new_fd{ItemType::RETVAL} {
+			initval{make_item_cfg("initval", "initial value")},
+			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
 		setParameters(initval);
 		setReturnItem(new_fd);
 	}
@@ -341,16 +341,15 @@ protected: // functions
  **/
 struct SelectSystemCallBase :
 		public SystemCall {
-	
+
 	explicit SelectSystemCallBase(const SystemCallNr nr) :
 			SystemCall{nr},
-			nfds{"nfds", "highest numbered fd + 1"},
-			readfds{nfds, "readfds", "readable fd set"},
-			writefds{nfds, "writefds", "writable fd set"},
-			exceptfds{nfds, "exceptfds", "exceptional fd set"},
-			nready{"nready",
-				"number of fds in all set that are ready",
-				ItemType::RETVAL} {
+			nfds{make_item_cfg("nfds", "highest numbered fd + 1")},
+			readfds{nfds, make_item_cfg("readfds", "readable fd set")},
+			writefds{nfds, make_item_cfg("writefds", "writable fd set")},
+			exceptfds{nfds, make_item_cfg("exceptfds", "exceptional fd set")},
+			nready{ItemCfg{ItemType::RETVAL,
+				"nready", "number of fds in all set that are ready"}} {
 		setReturnItem(nready);
 		addParameters(nfds, readfds, writefds, exceptfds);
 	}
@@ -385,7 +384,7 @@ struct SelectSystemCall :
 
 	explicit SelectSystemCall(const SystemCallNr nr) :
 			SelectSystemCallBase{nr},
-			timeout{"timeout", "maximum wait time"} {
+			timeout{make_item_cfg("timeout", "maximum wait time")} {
 		addParameters(timeout);
 	}
 
@@ -439,9 +438,10 @@ struct PSelectSystemCall :
 
 	explicit PSelectSystemCall(const SystemCallNr nr) :
 			SelectSystemCallBase{nr},
-			timeout{"timeout", "maximum wait time"},
-			sigmask{ItemType::PARAM_IN,
-				"sigset_argpack", "wait signal mask argument pack"} {
+			timeout{make_item_cfg("timeout", "maximum wait time")},
+			sigmask{ItemCfg{ItemType::PARAM_IN,
+				"sigset_argpack",
+				"wait signal mask argument pack"}} {
 		addParameters(timeout, sigmask);
 	}
 

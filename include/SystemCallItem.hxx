@@ -2,6 +2,7 @@
 
 // C++
 #include <iosfwd>
+#include <optional>
 #include <string_view>
 #include <type_traits>
 
@@ -25,6 +26,39 @@ enum class ItemType {
 	PARAM_IN_OUT, ///< Both an input and output parameter.
 	RETVAL        ///< A system call return value.
 };
+
+/// Basic configuration info of a SystemCallItem.
+/**
+ * This struct is used for partial overrides of per-class defaults for
+ * parameter names and ItemType. It is supposed to be used with designated
+ * initializers.
+ **/
+struct ItemCfg {
+	std::optional<ItemType> type = {};
+	std::optional<std::string_view> label = {};
+	std::optional<std::string_view> desc = {};
+
+	/// Return an object with new defaults applied to unassigned optionals.
+	/**
+	 * Any members set to std::nullopt will be overriden by the
+	 * corresponding member in `cfg`, if provided. The resulting ItemCfg
+	 * will be returned.
+	 *
+	 * This is useful for more deeply nested specializations of
+	 * SystemCallItem where base classes expect an ItemCfg as well.
+	 **/
+	ItemCfg apply_defaults(const ItemCfg &cfg) const {
+		return ItemCfg{
+			cfg.type ? type.value_or(*cfg.type) : type,
+			cfg.label ? label.value_or(*cfg.label) : label,
+			cfg.desc ? desc.value_or(*cfg.desc) : desc};
+	}
+};
+
+/// Construct an ItemCfg using label and desc.
+inline ItemCfg make_item_cfg(const std::string_view label, const std::string_view desc) {
+	return ItemCfg{.label = label, .desc = desc};
+}
 
 /// Base class for any kind of system call parameter or return value.
 /**
@@ -71,11 +105,11 @@ public: // functions
 	 **/
 	explicit SystemCallItem(
 		const ItemType type,
-		const std::string_view short_name = {},
-		const std::string_view long_name = {}) :
+		const std::string_view label = {},
+		const std::string_view desc = {}) :
 			m_type{type},
-			m_short_name{short_name},
-			m_long_name{long_name}
+			m_label{label},
+			m_desc{desc}
 	{}
 
 	virtual ~SystemCallItem() {}
@@ -93,13 +127,13 @@ public: // functions
 	/// Returns whether the item needs to be updated after the system call is finished.
 	bool needsUpdate() const { return m_type != ItemType::PARAM_IN; }
 
-	/// Returns the friendly short name for this item.
-	std::string_view shortName() const { return m_short_name; }
-	/// Returns the friendly long name for this item, if available, else the short name.
-	std::string_view longName() const {
-		return m_long_name.empty() ? shortName() : m_long_name; }
+	/// Returns the friendly label for this item.
+	std::string_view label() const { return m_label; }
+	/// Returns the friendly description for this item, if available, else the label.
+	std::string_view description() const {
+		return m_desc.empty() ? label() : m_desc; }
 
-	auto hasLongName() const { return !m_long_name.empty(); }
+	auto hasDescription() const { return !m_desc.empty(); }
 
 	/// Returns a human readable string representation of the item.
 	/**
@@ -206,10 +240,10 @@ protected: // data
 	const SystemCall *m_call = nullptr;
 	/// The type of item.
 	const ItemType m_type;
-	/// A human readable short name for the item, should be one word only.
-	std::string_view m_short_name;
-	/// A human readable longer name for the item.
-	std::string_view m_long_name;
+	/// A human readable label for the item, should be one word only.
+	std::string_view m_label;
+	/// A human readable description the item.
+	std::string_view m_desc;
 	/// The raw register value for the item.
 	Word m_val;
 	/// Flags influencing the processing of the item.

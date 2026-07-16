@@ -14,10 +14,12 @@ namespace clues::item {
 class CLUES_API SuccessResult :
 		public ReturnValue {
 public:
-	SuccessResult(
-		const std::string_view short_label = "success",
-		const std::string_view long_label = {}) :
-			ReturnValue{short_label, long_label} {
+	SuccessResult(const ItemCfg &cfg = {}) :
+			ReturnValue{
+				ItemCfg{
+					ItemType::RETVAL,
+					cfg.label.value_or("success"),
+					cfg.desc.value_or("")}} {
 	}
 
 	std::string str() const override;

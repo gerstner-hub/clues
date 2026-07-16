@@ -24,22 +24,22 @@ bool ArchPrctlSystemCall::check2ndPass(const Tracee &) {
 
 	switch (op.operation()) {
 	case SET_CPUID:
-		on_off.emplace("enable");
+		on_off.emplace(ItemCfg{.label = "enable"});
 		addParameters(*on_off);
 		break;
 	case GET_CPUID:
 		result.reset();
-		on_off_ret.emplace("enabled?", "", ItemType::RETVAL);
+		on_off_ret.emplace(ItemCfg{.type = ItemType::RETVAL, .label = "enabled?"});
 		setReturnItem(*on_off_ret);
 		break;
 	case SET_FS: [[fallthrough]];
 	case SET_GS:
-		set_addr.emplace("base");
+		set_addr.emplace(ItemCfg{.label = "base"});
 		addParameters(*set_addr);
 		break;
 	case GET_FS: [[fallthrough]];
 	case GET_GS:
-		get_addr.emplace("*base");
+		get_addr.emplace(ItemCfg{.label = "*base"});
 		get_addr->setBase(Base::HEX);
 		addParameters(*get_addr);
 		break;
@@ -52,7 +52,7 @@ bool ArchPrctlSystemCall::check2ndPass(const Tracee &) {
 #endif
 
 void PrCtlSystemCall::setBoolReturn() {
-	bool_res.emplace("bool", "", ItemType::RETVAL);
+	bool_res.emplace(ItemCfg{ItemType::RETVAL});
 	setReturnItem(*bool_res);
 }
 
@@ -65,7 +65,7 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 	using enum item::ProcessOp::Operation;
 
 	auto set_bool_return = [this]() {
-		bool_res.emplace("bool", "", ItemType::RETVAL);
+		bool_res.emplace(ItemCfg{ItemType::RETVAL});
 		setReturnItem(*bool_res);
 	};
 
@@ -95,17 +95,17 @@ bool PrCtlSystemCall::check2ndPass(const Tracee &) {
 		  case SET_CHILD_SUBREAPER: /* fallthrough */
 		  case SET_NO_NEW_PRIVS: /* fallthrough */
 		  case SET_KEEPCAPS: {
-			bool_setting.emplace("state", "new attribute state");
+			bool_setting.emplace(make_item_cfg("state", "new attribute state"));
 			addParameters(*bool_setting);
 			break;
 		} case GET_SECCOMP: {
-			int_res.emplace("mode", "current seccomp mode",
-					ItemType::RETVAL);
+			int_res.emplace(ItemCfg{ItemType::RETVAL, "mode",
+					"current seccomp mode"});
 			setReturnItem(*int_res);
 			break;
 		} case GET_TIMERSLACK: {
-			int_res.emplace("slack", "current timer slack",
-					ItemType::RETVAL);
+			int_res.emplace(ItemCfg{ItemType::RETVAL, "slack",
+					"current timer slack"});
 			setReturnItem(*int_res);
 			break;
 		} default: {
@@ -231,11 +231,11 @@ bool MemoryMapSystemCall::check2ndPass(const Tracee&) {
 		case ENV_START:
 		case ENV_END:
 		case AUXV:
-			addr.emplace("addr");
+			addr.emplace(ItemCfg{.label = "addr"});
 			addParameters(*addr);
 			break;
 		case MAP_SIZE:
-			reported_size.emplace("size");
+			reported_size.emplace(ItemCfg{.label = "size"});
 			addParameters(*reported_size);
 			break;
 		case EXE_FILE:
@@ -244,8 +244,8 @@ bool MemoryMapSystemCall::check2ndPass(const Tracee&) {
 			break;
 		case MAP:
 			mm_struct.emplace();
-			mm_struct_size.emplace("size",
-					"size of struct prctl_mm_map");
+			mm_struct_size.emplace(make_item_cfg("size",
+					"size of struct prctl_mm_map"));
 			addParameters(*mm_struct, *mm_struct_size);
 			break;
 	}
@@ -340,10 +340,10 @@ bool NameSystemCall::check2ndPass(const Tracee&) {
 
 	switch (op.operation()) {
 		case GET_NAME: {
-			name.emplace("name", "process name", ItemType::PARAM_OUT);
+			name.emplace(ItemCfg{ItemType::PARAM_OUT, "name", "process name"});
 			break;
 		} case SET_NAME: {
-			name.emplace("name", "process name");
+			name.emplace(make_item_cfg("name", "process name"));
 			break;
 		} default: {
 			throw cosmos::RuntimeError{"bad prctl op"};
@@ -364,7 +364,7 @@ bool ParentDeathSignalSystemCall::check2ndPass(const Tracee&) {
 
 	switch (op.operation()) {
 		case GET_PDEATHSIG: {
-			cur_signal.emplace("sig", "pointer to signal (long)");
+			cur_signal.emplace(make_item_cfg("sig", "pointer to signal (long)"));
 			addParameters(*cur_signal);
 			break;
 		} case SET_PDEATHSIG: {
@@ -398,9 +398,10 @@ bool SetSecCompSystemCall::check2ndPass(const Tracee&) {
 
 bool SetSyscallUserDispatchSystemCall::check2ndPass(const Tracee &) {
 	if (mode.mode() == item::SyscallUserDispatchMode::DISPATCH_ON) {
-		offset.emplace("offset", "offset of exempt code area");
-		size.emplace("size", "size of exempt code area");
-		on_off_switch.emplace("switch", "location of a fast on/off switch for the mechanism");
+		offset.emplace(make_item_cfg("offset", "offset of exempt code area"));
+		size.emplace(make_item_cfg("size", "size of exempt code area"));
+		on_off_switch.emplace(ItemCfg{.label = "switch",
+				.desc = "location of a fast on/off switch for the mechanism"});
 		addParameters(*offset, *size, *on_off_switch);
 		return true;
 	}

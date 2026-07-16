@@ -39,11 +39,12 @@ public: // functions
 	 * 	*at() type system call i.e. the special file descriptor
 	 * 	AT_FDCWD can occur.
 	 **/
-	explicit FileDescriptor(const ItemType type = ItemType::PARAM_IN,
-				const AtSemantics at_semantics = AtSemantics{false},
-				const std::string_view short_name = "fd",
-				const std::string_view long_name = "file descriptor") :
-			SystemCallItem{type, short_name, long_name},
+	explicit FileDescriptor(const ItemCfg &cfg = {},
+			const AtSemantics at_semantics = AtSemantics{false}) :
+			SystemCallItem{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("fd"),
+				cfg.desc.value_or("file descriptor")},
 			m_at_semantics{at_semantics} {
 	}
 
@@ -168,10 +169,11 @@ class FileModeParameter :
 		public item::ValueParameter {
 public:
 
-	explicit FileModeParameter(const std::string_view short_desc = "mode",
-			const std::string_view long_desc = "file-mode",
-			const ItemType type = ItemType::PARAM_IN) :
-			item::ValueParameter{type, short_desc, long_desc} {
+	explicit FileModeParameter(const ItemCfg &cfg = {}) :
+			ValueParameter{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("mode"),
+				cfg.desc.value_or("file-mode")} {
 	}
 
 	std::string str() const override;

@@ -352,7 +352,7 @@ std::string TermTracer::formatTraceeInvocation(const std::string &exe,
 }
 
 void TermTracer::printPar(std::ostream &trace, const SystemCallItem &par) const {
-	trace << (m_args.verbose.isSet() ? par.longName() : par.shortName());
+	trace << (m_args.verbose.isSet() ? par.description() : par.label());
 
 	if (m_print_pars) {
 		auto value = par.str();
@@ -433,7 +433,7 @@ void TermTracer::syscallExit(Tracee &tracee, const SystemCall &sc,
 	trace << ") = ";
 
 	if (auto res = sc.result(); res) {
-		trace << res->str() << " (" << (m_args.verbose.isSet() ? res->longName() : res->shortName()) << ")";
+		trace << res->str() << " (" << (m_args.verbose.isSet() ? res->description() : res->label()) << ")";
 	} else {
 		const auto err = *sc.error();
 		trace << err.str() << " (errno)";

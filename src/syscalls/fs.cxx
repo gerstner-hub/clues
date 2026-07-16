@@ -54,10 +54,16 @@ bool FcntlSystemCall::check2ndPass(const Tracee &) {
 	switch (operation.operation()) {
 		case Oper::DUPFD: [[fallthrough]];
 		case Oper::DUPFD_CLOEXEC: {
-			dup_lowest.emplace(ItemType::PARAM_IN, item::AtSemantics{false},
-					"lowest_fd", "lowest dup file descriptor number");
-			ret_dupfd.emplace(ItemType::RETVAL, item::AtSemantics{false},
-					"dupfd", "duplicated file descriptor");
+			dup_lowest.emplace(
+					ItemCfg{
+						.label = "lowest_fd",
+						.desc = "lowest dup file descriptor number"},
+					item::AtSemantics{false});
+			ret_dupfd.emplace(ItemCfg{
+						.type = ItemType::RETVAL,
+						.label = "dupfd",
+						.desc = "duplicated file descriptor"},
+					item::AtSemantics{false});
 			setNewReturnItem(*ret_dupfd);
 			setExtraParameter(*dup_lowest);
 			break;
@@ -130,14 +136,14 @@ bool FcntlSystemCall::check2ndPass(const Tracee &) {
 			setExtraParameter(*dnotify_arg);
 			break;
 		} case Oper::SETPIPE_SZ: {
-			pipe_size_arg.emplace("pipe size", "pipe buffer size");
+			pipe_size_arg.emplace(make_item_cfg("pipe size", "pipe buffer size"));
 			setExtraParameter(*pipe_size_arg);
 			/*
 			 * SET and GET both return the current pipe size
 			 */
 			[[fallthrough]];
 		} case Oper::GETPIPE_SZ: {
-			ret_pipe_size.emplace("pipe size", "pipe buffer size", ItemType::RETVAL);
+			ret_pipe_size.emplace(ItemCfg{ItemType::RETVAL, "pipe size", "pipe buffer size"});
 			setNewReturnItem(*ret_pipe_size);
 			break;
 		} case Oper::ADD_SEALS: {
@@ -256,8 +262,10 @@ FAdviseSystemCall::FAdviseSystemCall(const SystemCallNr nr) :
 
 void FAdviseSystemCall::setupPars64() {
 	m_is_native_64 = true;
-	auto &off = off_variant.emplace<0>(item::OffsetValue{"offset", "start offset of the byte range"});
-	auto &size = size_variant.emplace<0>(item::SizeValue{"size", "size of the byte range"});
+	auto &off = off_variant.emplace<0>(item::OffsetValue{make_item_cfg("offset",
+				"start offset of the byte range")});
+	auto &size = size_variant.emplace<0>(item::SizeValue{make_item_cfg("size",
+				"size of the byte range")});
 	setParameters(fd, off, size, advice);
 }
 
@@ -282,13 +290,16 @@ void FAdviseSystemCall::prepareNewSystemCall() {
 
 			if (size_is_64) {
 				size64 = &size_variant.emplace<1>(
-					item::CombinedOffsetValue{LOW_THEN_HIGH, "size of the byte range"});
+					item::CombinedOffsetValue{LOW_THEN_HIGH,
+						ItemCfg{.desc = "size of the byte range"}});
 			} else {
-				size32 = &size_variant.emplace<0>(item::SizeValue{"size", "size of the byte range"});
+				size32 = &size_variant.emplace<0>(item::SizeValue{make_item_cfg("size",
+							"size of the byte range")});
 			}
 
 			auto &offset64 = off_variant.emplace<1>(
-				item::CombinedOffsetValue{LOW_THEN_HIGH, "start offset of the byte range"});
+				item::CombinedOffsetValue{LOW_THEN_HIGH,
+						ItemCfg{.desc = "start offset of the byte range"}});
 
 			if (size_is_64) {
 				setParameters(fd, offset64.lowerPar(), offset64,
@@ -325,7 +336,7 @@ off_t FAdviseSystemCall::size() const {
 void FStatFSSystemCall::prepareNewSystemCall() {
 	if (callNr() == SystemCallNr::FSTATFS64) {
 		if (!size) {
-			size.emplace("size", "size of struct statfs64");
+			size.emplace(make_item_cfg("size", "size of struct statfs64"));
 			setParameters(fd, *size, buf);
 		}
 	} else {
@@ -339,7 +350,7 @@ void FStatFSSystemCall::prepareNewSystemCall() {
 void StatFSSystemCall::prepareNewSystemCall() {
 	if (callNr() == SystemCallNr::STATFS64) {
 		if (!size) {
-			size.emplace("size", "size of struct statfs64");
+			size.emplace(make_item_cfg("size", "size of struct statfs64"));
 			setParameters(path, *size, buf);
 		}
 	} else {

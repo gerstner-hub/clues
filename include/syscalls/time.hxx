@@ -12,8 +12,8 @@ struct CLUES_API NanoSleepSystemCall :
 
 	NanoSleepSystemCall() :
 			SystemCall{SystemCallNr::NANOSLEEP},
-			req_time{"req_time", "requested time"},
-			rem_time{"rem_time", "remaining time"} {
+			req_time{make_item_cfg("req_time", "requested time")},
+			rem_time{make_item_cfg("rem_time", "remaining time")} {
 		setReturnItem(result);
 		setParameters(req_time, rem_time);
 	}
@@ -31,8 +31,8 @@ struct CLUES_API ClockNanoSleepSystemCall :
 
 	ClockNanoSleepSystemCall(const SystemCallNr nr = SystemCallNr::CLOCK_NANOSLEEP) :
 			SystemCall{nr},
-			time{"time", "requested sleep time"},
-			remaining{"rem", "remaining sleep time"} {
+			time{make_item_cfg("time", "requested sleep time")},
+			remaining{make_item_cfg("rem", "remaining sleep time")} {
 		setReturnItem(result);
 		setParameters(clockid, flags, time, remaining);
 	}

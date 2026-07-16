@@ -389,7 +389,7 @@ class PTracerProcessID :
 public: // functions
 
 	explicit PTracerProcessID() :
-			ProcessID{ItemType::PARAM_IN} {
+			ProcessID{} {
 	}
 
 	std::string str() const override {
@@ -569,7 +569,7 @@ public: // types
 public: // functions
 
 	explicit THPDisableState() :
-			ReturnValue{"config", "THP-disable config"} {
+			ReturnValue{make_item_cfg("config", "THP-disable config")} {
 	}
 
 	Config config() const {
@@ -703,7 +703,9 @@ public: // types
 public: // functions
 
 	explicit TSCAccessPtr() :
-			PointerToScalar<int>{"access", "pointer to timestamp counter access"} {
+			PointerToScalar<int>{ItemCfg{
+				.label = "access", 
+				.desc = "pointer to timestamp counter access"}} {
 	}
 
 	Access access() const {
@@ -766,8 +768,10 @@ class AuxVectorBuffer :
 		public BufferPointer {
 public: // functions
 	explicit AuxVectorBuffer(const SystemCallItem &size_par) :
-			BufferPointer{size_par, ItemType::PARAM_OUT,
-				"auxv", "pointer to auxv buffer", /*is_binary=*/true} {
+			BufferPointer{
+				size_par,
+				ItemCfg{ItemType::PARAM_OUT, "auxv", "pointer to auxv buffer"},
+				/*is_binary=*/true} {
 	}
 
 	const std::optional<cosmos::AuxVector>& vector() const {

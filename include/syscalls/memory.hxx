@@ -15,8 +15,8 @@ struct CLUES_API BreakSystemCall :
 		public SystemCall {
 	BreakSystemCall() :
 			SystemCall{SystemCallNr::BREAK},
-			req_addr{"req_addr", "requested data segment end"},
-			ret_addr{"ret_addr", "actual data segment end", ItemType::RETVAL} {
+			req_addr{make_item_cfg("req_addr", "requested data segment end")},
+			ret_addr{ItemCfg{ItemType::RETVAL, "ret_addr", "actual data segment end"}} {
 		setReturnItem(ret_addr);
 		setParameters(req_addr);
 	}
@@ -52,10 +52,10 @@ public: // functions
 
 	explicit MmapSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-			hint{"hint", "address placement hint"},
-			length{"len", "length"},
-			offset{"offset"},
-			addr{"addr", "mapped memory address", ItemType::RETVAL} {
+			hint{make_item_cfg("hint", "address placement hint")},
+			length{make_item_cfg("len", "length")},
+			offset{ItemCfg{.label = "offset"}},
+			addr{ItemCfg{ItemType::RETVAL, "addr", "mapped memory address"}} {
 		setReturnItem(addr);
 		setParameters(hint, length, protection, flags, fd, offset);
 	}
@@ -94,8 +94,8 @@ struct CLUES_API MunmapSystemCall :
 
 	MunmapSystemCall() :
 			SystemCall{SystemCallNr::MUNMAP},
-			addr{"addr", "address to unmap"},
-			length{"len", "length"} {
+			addr{make_item_cfg("addr", "address to unmap")},
+			length{make_item_cfg("len", "length")} {
 		setReturnItem(result);
 		setParameters(addr, length);
 	}
@@ -113,8 +113,8 @@ struct CLUES_API MprotectSystemCall :
 
 	MprotectSystemCall() :
 			SystemCall{SystemCallNr::MPROTECT},
-			addr{"addr"},
-			length{"length"} {
+			addr{ItemCfg{.label = "addr"}},
+			length{ItemCfg{.label = "length"}} {
 		setReturnItem(result);
 		setParameters(addr, length, protection);
 	}

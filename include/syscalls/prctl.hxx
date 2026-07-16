@@ -405,7 +405,7 @@ class GetChildSubReaperSystemCall :
 public: // functions
 
 	explicit GetChildSubReaperSystemCall() :
-			is_subreaper{"subreaper", "is child-subreaper"} {
+			is_subreaper{make_item_cfg("subreaper", "is child-subreaper")} {
 		addParameters(is_subreaper);
 		setSuccessReturn();
 	}
@@ -426,10 +426,9 @@ public: // functions
 
 	explicit VirtualMemoryAttrSystemCall() :
 			attr{},
-			addr{"addr", "memory area start address"},
-			size{"size", "extent of memory area"},
-			name{item::StringData{"name",
-				"anonymous memory area name"}} {
+			addr{make_item_cfg("addr", "memory area start address")},
+			size{make_item_cfg("size", "extent of memory area")},
+			name{item::StringData{make_item_cfg("name", "anonymous memory area name")}} {
 		addParameters(attr, addr, size, *name);
 		setSuccessReturn();
 	}
@@ -736,7 +735,7 @@ class SetTHPDisableSystemCall :
 public: // functions
 
 	explicit SetTHPDisableSystemCall() :
-			thp_disable{"thp_disable"} {
+			thp_disable{ItemCfg{.label = "thp_disable"}} {
 		setSuccessReturn();
 		addParameters(thp_disable);
 	}
@@ -774,7 +773,7 @@ class GetTIDAddressSystemCall :
 public: // functions
 
 	explicit GetTIDAddressSystemCall() :
-			addr{"addrp", "pointer to int*"} {
+			addr{make_item_cfg("addrp", "pointer to int*")} {
 		setSuccessReturn();
 		addParameters(addr);
 	}
@@ -794,7 +793,7 @@ class SetTimerSlackSystemCall :
 public: // functions
 
 	explicit SetTimerSlackSystemCall() :
-			slack{"slack", "new current timer slack", ItemType::PARAM_IN} {
+			slack{ItemCfg{ItemType::PARAM_IN, "slack", "new current timer slack"}} {
 		setSuccessReturn();
 		addParameters(slack);
 	}
@@ -946,9 +945,9 @@ class GetAuxVectorSystemCall :
 public: // functions
 
 	explicit GetAuxVectorSystemCall() :
-			buffer_size{"size", "size of aux vector buffer"},
+			buffer_size{make_item_cfg("size", "size of aux vector buffer")},
 			aux_vector{buffer_size},
-			filled_size{"bytes", "filled bytes", ItemType::RETVAL} {
+			filled_size{ItemCfg{ItemType::RETVAL, "bytes", "filled bytes"}} {
 		setReturnItem(filled_size);
 		addParameters(aux_vector, buffer_size);
 	}

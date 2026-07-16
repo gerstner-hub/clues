@@ -19,11 +19,9 @@ CLUES_DEFAULT_VISIBILITY_ON;
 class TimeSpecParameter :
 		public PointerValue {
 public: // functions
-	explicit TimeSpecParameter(
-		const std::string_view short_name,
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN) :
-			PointerValue{type, short_name, long_name} {
+	explicit TimeSpecParameter(const ItemCfg &cfg = {}) :
+			PointerValue{cfg.type.value_or(ItemType::PARAM_IN),
+				*cfg.label, cfg.desc.value_or("")} {
 	}
 
 	std::string str() const override;
@@ -59,11 +57,8 @@ class TimeSpecInOutParameter :
 		public TimeSpecParameter {
 public: // functions
 
-	explicit TimeSpecInOutParameter(
-			const std::string_view short_name,
-			const std::string_view long_name = {}) :
-			TimeSpecParameter{short_name, long_name,
-				ItemType::PARAM_IN_OUT} {
+	explicit TimeSpecInOutParameter(const ItemCfg &cfg = {}) :
+			TimeSpecParameter{cfg.apply_defaults(ItemCfg{ItemType::PARAM_IN_OUT})} {
 
 	}
 
@@ -94,11 +89,8 @@ class RemainingTimeSpec :
 		public TimeSpecParameter {
 public: // functions
 
-	explicit RemainingTimeSpec(const std::string_view short_name,
-			const std::string_view long_name) :
-			TimeSpecParameter{short_name,
-				long_name,
-				ItemType::PARAM_OUT} {
+	explicit RemainingTimeSpec(const ItemCfg &cfg = {}) :
+			TimeSpecParameter{cfg.apply_defaults(ItemCfg{ItemType::PARAM_OUT})} {
 	}
 
 	std::string str() const override;
@@ -112,11 +104,9 @@ protected: // functions
 class TimeValParameter :
 		public PointerValue {
 public: // functions
-	explicit TimeValParameter(
-		const std::string_view short_name,
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN) :
-			PointerValue{type, short_name, long_name} {
+	explicit TimeValParameter(const ItemCfg &cfg = {}) :
+			PointerValue{cfg.type.value_or(ItemType::PARAM_IN),
+				*cfg.label, cfg.desc.value_or("")} {
 	}
 
 	std::string str() const override;
@@ -152,12 +142,8 @@ class TimeValInOutParameter :
 		public TimeValParameter {
 public: // functions
 
-	explicit TimeValInOutParameter(
-			const std::string_view short_name,
-			const std::string_view long_name = {}) :
-			TimeValParameter{short_name, long_name,
-				ItemType::PARAM_IN_OUT} {
-
+	explicit TimeValInOutParameter(const ItemCfg &cfg = {}) :
+			TimeValParameter{cfg.apply_defaults(ItemCfg{ItemType::PARAM_IN_OUT})} {
 	}
 
 	const std::optional<struct timeval>& remaining() const {

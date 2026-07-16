@@ -32,8 +32,10 @@ struct CloneSystemCall :
 
 	CloneSystemCall() :
 			SystemCall{SystemCallNr::CLONE},
-			stack{"stack", "stack address"},
-			new_pid{ItemType::RETVAL, "child pid"} {
+			stack{make_item_cfg("stack", "stack address")},
+			new_pid{ItemCfg{
+				.type = ItemType::RETVAL,
+				.desc = "child pid"}} {
 		setReturnItem(new_pid);
 		setParameters(flags, stack);
 	}
@@ -91,8 +93,8 @@ struct Clone3SystemCall :
 		public SystemCall {
 	Clone3SystemCall() :
 			SystemCall{SystemCallNr::CLONE3},
-       			size{"size", "cl_args structure size"},
-			pid{ItemType::RETVAL, "child pid"} {
+       			size{make_item_cfg("size", "cl_args structure size")},
+			pid{ItemCfg{.type = ItemType::RETVAL, .desc = "child pid"}} {
 		setParameters(cl_args, size);
 		setReturnItem(pid);
 	}
@@ -114,7 +116,9 @@ struct ForkSystemCall :
 
 	ForkSystemCall() :
 			SystemCall{SystemCallNr::FORK},
-			pid{ItemType::RETVAL, "child pid"} {
+			pid{ItemCfg{
+				.type = ItemType::RETVAL,
+				.desc = "child pid"}} {
 		setReturnItem(pid);
 	}
 
@@ -126,9 +130,9 @@ struct ExecveSystemCall :
 
 	ExecveSystemCall() :
 			SystemCall{SystemCallNr::EXECVE},
-			pathname{"filename"},
-			argv{"argv", "argument vector"},
-			envp{"envp", "environment block pointer"} {
+			pathname{ItemCfg{.label = "filename"}},
+			argv{make_item_cfg("argv", "argument vector")},
+			envp{make_item_cfg("envp", "environment block pointer")} {
 		setReturnItem(result);
 		setParameters(pathname, argv, envp);
 	}
@@ -144,10 +148,10 @@ struct ExecveAtSystemCall :
 
 	ExecveAtSystemCall() :
 			SystemCall{SystemCallNr::EXECVEAT},
-			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}},
-			pathname{"filename"},
-			argv{"argv", "argument vector"},
-			envp{"envp", "environment block pointer"} {
+			dirfd{{}, item::AtSemantics{true}},
+			pathname{ItemCfg{.label = "filename"}},
+			argv{make_item_cfg("argv", "argument vector")},
+			envp{make_item_cfg("envp", "environment block pointer")} {
 		setReturnItem(result);
 		setParameters(dirfd, pathname, argv, envp, flags);
 	}
@@ -176,7 +180,7 @@ struct GetXIDSystemCall :
 
 	GetXIDSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-			id{ItemType::RETVAL, getShortLabel(), getLongLabel()} {
+			id{ItemCfg{ItemType::RETVAL, getShortLabel(), getLongLabel()}} {
 		setReturnItem(id);
 	}
 
@@ -236,7 +240,7 @@ struct GetPGIDSystemCall :
 		GetXIDSystemCall<item::ProcessGroupID> {
 	explicit GetPGIDSystemCall() :
 			GetXIDSystemCall{SystemCallNr::GETPGID},
-			pid{ItemType::PARAM_IN} {
+			pid{} {
 		setParameters(pid);
 	}
 
@@ -247,7 +251,7 @@ struct GetSIDSystemCall :
 		GetXIDSystemCall<item::SessionID> {
 	explicit GetSIDSystemCall() :
 			GetXIDSystemCall{SystemCallNr::GETSID},
-			pid{ItemType::PARAM_IN} {
+			pid{} {
 		setParameters(pid);
 	}
 
@@ -258,7 +262,7 @@ struct SetSIDSystemCall :
 		public SystemCall {
 	explicit SetSIDSystemCall() :
 			SystemCall{SystemCallNr::SETSID},
-			new_sid{ItemType::RETVAL} {
+			new_sid{ItemCfg{.type = ItemType::RETVAL}} {
 		setReturnItem(new_sid);
 	}
 
@@ -269,8 +273,10 @@ struct Wait4SystemCall :
 		public SystemCall {
 	Wait4SystemCall() :
 			SystemCall{SystemCallNr::WAIT4},
-			pid{ItemType::PARAM_IN, "pid to wait for"},
-			event_pid{ItemType::RETVAL, "pid of child with status change"} {
+			pid{ItemCfg{.desc = "pid to wait for"}},
+			event_pid{ItemCfg{
+				.type = ItemType::RETVAL,
+				.desc = "pid of child with status change"}} {
 		setReturnItem(event_pid);
 		setParameters(pid, wstatus, options, rusage);
 	}
@@ -290,8 +296,10 @@ struct WaitPIDSystemCall :
 
 	WaitPIDSystemCall() :
 			SystemCall{SystemCallNr::WAITPID},
-			pid{ItemType::PARAM_IN, "pid to wait for"},
-			event_pid{ItemType::RETVAL, "pid of child with status change"} {
+			pid{ItemCfg{.desc = "pid to wait for"}},
+			event_pid{ItemCfg{
+				.type = ItemType::RETVAL,
+				.desc = "pid of child with status change"}} {
 		setReturnItem(event_pid);
 		setParameters(pid, wstatus, options);
 	}
@@ -348,8 +356,8 @@ struct PIDFDOpenSystemCall :
 
 	PIDFDOpenSystemCall() :
 			SystemCall{SystemCallNr::PIDFD_OPEN},
-			pid{ItemType::PARAM_IN},
-			new_fd{ItemType::RETVAL} {
+			pid{},
+			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
 		setReturnItem(new_fd);
 		addParameters(pid, flags);
 	}
@@ -369,7 +377,7 @@ struct PIDFDGetFDSystemCall :
 
 	PIDFDGetFDSystemCall() :
 			SystemCall{SystemCallNr::PIDFD_GETFD},
-			new_fd{ItemType::RETVAL} {
+			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
 		setReturnItem(new_fd);
 		setParameters(pidfd, targetfd, flags);
 	}

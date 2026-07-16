@@ -37,7 +37,7 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 	};
 
 	auto setWokenUpReturnValue = [this, setNewReturnItem]() {
-		num_woken_up.emplace("nwokenup", "number of waiters woken up");
+		num_woken_up.emplace(make_item_cfg("nwokenup", "number of waiters woken up"));
 		setNewReturnItem(*num_woken_up);
 	};
 
@@ -46,22 +46,22 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 	switch (command) {
 	case WAIT: [[fallthrough]];
 	case WAIT_BITSET:
-		value.emplace("value");
-		timeout.emplace("timeout");
+		value.emplace(ItemCfg{.label = "value"});
+		timeout.emplace(ItemCfg{.label = "timeout"});
 		if (command == WAIT) {
 			addParameters(*value, *timeout);
 		} else {
-			bitset.emplace("bitset");
+			bitset.emplace(ItemCfg{.label = "bitset"});
 			addParameters(*value, *timeout, item::unused, *bitset);
 		}
 		break;
 	case WAKE: [[fallthrough]];
 	case WAKE_BITSET:
-		wake_count.emplace("nwakeup", "number of waiters to wake up");
+		wake_count.emplace(make_item_cfg("nwakeup", "number of waiters to wake up"));
 		if (command == WAKE) {
 			addParameters(*wake_count);
 		} else {
-			bitset.emplace("bitset");
+			bitset.emplace(ItemCfg{.label = "bitset"});
 			addParameters(*wake_count, item::unused, item::unused, *bitset);
 		}
 
@@ -75,28 +75,28 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 		fd_sig.emplace();
 		new_fd.emplace();
 		addParameters(*fd_sig);
-		new_fd.emplace(ItemType::RETVAL);
+		new_fd.emplace(ItemCfg{.type = ItemType::RETVAL});
 		setNewReturnItem(*new_fd);
 		break;
 	case REQUEUE: [[fallthrough]];
 	case CMP_REQUEUE: [[fallthrough]];
 	case CMP_REQUEUE_PI:
-		wake_count.emplace("nwakeup", "number of waiters to wake up");
-		requeue_limit.emplace("val2", "max number of waiters to requeue");
-		futex2_addr.emplace("addr2", "requeue address");
+		wake_count.emplace(make_item_cfg("nwakeup", "number of waiters to wake up"));
+		requeue_limit.emplace(make_item_cfg("val2", "max number of waiters to requeue"));
+		futex2_addr.emplace(make_item_cfg("addr2", "requeue address"));
 		if (command == REQUEUE) {
 			addParameters(*wake_count, *requeue_limit, *futex2_addr);
 		} else {
-			requeue_value.emplace("val3", "comparison value");
+			requeue_value.emplace(make_item_cfg("val3", "comparison value"));
 			addParameters(*wake_count, *requeue_limit, *futex2_addr, *requeue_value);
 		}
 
 		setWokenUpReturnValue();
 		break;
 	case WAKE_OP:
-		wake_count.emplace("nwakeup", "number of waiters to wake up at addr1");
-		wake_count2.emplace("nwakeup2", "number of waiters to wake up at addr2");
-		futex2_addr.emplace("addr2", "op-futex");
+		wake_count.emplace(make_item_cfg("nwakeup", "number of waiters to wake up at addr1"));
+		wake_count2.emplace(make_item_cfg("nwakeup2", "number of waiters to wake up at addr2"));
+		futex2_addr.emplace(make_item_cfg("addr2", "op-futex"));
 		wake_op.emplace();
 		addParameters(*wake_count, *wake_count2, *futex2_addr, *wake_op);
 
@@ -107,7 +107,7 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 		// absolute timeout measured against CLOCK_REALTIME (or
 		// MONOTONIC in case of LOCK_PI2, if the CLOCK_REALTIME flag
 		// is not passed in `operation`.
-		timeout.emplace("timeout");
+		timeout.emplace(ItemCfg{.label = "timeout"});
 		addParameters(item::unused, *timeout);
 		break;
 	case TRYLOCK_PI: [[fallthrough]];
@@ -115,10 +115,10 @@ bool FutexSystemCall::check2ndPass(const Tracee &) {
 		// none of the extra arguments are used in these cases
 		break;
 	case WAIT_REQUEUE_PI:
-		value.emplace("value");
+		value.emplace(ItemCfg{.label = "value"});
 		// absolute timeout
-		timeout.emplace("timeout");
-		futex2_addr.emplace("addr2", "requeue address");
+		timeout.emplace(ItemCfg{.label = "timeout"});
+		futex2_addr.emplace(make_item_cfg("addr2", "requeue address"));
 		addParameters(*value, *timeout, *futex2_addr);
 		break;
 	default:

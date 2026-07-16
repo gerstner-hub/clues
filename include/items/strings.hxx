@@ -10,11 +10,11 @@ namespace clues::item {
 class CLUES_API StringData :
 		public PointerValue {
 public: // functions
-	explicit StringData(
-		const std::string_view short_name = "string",
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN) :
-			PointerValue{type, short_name, long_name} {
+	explicit StringData(const ItemCfg &cfg = {}) :
+			PointerValue{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("string"),
+				cfg.desc.value_or("")} {
 	}
 
 	std::string str() const override;
@@ -57,12 +57,9 @@ class CLUES_API StringBuffer :
 		public StringData {
 public: // functions
 
-	explicit StringBuffer(
-		const std::string_view short_name,
-		const std::string_view long_name,
-		const SystemCallItem &size_par) :
-		StringData{short_name, long_name, ItemType::PARAM_OUT},
-		m_size_par(size_par) {
+	explicit StringBuffer(const SystemCallItem &size_par, const ItemCfg &cfg = {}) :
+			StringData{cfg.apply_defaults(ItemCfg{ItemType::PARAM_OUT})},
+			m_size_par(size_par) {
 	}
 
 protected: // functions
@@ -82,10 +79,10 @@ class CLUES_API StringArrayData :
 		public PointerInValue {
 public: // functions
 
-	explicit StringArrayData(
-		const std::string_view short_name = "string-array",
-		const std::string_view long_name = {}) :
-			PointerInValue{short_name, long_name} {
+	explicit StringArrayData(const ItemCfg &cfg = {}) :
+			PointerInValue{
+				cfg.label.value_or("string-array"),
+				cfg.desc.value_or("")} {
 	}
 
 	std::string str() const override;

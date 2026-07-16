@@ -20,7 +20,7 @@ struct AccessSystemCall :
 
 	AccessSystemCall() :
 			SystemCall{SystemCallNr::ACCESS},
-			path{"path"} {
+			path{ItemCfg{.label = "path"}} {
 		setReturnItem(result);
 		setParameters(path, mode);
 	}
@@ -36,8 +36,8 @@ struct FAccessAtSystemCall :
 
 	explicit FAccessAtSystemCall(const SystemCallNr nr = SystemCallNr::FACCESSAT) :
 			SystemCall{nr},
-			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}},
-			path{"path"} {
+			dirfd{{}, item::AtSemantics{true}},
+			path{ItemCfg{.label = "path"}} {
 		setReturnItem(result);
 		setParameters(dirfd, path, mode);
 	}
@@ -128,7 +128,7 @@ struct FstatAtSystemCall :
 
 	explicit FstatAtSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-       			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}} {
+       			dirfd{{}, item::AtSemantics{true}} {
 		setReturnItem(result);
 		setParameters(dirfd, path, statbuf, flags);
 	}
@@ -146,7 +146,7 @@ struct StatSystemCallT :
 
 	explicit StatSystemCallT(const SystemCallNr nr) :
 			SystemCall{nr},
-			path{"path"} {
+			path{ItemCfg{.label = "path"}} {
 		setReturnItem(result);
 		setParameters(path, statbuf);
 	}
@@ -165,7 +165,7 @@ struct StatFSSystemCall :
 
 	explicit StatFSSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-			path{"path"} {
+			path{ItemCfg{.label = "path"}} {
 		setReturnItem(result);
 		setParameters(path, buf);
 	}
@@ -209,8 +209,8 @@ struct OpenSystemCall :
 
 	OpenSystemCall() :
 			SystemCall{SystemCallNr::OPEN},
-			filename{"filename"},
-			new_fd{ItemType::RETVAL} {
+			filename{ItemCfg{.label = "filename"}},
+			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
 		setReturnItem(new_fd);
 		setParameters(filename, flags);
 	}
@@ -237,9 +237,9 @@ struct OpenAtSystemCall :
 
 	OpenAtSystemCall() :
 			SystemCall{SystemCallNr::OPENAT},
-			fd{ItemType::PARAM_IN, item::AtSemantics{true}},
-			filename{"filename"},
-			new_fd{ItemType::RETVAL} {
+			fd{{}, item::AtSemantics{true}},
+			filename{ItemCfg{.label = "filename"}},
+			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
 		setReturnItem(new_fd);
 		setParameters(fd, filename, flags);
 	}
@@ -284,8 +284,8 @@ struct GetDentsSystemCall :
 
 	explicit GetDentsSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-			size{"size", "dirent size in bytes"},
-			ret_bytes{"bytes", "bytes returned in dirent", ItemType::RETVAL} {
+			size{make_item_cfg("size", "dirent size in bytes")},
+			ret_bytes{ItemCfg{ItemType::RETVAL, "bytes", "bytes returned in dirent"}} {
 		setReturnItem(ret_bytes);
 		setParameters(fd, dirent, size);
 	}
@@ -341,8 +341,8 @@ struct UmaskSystemCall :
 
 	explicit UmaskSystemCall() :
 			SystemCall{SystemCallNr::UMASK},
-			new_mask{"mask", "new umask value"},
-			old_mask{"old_mask", "old umask value", ItemType::RETVAL} {
+			new_mask{make_item_cfg("mask", "new umask value")},
+			old_mask{ItemCfg{ItemType::RETVAL, "old_mask", "old umask value"}} {
 		addParameters(new_mask);
 		setReturnItem(old_mask);
 	}
@@ -359,10 +359,10 @@ struct ReadLinkSystemCall :
 
 	explicit ReadLinkSystemCall(const SystemCallNr nr = SystemCallNr::READLINK) :
 			SystemCall{nr},
-			filled_bytes{"bytes", "number of bytes placed into buf", ItemType::RETVAL},
-			path{"path"},
-			buf{"buf", "buffer to place symlink target into", filled_bytes},
-			bufsiz{"bufsiz", "size of buf"} {
+			filled_bytes{ItemCfg{ItemType::RETVAL, "bytes", "number of bytes placed into buf"}},
+			path{ItemCfg{.label = "path"}},
+			buf{filled_bytes, make_item_cfg("buf", "buffer to place symlink target into")},
+			bufsiz{make_item_cfg("bufsiz", "size of buf")} {
 		setReturnItem(filled_bytes);
 		setParameters(path, buf, bufsiz);
 	}
@@ -384,7 +384,7 @@ struct ReadLinkAtSystemCall :
 
 	explicit ReadLinkAtSystemCall() :
 			ReadLinkSystemCall{SystemCallNr::READLINKAT},
-			dirfd{ItemType::PARAM_IN, item::AtSemantics{true}} {
+			dirfd{{}, item::AtSemantics{true}} {
 		setParameters(dirfd, path, buf, bufsiz);
 	}
 

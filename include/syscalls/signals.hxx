@@ -16,8 +16,9 @@ struct AlarmSystemCall :
 
 	AlarmSystemCall() :
 			SystemCall{SystemCallNr::ALARM},
-			seconds{"seconds"},
-			old_seconds{"old_seconds", "remaining seconds from previous timer", ItemType::RETVAL} {
+			seconds{ItemCfg{.label = "seconds"}},
+			old_seconds{ItemCfg{ItemType::RETVAL, "old_seconds",
+				"remaining seconds from previous timer"}} {
 		setReturnItem(old_seconds);
 		setParameters(seconds);
 	}
@@ -32,7 +33,7 @@ struct SigActionSystemCall :
 
 	explicit SigActionSystemCall(const SystemCallNr nr = SystemCallNr::SIGACTION) :
 			SystemCall{nr},
-			old_action{"old_action", "struct sigaction", ItemType::PARAM_OUT} {
+			old_action{ItemCfg{ItemType::PARAM_OUT, "old_action", "struct sigaction"}} {
 		setReturnItem(result);
 		setParameters(signum, action, old_action);
 	}
@@ -52,7 +53,7 @@ struct RtSigActionSystemCall :
 
 	explicit RtSigActionSystemCall() :
 			SigActionSystemCall{SystemCallNr::RT_SIGACTION},
-			sigset_size{"sigset_size", "sizeof(sigset_t)"} {
+			sigset_size{make_item_cfg("sigset_size", "sizeof(sigset_t)")} {
 		addParameters(sigset_size);
 	}
 
@@ -71,8 +72,8 @@ struct SigProcMaskSystemCall :
 
 	explicit SigProcMaskSystemCall(const SystemCallNr nr = SystemCallNr::SIGPROCMASK) :
 			SystemCall{nr},
-			new_mask{ItemType::PARAM_IN, "new mask"},
-			old_mask{ItemType::PARAM_OUT, "old mask"} {
+			new_mask{ItemCfg{ItemType::PARAM_IN, "new mask"}},
+			old_mask{ItemCfg{ItemType::PARAM_OUT, "old mask"}} {
 		setReturnItem(result);
 		setParameters(operation, new_mask, old_mask);
 	}
@@ -92,7 +93,7 @@ struct RtSigProcMaskSystemCall :
 
 	explicit RtSigProcMaskSystemCall() :
 			SigProcMaskSystemCall{SystemCallNr::RT_SIGPROCMASK},
-			sigset_size{"sigset_size", "sizeof(sigset_t)"} {
+			sigset_size{make_item_cfg("sigset_size", "sizeof(sigset_t)")} {
 		addParameters(sigset_size);
 	}
 
@@ -105,8 +106,8 @@ struct TgKillSystemCall :
 
 	TgKillSystemCall() :
 			SystemCall{SystemCallNr::TGKILL},
-			thread_group{ItemType::PARAM_IN, "thread group id"},
-			thread_id{ItemType::PARAM_IN} {
+			thread_group{ItemCfg{.desc = "thread group id"}},
+			thread_id{} {
 		setReturnItem(result);
 		setParameters(thread_group, thread_id, signum);
 	}
@@ -125,9 +126,9 @@ struct SignalFDSystemCall :
 
 	explicit SignalFDSystemCall(const SystemCallNr nr = SystemCallNr::SIGNALFD) :
 			SystemCall{nr},
-			mask{ItemType::PARAM_IN, "mask", "signals to process"},
-			sigset_size{"sigset_size", "sizeof(sigset_t)"},
-			new_fd{ItemType::RETVAL}	{
+			mask{ItemCfg{ItemType::PARAM_IN, "mask", "signals to process"}},
+			sigset_size{make_item_cfg("sigset_size", "sizeof(sigset_t)")},
+			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
 		addParameters(fd, mask, sigset_size);
 		setReturnItem(new_fd);
 	}

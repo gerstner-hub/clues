@@ -19,7 +19,7 @@ struct CLUES_API NotImplementedSystemCall :
 		public SystemCall {
 	explicit NotImplementedSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-			result{"result", ""} {
+			result{ItemCfg{.label = "result"}} {
 		setReturnItem(result);
 		addParameters(item);
 	}
@@ -41,7 +41,7 @@ struct CLUES_API UnknownSystemCall :
 		public SystemCall {
 	explicit UnknownSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-			result{"result", ""} {
+			result{ItemCfg{.label = "result"}} {
 		setReturnItem(result);
 		addParameters(item);
 	}
@@ -59,7 +59,7 @@ struct CLUES_API DroppedSystemCall :
 		public SystemCall {
 	explicit DroppedSystemCall(const SystemCallNr nr) :
 			SystemCall{nr},
-			result{"result", ""} {
+			result{ItemCfg{.label = "result"}} {
 		setReturnItem(result);
 		addParameters(item);
 	}
@@ -75,8 +75,9 @@ struct CLUES_API LimitSystemCallT :
 
 	LimitSystemCallT() :
 			SystemCall{LIMIT_SYS_NR},
-			limit{LIMIT_SYS_NR == SystemCallNr::GETRLIMIT ?
-				ItemType::PARAM_OUT : ItemType::PARAM_IN} {
+			limit{ItemCfg{LIMIT_SYS_NR == SystemCallNr::GETRLIMIT ?
+					ItemType::PARAM_OUT :
+					ItemType::PARAM_IN}} {
 		setReturnItem(result);
 		setParameters(type, limit);
 	}
@@ -94,9 +95,9 @@ struct CLUES_API Prlimit64SystemCall :
 
 	Prlimit64SystemCall() :
 			SystemCall{SystemCallNr::PRLIMIT64},
-			pid{ItemType::PARAM_IN, "target process"},
-			limit{ItemType::PARAM_IN},
-			old_limit{ItemType::PARAM_OUT, "old_limit"} {
+			pid{ItemCfg{.desc = "target process"}},
+			limit{ItemCfg{ItemType::PARAM_IN}},
+			old_limit{ItemCfg{ItemType::PARAM_OUT, "old_limit"}} {
 		setReturnItem(result);
 		setParameters(pid, type, limit, old_limit);
 	}
@@ -132,7 +133,7 @@ struct ExitSystemCallT :
 
 	ExitSystemCallT() :
 			SystemCall{NR},
-			status{ItemType::PARAM_IN, "exit code"} {
+			status{ItemCfg{.type = ItemType::PARAM_IN, .desc = "exit code"}} {
 		setReturnItem(result);
 		setParameters(status);
 	}
@@ -149,11 +150,11 @@ struct CLUES_API GetRandomSystemCall :
 
 	GetRandomSystemCall() :
 			SystemCall{SystemCallNr::GETRANDOM},
-			buf{count, ItemType::PARAM_OUT, "buf", "buffer",
+			buf{count, ItemCfg{ItemType::PARAM_OUT, "buf", "buffer"},
 			/*is_binary=*/true},
-			count{"size"},
+			count{ItemCfg{.label = "size"}},
 			flags{},
-			obtained{"bytes", "bytes obtained", ItemType::RETVAL} {
+			obtained{ItemCfg{ItemType::RETVAL, "bytes", "bytes obtained"}} {
 		setParameters(buf, count, flags);
 		setReturnItem(obtained);
 	}
@@ -179,8 +180,8 @@ struct CLUES_API RSeqSystemCall :
 
 	explicit RSeqSystemCall() :
 			SystemCall{SystemCallNr::RSEQ},
-			rseq_len{"rseq_len", "size of struct rseq"},
-			signature{"signature", "abort handler signature"} {
+			rseq_len{make_item_cfg("rseq_len", "size of struct rseq")},
+			signature{make_item_cfg("signature", "abort handler signature")} {
 		signature.setBase(Base::HEX);
 		setParameters(rseq, rseq_len, flags, signature);
 		setReturnItem(result);

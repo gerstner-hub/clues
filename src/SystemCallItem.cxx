@@ -31,7 +31,7 @@ bool SystemCallItem::usesTime32() const {
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const clues::SystemCallItem &value) {
-	o << value.longName() << " = " << value.str();
+	o << value.description() << " = " << value.str();
 	return o;
 }
 

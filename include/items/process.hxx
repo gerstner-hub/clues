@@ -26,12 +26,11 @@ class ProcessID :
 		public SystemCallItem {
 public: // functions
 
-	explicit ProcessID(const ItemType type, const std::string_view desc = "process ID") :
-			SystemCallItem{type, "pid", desc} {
-	}
-
-	ProcessID(const ItemType type, const std::string_view label, const std::string_view desc) :
-			SystemCallItem{type, label, desc} {
+	explicit ProcessID(const ItemCfg &cfg = ItemCfg{}) :
+			SystemCallItem{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("pid"),
+				cfg.desc.value_or("process ID")} {
 	}
 
 	auto pid() const { return m_pid; }
@@ -58,12 +57,11 @@ class ProcessGroupID :
 		public SystemCallItem {
 public: // functions
 
-	explicit ProcessGroupID(const ItemType type, const std::string_view desc = "process group ID") :
-			SystemCallItem{type, "pgid", desc} {
-	}
-
-	ProcessGroupID(const ItemType type, const std::string_view label, const std::string_view desc) :
-			SystemCallItem{type, label, desc} {
+	explicit ProcessGroupID(const ItemCfg &cfg = ItemCfg{}) :
+			SystemCallItem{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("pgid"),
+				cfg.desc.value_or("process group ID")} {
 	}
 
 	auto pgid() const { return m_pgid; }
@@ -90,12 +88,11 @@ class SessionID :
 		public SystemCallItem {
 public: // functions
 
-	explicit SessionID(const ItemType type, const std::string_view desc = "session ID") :
-			SystemCallItem{type, "sid", desc} {
-	}
-
-	SessionID(const ItemType type, const std::string_view label, const std::string_view desc) :
-			SystemCallItem{type, label, desc} {
+	explicit SessionID(const ItemCfg &cfg = ItemCfg{}) :
+			SystemCallItem{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("sid"),
+				cfg.desc.value_or("session ID")} {
 	}
 
 	auto sid() const { return m_sid; }
@@ -122,12 +119,11 @@ class ThreadID :
 		public SystemCallItem {
 public: // functions
 
-	explicit ThreadID(const ItemType type, const std::string_view desc = "thread ID") :
-			SystemCallItem{type, "tid", desc} {
-	}
-
-	ThreadID(const ItemType type, const std::string_view label, const std::string_view desc) :
-			SystemCallItem{type, label, desc} {
+	explicit ThreadID(const ItemCfg &cfg = ItemCfg{}) :
+		SystemCallItem{
+			cfg.type.value_or(ItemType::PARAM_IN),
+			cfg.label.value_or("tid"),
+			cfg.desc.value_or("thread ID")} {
 	}
 
 	auto tid() const { return m_tid; }
@@ -147,8 +143,8 @@ class ExitStatus :
 		public SystemCallItem {
 public: // functions
 
-	explicit ExitStatus(const ItemType type, const std::string_view desc) :
-			SystemCallItem{type, "status", desc} {
+	explicit ExitStatus(const ItemCfg &cfg = {}) :
+			SystemCallItem{*cfg.type, cfg.label.value_or("status"), cfg.desc.value_or("")} {
 	}
 
 	auto status() const { return m_status; }
@@ -237,7 +233,7 @@ class WaitStatus :
 public: // functions
 
 	explicit WaitStatus() :
-			PointerToScalar{"wstatus", "wait status"} {
+			PointerToScalar{make_item_cfg("wstatus", "wait status")} {
 	}
 
 	const std::optional<cosmos::WaitStatus>& status() const {

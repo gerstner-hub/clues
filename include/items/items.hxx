@@ -20,8 +20,8 @@ CLUES_DEFAULT_VISIBILITY_ON;
 class ReturnValue :
 		public SystemCallItem {
 public:
-	explicit ReturnValue(const std::string_view short_name, const std::string_view long_name = {}) :
-		SystemCallItem{ItemType::RETVAL, short_name, long_name}
+	explicit ReturnValue(const ItemCfg &cfg) :
+		SystemCallItem{ItemType::RETVAL, *cfg.label, cfg.desc.value_or("")}
 	{}
 };
 
@@ -136,11 +136,11 @@ class GenericPointerValue :
 		public PointerValue {
 public: // functions
 
-	explicit GenericPointerValue(
-		const std::string_view short_name,
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN) :
-			PointerValue{type, short_name, long_name} {
+	explicit GenericPointerValue(const ItemCfg &cfg = {}) :
+			PointerValue{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				*cfg.label,
+				cfg.desc.value_or("")} {
 	}
 
 	std::string str() const override;
@@ -168,14 +168,12 @@ public: // functions
 	 **/
 	explicit BufferPointer(
 		const SystemCallItem &size_par,
-		const ItemType type,
-		const std::string_view short_name,
-		const std::string_view long_name = {},
+		const ItemCfg &cfg = {},
 		const bool is_binary = false) :
-			PointerValue{type, short_name, long_name},
+			PointerValue{*cfg.type, *cfg.label, cfg.desc.value_or("")},
 			m_size_par{size_par},
 			m_is_binary{is_binary} {
-		if (type == ItemType::PARAM_IN) {
+		if (cfg.type == ItemType::PARAM_IN) {
 			/*
 			 * currently needed for write(), but other system
 			 * calls might be affected, too.
@@ -241,11 +239,9 @@ class PointerToScalar :
 		public PointerValue {
 public: // functions
 
-	explicit PointerToScalar(
-		const std::string_view short_name,
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_OUT) :
-			PointerValue{type, short_name, long_name} {
+	explicit PointerToScalar(const ItemCfg &cfg = {}) :
+			PointerValue{cfg.type.value_or(ItemType::PARAM_OUT),
+				*cfg.label, cfg.desc.value_or("")} {
 	}
 
 	ForeignPtr pointer() const {
@@ -297,11 +293,11 @@ class IntValueT :
 		public ValueParameter {
 public: // functions
 
-	explicit IntValueT(
-		const std::string_view short_name,
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN) :
-			ValueParameter{type, short_name, long_name} {
+	explicit IntValueT(const ItemCfg &cfg = {}) :
+			ValueParameter{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				*cfg.label,
+				cfg.desc.value_or("")} {
 	}
 
 	INT value() const {
@@ -340,11 +336,11 @@ class BoolValue :
 		public ValueParameter {
 public: // functions
 
-	explicit BoolValue(
-		const std::string_view short_name,
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_IN) :
-			ValueParameter{type, short_name, long_name} {
+	explicit BoolValue(const ItemCfg &cfg = {}) :
+			ValueParameter{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("bool"),
+				cfg.desc.value_or("")} {
 	}
 
 	bool value() const {

@@ -12,10 +12,11 @@ class CLUES_API UserID :
 		public SystemCallItem {
 public: // functions
 
-	explicit UserID(const ItemType type = ItemType::RETVAL,
-			const std::string_view short_name = "uid",
-			const std::string_view long_name = "user id") :
-			SystemCallItem{type, short_name, long_name} {
+	explicit UserID(const ItemCfg &cfg = ItemCfg{}) :
+			SystemCallItem{
+				cfg.type.value_or(ItemType::RETVAL),
+				cfg.label.value_or("uid"),
+				cfg.desc.value_or("user id")} {
 	}
 
 	auto uid() const {
@@ -37,10 +38,11 @@ class CLUES_API GroupID :
 		public SystemCallItem {
 public: // functions
 
-	explicit GroupID(const ItemType type = ItemType::RETVAL,
-			const std::string_view short_name = "gid",
-			const std::string_view long_name = "group id") :
-			SystemCallItem{type, short_name, long_name} {
+	explicit GroupID(const ItemCfg &cfg = ItemCfg{}) :
+		SystemCallItem{
+			cfg.type.value_or(ItemType::RETVAL),
+			cfg.label.value_or("gid"),
+			cfg.desc.value_or("group id")} {
 	}
 
 	auto gid() const {

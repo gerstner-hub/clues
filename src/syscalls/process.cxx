@@ -30,8 +30,8 @@ bool CloneSystemCall::check2ndPass(const Tracee &)  {
 
 	auto maybe_add_settid_par = [this, clone_flags, maybe_add_unused_par](const size_t pos) {
 		if (clone_flags[CHILD_SETTID]) {
-			child_tid.emplace("child_tid",
-					"pointer to child TID in child's memory");
+			child_tid.emplace(ItemCfg{.label = "child_tid",
+					.desc = "pointer to child TID in child's memory"});
 			maybe_add_unused_par(pos);
 			addParameters(*child_tid);
 		}
@@ -39,7 +39,8 @@ bool CloneSystemCall::check2ndPass(const Tracee &)  {
 
 	auto maybe_add_settls_par = [this, clone_flags, maybe_add_unused_par](const size_t pos) {
 		if (clone_flags[SETTLS]) {
-			tls.emplace("tls", "ABI-specific thread-local-storage data");
+			tls.emplace(ItemCfg{.label = "tls",
+					.desc = "ABI-specific thread-local-storage data"});
 
 			maybe_add_unused_par(pos);
 			addParameters(*tls);
@@ -48,12 +49,12 @@ bool CloneSystemCall::check2ndPass(const Tracee &)  {
 
 	// these two are mutual-exclusive in the old clone() system call
 	if (clone_flags[PARENT_SETTID]) {
-		parent_tid.emplace("parent_tid",
-				"pointer to child TID in parent's memory");
+		parent_tid.emplace(ItemCfg{.label = "parent_tid",
+				.desc = "pointer to child TID in parent's memory"});
 		addParameters(*parent_tid);
 	} else if (clone_flags[PIDFD]) {
-		pidfd.emplace("pidfd",
-				"pointer to pidfd in parent's memory (alternative use of parent_tid)");
+		pidfd.emplace(ItemCfg{.label = "pidfd",
+				.desc = "pointer to pidfd in parent's memory (alternative use of parent_tid)"});
 		addParameters(*pidfd);
 	}
 
@@ -108,16 +109,18 @@ bool WaitIDSystemCall::check2ndPass(const Tracee&) {
 
 	switch (idtype.type()) {
 		case Type::PID: {
-			id_pid.emplace(ItemType::PARAM_IN, "pid", "process id");
+			id_pid.emplace();
 			setup_pars(*id_pid);
 			break;
 		} case Type::PGID: {
-			id_pgid.emplace(ItemType::PARAM_IN, "pgid", "process group id");
+			id_pgid.emplace();
 			setup_pars(*id_pgid);
 			break;
 		} case Type::PIDFD: {
-			id_pidfd.emplace(ItemType::PARAM_IN, item::AtSemantics{false},
-					"pidfd", "pid file descriptor");
+			id_pidfd.emplace(ItemCfg{
+					.label = "pidfd",
+					.desc = "pid file descriptor"},
+					item::AtSemantics{false});
 			setup_pars(*id_pidfd);
 			break;
 		} case Type::ALL: {

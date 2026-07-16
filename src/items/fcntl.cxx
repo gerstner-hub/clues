@@ -317,13 +317,13 @@ void FileDescOwner::processValue(const Tracee &) {
 	if (pid_or_pgid >= 0) {
 		m_pgid.reset();
 		m_pid = cosmos::ProcessID{pid_or_pgid};
-		m_short_name = "pid";
-		m_long_name = "process id";
+		m_label = "pid";
+		m_desc = "process id";
 	} else {
 		m_pid.reset();
 		m_pgid = cosmos::ProcessGroupID{-pid_or_pgid};
-		m_short_name = "pgid";
-		m_long_name = "process group id";
+		m_label = "pgid";
+		m_desc = "process group id";
 	}
 }
 

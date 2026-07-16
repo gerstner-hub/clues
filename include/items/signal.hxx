@@ -79,11 +79,10 @@ protected: // data
 class SigActionParameter :
 		public PointerValue {
 public: // functions
-	explicit SigActionParameter(
-		const std::string_view short_name = "sigaction",
-		const std::string_view long_name = "struct sigaction",
-		const ItemType type = ItemType::PARAM_IN) :
-			PointerValue{type, short_name, long_name} {
+	explicit SigActionParameter(const ItemCfg &cfg = {}) :
+			PointerValue{cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("sigaction"),
+				cfg.desc.value_or("struct sigaction2")} {
 	}
 
 	std::string str() const override;
@@ -106,10 +105,11 @@ class SigSetParameter :
 		public PointerValue {
 public: // functions
 
-	explicit SigSetParameter(
-		const ItemType type = ItemType::PARAM_IN,
-		const std::string_view short_name = "sigset", const std::string_view name = "signal set") :
-			PointerValue{type, short_name, name} {
+	explicit SigSetParameter(const ItemCfg &cfg = {}) :
+			PointerValue{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("sigset"),
+				cfg.desc.value_or("signal set")} {
 	}
 
 	std::string str() const override;

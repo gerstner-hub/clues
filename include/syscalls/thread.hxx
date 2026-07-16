@@ -17,8 +17,10 @@ struct CLUES_API SetTIDAddressSystemCall :
 
 	SetTIDAddressSystemCall() :
 			SystemCall{SystemCallNr::SET_TID_ADDRESS},
-			address{"addr", "thread ID location"},
-			caller_tid{ItemType::RETVAL, "caller thread ID"} {
+			address{make_item_cfg("addr", "thread ID location")},
+			caller_tid{ItemCfg{
+				.type = ItemType::RETVAL,
+				.desc = "caller thread ID"}} {
 		setReturnItem(caller_tid);
 		setParameters(address);
 	}
@@ -40,10 +42,10 @@ struct CLUES_API GetRobustListSystemCall :
 
 	GetRobustListSystemCall() :
 			SystemCall{SystemCallNr::GET_ROBUST_LIST},
-			thread_id{ItemType::PARAM_IN, "thread ID"},
-			list_head{"head", "pointer to robust list head"},
-			size_ptr{"sizep", "pointer to robust list head size",
-				ItemType::PARAM_IN_OUT} {
+			thread_id{},
+			list_head{make_item_cfg("head", "pointer to robust list head")},
+			size_ptr{ItemCfg{ItemType::PARAM_IN_OUT,
+				"sizep", "pointer to robust list head size"}} {
 		setReturnItem(result);
 		setParameters(thread_id, list_head, size_ptr);
 		list_head.setBase(Base::HEX);
@@ -65,8 +67,8 @@ struct CLUES_API SetRobustListSystemCall :
 
 	SetRobustListSystemCall() :
 			SystemCall{SystemCallNr::SET_ROBUST_LIST},
-			list_head{"head", "pointer to robust list head"},
-			size{"size", "robust list size"} {
+			list_head{make_item_cfg("head", "pointer to robust list head")},
+			size{make_item_cfg("size", "robust list size")} {
 		setReturnItem(result);
 		setParameters(list_head, size);
 	}
@@ -87,7 +89,7 @@ struct CLUES_API FutexSystemCall :
 
 	explicit FutexSystemCall(const SystemCallNr nr = SystemCallNr::FUTEX) :
 			SystemCall{nr},
-			futex_addr{"addr", "pointer to futex word"},
+			futex_addr{make_item_cfg("addr", "pointer to futex word")},
 			result{item::SuccessResult{}} {
 		/*
 		 * minimal default setup, the actual parameters and return

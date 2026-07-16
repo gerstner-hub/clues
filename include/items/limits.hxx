@@ -41,8 +41,8 @@ protected: // data
 class CLUES_API ResourceLimit :
 		public PointerValue {
 public: // functions
-	explicit ResourceLimit(const ItemType type, const std::string_view name = {}) :
-			PointerValue{type, name.empty() ? "limit" : name, ""} {
+	explicit ResourceLimit(const ItemCfg &cfg = {}) :
+			PointerValue{*cfg.type, cfg.label.value_or("limit"), cfg.desc.value_or("")} {
 	}
 
 	std::string str() const override;

@@ -284,10 +284,11 @@ public: // types
 
 public: // data
 
-	explicit CombinedOffsetValue(const Ordering order = LOW_THEN_HIGH, const std::string_view long_desc = "") :
-			SystemCallItem{ItemType::PARAM_IN,
-				"offset",
-				long_desc.empty() ? "read/write offset" : long_desc},
+	explicit CombinedOffsetValue(const Ordering order = LOW_THEN_HIGH, const ItemCfg &cfg = {}) :
+			SystemCallItem{
+				cfg.type.value_or(ItemType::PARAM_IN),
+				cfg.label.value_or("offset"),
+				cfg.desc.value_or("read/write offset")},
 			m_order{order},
 			m_lower_bits{} {
 		if (order == HIGH_THEN_LOW) {
@@ -474,9 +475,10 @@ public: // functions
 	 * descriptor in the set can be.
 	 **/
 	explicit FDSet(const SystemCallItem &nfds,
-			const std::string_view short_name,
-			const std::string_view long_name) :
-			PointerValue{ItemType::PARAM_IN_OUT, short_name, long_name},
+			const ItemCfg &cfg = {}) :
+			PointerValue{
+				cfg.type.value_or(ItemType::PARAM_IN_OUT),
+				cfg.label.value(), cfg.desc.value()},
 			m_nfds{nfds} {
 	}
 
