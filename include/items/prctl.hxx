@@ -36,7 +36,7 @@ public: // types
 public: // functions
 
 	explicit ArchOpParameter() :
-			ValueInParameter{"op"} {
+			ValueInParameter{ItemCfg{.label = "op"}} {
 	}
 
 	std::string str() const override;
@@ -143,7 +143,7 @@ public: // types
 public: // functions
 
 	ProcessOp() :
-			ValueInParameter{"op", "operation"} {
+			ValueInParameter{make_item_cfg("op", "operation")} {
 	}
 
 	Operation operation() const {
@@ -180,8 +180,8 @@ public: // types
 public: // functions
 
 	explicit AmbientCapOp() :
-			ValueInParameter{"subop",
-				"ambient capability set operation"} {
+			ValueInParameter{make_item_cfg("subop",
+					"ambient capability set operation")} {
 	}
 
 	Operation operation() const {
@@ -214,8 +214,8 @@ public: // types
 public: // functions
 
 	explicit MachineCheckOp() :
-			ValueInParameter{"subop",
-				"machine check exception operation"} {
+			ValueInParameter{make_item_cfg("subop",
+					"machine check exception operation")} {
 	}
 
 	Operation operation() const {
@@ -248,8 +248,8 @@ public: // types
 public: // functions
 
 	explicit MachineCheckPolicy(const ItemType type = ItemType::PARAM_IN) :
-			ValueParameter{type, "policy",
-				"machine check exception policy"} {
+			ValueParameter{ItemCfg{type, "policy",
+				"machine check exception policy"}} {
 	}
 
 	Policy policy() const {
@@ -295,7 +295,7 @@ public: // types
 public: // functions
 
 	explicit MemoryMapOp() :
-			ValueInParameter{"subop", "memory map operation"} {
+			ValueInParameter{make_item_cfg("subop", "memory map operation")} {
 	}
 
 	Operation operation() const {
@@ -325,7 +325,7 @@ class MemoryMapStruct :
 public: // functions
 
 	explicit MemoryMapStruct() :
-			PointerInValue{"map", "pointer to prctl_mm_map*"} {
+			PointerInValue{make_item_cfg("map", "pointer to prctl_mm_map*")} {
 		// we need access to the map_size argument which follows us.
 		m_flags.set(Flag::DEFER_FILL);
 	}
@@ -365,7 +365,7 @@ public: // types
 public: // functions
 
 	explicit VirtualMemoryAttr() :
-			ValueInParameter{"attr", "virtual memory attribute"} {
+			ValueInParameter{make_item_cfg("attr", "virtual memory attribute")} {
 	}
 
 	Attr attr() const {
@@ -418,7 +418,7 @@ public: // types
 public: // functions
 
 	explicit SpeculationCtrlMisfeature() :
-			ValueInParameter{"misfeature", "speculation control misfeature"} {
+			ValueInParameter{make_item_cfg("misfeature", "speculation control misfeature")} {
 	}
 
 	Misfeature misfeature() const {
@@ -465,7 +465,7 @@ public: // types
 public: // functions
 
 	explicit SpeculationCtrlSetting(const ItemType type) :
-			ValueParameter{type, "setting", "speculation control setting"} {
+			ValueParameter{ItemCfg{type, "setting", "speculation control setting"}} {
 	}
 
 	Settings settings() const {
@@ -500,7 +500,7 @@ public: // types
 public: // functions
 
 	explicit SyscallUserDispatchMode() :
-			ValueInParameter{"mode", "system call user dispatch mode"} {
+			ValueInParameter{make_item_cfg("mode", "system call user dispatch mode")} {
 	}
 
 	Mode mode() const {
@@ -535,7 +535,7 @@ public: // types
 public: // functions
 
 	explicit TaggedAddressControl(const ItemType type) :
-			ValueParameter{type, "mode", "tagged userspace addresses mode"} {
+			ValueParameter{ItemCfg{type, "mode", "tagged userspace addresses mode"}} {
 	}
 
 	Mode mode() const {
@@ -605,7 +605,7 @@ public: // types
 public: // functions
 
 	explicit THPDisableFlags() :
-			ValueInParameter{"flags", "THP-disable flags"} {
+			ValueInParameter{make_item_cfg("flags", "THP-disable flags")} {
 	}
 
 	Flags flags() const {
@@ -638,7 +638,7 @@ public: // types
 public: // functions
 
 	explicit TimingMode(const ItemType type) :
-			ValueParameter{type, "mode", "timing mode"} {
+			ValueParameter{ItemCfg{type, "mode", "timing mode"}} {
 	}
 
 	Mode mode() const {
@@ -671,7 +671,7 @@ public: // types
 public: // functions
 
 	explicit TSCAccess(const ItemType type) :
-			ValueParameter{type, "access", "timestamp counter access"} {
+			ValueParameter{ItemCfg{type, "access", "timestamp counter access"}} {
 	}
 
 	Access access() const {
@@ -740,7 +740,7 @@ public: // types
 public: // functions
 
 	explicit MemDenyWriteExecProtectionMask(const ItemType type) :
-			ValueParameter{type, "mask", "protection mask"} {
+			ValueParameter{ItemCfg{type, "mask", "protection mask"}} {
 	}
 
 	Mask mask() const {

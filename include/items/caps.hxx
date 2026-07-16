@@ -21,7 +21,7 @@ class CLUES_API Capability :
 public: // functions
 
 	explicit Capability() :
-			ValueInParameter{"cap", "capability"} {
+			ValueInParameter{make_item_cfg("cap", "capability")} {
 	}
 
 	cosmos::Capability cap() const {
@@ -49,7 +49,7 @@ class CLUES_API SecureBits :
 public: // functions
 
 	explicit SecureBits(const ItemType type) :
-			SystemCallItem{type, "bits", "secure bits mask"} {
+			SystemCallItem{ItemCfg{type, "bits", "secure bits mask"}} {
 	}
 
 	cosmos::SecureBits mask() const {

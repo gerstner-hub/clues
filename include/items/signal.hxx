@@ -30,7 +30,7 @@ public: // types
 
 public:
 	explicit SigSetOperation() :
-			ValueInParameter{"sigsetop", "signal set operation"} {
+			ValueInParameter{make_item_cfg("sigsetop", "signal set operation")} {
 	}
 
 	std::string str() const override;
@@ -55,7 +55,7 @@ class SignalNumber :
 		public ValueParameter {
 public: // functions
 	explicit SignalNumber(const ItemType type = ItemType::PARAM_IN) :
-		ValueParameter{type, "signum", "signal number"} {
+		ValueParameter{ItemCfg{type, "signum", "signal number"}} {
 	}
 
 	std::string str() const override;
@@ -80,9 +80,10 @@ class SigActionParameter :
 		public PointerValue {
 public: // functions
 	explicit SigActionParameter(const ItemCfg &cfg = {}) :
-			PointerValue{cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("sigaction"),
-				cfg.desc.value_or("struct sigaction2")} {
+			PointerValue{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "sigaction",
+				.desc = "struct sigaction2"})} {
 	}
 
 	std::string str() const override;
@@ -106,10 +107,10 @@ class SigSetParameter :
 public: // functions
 
 	explicit SigSetParameter(const ItemCfg &cfg = {}) :
-			PointerValue{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("sigset"),
-				cfg.desc.value_or("signal set")} {
+			PointerValue{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "sigset",
+				.desc = "signal set"})} {
 	}
 
 	std::string str() const override;
@@ -143,7 +144,7 @@ class SigInfo :
 public: // functions
 
 	explicit SigInfo() :
-		PointerOutValue{"infop", "struct siginfo_t*"} {
+		PointerOutValue{make_item_cfg("infop", "struct siginfo_t*")} {
 
 	}
 
@@ -182,7 +183,7 @@ public: // types
 public: // functions
 
 	explicit SignalFDFlags() :
-			ValueInParameter{"flags", "signalfd() creation flags"} {
+			ValueInParameter{make_item_cfg("flags", "signalfd() creation flags")} {
 	}
 
 	Flags flags() const {

@@ -20,7 +20,7 @@ class CLUES_API ResourceType :
 		public ValueInParameter {
 public: // functions
 	explicit ResourceType() :
-			ValueInParameter{"resource", "resource type"} {
+			ValueInParameter{make_item_cfg("resource", "resource type")} {
 	}
 
 	std::string str() const override;
@@ -42,7 +42,9 @@ class CLUES_API ResourceLimit :
 		public PointerValue {
 public: // functions
 	explicit ResourceLimit(const ItemCfg &cfg = {}) :
-			PointerValue{*cfg.type, cfg.label.value_or("limit"), cfg.desc.value_or("")} {
+			PointerValue{cfg.applyDefaults(ItemCfg{
+					.label = "limit",
+					.desc = ""})} {
 	}
 
 	std::string str() const override;

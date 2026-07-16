@@ -46,7 +46,7 @@ public: // types
 public: // functions
 
 	explicit FutexOperation() :
-			ValueInParameter{"op", "futex operation"} {
+			ValueInParameter{make_item_cfg("op", "futex operation")} {
 	}
 
 	std::string str() const override;
@@ -111,7 +111,7 @@ public: // types
 public: // functions
 
 	explicit FutexWakeOperation() :
-			ValueInParameter{"wake_op", "wake operation settings"} {
+			ValueInParameter{make_item_cfg("wake_op", "wake operation settings")} {
 	}
 
 	std::string str() const override;

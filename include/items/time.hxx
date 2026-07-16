@@ -20,8 +20,9 @@ class TimeSpecParameter :
 		public PointerValue {
 public: // functions
 	explicit TimeSpecParameter(const ItemCfg &cfg = {}) :
-			PointerValue{cfg.type.value_or(ItemType::PARAM_IN),
-				*cfg.label, cfg.desc.value_or("")} {
+			PointerValue{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.desc = ""})} {
 	}
 
 	std::string str() const override;
@@ -58,7 +59,7 @@ class TimeSpecInOutParameter :
 public: // functions
 
 	explicit TimeSpecInOutParameter(const ItemCfg &cfg = {}) :
-			TimeSpecParameter{cfg.apply_defaults(ItemCfg{ItemType::PARAM_IN_OUT})} {
+			TimeSpecParameter{cfg.applyDefaults(ItemCfg{ItemType::PARAM_IN_OUT})} {
 
 	}
 
@@ -90,7 +91,7 @@ class RemainingTimeSpec :
 public: // functions
 
 	explicit RemainingTimeSpec(const ItemCfg &cfg = {}) :
-			TimeSpecParameter{cfg.apply_defaults(ItemCfg{ItemType::PARAM_OUT})} {
+			TimeSpecParameter{cfg.applyDefaults(ItemCfg{ItemType::PARAM_OUT})} {
 	}
 
 	std::string str() const override;
@@ -105,8 +106,9 @@ class TimeValParameter :
 		public PointerValue {
 public: // functions
 	explicit TimeValParameter(const ItemCfg &cfg = {}) :
-			PointerValue{cfg.type.value_or(ItemType::PARAM_IN),
-				*cfg.label, cfg.desc.value_or("")} {
+			PointerValue{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.desc = ""})} {
 	}
 
 	std::string str() const override;
@@ -143,7 +145,7 @@ class TimeValInOutParameter :
 public: // functions
 
 	explicit TimeValInOutParameter(const ItemCfg &cfg = {}) :
-			TimeValParameter{cfg.apply_defaults(ItemCfg{ItemType::PARAM_IN_OUT})} {
+			TimeValParameter{cfg.applyDefaults(ItemCfg{ItemType::PARAM_IN_OUT})} {
 	}
 
 	const std::optional<struct timeval>& remaining() const {
@@ -167,7 +169,7 @@ class ClockID :
 		public ValueInParameter {
 public: // functions
 	explicit ClockID() :
-			ValueInParameter{"clockid", "clock identifier"} {
+			ValueInParameter{make_item_cfg("clockid", "clock identifier")} {
 	}
 
 	std::string str() const override;
@@ -198,7 +200,7 @@ public: // types
 public: // functions
 
 	explicit ClockNanoSleepFlags() :
-			ValueInParameter{"flags", "clock sleep flags"} {
+			ValueInParameter{make_item_cfg("flags", "clock sleep flags")} {
 	}
 
 	std::string str() const override;

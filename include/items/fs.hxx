@@ -41,10 +41,10 @@ public: // functions
 	 **/
 	explicit FileDescriptor(const ItemCfg &cfg = {},
 			const AtSemantics at_semantics = AtSemantics{false}) :
-			SystemCallItem{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("fd"),
-				cfg.desc.value_or("file descriptor")},
+			SystemCallItem{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "fd",
+				.desc = "file descriptor"})},
 			m_at_semantics{at_semantics} {
 	}
 
@@ -81,7 +81,7 @@ class OpenFlagsValue :
 		public SystemCallItem {
 public:
 	explicit OpenFlagsValue(const ItemType type = ItemType::PARAM_IN) :
-			SystemCallItem{type, "flags", "open flags"} {
+			SystemCallItem{ItemCfg{type, "flags", "open flags"}} {
 	}
 
 	std::string str() const override;
@@ -123,7 +123,7 @@ public: // types
 public: // functions
 
 	AtFlagsValue() :
-			SystemCallItem{ItemType::PARAM_IN, "flags", "*at flags"} {
+			SystemCallItem{ItemCfg{ItemType::PARAM_IN, "flags", "*at flags"}} {
 	}
 
 	std::string str() const override;
@@ -146,7 +146,7 @@ class AccessModeParameter :
 		public item::ValueInParameter {
 public:
 	explicit AccessModeParameter() :
-			item::ValueInParameter{"check", "access check"} {
+			item::ValueInParameter{make_item_cfg("check", "access check")} {
 	}
 
 	std::string str() const override;
@@ -170,10 +170,10 @@ class FileModeParameter :
 public:
 
 	explicit FileModeParameter(const ItemCfg &cfg = {}) :
-			ValueParameter{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("mode"),
-				cfg.desc.value_or("file-mode")} {
+			ValueParameter{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "mode",
+				.desc = "file-mode"})} {
 	}
 
 	std::string str() const override;
@@ -198,7 +198,7 @@ class StatParameter :
 		public PointerOutValue {
 public: // functions
 	explicit StatParameter() :
-			PointerOutValue{"stat", "struct stat"} {
+			PointerOutValue{make_item_cfg("stat", "struct stat")} {
 	}
 
 	std::string str() const override;
@@ -252,8 +252,8 @@ public: // types
 public: // functions
 
 	explicit DirEntries() :
-			PointerOutValue{"dirent", "struct linux_dirent"}
-	{}
+			PointerOutValue{make_item_cfg("dirent", "struct linux_dirent")} {
+	}
 
 	std::string str() const override;
 
@@ -298,7 +298,7 @@ public: // types
 public: // functions
 
 	explicit AccessAdvice() :
-			ValueInParameter{"advice", "access pattern advice"} {
+			ValueInParameter{make_item_cfg("advice", "access pattern advice")} {
 	}
 
 	std::string str() const override;
@@ -321,7 +321,7 @@ class StatFSParameter :
 public: // functions
 
 	explicit StatFSParameter() :
-			PointerOutValue{"buf", "struct statfs"} {
+			PointerOutValue{make_item_cfg("buf", "struct statfs")} {
 	}
 
 	std::string str() const override;

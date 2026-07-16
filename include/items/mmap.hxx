@@ -14,7 +14,7 @@ class CLUES_API MemoryProtectionParameter :
 public: // functions
 
 	explicit MemoryProtectionParameter() :
-			ValueInParameter{"prot", "protection"} {
+			ValueInParameter{make_item_cfg("prot", "protection")} {
 	}
 
 	std::string str() const override;
@@ -40,7 +40,7 @@ class CLUES_API MapFlagsParameter :
 public: // functions
 
 	explicit MapFlagsParameter() :
-			ValueInParameter{"flags", "memory mapping flags"} {
+			ValueInParameter{make_item_cfg("flags", "memory mapping flags")} {
 	}
 
 	std::string str() const override;
@@ -77,7 +77,7 @@ class CLUES_API OldMmapArgs :
 public:
 
 	explicit OldMmapArgs() :
-			PointerInValue{"args"} {
+			PointerInValue{ItemCfg{.label = "args"}} {
 	}
 
 	bool valid() const {

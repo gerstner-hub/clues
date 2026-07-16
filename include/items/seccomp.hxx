@@ -35,7 +35,7 @@ public: // types
 public: // functions
 
 	explicit SecCompMode() :
-			ValueInParameter{"mode", "secure computing mode"} {
+			ValueInParameter{make_item_cfg("mode", "secure computing mode")} {
 	}
 
 	Mode mode() const {
@@ -62,7 +62,7 @@ class CLUES_API FilterProg :
 public: // functions
 
 	explicit FilterProg() :
-			PointerInValue{"filter", "bpf filter program struct"} {
+			PointerInValue{make_item_cfg("filter", "bpf filter program struct")} {
 	}
 
 	std::string str() const override;

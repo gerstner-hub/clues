@@ -16,7 +16,7 @@ class CLUES_API CloneFlagsValue :
 public: // functions
 
 	explicit CloneFlagsValue() :
-			SystemCallItem{ItemType::PARAM_IN, "flags", "clone flags"} {
+			SystemCallItem{ItemCfg{ItemType::PARAM_IN, "flags", "clone flags"}} {
 	}
 
 	std::string str() const override;
@@ -46,7 +46,7 @@ class CLUES_API CloneArgs :
 public: // functions
 
 	explicit CloneArgs() :
-			SystemCallItem{ItemType::PARAM_IN_OUT, "cl_args", "clone arguments"} {
+			SystemCallItem{ItemCfg{ItemType::PARAM_IN_OUT, "cl_args", "clone arguments"}} {
 
 	}
 

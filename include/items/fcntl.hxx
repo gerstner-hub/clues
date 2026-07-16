@@ -21,7 +21,7 @@ class FcntlOperation :
 public: // types
 
 	FcntlOperation() :
-			ValueInParameter{"op", "operation"} {
+			ValueInParameter{make_item_cfg("op", "operation")} {
 	}
 
 	/// All possible arguments for the `op` parameter to `fcntl(2)`.
@@ -100,7 +100,7 @@ protected: // data
 struct FileDescFlagsValue :
 		public SystemCallItem {
 	explicit FileDescFlagsValue(ItemType type) :
-			SystemCallItem{type, "fdflags", "file descriptor flags"} {
+			SystemCallItem{ItemCfg{type, "fdflags", "file descriptor flags"}} {
 	}
 
 	std::string str() const override;
@@ -125,7 +125,7 @@ public: // functions
 	explicit FLockParameter() :
 			// this can be PARAM_IN and PARAM_IN_OUT, but we
 			// simply claim it's always IN_OUT
-			PointerValue{ItemType::PARAM_IN_OUT, "flock", "struct flock"} {
+			PointerValue{ItemCfg{ItemType::PARAM_IN_OUT, "flock", "struct flock"}} {
 	}
 
 	std::string str() const override;
@@ -161,7 +161,7 @@ class FileDescOwner :
 public: // functions
 
 	explicit FileDescOwner(const ItemType type) :
-			SystemCallItem{type} {
+			SystemCallItem{ItemCfg{type, "", ""}} {
 	}
 
 	std::string str() const override;
@@ -197,7 +197,7 @@ class ExtFileDescOwner :
 		public SystemCallItem {
 public: // functions
 	explicit ExtFileDescOwner(const ItemType type) :
-			SystemCallItem{type, "owner_ex", "struct f_owner_ex"} {
+			SystemCallItem{ItemCfg{type, "owner_ex", "struct f_owner_ex"}} {
 	}
 
 	std::string str() const override;
@@ -221,7 +221,7 @@ class LeaseType :
 public: // functions
 
 	explicit LeaseType(const ItemType type) :
-			SystemCallItem{type, "lease", "lease type"} {
+			SystemCallItem{ItemCfg{type, "lease", "lease type"}} {
 	}
 
 	std::string str() const override;
@@ -260,7 +260,7 @@ public: // types
 public: // functions
 
 	explicit DNotifySettings() :
-			ValueInParameter{"events", "dnotify event bitmask"} {
+			ValueInParameter{make_item_cfg("events", "dnotify event bitmask")} {
 	}
 
 	auto settings() const {
@@ -284,7 +284,7 @@ class FileSealSettings :
 public: // functions
 
 	explicit FileSealSettings(const ItemType type) :
-			ValueParameter{type, "flags", "seal flags"} {
+			ValueParameter{ItemCfg{type, "flags", "seal flags"}} {
 	}
 
 	/// Returns the currently stored SealFlags
@@ -320,7 +320,7 @@ public: // types
 public: // functions
 
 	explicit ReadWriteHint(const ItemType type) :
-			SystemCallItem{type, "rw_hint", "read/write lifetime hint"} {
+			SystemCallItem{ItemCfg{type, "rw_hint", "read/write lifetime hint"}} {
 	}
 
 	Hint hint() const {

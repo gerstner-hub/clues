@@ -23,7 +23,7 @@ class CLUES_API GetRandomFlagsValue :
 		public SystemCallItem {
 public:
 	explicit GetRandomFlagsValue() :
-			SystemCallItem{ItemType::PARAM_IN, "flags", "random flags"} {
+			SystemCallItem{ItemCfg{ItemType::PARAM_IN, "flags", "random flags"}} {
 	}
 
 	std::string str() const override;
@@ -52,8 +52,7 @@ class CLUES_API RSeqParameter :
 public: // functions
 
 	explicit RSeqParameter() :
-			PointerValue{ItemType::PARAM_IN_OUT,
-				"rseq", "struct rseq*"} {
+			PointerValue{ItemCfg{ItemType::PARAM_IN_OUT, "rseq", "struct rseq*"}} {
 	};
 
 	std::string str() const override;
@@ -108,7 +107,7 @@ public: // types
 public: // functions
 
 	explicit RSeqFlagsValue() :
-			ValueInParameter{"flags"} {
+			ValueInParameter{ItemCfg{.label = "flags"}} {
 
 	}
 
@@ -157,7 +156,7 @@ public: // types
 public: // functions
 
 	explicit UnameStruct() :
-			PointerOutValue{"utsname", "struct utsname*"} {
+			PointerOutValue{make_item_cfg("utsname", "struct utsname*")} {
 	}
 
 	/// Access to the converted struct utsname data.

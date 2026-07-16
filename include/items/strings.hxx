@@ -11,10 +11,10 @@ class CLUES_API StringData :
 		public PointerValue {
 public: // functions
 	explicit StringData(const ItemCfg &cfg = {}) :
-			PointerValue{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("string"),
-				cfg.desc.value_or("")} {
+			PointerValue{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "string",
+				.desc = ""})} {
 	}
 
 	std::string str() const override;
@@ -58,7 +58,7 @@ class CLUES_API StringBuffer :
 public: // functions
 
 	explicit StringBuffer(const SystemCallItem &size_par, const ItemCfg &cfg = {}) :
-			StringData{cfg.apply_defaults(ItemCfg{ItemType::PARAM_OUT})},
+			StringData{cfg.applyDefaults(ItemCfg{ItemType::PARAM_OUT})},
 			m_size_par(size_par) {
 	}
 
@@ -80,9 +80,9 @@ class CLUES_API StringArrayData :
 public: // functions
 
 	explicit StringArrayData(const ItemCfg &cfg = {}) :
-			PointerInValue{
-				cfg.label.value_or("string-array"),
-				cfg.desc.value_or("")} {
+			PointerInValue{cfg.applyDefaults(ItemCfg{
+				.label = "string-array",
+				.desc = ""})} {
 	}
 
 	std::string str() const override;

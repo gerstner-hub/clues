@@ -13,10 +13,7 @@ class CLUES_API UserID :
 public: // functions
 
 	explicit UserID(const ItemCfg &cfg = ItemCfg{}) :
-			SystemCallItem{
-				cfg.type.value_or(ItemType::RETVAL),
-				cfg.label.value_or("uid"),
-				cfg.desc.value_or("user id")} {
+			SystemCallItem{cfg.applyDefaults(ItemCfg{ItemType::RETVAL, "uid", "user id"})} {
 	}
 
 	auto uid() const {
@@ -39,10 +36,7 @@ class CLUES_API GroupID :
 public: // functions
 
 	explicit GroupID(const ItemCfg &cfg = ItemCfg{}) :
-		SystemCallItem{
-			cfg.type.value_or(ItemType::RETVAL),
-			cfg.label.value_or("gid"),
-			cfg.desc.value_or("group id")} {
+		SystemCallItem{cfg.applyDefaults(ItemCfg{ItemType::RETVAL, "gid", "group id"})} {
 	}
 
 	auto gid() const {

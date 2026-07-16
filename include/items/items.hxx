@@ -21,8 +21,8 @@ class ReturnValue :
 		public SystemCallItem {
 public:
 	explicit ReturnValue(const ItemCfg &cfg) :
-		SystemCallItem{ItemType::RETVAL, *cfg.label, cfg.desc.value_or("")}
-	{}
+		SystemCallItem{ItemCfg{ItemType::RETVAL, cfg.label, cfg.desc}} {
+	}
 };
 
 /// Base class for a pass-by-value parameter of a system call.
@@ -38,11 +38,8 @@ class ValueParameter :
 		public SystemCallItem {
 public: // functions
 
-	explicit ValueParameter(
-		const ItemType type,
-		const std::string_view short_name,
-		const std::string_view long_name = {}) :
-			SystemCallItem{type, short_name, long_name} {
+	explicit ValueParameter(const ItemCfg &cfg) :
+			SystemCallItem{cfg} {
 	}
 };
 
@@ -51,10 +48,8 @@ class ValueInParameter :
 		public ValueParameter {
 public: // functions
 
-	explicit ValueInParameter(
-		const std::string_view short_name,
-		const std::string_view long_name = {}) :
-			ValueParameter{ItemType::PARAM_IN, short_name, long_name} {
+	explicit ValueInParameter(const ItemCfg &cfg) :
+			ValueParameter{ItemCfg{ItemType::PARAM_IN, cfg.label, cfg.desc}} {
 	}
 };
 
@@ -63,10 +58,8 @@ class ValueOutParameter :
 		public ValueParameter {
 public: // functions
 
-	explicit ValueOutParameter(
-		const std::string_view short_name,
-		const std::string_view long_name) :
-			ValueParameter{ItemType::PARAM_OUT, short_name, long_name} {
+	explicit ValueOutParameter(const ItemCfg &cfg) :
+			ValueParameter{ItemCfg{ItemType::PARAM_OUT, cfg.label, cfg.desc}} {
 	}
 };
 
@@ -81,11 +74,8 @@ class PointerValue :
 		public SystemCallItem {
 public: // functions
 
-	explicit PointerValue(
-		const ItemType type,
-		const std::string_view short_name,
-		const std::string_view long_name) :
-			SystemCallItem{type, short_name, long_name} {
+	explicit PointerValue(const ItemCfg &cfg) :
+			SystemCallItem{cfg} {
 	}
 
 	ForeignPtr ptr() const {
@@ -107,11 +97,8 @@ class PointerOutValue :
 		public PointerValue {
 public: // functions
 
-	explicit PointerOutValue(
-		const std::string_view short_name,
-		const std::string_view long_name = {},
-		const ItemType type = ItemType::PARAM_OUT) :
-			PointerValue{type, short_name, long_name} {
+	explicit PointerOutValue(const ItemCfg &cfg) :
+			PointerValue{ItemCfg{ItemType::PARAM_OUT, cfg.label, cfg.desc}} {
 	}
 };
 
@@ -125,10 +112,8 @@ class PointerInValue :
 		public PointerValue {
 public: // functions
 
-	explicit PointerInValue(
-		const std::string_view short_name,
-		const std::string_view long_name = {}) :
-			PointerValue{ItemType::PARAM_IN, short_name, long_name} {
+	explicit PointerInValue(const ItemCfg &cfg) :
+			PointerValue{ItemCfg{ItemType::PARAM_IN, cfg.label, cfg.desc}} {
 	}
 };
 
@@ -137,10 +122,10 @@ class GenericPointerValue :
 public: // functions
 
 	explicit GenericPointerValue(const ItemCfg &cfg = {}) :
-			PointerValue{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				*cfg.label,
-				cfg.desc.value_or("")} {
+			PointerValue{cfg.applyDefaults(
+					ItemCfg{
+						.type = ItemType::PARAM_IN,
+						.desc = ""})} {
 	}
 
 	std::string str() const override;
@@ -170,7 +155,7 @@ public: // functions
 		const SystemCallItem &size_par,
 		const ItemCfg &cfg = {},
 		const bool is_binary = false) :
-			PointerValue{*cfg.type, *cfg.label, cfg.desc.value_or("")},
+			PointerValue{cfg.applyDefaults(ItemCfg{.desc = ""})},
 			m_size_par{size_par},
 			m_is_binary{is_binary} {
 		if (cfg.type == ItemType::PARAM_IN) {
@@ -240,8 +225,9 @@ class PointerToScalar :
 public: // functions
 
 	explicit PointerToScalar(const ItemCfg &cfg = {}) :
-			PointerValue{cfg.type.value_or(ItemType::PARAM_OUT),
-				*cfg.label, cfg.desc.value_or("")} {
+			PointerValue{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_OUT,
+				.desc = ""})} {
 	}
 
 	ForeignPtr pointer() const {
@@ -294,10 +280,9 @@ class IntValueT :
 public: // functions
 
 	explicit IntValueT(const ItemCfg &cfg = {}) :
-			ValueParameter{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				*cfg.label,
-				cfg.desc.value_or("")} {
+			ValueParameter{cfg.applyDefaults(ItemCfg{
+					.type = ItemType::PARAM_IN,
+					.desc = ""})} {
 	}
 
 	INT value() const {
@@ -337,10 +322,8 @@ class BoolValue :
 public: // functions
 
 	explicit BoolValue(const ItemCfg &cfg = {}) :
-			ValueParameter{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("bool"),
-				cfg.desc.value_or("")} {
+			ValueParameter{cfg.applyDefaults(
+				ItemCfg{ItemType::PARAM_IN, "bool", ""})} {
 	}
 
 	bool value() const {
@@ -365,7 +348,7 @@ struct UnknownItem :
 		public ValueInParameter {
 
 	UnknownItem() :
-			ValueInParameter{"unknown"} {
+			ValueInParameter{ItemCfg{.label = "unknown"}} {
 	}
 
 	std::string str() const override {
@@ -378,7 +361,7 @@ struct UnsupportedItem :
 		public ValueInParameter {
 
 	UnsupportedItem() :
-			ValueInParameter{"unknown"} {
+			ValueInParameter{ItemCfg{.label = "unknown"}} {
 	}
 
 	std::string str() const override {
@@ -391,7 +374,7 @@ struct DroppedItem :
 		public ValueInParameter {
 
 	DroppedItem() :
-			ValueInParameter{"unknown"} {
+			ValueInParameter{ItemCfg{.label = "unknown"}} {
 	}
 
 	std::string str() const override {
@@ -416,7 +399,7 @@ struct UnusedItem :
 		public ValueInParameter {
 
 	UnusedItem() :
-			ValueInParameter{"unused"} {
+			ValueInParameter{ItemCfg{.label = "unused"}} {
 		m_flags.set(Flag::UNUSED);
 	}
 

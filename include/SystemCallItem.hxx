@@ -47,7 +47,7 @@ struct ItemCfg {
 	 * This is useful for more deeply nested specializations of
 	 * SystemCallItem where base classes expect an ItemCfg as well.
 	 **/
-	ItemCfg apply_defaults(const ItemCfg &cfg) const {
+	ItemCfg applyDefaults(const ItemCfg &cfg) const {
 		return ItemCfg{
 			cfg.type ? type.value_or(*cfg.type) : type,
 			cfg.label ? label.value_or(*cfg.label) : label,
@@ -98,19 +98,16 @@ public: // functions
 	/**
 	 * \param[in] type
 	 * 	The type of item.
-	 * \param[in] short_name
+	 * \param[in] label
 	 * 	A short friendly name for this item (one word)
-	 * \param[in] long_name
+	 * \param[in] desc
 	 *	A longer name for this item, optional
 	 **/
-	explicit SystemCallItem(
-		const ItemType type,
-		const std::string_view label = {},
-		const std::string_view desc = {}) :
-			m_type{type},
-			m_label{label},
-			m_desc{desc}
-	{}
+	explicit SystemCallItem(const ItemCfg &cfg) :
+			m_type{*cfg.type},
+			m_label{*cfg.label},
+			m_desc{cfg.desc.value_or("")} {
+	}
 
 	virtual ~SystemCallItem() {}
 

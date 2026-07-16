@@ -27,10 +27,10 @@ class ProcessID :
 public: // functions
 
 	explicit ProcessID(const ItemCfg &cfg = ItemCfg{}) :
-			SystemCallItem{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("pid"),
-				cfg.desc.value_or("process ID")} {
+			SystemCallItem{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "pid",
+				.desc = "process ID"})} {
 	}
 
 	auto pid() const { return m_pid; }
@@ -58,10 +58,10 @@ class ProcessGroupID :
 public: // functions
 
 	explicit ProcessGroupID(const ItemCfg &cfg = ItemCfg{}) :
-			SystemCallItem{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("pgid"),
-				cfg.desc.value_or("process group ID")} {
+			SystemCallItem{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "pgid",
+				.desc = "process group ID"})} {
 	}
 
 	auto pgid() const { return m_pgid; }
@@ -89,10 +89,10 @@ class SessionID :
 public: // functions
 
 	explicit SessionID(const ItemCfg &cfg = ItemCfg{}) :
-			SystemCallItem{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("sid"),
-				cfg.desc.value_or("session ID")} {
+			SystemCallItem{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "sid",
+				.desc = "session ID"})} {
 	}
 
 	auto sid() const { return m_sid; }
@@ -120,10 +120,10 @@ class ThreadID :
 public: // functions
 
 	explicit ThreadID(const ItemCfg &cfg = ItemCfg{}) :
-		SystemCallItem{
-			cfg.type.value_or(ItemType::PARAM_IN),
-			cfg.label.value_or("tid"),
-			cfg.desc.value_or("thread ID")} {
+		SystemCallItem{cfg.applyDefaults(ItemCfg{
+			.type = ItemType::PARAM_IN,
+			.label = "tid",
+			.desc = "thread ID"})} {
 	}
 
 	auto tid() const { return m_tid; }
@@ -144,7 +144,9 @@ class ExitStatus :
 public: // functions
 
 	explicit ExitStatus(const ItemCfg &cfg = {}) :
-			SystemCallItem{*cfg.type, cfg.label.value_or("status"), cfg.desc.value_or("")} {
+			SystemCallItem{cfg.applyDefaults(ItemCfg{
+					.label = "status",
+					.desc = ""})} {
 	}
 
 	auto status() const { return m_status; }
@@ -165,7 +167,7 @@ class WaitOptions :
 public: // functions
 
 	explicit WaitOptions() :
-			ValueInParameter{"options", "wait options"} {
+			ValueInParameter{make_item_cfg("options", "wait options")} {
 	}
 
 	auto options() const {
@@ -191,7 +193,7 @@ class ResourceUsage :
 public: // functions
 
 	explicit ResourceUsage() :
-			PointerOutValue{"rusage", "resource usage"} {
+			PointerOutValue{make_item_cfg("rusage", "resource usage")} {
 	}
 
 	std::string str() const override;
@@ -273,7 +275,7 @@ public: // types
 public: // functions
 
 	explicit WaitID() :
-			ValueInParameter{"idtype", "wait ID type"} {
+			ValueInParameter{make_item_cfg("idtype", "wait ID type")} {
 	}
 
 	Type type() const {
@@ -301,7 +303,7 @@ public: // types
 public: // functions
 
 	explicit PIDFDOpenFlags() :
-			ValueInParameter{"flags", "pidfd open flags"} {
+			ValueInParameter{make_item_cfg("flags", "pidfd open flags")} {
 	}
 
 	Flags flags() const {
@@ -334,7 +336,7 @@ public: // types
 public: // functions
 
 	explicit PIDFDGetFDFlags() :
-			ValueInParameter{"flags", "open flags"} {
+			ValueInParameter{make_item_cfg("flags", "open flags")} {
 	}
 
 	Flags flags() const {
@@ -363,7 +365,7 @@ public: // types
 public: // functions
 
 	explicit PIDFDSendSignalFlags() :
-			ValueInParameter{"flags", "signal scope flags"} {
+			ValueInParameter{make_item_cfg("flags", "signal scope flags")} {
 	}
 
 	Flags flags() const {

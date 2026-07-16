@@ -30,7 +30,7 @@ class PipeEnds :
 public: // functions
 
 	explicit PipeEnds() :
-			PointerOutValue{"pipefd", "pointer to array pipefd[2]"} {
+			PointerOutValue{make_item_cfg("pipefd", "pointer to array pipefd[2]")} {
 	}
 
 	std::string str() const override;
@@ -90,7 +90,7 @@ public: // types
 public: // functions
 
 	explicit PipeFlags() :
-			ValueInParameter{"flags"} {
+			ValueInParameter{ItemCfg{.label = "flags"}} {
 	}
 
 	Flags flags() const {
@@ -153,7 +153,7 @@ public: // functions
 	explicit IOVectorBase(
 			const SystemCallItem &vector_count,
 			const ItemType type) :
-			PointerValue{type, "iov", "struct iov*"},
+			PointerValue{ItemCfg{type, "iov", "struct iov*"}},
 			m_vector_count_par{vector_count} {
 		/*
 		 * `vector_count` comes after the `struct iovec*` in readv()
@@ -285,10 +285,10 @@ public: // types
 public: // data
 
 	explicit CombinedOffsetValue(const Ordering order = LOW_THEN_HIGH, const ItemCfg &cfg = {}) :
-			SystemCallItem{
-				cfg.type.value_or(ItemType::PARAM_IN),
-				cfg.label.value_or("offset"),
-				cfg.desc.value_or("read/write offset")},
+			SystemCallItem{cfg.applyDefaults(ItemCfg{
+				.type = ItemType::PARAM_IN,
+				.label = "offset",
+				.desc = "read/write offset"})},
 			m_order{order},
 			m_lower_bits{} {
 		if (order == HIGH_THEN_LOW) {
@@ -337,7 +337,7 @@ public: // types
 public: // functions
 
 	explicit ReadWriteFlags() :
-			ValueInParameter{"flags"} {
+			ValueInParameter{ItemCfg{.label = "flags"}} {
 	}
 
 	Flags flags() const {
@@ -367,7 +367,7 @@ public: // types
 public: // functions
 
 	explicit Whence() :
-			ValueInParameter{"whence", "seek direction"} {
+			ValueInParameter{make_item_cfg("whence", "seek direction")} {
 	}
 
 	SeekType type() const {
@@ -395,7 +395,7 @@ public: // types
 public: // functions
 
 	explicit EventFDFlags() :
-			ValueInParameter{"flags", "creation flags"} {
+			ValueInParameter{make_item_cfg("flags", "creation flags")} {
 	}
 
 	Flags flags() const {
@@ -476,9 +476,8 @@ public: // functions
 	 **/
 	explicit FDSet(const SystemCallItem &nfds,
 			const ItemCfg &cfg = {}) :
-			PointerValue{
-				cfg.type.value_or(ItemType::PARAM_IN_OUT),
-				cfg.label.value(), cfg.desc.value()},
+			PointerValue{cfg.applyDefaults(ItemCfg{
+					.type = ItemType::PARAM_IN_OUT})},
 			m_nfds{nfds} {
 	}
 
@@ -517,8 +516,10 @@ class CLUES_API OldSelectArgs :
 public:
 
 	explicit OldSelectArgs() :
-			PointerValue{ItemType::PARAM_IN_OUT,
-				"args", "struct sel_args_struct*"} {
+			PointerValue{ItemCfg{
+				ItemType::PARAM_IN_OUT,
+				"args",
+				"struct sel_args_struct*"}} {
 	}
 
 	bool valid() const {
