@@ -81,4 +81,8 @@ void SelectSystemCall::postSystemCall(const Tracee &proc) {
 	}
 }
 
+void EPollCreateSystemCall::updateFDTracking(const Tracee &proc) {
+	trackFD(proc, FDInfo{FDInfo::EVENT_FD, new_fd.fd()});
+}
+
 } // end ns

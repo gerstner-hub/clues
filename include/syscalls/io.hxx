@@ -1,6 +1,8 @@
 #pragma once
 
 // clues
+#include "SystemCallItem.hxx"
+#include "items/items.hxx"
 #include <clues/SystemCall.hxx>
 #include <clues/items/fs.hxx>
 #include <clues/items/io.hxx>
@@ -447,6 +449,35 @@ struct PSelectSystemCall :
 
 	item::TimeSpecInOutParameter timeout;
 	item::SigSetParameter sigmask;
+};
+
+struct EPollCreateSystemCall :
+		public SystemCall {
+
+	explicit EPollCreateSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+			new_fd{ItemCfg{ItemType::RETVAL}} {
+		if (nr == SystemCallNr::EPOLL_CREATE1) {
+			flags.emplace();
+			addParameters(*flags);
+		} else {
+			size.emplace(make_item_cfg("size", "expected number of event watches"));
+			addParameters(*size);
+		}
+
+		setReturnItem(new_fd);
+	}
+
+	/// Creation flags only present in epoll_create1().
+	std::optional<item::EPollCreateFlags> flags;
+	/// Expected number of file descriptors only present in epoll_create().
+	std::optional<item::IntValue> size;
+	/// The new epoll file descriptor.
+	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &) override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

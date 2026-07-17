@@ -2,6 +2,7 @@
 
 // Linux
 #include <fcntl.h>
+#include <sys/epoll.h>
 #include <sys/select.h>
 
 // C++
@@ -411,6 +412,38 @@ protected: // functions
 protected: // data
 
 	Flags m_flags{0};
+};
+
+/// Flags used with epoll_create1().
+class EPollCreateFlags :
+		public ValueInParameter {
+public: // types
+
+	enum class Flag : int {
+		CLOEXEC = EPOLL_CLOEXEC
+	};
+
+	using Flags = cosmos::BitMask<Flag>;
+
+public: // functions
+
+	explicit EPollCreateFlags() :
+			ValueInParameter{make_item_cfg("flags", "creation flags")} {
+	}
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+	std::string str() const override;
+
+protected: // data
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	Flags m_flags{};
 };
 
 /// File descriptor sets as used with SelectSystemCall.

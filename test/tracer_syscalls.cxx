@@ -492,6 +492,12 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(pselect6_time64\(nfds=5, readfds=\[3\] → \[\], writefds=\[4\] → \[4\], exceptfds=NULL, timeout=\{50s, 100ns\} → left: \{49s, {decimal}ns\}, sigset_argpack=\{sigmask=\{SIGINT, SIGQUIT\}, sigsetsize=8\}\) = 1 \(nready\))",
 #	endif
 	}},
+	TestSpec{"epoll", "epoll_create,epoll_create1", {
+#ifdef SYS_epoll_create
+		R"(epoll_create\(size=128\) = 3 \(fd\))",
+#endif
+		R"(epoll_create1\(flags=0x80000 \(EPOLL_CLOEXEC\)\) = 3 \(fd\))",
+	}},
 #ifdef COSMOS_I386
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

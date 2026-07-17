@@ -11,6 +11,7 @@
 #include <clues/private/utils.hxx>
 #include <clues/syscalls/io.hxx>
 #include <clues/Tracee.hxx>
+#include <sys/epoll.h>
 
 namespace clues::item {
 
@@ -213,6 +214,18 @@ std::string EventFDFlags::str() const {
 }
 
 void EventFDFlags::processValue(const Tracee &) {
+	m_flags = valueAs<Flags>();
+}
+
+std::string EPollCreateFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+
+	BITFLAGS_ADD(EPOLL_CLOEXEC);
+
+	return BITFLAGS_STR();
+}
+
+void EPollCreateFlags::processValue(const Tracee &) {
 	m_flags = valueAs<Flags>();
 }
 

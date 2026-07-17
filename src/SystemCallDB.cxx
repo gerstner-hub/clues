@@ -1,4 +1,5 @@
 // C++
+#include "sysnrs/i386.hxx"
 #include <utility>
 
 // clues
@@ -165,6 +166,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::NEWSELECT:       return new_sys<SelectSystemCall>(nr);
 	case SystemCallNr::PSELECT6:        [[ fallthrough ]];
 	case SystemCallNr::PSELECT6_TIME64: return new_sys<PSelectSystemCall>(nr);
+	case SystemCallNr::EPOLL_CREATE:    [[ fallthrough ]];
+	case SystemCallNr::EPOLL_CREATE1:   return new_sys<EPollCreateSystemCall>(nr);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

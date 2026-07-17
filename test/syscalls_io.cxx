@@ -1,7 +1,9 @@
 // test
+#include "syscalls/io.hxx"
 #include "utils/syscalls.hxx"
 
 // Linux
+#include <sys/epoll.h>
 #include <sys/ioctl.h>
 #include <linux/fs.h>
 
@@ -1101,6 +1103,38 @@ const auto TESTS = std::array{
 		}, "", {ABI::I386}
 	},
 #endif
+#ifndef COSMOS_AARCH64
+	TestSpec{SystemCallNr::EPOLL_CREATE, []() {
+			::epoll_create(128);
+		}, ENTRY_VERIFY_CB(EPollCreateSystemCall, {
+			VERIFY(!sc.flags);
+			VERIFY(sc.size);
+			VERIFY(sc.size->value() == 128);
+		}), EXIT_VERIFY_CB(EPollCreateSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::EPOLL_CREATE, 128);
+			})
+		}
+	},
+#endif
+	TestSpec{SystemCallNr::EPOLL_CREATE1, []() {
+			::epoll_create1(EPOLL_CLOEXEC);
+		}, ENTRY_VERIFY_CB(EPollCreateSystemCall, {
+			VERIFY(sc.flags);
+			VERIFY(!sc.size);
+			VERIFY(sc.flags->flags().raw() == EPOLL_CLOEXEC);
+		}), EXIT_VERIFY_CB(EPollCreateSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.new_fd.fd() == FIRST_FD);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::EPOLL_CREATE1, EPOLL_CLOEXEC);
+			})
+		}
+	},
 };
 
 } // end anon ns
