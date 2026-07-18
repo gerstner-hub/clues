@@ -492,11 +492,12 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(pselect6_time64\(nfds=5, readfds=\[3\] → \[\], writefds=\[4\] → \[4\], exceptfds=NULL, timeout=\{50s, 100ns\} → left: \{49s, {decimal}ns\}, sigset_argpack=\{sigmask=\{SIGINT, SIGQUIT\}, sigsetsize=8\}\) = 1 \(nready\))",
 #	endif
 	}},
-	TestSpec{"epoll", "epoll_create,epoll_create1", {
+	TestSpec{"epoll", "epoll_create,epoll_create1,epoll_ctl", {
 #ifdef SYS_epoll_create
 		R"(epoll_create\(size=128\) = 3 \(fd\))",
 #endif
 		R"(epoll_create1\(flags=0x80000 \(EPOLL_CLOEXEC\)\) = 3 \(fd\))",
+		R"(epoll_ctl\(epfd=3, op=EPOLL_CTL_ADD, fd=0, event=\{events=0x11 \(EPOLLHUP|EPOLLIN\), data=0x1267\}\) = 0 \(success\))",
 	}},
 	TestSpec{"dup", "dup,dup2,dup3", {
 		R"(dup\(oldfd=0\) = 3 \(fd\))",

@@ -9,5 +9,11 @@ int main() {
 	close(fd);
 #endif
 	fd = epoll_create1(EPOLL_CLOEXEC);
+
+	epoll_event ev;
+	ev.events = EPOLLIN|EPOLLHUP;
+	ev.data.fd = 4711;
+	epoll_ctl(fd, EPOLL_CTL_ADD, 0, &ev);
+
 	close(fd);
 }

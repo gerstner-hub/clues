@@ -338,4 +338,58 @@ std::string OldSelectArgs::str() const {
 
 }
 
+std::string EPollOperation::str() const {
+	switch (cosmos::to_integral(m_op)) {
+		CASE_ENUM_TO_STR(EPOLL_CTL_ADD);
+		CASE_ENUM_TO_STR(EPOLL_CTL_DEL);
+		CASE_ENUM_TO_STR(EPOLL_CTL_MOD);
+		default: return "EPOLL_CTL_???";
+	}
+}
+
+void EPollOperation::processValue(const Tracee &) {
+	m_op = valueAs<Operation>();
+}
+
+void EPollEvent::processValue(const Tracee &proc) {
+	if (isZero()) {
+		m_ev.reset();
+		return;
+	}
+
+	if (!m_ev) {
+		m_ev.emplace();
+	}
+
+	if (!proc.readStruct(asPtr(), *m_ev)) {
+		m_ev.reset();
+		return;
+	}
+}
+
+std::string EPollEvent::str() const {
+	if (!m_ev)
+		return formatBadPointer();
+
+	const auto events = *flags();
+	BITFLAGS_FORMAT_START(events);
+	BITFLAGS_ADD(EPOLLRDHUP);
+	BITFLAGS_ADD(EPOLLERR);
+	BITFLAGS_ADD(EPOLLHUP);
+	BITFLAGS_ADD(EPOLLIN);
+	BITFLAGS_ADD(EPOLLOUT);
+	BITFLAGS_ADD(EPOLLPRI);
+	BITFLAGS_ADD(EPOLLET);
+	BITFLAGS_ADD(EPOLLONESHOT);
+	BITFLAGS_ADD(EPOLLWAKEUP);
+	const auto flags_str = BITFLAGS_STR();
+
+	/*
+	 * format the data, which is a union, as a hexadecimal pointer
+	 */
+	return std::format("{{events={}, data={}}}",
+		flags_str, m_ev->data.ptr
+	);
+}
+
 } // end ns

@@ -480,6 +480,31 @@ protected: // functions
 	void updateFDTracking(const Tracee &) override;
 };
 
+struct EPollCtlSystemCall :
+		public SystemCall {
+
+	explicit EPollCtlSystemCall() :
+			SystemCall{SystemCallNr::EPOLL_CTL},
+			epoll_fd{make_item_cfg("epfd", "epoll file descriptor")},
+			event{ItemCfg{ItemType::PARAM_IN}} {
+		addParameters(epoll_fd, op, fd, event);
+		setReturnItem(res);
+	}
+
+	item::FileDescriptor epoll_fd;
+	item::EPollOperation op;
+	/// the file descriptor to adjust in the epoll set.
+	item::FileDescriptor fd;
+	/*
+	 * For EPOLL_CTL_DEL this is unused, but a bug in older kernels
+	 * required applications to pass non-null here. So let's always fetch
+	 * this structure, if available.
+	 */
+	item::EPollEvent event;
+
+	item::SuccessResult res;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

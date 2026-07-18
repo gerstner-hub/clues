@@ -13,6 +13,7 @@
 // cosmos
 #include <cosmos/BitMask.hxx>
 #include <cosmos/io/EventFile.hxx>
+#include <cosmos/io/Poller.hxx>
 #include <cosmos/io/StreamIO.hxx>
 
 // clues
@@ -598,6 +599,99 @@ protected: // data
 	ForeignPtr writefds; // fd_set*
 	ForeignPtr exceptfds; // fd_set*
 	ForeignPtr timeout; // struct timeval32*
+};
+
+/// The `op` parameter in `epoll_ctl()`.
+class CLUES_API EPollOperation :
+		public ValueInParameter {
+public: // flags
+
+	enum class Operation : int {
+		ADD = EPOLL_CTL_ADD,
+		MOD = EPOLL_CTL_MOD,
+		DEL = EPOLL_CTL_DEL
+	};
+
+	using enum Operation;
+
+public: // functions
+
+	explicit EPollOperation() :
+			ValueInParameter{ItemCfg{.label = "op", .desc = "operation"}} {
+	}
+
+	Operation operation() const {
+		return m_op;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override;
+
+protected: // data
+
+	Operation m_op{};
+};
+
+/// `struct epoll_event` used with the epoll API.
+class CLUES_API EPollEvent :
+		public PointerValue {
+public: // types
+
+	/*
+	 * libcosmos models these as well, but in a split fashion separating
+	 * monitoring flags and event reporting flags. for tracing purposes it
+	 * is better to use a simple common type.
+	 */
+	enum class Event : uint32_t {
+		SOCKET_HANGUP  = EPOLLRDHUP,
+		ERROR          = EPOLLERR,
+		HANGUP         = EPOLLHUP,
+		INPUT          = EPOLLIN,
+		OUTPUT         = EPOLLOUT,
+		EXCEPTIONS     = EPOLLPRI,
+		EDGE_TRIGGERED = EPOLLET,
+		ONESHOT        = EPOLLONESHOT,
+		STAY_AWAKE     = EPOLLWAKEUP
+	};
+
+	using enum Event;
+
+	using Events = cosmos::BitMask<Event>;
+
+public: // functions
+
+	/**
+	 * You need to pass the ItemType in `cfg`.
+	 **/
+	explicit EPollEvent(const ItemCfg &cfg = {}) :
+			PointerValue{cfg.applyDefaults(ItemCfg{
+				.label = "event",
+				.desc = "struct epoll_event"})} {
+	}
+
+	std::string str() const override;
+
+	const std::optional<struct epoll_event>& event() const {
+		return m_ev;
+	}
+
+	std::optional<Events> flags() const {
+		if (!m_ev)
+			return {};
+
+		return Events{m_ev->events};
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	std::optional<struct epoll_event> m_ev;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

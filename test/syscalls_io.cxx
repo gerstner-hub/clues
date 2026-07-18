@@ -1,4 +1,5 @@
 // test
+#include "items/io.hxx"
 #include "syscalls/io.hxx"
 #include "utils/syscalls.hxx"
 
@@ -1132,6 +1133,32 @@ const auto TESTS = std::array{
 		}), IgnoreCalls{}, {
 			I386_CROSS_ABI(IgnoreCalls{}, []() {
 				syscall32(SyscallNr32::EPOLL_CREATE1, EPOLL_CLOEXEC);
+			})
+		}
+	},
+	TestSpec{SystemCallNr::EPOLL_CTL, []() {
+			int efd = ::epoll_create(128);
+			struct epoll_event ev;
+			ev.events = EPOLLIN|EPOLLHUP;
+			ev.data.ptr = (void*)0x1234;
+			epoll_ctl(efd, EPOLL_CTL_ADD, 0, &ev);
+		}, ENTRY_VERIFY_CB(EPollCtlSystemCall, {
+			VERIFY(sc.epoll_fd.fd() == FIRST_FD);
+			VERIFY(sc.op.operation() == clues::item::EPollOperation::ADD);
+			VERIFY(sc.fd.fd() == cosmos::FileNum{0});
+			const auto &ev = *sc.event.event();
+			VERIFY(ev.data.ptr == (void*)0x1234);
+			using enum clues::item::EPollEvent::Event;
+			VERIFY(*sc.event.flags() == clues::item::EPollEvent::Events{INPUT, HANGUP});
+		}), EXIT_VERIFY_CB(EPollCtlSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int efd = epoll_create(128);
+				auto ev = alloc_struct32<struct epoll_event>();
+				ev->events = EPOLLIN|EPOLLHUP;
+				ev->data.ptr = (void*)0x1234;
+				syscall32(SyscallNr32::EPOLL_CTL, efd, EPOLL_CTL_ADD, 0, ev);
 			})
 		}
 	},

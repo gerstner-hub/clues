@@ -155,6 +155,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::ULIMIT:
 	case SystemCallNr::STTY:
 	case SystemCallNr::SECURITY:
+	case SystemCallNr::EPOLL_CTL_OLD: /* these two were only present during the 2.5 dev series but they kept the slots */
+	case SystemCallNr::EPOLL_WAIT_OLD:
 	case SystemCallNr::TUXCALL:         return new_sys<DroppedSystemCall>(nr);
 	case SystemCallNr::STATFS:          [[ fallthrough ]];
 	case SystemCallNr::STATFS64:        return new_sys<StatFSSystemCall>(nr);
@@ -168,6 +170,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::PSELECT6_TIME64: return new_sys<PSelectSystemCall>(nr);
 	case SystemCallNr::EPOLL_CREATE:    [[ fallthrough ]];
 	case SystemCallNr::EPOLL_CREATE1:   return new_sys<EPollCreateSystemCall>(nr);
+	case SystemCallNr::EPOLL_CTL:       return new_sys<EPollCtlSystemCall>();
 	case SystemCallNr::DUP:             return new_sys<DupSystemCall>();
 	case SystemCallNr::DUP2:            return new_sys<Dup2SystemCall>();
 	case SystemCallNr::DUP3:            return new_sys<Dup3SystemCall>();
