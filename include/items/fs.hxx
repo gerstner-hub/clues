@@ -347,6 +347,43 @@ protected: // data
 	std::optional<cosmos::FileSystemStatus> m_stat;
 };
 
+/// Flags used with dup3().
+/**
+ * The dup3() flags are semantically difficult, since it only supports
+ * `O_CLOEXEC` currently, borrowing it from the `open()` family of system
+ * calls. In `open()` the flags are combined with the file mode, however, so
+ * we cannot reuse OpenFlagsValue here.
+ *
+ * This is also not the same as FileDescFlagsValue used with `fcntl()`,
+ * although it is semantically close.
+ *
+ * We introduce this dedicated item type only carrying cosmos::OpenFlags for
+ * the time being, hoping that this type will survive any possible future
+ * extension of the flags in the kernel API.
+ **/
+class DupFlags :
+		public ValueInParameter {
+public: // functions
+
+	explicit DupFlags() :
+			ValueInParameter{ItemCfg{.label = "flags"}} {
+	};
+
+	std::string str() const override;
+
+	cosmos::OpenFlags flags() const {
+		return m_flags;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+protected: // data
+
+	cosmos::OpenFlags m_flags{};
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

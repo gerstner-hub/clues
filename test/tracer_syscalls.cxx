@@ -498,6 +498,13 @@ const std::vector<TestSpec> TEST_SPECS{
 #endif
 		R"(epoll_create1\(flags=0x80000 \(EPOLL_CLOEXEC\)\) = 3 \(fd\))",
 	}},
+	TestSpec{"dup", "dup,dup2,dup3", {
+		R"(dup\(oldfd=0\) = 3 \(fd\))",
+#ifdef SYS_dup2
+		R"(dup2\(oldfd=3, newfd=50\) = 50 \(fd\))",
+#endif
+		R"(dup3\(oldfd=3, newfd=100, flags=0x80000 \(O_CLOEXEC\)\) = 100 \(fd\))",
+	}},
 #ifdef COSMOS_I386
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

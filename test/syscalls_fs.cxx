@@ -1,4 +1,6 @@
 // test
+#include "fs/types.hxx"
+#include "syscalls/fs.hxx"
 #include "utils/syscalls.hxx"
 
 #include <clues/private/kernel/statfs.hxx>
@@ -755,8 +757,54 @@ const auto TESTS = std::array{
 		},
 		"",
 		{clues::ABI::I386}
-	}
+	},
 #endif // COSMOS_X86
+	TestSpec{SystemCallNr::DUP, []() {
+			if (dup(0) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(DupSystemCall, {
+			VERIFY(sc.oldfd.fd() == cosmos::FileNum{0});
+		}), EXIT_VERIFY_CB(DupSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.retfd.fd() == FIRST_FD);
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::DUP, 0);
+			})
+		}
+	},
+#ifdef SYS_dup2
+	TestSpec{SystemCallNr::DUP2, []() {
+			(void)dup2(0, 50);
+		}, ENTRY_VERIFY_CB(Dup2SystemCall, {
+			VERIFY(sc.oldfd.fd() == cosmos::FileNum{0});
+			VERIFY(sc.newfd.fd() == cosmos::FileNum{50});
+		}), EXIT_VERIFY_CB(Dup2SystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.retfd.fd() == cosmos::FileNum{50});
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::DUP2, 0, 50);
+			})
+		}
+	},
+#endif
+	TestSpec{SystemCallNr::DUP3, []() {
+			(void)dup3(0, 50, O_CLOEXEC);
+		}, ENTRY_VERIFY_CB(Dup3SystemCall, {
+			VERIFY(sc.oldfd.fd() == cosmos::FileNum{0});
+			VERIFY(sc.newfd.fd() == cosmos::FileNum{50});
+			VERIFY(sc.flags.flags().raw() == O_CLOEXEC);
+		}), EXIT_VERIFY_CB(Dup3SystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.retfd.fd() == cosmos::FileNum{50});
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{}, []() {
+				syscall32(SyscallNr32::DUP3, 0, 50, O_CLOEXEC);
+			})
+		}
+	},
 };
 
 } // end ns

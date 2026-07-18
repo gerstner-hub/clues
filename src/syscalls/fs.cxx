@@ -1,4 +1,5 @@
 // cosmos
+#include "types.hxx"
 #include <cosmos/compiler.hxx>
 
 // clues
@@ -359,6 +360,22 @@ void StatFSSystemCall::prepareNewSystemCall() {
 			setParameters(path, buf);
 		}
 	}
+}
+
+void DupSystemCall::updateFDTracking(const Tracee &proc) {
+	const auto &fd_map = proc.fdInfoMap();
+	auto info = fd_map.find(oldfd.fd());
+
+	if (info == fd_map.end()) {
+		LOG_WARN(std::format("[{}]: source fd {} not found for dup()",
+			cosmos::to_integral(proc.pid()),
+			cosmos::to_integral(oldfd.fd())));
+		return;
+	}
+
+	auto new_entry = FDInfo{info->second};
+	new_entry.fd = retfd.fd();
+	trackFD(proc, std::move(new_entry));
 }
 
 } // end ns

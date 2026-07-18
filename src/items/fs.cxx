@@ -716,4 +716,16 @@ void StatFSParameter::updateData(const Tracee &proc) {
 	}
 }
 
+std::string DupFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+
+	BITFLAGS_ADD(O_CLOEXEC);
+
+	return BITFLAGS_STR();
+}
+
+void DupFlags::processValue(const Tracee &) {
+	m_flags = valueAs<cosmos::OpenFlags>();
+}
+
 } // end ns

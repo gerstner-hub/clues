@@ -168,6 +168,9 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::PSELECT6_TIME64: return new_sys<PSelectSystemCall>(nr);
 	case SystemCallNr::EPOLL_CREATE:    [[ fallthrough ]];
 	case SystemCallNr::EPOLL_CREATE1:   return new_sys<EPollCreateSystemCall>(nr);
+	case SystemCallNr::DUP:             return new_sys<DupSystemCall>();
+	case SystemCallNr::DUP2:            return new_sys<Dup2SystemCall>();
+	case SystemCallNr::DUP3:            return new_sys<Dup3SystemCall>();
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

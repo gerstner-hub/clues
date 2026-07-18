@@ -392,6 +392,52 @@ struct ReadLinkAtSystemCall :
 
 };
 
+/// The oldest dup() system call.
+struct DupSystemCall :
+		public SystemCall {
+
+	explicit DupSystemCall(const SystemCallNr nr = SystemCallNr::DUP) :
+			SystemCall{nr},
+			oldfd{ItemCfg{.label = "oldfd"}},
+			retfd{ItemCfg{ItemType::RETVAL}} {
+		addParameters(oldfd);
+		setReturnItem(retfd);
+	}
+
+	item::FileDescriptor oldfd;
+	item::FileDescriptor retfd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &proc) override;
+};
+
+/// The dup2() system call taking an explicit new file descriptor parameter.
+struct Dup2SystemCall :
+		public DupSystemCall {
+
+	explicit Dup2SystemCall(const SystemCallNr nr = SystemCallNr::DUP2) :
+			DupSystemCall{nr},
+			newfd{ItemCfg{.label = "newfd"}} {
+		addParameters(newfd);
+	}
+
+	/// The desired duplicated file descriptor number for `oldfd`.
+	item::FileDescriptor newfd;
+};
+
+/// The dup3() system call taking additional flags.
+struct Dup3SystemCall :
+		public Dup2SystemCall {
+
+	explicit Dup3SystemCall() :
+			Dup2SystemCall{SystemCallNr::DUP3} {
+		addParameters(flags);
+	}
+
+	item::DupFlags flags;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
