@@ -635,17 +635,16 @@ protected: // data
 	Operation m_op{};
 };
 
-/// `struct epoll_event` used with the epoll API.
-class CLUES_API EPollEvent :
-		public PointerValue {
-public: // types
+/// Wrapper around `struct epoll_event` used in multiple epoll related items.
+struct EPollEvent :
+	public epoll_event {
 
 	/*
 	 * libcosmos models these as well, but in a split fashion separating
 	 * monitoring flags and event reporting flags. for tracing purposes it
 	 * is better to use a simple common type.
 	 */
-	enum class Event : uint32_t {
+	enum class Flag : uint32_t {
 		SOCKET_HANGUP  = EPOLLRDHUP,
 		ERROR          = EPOLLERR,
 		HANGUP         = EPOLLHUP,
@@ -657,32 +656,32 @@ public: // types
 		STAY_AWAKE     = EPOLLWAKEUP
 	};
 
-	using enum Event;
+	using enum Flag;
 
-	using Events = cosmos::BitMask<Event>;
+	using Flags = cosmos::BitMask<Flag>;
 
+	Flags flags() const {
+		return Flags{this->events};
+	}
+};
+
+/// `struct epoll_event` used with the epoll_ctl() system call.
+/**
+ * This is a single input-only event structure which declares the events the
+ * caller is interested in.
+ **/
+class CLUES_API EPollEventSettings :
+		public PointerInValue {
 public: // functions
 
-	/**
-	 * You need to pass the ItemType in `cfg`.
-	 **/
-	explicit EPollEvent(const ItemCfg &cfg = {}) :
-			PointerValue{cfg.applyDefaults(ItemCfg{
-				.label = "event",
-				.desc = "struct epoll_event"})} {
+	explicit EPollEventSettings() :
+			PointerInValue{make_item_cfg("event", "struct epoll_event")} {
 	}
 
 	std::string str() const override;
 
-	const std::optional<struct epoll_event>& event() const {
+	const std::optional<EPollEvent>& event() const {
 		return m_ev;
-	}
-
-	std::optional<Events> flags() const {
-		if (!m_ev)
-			return {};
-
-		return Events{m_ev->events};
 	}
 
 protected: // functions
@@ -691,7 +690,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<struct epoll_event> m_ev;
+	std::optional<EPollEvent> m_ev;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

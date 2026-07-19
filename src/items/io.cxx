@@ -351,7 +351,10 @@ void EPollOperation::processValue(const Tracee &) {
 	m_op = valueAs<Operation>();
 }
 
-void EPollEvent::processValue(const Tracee &proc) {
+/* make sure the derived type doesn't add any data */
+static_assert(sizeof(EPollEvent) == sizeof(epoll_event), "struct epoll_event size mismatch");
+
+void EPollEventSettings::processValue(const Tracee &proc) {
 	if (isZero()) {
 		m_ev.reset();
 		return;
@@ -367,11 +370,11 @@ void EPollEvent::processValue(const Tracee &proc) {
 	}
 }
 
-std::string EPollEvent::str() const {
+std::string EPollEventSettings::str() const {
 	if (!m_ev)
 		return formatBadPointer();
 
-	const auto events = *flags();
+	const auto events = m_ev->flags();
 	BITFLAGS_FORMAT_START(events);
 	BITFLAGS_ADD(EPOLLRDHUP);
 	BITFLAGS_ADD(EPOLLERR);

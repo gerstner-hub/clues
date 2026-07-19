@@ -1148,8 +1148,8 @@ const auto TESTS = std::array{
 			VERIFY(sc.fd.fd() == cosmos::FileNum{0});
 			const auto &ev = *sc.event.event();
 			VERIFY(ev.data.ptr == (void*)0x1234);
-			using enum clues::item::EPollEvent::Event;
-			VERIFY(*sc.event.flags() == clues::item::EPollEvent::Events{INPUT, HANGUP});
+			using enum clues::item::EPollEvent::Flag;
+			VERIFY(ev.flags() == clues::item::EPollEvent::Flags{INPUT, HANGUP});
 		}), EXIT_VERIFY_CB(EPollCtlSystemCall, {
 			VERIFY(sc.hasResultValue());
 		}), IgnoreCalls{1}, {

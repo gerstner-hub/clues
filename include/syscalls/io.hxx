@@ -76,7 +76,7 @@ struct WriteVSystemCall :
 
 	explicit WriteVSystemCall(const SystemCallNr nr = SystemCallNr::WRITEV) :
 			SystemCall{nr},
-       			fd{},
+			fd{},
 			iov{iov_count},
 			iov_count{make_item_cfg("iovcnt", "number of struct iovec*")},
 			written{ItemCfg{ItemType::RETVAL, "bytes", "bytes written"}} {
@@ -98,7 +98,7 @@ struct PRead64SystemCall :
 		public ReadSystemCall {
 	PRead64SystemCall() :
 			ReadSystemCall{SystemCallNr::PREAD64},
-       			offset{make_item_cfg("offset", "read offset")} {
+			offset{make_item_cfg("offset", "read offset")} {
 		addParameters(offset);
 	}
 
@@ -113,7 +113,7 @@ struct PWrite64SystemCall :
 		public WriteSystemCall {
 	PWrite64SystemCall() :
 			WriteSystemCall{SystemCallNr::PWRITE64},
-       			offset{make_item_cfg("offset", "write offset")} {
+			offset{make_item_cfg("offset", "write offset")} {
 		addParameters(offset);
 	}
 
@@ -343,6 +343,15 @@ protected: // functions
  **/
 struct SelectSystemCallBase :
 		public SystemCall {
+	item::IntValue nfds;
+	item::FDSet readfds;
+	item::FDSet writefds;
+	item::FDSet exceptfds;
+
+	// return value
+	item::IntValue nready;
+
+protected:
 
 	explicit SelectSystemCallBase(const SystemCallNr nr) :
 			SystemCall{nr},
@@ -356,13 +365,6 @@ struct SelectSystemCallBase :
 		addParameters(nfds, readfds, writefds, exceptfds);
 	}
 
-	item::IntValue nfds;
-	item::FDSet readfds;
-	item::FDSet writefds;
-	item::FDSet exceptfds;
-
-	// return value
-	item::IntValue nready;
 };
 
 /// Traditional select() system call handling.
@@ -485,8 +487,7 @@ struct EPollCtlSystemCall :
 
 	explicit EPollCtlSystemCall() :
 			SystemCall{SystemCallNr::EPOLL_CTL},
-			epoll_fd{make_item_cfg("epfd", "epoll file descriptor")},
-			event{ItemCfg{ItemType::PARAM_IN}} {
+			epoll_fd{make_item_cfg("epfd", "epoll file descriptor")} {
 		addParameters(epoll_fd, op, fd, event);
 		setReturnItem(res);
 	}
@@ -500,7 +501,7 @@ struct EPollCtlSystemCall :
 	 * required applications to pass non-null here. So let's always fetch
 	 * this structure, if available.
 	 */
-	item::EPollEvent event;
+	item::EPollEventSettings event;
 
 	item::SuccessResult res;
 };
