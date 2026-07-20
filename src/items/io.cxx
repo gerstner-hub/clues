@@ -370,12 +370,9 @@ void EPollEventSettings::processValue(const Tracee &proc) {
 	}
 }
 
-std::string EPollEventSettings::str() const {
-	if (!m_ev)
-		return formatBadPointer();
-
-	const auto events = m_ev->flags();
-	BITFLAGS_FORMAT_START(events);
+std::string EPollEvent::formatFlags() const {
+	const auto mask = flags();
+	BITFLAGS_FORMAT_START(mask);
 	BITFLAGS_ADD(EPOLLRDHUP);
 	BITFLAGS_ADD(EPOLLERR);
 	BITFLAGS_ADD(EPOLLHUP);
@@ -385,14 +382,53 @@ std::string EPollEventSettings::str() const {
 	BITFLAGS_ADD(EPOLLET);
 	BITFLAGS_ADD(EPOLLONESHOT);
 	BITFLAGS_ADD(EPOLLWAKEUP);
-	const auto flags_str = BITFLAGS_STR();
+	return BITFLAGS_STR();
+}
+
+std::string EPollEventSettings::str() const {
+	if (!m_ev)
+		return formatBadPointer();
+
 
 	/*
 	 * format the data, which is a union, as a hexadecimal pointer
 	 */
 	return std::format("{{events={}, data={}}}",
-		flags_str, m_ev->data.ptr
+		m_ev->formatFlags(), m_ev->data.ptr
 	);
+}
+
+void EPollEventReport::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue())
+		return;
+
+	const auto num_events = m_call->result()->valueAs<int>();
+
+	m_events.resize(num_events);
+
+	if (!proc.readStructs(ptr(), m_events)) {
+		m_events.clear();
+	}
+}
+
+std::string EPollEventReport::str() const {
+	std::string ret{"["};
+
+	bool first = true;
+
+	for (const auto &ev: m_events) {
+		if (first)
+			first = false;
+		else {
+			ret += ", ";
+		}
+
+		ret += std::format("{{events={}, data={}}}",
+			ev.formatFlags(), ev.data.ptr);
+	}
+
+	ret += "]";
+	return ret;
 }
 
 } // end ns

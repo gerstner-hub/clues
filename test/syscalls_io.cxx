@@ -1,14 +1,17 @@
 // test
-#include "items/io.hxx"
-#include "syscalls/io.hxx"
 #include "utils/syscalls.hxx"
 
 // Linux
+#include <linux/fs.h>
 #include <sys/epoll.h>
 #include <sys/ioctl.h>
-#include <linux/fs.h>
+
+// cosmos
+#include <cosmos/memory.hxx>
 
 // clues
+#include <clues/syscalls/io.hxx>
+#include <clues/items/io.hxx>
 #include <clues/private/kernel/time.hxx>
 #include <clues/private/kernel/select.hxx>
 #include <clues/private/kernel/sigset.hxx>
@@ -187,6 +190,42 @@ void verify_pselect_exit(const clues::PSelectSystemCall &sc, bool &good) {
 	verify_select_base_exit(sc, good);
 	VERIFY(sc.timeout.spec().has_value());
 	VERIFY(sc.timeout.remaining().has_value());
+}
+
+void call_epoll_wait(std::function<void (int)> wait) {
+	int efd = epoll_create(128);
+	int pipes[2];
+	if (pipe(pipes) < 0)
+		return;
+	if (write(pipes[1], "test", 4) != 4)
+		return;
+	struct epoll_event ev;
+	cosmos::zero_object(ev);
+	ev.events = EPOLLIN|EPOLLHUP;
+	ev.data.fd = pipes[0];
+	epoll_ctl(efd, EPOLL_CTL_ADD, pipes[0], &ev);
+	ev.events = EPOLLOUT|EPOLLHUP;
+	ev.data.fd = pipes[1];
+	epoll_ctl(efd, EPOLL_CTL_ADD, pipes[1], &ev);
+	wait(efd);
+}
+
+void verify_epoll_wait_entry(const clues::EPollWaitSystemCallBase &sc, bool &good) {
+	VERIFY(sc.epoll_fd.fd() == FIRST_FD);
+	VERIFY(sc.max_events.value() == 2);
+}
+
+void verify_epoll_wait_exit(const clues::EPollWaitSystemCallBase &sc, bool &good) {
+	VERIFY(sc.hasResultValue());
+	VERIFY(sc.events_ready.value() == 2);
+	const auto &events = sc.events.events();
+	VERIFY(events.size() == 2);
+	using enum clues::item::EPollEvent::Flag;
+	using Flags = clues::item::EPollEvent::Flags;
+	VERIFY(events[0].flags() == Flags{INPUT});
+	VERIFY(events[0].dataAsFD() == SECOND_FD);
+	VERIFY(events[1].flags() == Flags{OUTPUT});
+	VERIFY(events[1].dataAsFD() == THIRD_FD);
 }
 
 const auto TESTS = std::array{
@@ -1159,6 +1198,91 @@ const auto TESTS = std::array{
 				ev->events = EPOLLIN|EPOLLHUP;
 				ev->data.ptr = (void*)0x1234;
 				syscall32(SyscallNr32::EPOLL_CTL, efd, EPOLL_CTL_ADD, 0, ev);
+			})
+		}
+	},
+#ifdef SYS_epoll_wait
+	TestSpec{SystemCallNr::EPOLL_WAIT, []() {
+			call_epoll_wait([](int efd) {
+				struct epoll_event ev[2];
+				epoll_wait(efd, ev, 2, 100);
+			});
+		}, ENTRY_VERIFY_CB(EPollWaitSystemCall, {
+			verify_epoll_wait_entry(sc, good);
+		}), EXIT_VERIFY_CB(EPollWaitSystemCall, {
+			verify_epoll_wait_exit(sc, good);
+			VERIFY(sc.timeout_ms.value() == 100);
+		}), IgnoreCalls{5}, {
+			I386_CROSS_ABI(IgnoreCalls{6}, []() {
+				call_epoll_wait([](int efd) {
+					auto evp = alloc_struct32<struct epoll_event[2]>();
+					auto &ev = *evp;
+					syscall32(SyscallNr32::EPOLL_WAIT, efd, ev, 2, 100);
+				});
+			})
+		}
+	},
+#endif
+	TestSpec{SystemCallNr::EPOLL_PWAIT, []() {
+			call_epoll_wait([](int efd) {
+				struct epoll_event ev[2];
+				sigset_t ss;
+				sigemptyset(&ss);
+				sigaddset(&ss, SIGTERM);
+				epoll_pwait(efd, ev, 2, 100, &ss);
+			});
+		}, ENTRY_VERIFY_CB(EPollPWaitSystemCall, {
+			verify_epoll_wait_entry(sc, good);
+		}), EXIT_VERIFY_CB(EPollPWaitSystemCall, {
+			verify_epoll_wait_exit(sc, good);
+			VERIFY(sc.timeout_ms.value() == 100);
+			VERIFY(sc.sigmask.sigset()->isSet(cosmos::signal::TERMINATE));
+		}), IgnoreCalls{5}, {
+			I386_CROSS_ABI(IgnoreCalls{7}, []() {
+				call_epoll_wait([](int efd) {
+					auto evp = alloc_struct32<struct epoll_event[2]>();
+					auto &ev = *evp;
+					auto ss = alloc_struct32<sigset_t>();
+					sigemptyset(ss);
+					sigaddset(ss, SIGTERM);
+					syscall32(SyscallNr32::EPOLL_PWAIT, efd, ev, 2, 100, ss, 8);
+				});
+			})
+		}
+	},
+	TestSpec{SystemCallNr::EPOLL_PWAIT2, []() {
+			call_epoll_wait([](int efd) {
+				struct epoll_event ev[2];
+				sigset_t ss;
+				sigemptyset(&ss);
+				sigaddset(&ss, SIGTERM);
+				struct timespec ts;
+				ts.tv_sec = 0;
+				ts.tv_nsec = 100000;
+				epoll_pwait2(efd, ev, 2, &ts, &ss);
+			});
+		}, ENTRY_VERIFY_CB(EPollPWait2SystemCall, {
+			verify_epoll_wait_entry(sc, good);
+		}), EXIT_VERIFY_CB(EPollPWait2SystemCall, {
+			verify_epoll_wait_exit(sc, good);
+			const auto &ts = *sc.timeout.spec();
+			VERIFY(ts.tv_sec == 0);
+			VERIFY(ts.tv_nsec == 100000);
+			VERIFY(sc.sigmask.sigset()->isSet(cosmos::signal::TERMINATE));
+		}), IgnoreCalls{5}, {
+			I386_CROSS_ABI(IgnoreCalls{8}, []() {
+				call_epoll_wait([](int efd) {
+					auto evp = alloc_struct32<struct epoll_event[2]>();
+					auto &ev = *evp;
+					/* this always uses the 64-bit timespec */
+					auto ts = alloc_struct32<struct timespec>();
+					ts->tv_sec = 0;
+					ts->tv_nsec = 100000;
+					auto ss = alloc_struct32<sigset_t>();
+					sigemptyset(ss);
+					sigaddset(ss, SIGTERM);
+					syscall32(SyscallNr32::EPOLL_PWAIT2, efd, ev, 2, ts, ss, 8);
+				});
 			})
 		}
 	},

@@ -545,7 +545,7 @@ protected: // data
 };
 
 /// Combined select() arguments for the old variant of select() on 32-bit ABIs like I386.
-class CLUES_API OldSelectArgs :
+class OldSelectArgs :
 		public PointerValue {
 public:
 
@@ -602,7 +602,7 @@ protected: // data
 };
 
 /// The `op` parameter in `epoll_ctl()`.
-class CLUES_API EPollOperation :
+class EPollOperation :
 		public ValueInParameter {
 public: // flags
 
@@ -663,6 +663,14 @@ struct EPollEvent :
 	Flags flags() const {
 		return Flags{this->events};
 	}
+
+	/// Returns the event data interpreted as a file descriptor number.
+	cosmos::FileNum dataAsFD() const {
+		return cosmos::FileNum{this->data.fd};
+	}
+
+	/// returns the formatted bitmask found in `flags()`.
+	std::string formatFlags() const;
 };
 
 /// `struct epoll_event` used with the epoll_ctl() system call.
@@ -670,7 +678,7 @@ struct EPollEvent :
  * This is a single input-only event structure which declares the events the
  * caller is interested in.
  **/
-class CLUES_API EPollEventSettings :
+class EPollEventSettings :
 		public PointerInValue {
 public: // functions
 
@@ -691,6 +699,33 @@ protected: // functions
 protected: // data
 
 	std::optional<EPollEvent> m_ev;
+};
+
+/// Pointer to output array of `struct epoll_event` used with the epoll_wait() family of system calls.
+class EPollEventReport :
+		public PointerOutValue {
+public: // functions
+	explicit EPollEventReport() :
+			PointerOutValue{make_item_cfg("events", "struct epoll_event[n]")} {
+	}
+
+	std::string str() const override;
+
+	const std::vector<EPollEvent> events() const {
+		return m_events;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_events.clear();
+	}
+
+	void updateData(const Tracee &) override;
+
+protected: // data
+
+	std::vector<EPollEvent> m_events;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

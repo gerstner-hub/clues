@@ -499,6 +499,13 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(epoll_create1\(flags=0x80000 \(EPOLL_CLOEXEC\)\) = 3 \(fd\))",
 		R"(epoll_ctl\(epfd=3, op=EPOLL_CTL_ADD, fd=0, event=\{events=0x11 \(EPOLLHUP|EPOLLIN\), data=0x1267\}\) = 0 \(success\))",
 	}},
+	TestSpec{"epoll", "epoll_wait,epoll_pwait,epoll_pwait2", {
+#ifdef SYS_epoll_wait
+		R"(epoll_wait\(epfd=3, events=\[\{events=0x1 \(EPOLLIN\), data=0x1267\}, \{events=0x4 \(EPOLLOUT\), data=0x32f\}\], n=3, timeout=10\) = 2 \(nready\))",
+#endif
+		R"(epoll_pwait\(epfd=3, events=\[\{events=0x1 \(EPOLLIN\), data=0x1267\}, \{events=0x4 \(EPOLLOUT\), data=0x32f\}\], n=3, timeout=10, sigset=\{SIGINT, SIGTERM\}, sigset_size=8\) = 2 \(nready\))",
+		R"(epoll_pwait2\(epfd=3, events=\[\{events=0x1 \(EPOLLIN\), data=0x1267\}, \{events=0x4 \(EPOLLOUT\), data=0x32f\}\], n=3, timeout=\{0s, 10000ns\}, sigset=\{SIGINT, SIGTERM\}, sigset_size=8\) = 2 \(nready\))",
+	}},
 	TestSpec{"dup", "dup,dup2,dup3", {
 		R"(dup\(oldfd=0\) = 3 \(fd\))",
 #ifdef SYS_dup2

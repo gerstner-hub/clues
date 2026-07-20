@@ -506,6 +506,95 @@ struct EPollCtlSystemCall :
 	item::SuccessResult res;
 };
 
+/// Base class for the epoll_wait() family of function calls.
+/**
+ * These function calls share a number of parameters but are otherwise
+ * incompatible with each other. For this purpose, similar to
+ * SelectSystemCallBase, this base type provides common infrastructure for
+ * specialized implementations.
+ **/
+struct EPollWaitSystemCallBase :
+		public SystemCall {
+
+	item::FileDescriptor epoll_fd;
+	item::EPollEventReport events;
+	/// maximum number of structs found at `events`
+	item::IntValue max_events;
+
+	/// number of entries actually filled in `events`
+	item::IntValue events_ready;
+
+protected: // functions
+
+	explicit EPollWaitSystemCallBase(const SystemCallNr nr) :
+			SystemCall{nr},
+			epoll_fd{make_item_cfg("epfd", "epoll file descriptor")},
+			max_events{make_item_cfg("n", "maximum number of struct epoll_event to report")},
+			events_ready{ItemCfg{ItemType::RETVAL, "nready", "number of events reported"}} {
+		setParameters(epoll_fd, events, max_events);
+		setReturnItem(events_ready);
+	}
+};
+
+/// Type for epoll_wait() without sigmask and using a plain milliseconds integer for timeout.
+struct EPollWaitSystemCall :
+		public EPollWaitSystemCallBase {
+	explicit EPollWaitSystemCall() :
+			EPollWaitSystemCallBase{SystemCallNr::EPOLL_WAIT},
+			timeout_ms{make_item_cfg("timeout", "timeout in milliseconds")} {
+		addParameters(timeout_ms);
+	}
+
+	item::IntValue timeout_ms;
+};
+
+/// Base class for epoll_pwait() family of system calls.
+/**
+ * These system calls employ an additional signal mask to apply. pwait() and
+ * pwait2() still different with regards to the timeout parameter type.
+ **/
+struct EPollPWaitSystemCallBase :
+		public EPollWaitSystemCallBase {
+	item::SigSetParameter sigmask;
+	item::SizeValue sigset_size;
+
+protected:
+	explicit EPollPWaitSystemCallBase(const SystemCallNr nr) :
+			EPollWaitSystemCallBase{nr},
+			sigset_size{make_item_cfg("sigset_size", "sizeof(sigset_t)")} {
+	}
+};
+
+/// Type for epoll_pwait() taking an additional signal mask parameter.
+struct EPollPWaitSystemCall :
+		public EPollPWaitSystemCallBase {
+
+	explicit EPollPWaitSystemCall() :
+			EPollPWaitSystemCallBase{SystemCallNr::EPOLL_PWAIT},
+			timeout_ms{make_item_cfg("timeout", "timeout in milliseconds")}	{
+		addParameters(timeout_ms, sigmask, sigset_size);
+	}
+
+	item::IntValue timeout_ms;
+};
+
+/// Type for epoll_pwait().
+/**
+ * This takes an additional signal mask parameter and a full struct timespec
+ * for timeout handling.
+ **/
+struct EPollPWait2SystemCall :
+		public EPollPWaitSystemCallBase {
+
+	explicit EPollPWait2SystemCall() :
+			EPollPWaitSystemCallBase{SystemCallNr::EPOLL_PWAIT2},
+			timeout{ItemCfg{.label = "timeout"}} {
+		addParameters(timeout, sigmask, sigset_size);
+	}
+
+	item::TimeSpecParameter timeout;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

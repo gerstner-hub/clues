@@ -174,6 +174,7 @@ MemoryRangeVector parse_memory_map(const Tracee &proc);
  */
 constexpr cosmos::FileNum FIRST_FD{4};
 constexpr cosmos::FileNum SECOND_FD{5};
+constexpr cosmos::FileNum THIRD_FD{6};
 constexpr uintptr_t STACK_ADDR = sizeof(void*) == 8 ? 0x700000000000 : 0x70000000;
 constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 2;
 /*
