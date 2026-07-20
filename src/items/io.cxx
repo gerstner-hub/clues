@@ -119,6 +119,9 @@ std::string IOVectorBase::str() const {
 
 void IOVectorBase::fetchBuffer(const Tracee &tracee, Buffer &buffer,
 		const size_t left_to_fetch) {
+	if (buffer.len == 0)
+		/* len 0 with NULL pointer is allowed and is ignored */
+		return;
 	buffer.filled = std::min(left_to_fetch, buffer.len);
 	const auto to_fetch = std::min(tracee.maxBufferPrefetch(), buffer.filled);
 	buffer.data.resize(to_fetch);
