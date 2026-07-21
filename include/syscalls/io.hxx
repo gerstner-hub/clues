@@ -595,6 +595,57 @@ struct EPollPWait2SystemCall :
 	item::TimeSpecParameter timeout;
 };
 
+/// Base type for poll() and ppoll().
+struct PollSystemCallBase :
+		public SystemCall {
+
+	item::IntValueT<nfds_t> nfds;
+	item::PollFDs fds;
+
+	item::IntValue events_ready;
+
+protected:
+
+	explicit PollSystemCallBase(const SystemCallNr nr) :
+			SystemCall{nr},
+			nfds{make_item_cfg("nfds", "number of struct pollfd elements")},
+			fds{nfds},
+			events_ready{ItemCfg{ItemType::RETVAL,
+				"nready", "number of events with non-zero revent fields"}} {
+		setParameters(fds, nfds);
+		setReturnItem(events_ready);
+	}
+};
+
+/// Older `poll()` system call using a simple milliseconds timeout and no sigmask.
+struct PollSystemCall :
+		public PollSystemCallBase {
+
+	explicit PollSystemCall() :
+			PollSystemCallBase{SystemCallNr::POLL},
+			timeout_ms{make_item_cfg("timeout", "timeout in milliseconds")} {
+		addParameters(timeout_ms);
+	}
+
+	item::IntValue timeout_ms;
+};
+
+/// Newer `ppoll()` system call using a full timespec for timeout and a sigmask.
+struct PPollSystemCall :
+		public PollSystemCallBase {
+
+	explicit PPollSystemCall(const SystemCallNr nr) :
+			PollSystemCallBase{nr},
+			timeout{make_item_cfg("timeout", "maximum wait time")},
+			sigset_size{make_item_cfg("sigset_size", "sizeof(sigset_t)")} {
+		addParameters(timeout, sigmask, sigset_size);
+	}
+
+	item::TimeSpecInOutParameter timeout;
+	item::SigSetParameter sigmask;
+	item::SizeValue sigset_size;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

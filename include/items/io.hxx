@@ -2,6 +2,7 @@
 
 // Linux
 #include <fcntl.h>
+#include <poll.h>
 #include <sys/epoll.h>
 #include <sys/select.h>
 
@@ -726,6 +727,71 @@ protected: // functions
 protected: // data
 
 	std::vector<EPollEvent> m_events;
+};
+
+/// Pointer to in-out array of `struct pollfd*` in `poll()` and `ppoll()`.
+class PollFDs :
+		public PointerValue {
+public: // types
+
+	enum class Event : short {
+		IN     = POLLIN,
+		OUT    = POLLOUT,
+		PRI    = POLLPRI,
+		RDHUP  = POLLRDHUP,
+		ERR    = POLLERR,
+		HUP    = POLLHUP,
+		NVAL   = POLLNVAL,
+		/* _XOPEN_SOURCE redundant constants */
+		RDNORM = POLLRDNORM,
+		RDBAND = POLLRDBAND,
+		WRNORM = POLLWRNORM,
+		WRBAND = POLLWRBAND
+	};
+
+	using Events = cosmos::BitMask<Event>;
+
+	struct PollFD : pollfd {
+		cosmos::FileNum asFileNum() const {
+			return cosmos::FileNum{this->fd};
+		}
+
+		Events reqEvents() const {
+			return Events{this->events};
+		}
+
+		Events retEvents() const {
+			return Events{this->revents};
+		}
+	};
+
+public: // functions
+
+	explicit PollFDs(const SystemCallItem &num_fds) :
+			PointerValue{ItemCfg{ItemType::PARAM_IN_OUT, "fds", "struct pollfd*"}},
+			m_num_fds{num_fds} {
+		/* we need to parse num_fds first */
+		m_flags.set(Flag::DEFER_FILL);
+	}
+
+	std::string str() const override;
+
+	std::string formatEvents(const Events ev) const;
+
+	const std::vector<PollFD> fds() const {
+		return m_fds;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+	void updateData(const Tracee &) override;
+
+protected: // data
+
+	std::vector<PollFD> m_fds;
+	const SystemCallItem &m_num_fds;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

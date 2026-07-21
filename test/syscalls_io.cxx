@@ -1,13 +1,17 @@
 // test
+#include "proc/signal.hxx"
+#include "syscalls/prctl.hxx"
 #include "utils/syscalls.hxx"
 
 // Linux
+#include <elf.h>
 #include <linux/fs.h>
 #include <sys/epoll.h>
 #include <sys/ioctl.h>
 
 // cosmos
 #include <cosmos/memory.hxx>
+#include <cosmos/compiler.hxx>
 
 // clues
 #include <clues/syscalls/io.hxx>
@@ -17,6 +21,7 @@
 #include <clues/private/kernel/sigset.hxx>
 
 // test
+#include <sys/poll.h>
 #include <utils/types.hxx>
 
 namespace {
@@ -226,6 +231,73 @@ void verify_epoll_wait_exit(const clues::EPollWaitSystemCallBase &sc, bool &good
 	VERIFY(events[0].dataAsFD() == SECOND_FD);
 	VERIFY(events[1].flags() == Flags{OUTPUT});
 	VERIFY(events[1].dataAsFD() == THIRD_FD);
+}
+
+void call_poll(std::function<void (struct pollfd *fds)> poll_cb, const bool mem32 = false) {
+	int pipes[2];
+	if (pipe(pipes) < 0)
+		return;
+	if (write(pipes[1], "test", 4) != 4)
+		return;
+	struct pollfd stack_fds[2];
+	cosmos::zero_object(stack_fds);
+	struct pollfd *fds = stack_fds;
+	if (mem32) {
+#ifdef TEST_I386_EMU
+		fds = alloc32<struct pollfd*>(sizeof(struct pollfd) * 2);
+		std::memset(fds, 0, sizeof(struct pollfd) * 2);
+#endif
+	}
+	fds[0].fd = pipes[0];
+	fds[0].events = POLLIN|POLLRDHUP;
+	fds[1].fd = pipes[1];
+	fds[1].events = POLLOUT|POLLHUP;
+	poll_cb(fds);
+}
+
+void verify_poll_entry(const clues::PollSystemCallBase &sc, bool &good) {
+	VERIFY(sc.nfds.value() == 2);
+	VERIFY(sc.fds.fds().size() == 2);
+	const auto &fds = sc.fds.fds();
+	const auto &fd0 = fds[0];
+	const auto &fd1 = fds[1];
+	VERIFY(fd0.asFileNum() == FIRST_FD);
+	VERIFY(fd1.asFileNum() == SECOND_FD);
+	using enum clues::item::PollFDs::Event;
+	using Events = clues::item::PollFDs::Events;
+	VERIFY(fd0.reqEvents() == Events{IN, RDHUP});
+	VERIFY(fd1.reqEvents() == Events{OUT, HUP});
+}
+
+void call_ppoll(std::function<void (struct pollfd *fds, sigset_t *ss)> ppoll_cb,
+		const bool mem32 = false) {
+	call_poll([mem32, ppoll_cb](struct pollfd *fds) {
+		sigset_t stack_ss;
+		sigset_t *ss = &stack_ss;
+		if (mem32) {
+#ifdef TEST_I386_EMU
+			ss = alloc_struct32<sigset_t>();
+#endif
+		}
+
+		sigemptyset(ss);
+		sigaddset(ss, SIGUSR1);
+		sigaddset(ss, SIGTERM);
+
+		ppoll_cb(fds, ss);
+	}, mem32);
+}
+
+void verify_ppoll_entry(const clues::PPollSystemCall &sc, bool &good) {
+	verify_poll_entry(sc, good);
+	const auto &ts = *sc.timeout.spec();
+	VERIFY(ts.tv_sec == 0);
+	VERIFY(ts.tv_nsec == 100000);
+	VERIFY(sc.sigmask.sigset().has_value());
+	const auto &set = *sc.sigmask.sigset();
+	VERIFY(set.isSet(cosmos::signal::USR1));
+	VERIFY(set.isSet(cosmos::signal::TERMINATE));
+	VERIFY(!set.isSet(cosmos::signal::SEGV));
 }
 
 const auto TESTS = std::array{
@@ -1285,6 +1357,75 @@ const auto TESTS = std::array{
 				});
 			})
 		}
+	},
+#ifndef COSMOS_AARCH64
+	TestSpec{SystemCallNr::POLL, []() {
+			call_poll([](struct pollfd fds[2]) {
+				::poll(fds, 2, 100);
+			});
+		}, ENTRY_VERIFY_CB(PollSystemCall, {
+			verify_poll_entry(sc, good);
+			VERIFY(sc.timeout_ms.value() == 100);
+		}), EXIT_VERIFY_CB(PollSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.events_ready.value() == 2);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				call_poll([](struct pollfd fds[2]) {
+					syscall32(SyscallNr32::POLL, fds, 2, 100);
+				}, true);
+			})
+		}
+	},
+#endif
+	TestSpec{SystemCallNr::PPOLL, []() {
+			call_ppoll([](struct pollfd *fds, sigset_t *ss) {
+				struct timespec ts;
+				ts.tv_sec = 0;
+				ts.tv_nsec = 100000;
+				::ppoll(fds, 2, &ts, ss);
+			});
+		}, ENTRY_VERIFY_CB(PPollSystemCall, {
+			verify_ppoll_entry(sc, good);
+		}), EXIT_VERIFY_CB(PPollSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.events_ready.value() == 2);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				call_ppoll([](struct pollfd *fds, sigset_t *ss) {
+					auto ts = alloc_struct32<clues::timespec32>();
+					ts->tv_sec = 0;
+					ts->tv_nsec = 100000;
+					syscall32(SyscallNr32::PPOLL, fds, 2, ts, ss, 8);
+				}, true);
+			})
+		}
+	},
+	/* variant on I386 using 64-bit timespec */
+	TestSpec{SystemCallNr::PPOLL_TIME64, []() {
+#ifdef COSMOS_I386
+			call_ppoll([](struct pollfd *fds, sigset_t *ss) {
+				struct timespec ts;
+				ts.tv_sec = 0;
+				ts.tv_nsec = 100000;
+				syscall(SYS_ppoll_time64, fds, 2, &ts, ss, 8);
+			});
+#endif
+		}, ENTRY_VERIFY_CB(PPollSystemCall, {
+			verify_ppoll_entry(sc, good);
+		}), EXIT_VERIFY_CB(PPollSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.events_ready.value() == 2);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				call_ppoll([](struct pollfd *fds, sigset_t *ss) {
+					auto ts = alloc_struct32<struct timespec>();
+					ts->tv_sec = 0;
+					ts->tv_nsec = 100000;
+					syscall32(SyscallNr32::PPOLL_TIME64, fds, 2, ts, ss, 8);
+				}, true);
+			})
+		}, "", {ABI::I386}
 	},
 };
 

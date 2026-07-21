@@ -434,4 +434,74 @@ std::string EPollEventReport::str() const {
 	return ret;
 }
 
+static_assert(sizeof(PollFDs::PollFD) == sizeof(struct pollfd), "struct pollfd size mismatch");
+
+void PollFDs::processValue(const Tracee &proc) {
+	m_fds.resize(m_num_fds.valueAs<nfds_t>());
+
+	try {
+		if (!proc.readStructs(ptr(), m_fds)) {
+			return;
+		}
+	} catch (const std::exception &e) {
+		m_fds.clear();
+	}
+}
+
+void PollFDs::updateData(const Tracee &proc) {
+	try {
+		if (!proc.readStructs(ptr(), m_fds)) {
+			return;
+		}
+	} catch (const std::exception &e) {
+		/* difficult to say what to do here, we managed to read during
+		 * syscall-enter, but failed during syscall-exit. keep the
+		 * initial data around then */
+		LOG_ERROR("Failed to update struct pollfd*: " << e.what());
+	}
+}
+
+std::string PollFDs::formatEvents(const Events ev) const {
+	BITFLAGS_FORMAT_START(ev);
+
+	BITFLAGS_ADD(POLLIN);
+	BITFLAGS_ADD(POLLOUT);
+	BITFLAGS_ADD(POLLPRI);
+	BITFLAGS_ADD(POLLRDHUP);
+	BITFLAGS_ADD(POLLERR);
+	BITFLAGS_ADD(POLLHUP);
+	BITFLAGS_ADD(POLLNVAL);
+	BITFLAGS_ADD(POLLRDNORM);
+	BITFLAGS_ADD(POLLRDBAND);
+	BITFLAGS_ADD(POLLWRNORM);
+	BITFLAGS_ADD(POLLWRBAND);
+
+	return BITFLAGS_STR();
+}
+
+std::string PollFDs::str() const {
+	if (m_fds.empty()) {
+		return formatBadPointer();
+	}
+
+	std::string ret{"["};
+	bool first = true;
+
+	for (const auto &pfd: m_fds) {
+		if (first)
+			first = false;
+		else
+			ret += ", ";
+
+		ret += std::format("{{fd={}, events={}, revents={}}}",
+			cosmos::to_integral(pfd.asFileNum()),
+			formatEvents(pfd.reqEvents()),
+			formatEvents(pfd.retEvents())
+		);
+	}
+
+	ret += "]";
+	return ret;
+}
+
 } // end ns

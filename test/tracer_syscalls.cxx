@@ -506,6 +506,13 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(epoll_pwait\(epfd=3, events=\[\{events=0x1 \(EPOLLIN\), data=0x1267\}, \{events=0x4 \(EPOLLOUT\), data=0x32f\}\], n=3, timeout=10, sigset=\{SIGINT, SIGTERM\}, sigset_size=8\) = 2 \(nready\))",
 		R"(epoll_pwait2\(epfd=3, events=\[\{events=0x1 \(EPOLLIN\), data=0x1267\}, \{events=0x4 \(EPOLLOUT\), data=0x32f\}\], n=3, timeout=\{0s, 10000ns\}, sigset=\{SIGINT, SIGTERM\}, sigset_size=8\) = 2 \(nready\))",
 	}},
+	TestSpec{"poll", "poll,ppoll,ppoll_time64", {
+		R"(poll\(fds=\[\{fd=3, events=0x2001 \(POLLIN|POLLRDHUP\), revents=0x1 \(POLLIN\)\}, \{fd=4, events=0x14 \(POLLOUT|POLLHUP\), revents=0x4 \(POLLOUT\)\}\], nfds=2, timeout=100\) = 2 \(nready\)\))",
+		R"(ppoll\(fds=\[\{fd=3, events=0x2001 \(POLLIN|POLLRDHUP\), revents=0x1 \(POLLIN\)\}, \{fd=4, events=0x14 \(POLLOUT|POLLHUP\), revents=0x4 \(POLLOUT\)\}\], nfds=2, timeout=\{0s, 10000ns\} → left: \{0s, {decimal}ns\}, sigset=\{SIGUSR1\}, sigset_size=8\) = 2 \(nready\)\))",
+#ifdef SYS_ppoll_time64
+		R"(ppoll_time64\(fds=\[\{fd=3, events=0x2001 \(POLLIN|POLLRDHUP\), revents=0x1 \(POLLIN\)\}, \{fd=4, events=0x14 \(POLLOUT|POLLHUP\), revents=0x4 \(POLLOUT\)\}\], nfds=2, timeout=\{0s, 10000ns\} → left: \{0s, {decimal}ns\}, sigset=\{SIGUSR1\}, sigset_size=8\) = 2 \(nready\)\))",
+#endif
+	}},
 	TestSpec{"dup", "dup,dup2,dup3", {
 		R"(dup\(oldfd=0\) = 3 \(fd\))",
 #ifdef SYS_dup2

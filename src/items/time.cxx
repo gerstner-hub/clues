@@ -41,7 +41,8 @@ bool TimeSpecParameter::needTime32Conversion() const {
 			SystemCallNr::CLOCK_NANOSLEEP,
 			SystemCallNr::FUTEX,
 			SystemCallNr::NANOSLEEP,
-			SystemCallNr::PSELECT6
+			SystemCallNr::PSELECT6,
+			SystemCallNr::PPOLL
 	});
 }
 

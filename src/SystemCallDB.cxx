@@ -174,6 +174,9 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::EPOLL_WAIT:      return new_sys<EPollWaitSystemCall>();
 	case SystemCallNr::EPOLL_PWAIT:     return new_sys<EPollPWaitSystemCall>();
 	case SystemCallNr::EPOLL_PWAIT2:    return new_sys<EPollPWait2SystemCall>();
+	case SystemCallNr::POLL:            return new_sys<PollSystemCall>();
+	case SystemCallNr::PPOLL:           [[ fallthrough ]];
+	case SystemCallNr::PPOLL_TIME64:    return new_sys<PPollSystemCall>(nr);
 	case SystemCallNr::DUP:             return new_sys<DupSystemCall>();
 	case SystemCallNr::DUP2:            return new_sys<Dup2SystemCall>();
 	case SystemCallNr::DUP3:            return new_sys<Dup3SystemCall>();
