@@ -63,11 +63,9 @@ void PointerToScalar<INT>::fetchValue(const Tracee &tracee) {
 	if (m_ptr == ForeignPtr::NO_POINTER)
 		return;
 
-	try {
-		if (tracee.readStruct(m_ptr, val)) {
-			m_val = val;
-		}
-	} catch (const std::exception &) {
+	if (tracee.readStruct(m_ptr, val)) {
+		m_val = val;
+	} else {
 		// probably a bad address
 	}
 }

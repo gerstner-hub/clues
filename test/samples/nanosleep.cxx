@@ -1,13 +1,15 @@
 #include <time.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <iostream>
+#include <string>
 
 #include <cosmos/compiler.hxx>
 #include <clues/private/kernel/time.hxx>
 #include <utils/types.hxx>
 
 void clock_sleep(struct timespec ts) {
+	auto ts_fault = (struct timespec*)0x1;
+	syscall(SYS_clock_nanosleep, CLOCK_MONOTONIC, TIMER_ABSTIME, ts_fault, ts_fault);
 	clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);
 #ifdef SYS_clock_nanosleep_time64
 	syscall(SYS_clock_nanosleep_time64, CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, &ts);

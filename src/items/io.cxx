@@ -69,8 +69,10 @@ void IOVectorBase::processValue(const Tracee &tracee) {
 
 	auto obtain_specs = [this, &tracee](auto &specs) {
 		specs.resize(m_buffers.size());
-		if (!tracee.readStructs(ptr(), specs))
+		if (!tracee.readStructs(ptr(), specs)) {
+			m_buffers.clear();
 			return;
+		}
 
 		for (size_t i = 0; i < specs.size(); i++) {
 			const auto &native = specs[i];
@@ -112,6 +114,10 @@ std::string IOVectorBase::str() const {
 					buffer.data.size())),
 			buffer.len
 		);
+	}
+
+	if (m_buffers.empty() && count() != 0) {
+		ret += "<invalid>";
 	}
 
 	return ret + "]";
@@ -439,25 +445,19 @@ static_assert(sizeof(PollFDs::PollFD) == sizeof(struct pollfd), "struct pollfd s
 void PollFDs::processValue(const Tracee &proc) {
 	m_fds.resize(m_num_fds.valueAs<nfds_t>());
 
-	try {
-		if (!proc.readStructs(ptr(), m_fds)) {
-			return;
-		}
-	} catch (const std::exception &e) {
+	if (!proc.readStructs(ptr(), m_fds)) {
 		m_fds.clear();
+		return;
 	}
 }
 
 void PollFDs::updateData(const Tracee &proc) {
-	try {
-		if (!proc.readStructs(ptr(), m_fds)) {
-			return;
-		}
-	} catch (const std::exception &e) {
+	if (!proc.readStructs(ptr(), m_fds)) {
 		/* difficult to say what to do here, we managed to read during
 		 * syscall-enter, but failed during syscall-exit. keep the
 		 * initial data around then */
-		LOG_ERROR("Failed to update struct pollfd*: " << e.what());
+		LOG_ERROR("Failed to update struct pollfd*");
+		return;
 	}
 }
 

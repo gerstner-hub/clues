@@ -172,8 +172,12 @@ public: // functions
 	}
 
 	/// Returns the number of buffers contained in iovec array.
+	/**
+	 * This is the count passed to the system call, not necessarily the
+	 * amount of successfully fetched buffers returned by `buffers()`.
+	 **/
 	auto count() const {
-		return m_buffers.size();
+		return m_vector_count_par.valueAs<int>();
 	}
 
 	std::string str() const override;

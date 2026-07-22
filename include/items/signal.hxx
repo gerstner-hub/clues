@@ -83,7 +83,7 @@ public: // functions
 			PointerValue{cfg.applyDefaults(ItemCfg{
 				.type = ItemType::PARAM_IN,
 				.label = "sigaction",
-				.desc = "struct sigaction2"})} {
+				.desc = "struct sigaction"})} {
 	}
 
 	std::string str() const override;

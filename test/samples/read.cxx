@@ -67,6 +67,11 @@ int main() {
 		return 1;
 	}
 
+	auto fault_vec = (struct iovec*)0x1234;
+	if (readv(fd, fault_vec, 1) >= 0) {
+		return 1;
+	}
+
 	constexpr std::string_view PIPE_DATA{"test pipe content\n"};
 
 	/* now try a partial read from the pipe */

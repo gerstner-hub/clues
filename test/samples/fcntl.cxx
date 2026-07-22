@@ -37,6 +37,9 @@ static void flockCntl() {
 	fl.l_type = F_UNLCK;
 	fcntl(fd, F_SETLK, &fl);
 
+	auto fault_lock = (struct flock*)0x1234;
+	fcntl(fd, F_SETLK, fault_lock);
+
 #ifdef __i386__
 
 	/*

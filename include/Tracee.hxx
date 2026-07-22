@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include "regs/RegisterData.hxx"
 #include <array>
 #include <iosfwd>
 
@@ -9,6 +10,7 @@
 
 // cosmos
 #include <cosmos/BitMask.hxx>
+#include <cosmos/error/ApiError.hxx>
 #include <cosmos/proc/process.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/signal.hxx>
@@ -17,8 +19,8 @@
 // clues
 #include <clues/ProcessData.hxx>
 #include <clues/RegisterSet.hxx>
-#include <clues/SystemCallInfo.hxx>
 #include <clues/SystemCallDB.hxx>
+#include <clues/SystemCallInfo.hxx>
 #include <clues/types.hxx>
 
 namespace cosmos {
@@ -234,7 +236,15 @@ public: // functions
 			static_assert(std::is_trivial_v<T> == true);
 		}
 
-		readBlob(addr, reinterpret_cast<char*>(&out), max_bytes);
+		try {
+			readBlob(addr, reinterpret_cast<char*>(&out), max_bytes);
+		} catch (const cosmos::ApiError &ex) {
+			if (ex.errnum() == cosmos::Errno::IO_ERROR) {
+				return false;
+			}
+
+			throw;
+		}
 		return true;
 	}
 

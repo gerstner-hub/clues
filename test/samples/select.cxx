@@ -51,6 +51,10 @@ int main() {
 
 	syscall(SYS_select, &args);
 #elif defined(SYS_select)
+	auto tv_fault = (struct timeval*)0x1234;
+	syscall(SYS_select, writefd + 1, &readset, &writeset, NULL, tv_fault);
+	auto set_fault = (fd_set*)0x1234;
+	syscall(SYS_select, writefd + 1, set_fault, &writeset, NULL, tv_fault);
 	syscall(SYS_select, writefd + 1, &readset, &writeset, NULL, &tv);
 #endif
 

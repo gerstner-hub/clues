@@ -2,10 +2,8 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <climits>
 
 #include <clues/private/kernel/other.hxx>
-#include <iostream>
 
 int main() {
 	/*
@@ -40,6 +38,9 @@ int main() {
 		struct rlimit lim;
 		getrlimit(RLIMIT_AS, &lim);
 		setrlimit(RLIMIT_AS, &lim);
+
+		auto fault_limit = (struct rlimit*)0x1234;
+		getrlimit(RLIMIT_AS, fault_limit);
 
 		lim.rlim_cur = 60000;
 		lim.rlim_max = 400000;
