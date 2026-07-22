@@ -1,6 +1,7 @@
 #include <sched.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
+#include <sys/mman.h>
 
 #include <cosmos/proc/clone.hxx>
 #include <cosmos/proc/process.hxx>
@@ -35,7 +36,11 @@ void testClone3() {
 	using enum cosmos::CloneFlag;
 	args.setFlags(cosmos::CloneFlags{CLEAR_SIGHAND, PIDFD, CHILD_SETTID, PARENT_SETTID});
 	args.setPidFD(&pidfd);
-	cosmos::ThreadID tid;
+	/* NOTE: in 32-bit emulation context the parent-tid seems not to be
+	 * updated as expected upon system call exit, it will still contain
+	 * this initial value. The reason is unclear.
+	 */
+	cosmos::ThreadID tid{1234};
 	args.setChildTID(&tid);
 	args.setParentTID(&tid);
 
@@ -45,7 +50,7 @@ void testClone3() {
 		cosmos::proc::exit(cosmos::ExitStatus{5});
 	}
 
-	// another test, likely unsucessfuly, using custom TIDs for the child
+	// another test, likely unsucessful, using custom TIDs for the child
 	cosmos::ThreadID tids[3] = {cosmos::ThreadID{5}, cosmos::ThreadID{50}, cosmos::ThreadID{500}};
 
 	args.setTIDs(&tids[0], sizeof(tids) / sizeof(cosmos::ThreadID));
@@ -62,7 +67,9 @@ void testClone3() {
 }
 
 int main() {
-	char child_stack[8192];
+	constexpr auto STACK_SIZE = 1024 * 1024 * 8;
+	auto stack = mmap(NULL, STACK_SIZE, PROT_READ|PROT_WRITE, MAP_STACK|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
+	auto child_stack = (char*)stack + STACK_SIZE;
 	int arg = -5000;
 	pid_t parent_tid = 0;
 	if (clone(&child, child_stack, CLONE_FS|CLONE_PARENT_SETTID|SIGCHLD, &arg, &parent_tid) < 0) {
