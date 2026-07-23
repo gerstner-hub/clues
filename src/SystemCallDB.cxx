@@ -180,6 +180,9 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::DUP:             return new_sys<DupSystemCall>();
 	case SystemCallNr::DUP2:            return new_sys<Dup2SystemCall>();
 	case SystemCallNr::DUP3:            return new_sys<Dup3SystemCall>();
+	case SystemCallNr::GETCWD:          return new_sys<GetCWDSystemCall>();
+	case SystemCallNr::CHDIR:           return new_sys<ChDirSystemCall>();
+	case SystemCallNr::FCHDIR:          return new_sys<FChDirSystemCall>();
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

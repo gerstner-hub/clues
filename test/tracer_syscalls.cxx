@@ -520,6 +520,11 @@ const std::vector<TestSpec> TEST_SPECS{
 #endif
 		R"(dup3\(oldfd=3, newfd=100, flags=0x80000 \(O_CLOEXEC\)\) = 100 \(fd\))",
 	}},
+	TestSpec{"cwd", "getcwd,chdir,fchdir", {
+		R"(chdir\(cwd="/tmp"\) = 0 \(success\))",
+		R"(getcwd\(path="/tmp", size=4096\) = 5 \(length\))",
+		R"(fchdir\(fd=3\) = 0 \(success\))",
+	}},
 #ifdef COSMOS_I386
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

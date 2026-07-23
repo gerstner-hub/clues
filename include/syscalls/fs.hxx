@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include "SystemCallItem.hxx"
 #include <variant>
 
 // clues
@@ -436,6 +437,57 @@ struct Dup3SystemCall :
 	}
 
 	item::DupFlags flags;
+};
+
+struct GetCWDSystemCall :
+		public SystemCall {
+
+	explicit GetCWDSystemCall() :
+			SystemCall{SystemCallNr::GETCWD},
+			cwd{ItemCfg{.type = ItemType::PARAM_OUT, .label = "path"}},
+			bufsiz{make_item_cfg("size", "size of output buffer")},
+			filled{ItemCfg{ItemType::RETVAL,
+				"length", "length of CWD output string including \\0"}} {
+		addParameters(cwd, bufsiz);
+		setReturnItem(filled);
+	}
+
+	/// Out buffer to place the CWD path in.
+	item::StringData cwd;
+	/// Size of the `cwd` out buffer.
+	item::SizeValue bufsiz;
+
+	/// number of bytes placed into `cwd` including null byte.
+	item::SizeValue filled;
+};
+
+struct ChDirSystemCall :
+		public SystemCall {
+
+	explicit ChDirSystemCall() :
+			SystemCall{SystemCallNr::CHDIR},
+			cwd{ItemCfg{.label = "cwd", .desc = "new working directory"}} {
+		addParameters(cwd);
+		setReturnItem(res);
+	}
+
+	item::StringData cwd;
+
+	item::SuccessResult res;
+};
+
+struct FChDirSystemCall :
+		public SystemCall {
+
+	explicit FChDirSystemCall() :
+			SystemCall{SystemCallNr::FCHDIR} {
+		addParameters(fd);
+		setReturnItem(res);
+	}
+
+	item::FileDescriptor fd;
+
+	item::SuccessResult res;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

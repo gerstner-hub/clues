@@ -805,6 +805,63 @@ const auto TESTS = std::array{
 			})
 		}
 	},
+	TestSpec{SystemCallNr::GETCWD, []() {
+			if (chdir("/tmp") < 0) {
+				return;
+			}
+			char path[PATH_MAX];
+			if (::getcwd(path, PATH_MAX) == NULL) {
+
+			}
+		}, ENTRY_VERIFY_CB(GetCWDSystemCall, {
+			VERIFY(!sc.cwd.data());
+			VERIFY(sc.bufsiz.value() == PATH_MAX);
+		}), EXIT_VERIFY_CB(GetCWDSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(*sc.cwd.data() == "/tmp");
+			VERIFY(sc.filled.value() == sc.cwd.data()->size() + 1);
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				if (chdir("/tmp") < 0) {
+					return;
+				}
+
+				auto path = alloc32<char*>(PATH_MAX);
+				syscall32(SyscallNr32::GETCWD, path, PATH_MAX);
+			})
+		}
+	},
+	TestSpec{SystemCallNr::CHDIR, []() {
+			if (::chdir("/tmp") < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(ChDirSystemCall, {
+			VERIFY(sc.cwd.data() == "/tmp");
+		}), EXIT_VERIFY_CB(ChDirSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				auto ncwd = alloc_str32("/tmp");
+				syscall32(SyscallNr32::CHDIR, ncwd);
+			})
+		}
+	},
+	TestSpec{SystemCallNr::FCHDIR, []() {
+			int fd = open("/tmp", O_RDONLY|O_DIRECTORY);
+			if (::fchdir(fd) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(FChDirSystemCall, {
+			VERIFY(sc.fd.fd() == FIRST_FD);
+		}), EXIT_VERIFY_CB(FChDirSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{1}, []() {
+				int fd = open("/tmp", O_RDONLY|O_DIRECTORY);
+				syscall32(SyscallNr32::FCHDIR, fd);
+			})
+		}
+	},
 };
 
 } // end ns
