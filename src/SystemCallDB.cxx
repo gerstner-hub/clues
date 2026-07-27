@@ -1,17 +1,8 @@
 // C++
-#include "sysnrs/i386.hxx"
 #include <utility>
 
 // clues
-#include <clues/syscalls/fs.hxx>
-#include <clues/syscalls/io.hxx>
-#include <clues/syscalls/memory.hxx>
-#include <clues/syscalls/other.hxx>
-#include <clues/syscalls/prctl.hxx>
-#include <clues/syscalls/process.hxx>
-#include <clues/syscalls/signals.hxx>
-#include <clues/syscalls/thread.hxx>
-#include <clues/syscalls/time.hxx>
+#include <clues/syscalls/all.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCallInfo.hxx>
@@ -183,6 +174,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::GETCWD:          return new_sys<GetCWDSystemCall>();
 	case SystemCallNr::CHDIR:           return new_sys<ChDirSystemCall>();
 	case SystemCallNr::FCHDIR:          return new_sys<FChDirSystemCall>();
+	case SystemCallNr::SOCKET:          return new_sys<SocketSystemCall>();
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

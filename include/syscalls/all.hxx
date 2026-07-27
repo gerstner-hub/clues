@@ -8,6 +8,7 @@
 #include <clues/syscalls/fs.hxx>
 #include <clues/syscalls/io.hxx>
 #include <clues/syscalls/memory.hxx>
+#include <clues/syscalls/net.hxx>
 #include <clues/syscalls/other.hxx>
 #include <clues/syscalls/prctl.hxx>
 #include <clues/syscalls/process.hxx>

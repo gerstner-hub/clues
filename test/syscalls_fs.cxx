@@ -1,6 +1,4 @@
 // test
-#include "fs/types.hxx"
-#include "syscalls/fs.hxx"
 #include "utils/syscalls.hxx"
 
 #include <clues/private/kernel/statfs.hxx>

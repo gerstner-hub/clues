@@ -525,6 +525,12 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(getcwd\(path="/tmp", size=4096\) = 5 \(length\))",
 		R"(fchdir\(fd=3\) = 0 \(success\))",
 	}},
+	TestSpec{{}, "socket", {
+		R"(socket\(domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0\) = 3 \(fd\))",
+		R"(socket\(domain=AF_INET6, type=0x2 \(SOCK_DGRAM\), prot=IPPROTO_UDP\) = 3 \(fd\))",
+		R"(socket\(domain=AF_NETLINK, type=0x3 \(SOCK_RAW\), prot=NETLINK_ROUTE\) = 3 \(fd\))",
+		R"(socket\(domain=AF_PACKET, type=0x3 \(SOCK_RAW\), prot=ETH_P_DIAG\) = 1 \(EPERM\) \(errno\))",
+	}},
 #ifdef COSMOS_I386
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"
