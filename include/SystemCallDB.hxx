@@ -9,9 +9,10 @@
 
 namespace clues {
 
-using SystemCallPtr = std::shared_ptr<SystemCall>;
-
 class SystemCallInfo;
+
+using SystemCallPtr = std::shared_ptr<SystemCall>;
+using SystemCallFactory = SystemCallPtr (*)(const SystemCallInfo&);
 
 /// Stores information about each system call number in form of SystemCall objects.
 /**

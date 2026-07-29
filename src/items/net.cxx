@@ -6,6 +6,7 @@
 #include <clues/macros.h>
 #include <clues/private/utils.hxx>
 #include <clues/syscalls/net.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues::item {
 
@@ -267,6 +268,84 @@ std::string SocketProtocol::str() const {
 
 		return "???";
 	}, m_prot);
+}
+
+std::string SocketCallType::str() const {
+	switch (cosmos::to_integral(m_call)) {
+		CASE_ENUM_TO_STR(SYS_SOCKET);
+		CASE_ENUM_TO_STR(SYS_BIND);
+		CASE_ENUM_TO_STR(SYS_CONNECT);
+		CASE_ENUM_TO_STR(SYS_LISTEN);
+		CASE_ENUM_TO_STR(SYS_ACCEPT);
+		CASE_ENUM_TO_STR(SYS_GETSOCKNAME);
+		CASE_ENUM_TO_STR(SYS_GETPEERNAME);
+		CASE_ENUM_TO_STR(SYS_SOCKETPAIR);
+		CASE_ENUM_TO_STR(SYS_SEND);
+		CASE_ENUM_TO_STR(SYS_RECV);
+		CASE_ENUM_TO_STR(SYS_SENDTO);
+		CASE_ENUM_TO_STR(SYS_RECVFROM);
+		CASE_ENUM_TO_STR(SYS_SHUTDOWN);
+		CASE_ENUM_TO_STR(SYS_SETSOCKOPT);
+		CASE_ENUM_TO_STR(SYS_GETSOCKOPT);
+		CASE_ENUM_TO_STR(SYS_SENDMSG);
+		CASE_ENUM_TO_STR(SYS_RECVMSG);
+		CASE_ENUM_TO_STR(SYS_ACCEPT4);
+		CASE_ENUM_TO_STR(SYS_RECVMMSG);
+		CASE_ENUM_TO_STR(SYS_SENDMMSG);
+		default: return "SYS_???";
+	}
+}
+
+constexpr size_t NUM_SOCKETCALLS = SYS_SENDMMSG + 1;
+/* index 0 is unused / invalid */
+static constexpr std::array<size_t, NUM_SOCKETCALLS> NUM_SOCKETCALL_ARGS{
+	0, 3, 3, 3, 2, 3, 3, 3, 4, 4, 4, 6, 6, 2, 5, 5, 3, 3, 4, 5, 4
+};
+
+void SocketCallArgs::processValue(const Tracee &proc) {
+	m_args.clear();
+	const auto callnum = cosmos::to_integral(m_type.call());
+	const auto num_args = NUM_SOCKETCALL_ARGS[callnum];
+
+	if (m_call->is32BitEmulationABI()) {
+		/* the tracee uses smaller `unsigned long` than us */
+		std::vector<uint32_t> args;
+		/* if this throws just pass it on */
+		proc.readVector(asPtr(), args, num_args);
+
+		for (const auto arg: args) {
+			m_args.push_back(arg);
+		}
+	} else {
+		try {
+			proc.readVector(asPtr(), m_args, num_args);
+		} catch (...) {
+			m_args.clear();
+			throw;
+		}
+	}
+}
+
+std::string SocketCallArgs::str() const {
+
+	std::string ret{"{"};
+
+	using enum SocketCallType::Call;
+
+	switch (m_type.call()) {
+	case SOCKET: {
+		const auto &call = dynamic_cast<const SocketSystemCall&>(*m_call);
+		ret += std::format("domain={}, type={}, prot={}",
+			call.domain.str(),
+			call.type.str(),
+			call.prot.str()
+		);
+		break;
+	}
+	default: return "???";
+	}
+
+	return ret + "}";
 }
 
 } // end ns

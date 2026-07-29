@@ -20,10 +20,10 @@ std::pair<SystemCallPtr, bool> new_sys(Args&&... args) {
 }
 
 // alias for creating multi-typed SystemCall instances below
-template <typename T, typename... Args>
-std::pair<SystemCallPtr, bool> new_multi_sys(Args&&... args) {
+template <typename... Args>
+std::pair<SystemCallPtr, bool> new_multi_sys(SystemCallFactory factory, Args&&... args) {
 	    return std::make_pair(
-			    T::createSystemCall(std::forward<Args>(args)...),
+			    factory(std::forward<Args>(args)...),
 			    false);
 }
 
@@ -119,7 +119,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::LSEEK:           return new_sys<LSeekSystemCall>();
 	case SystemCallNr::LLSEEK:          return new_sys<LLSeekSystemCall>();
 	case SystemCallNr::RSEQ:            return new_sys<RSeqSystemCall>();
-	case SystemCallNr::PRCTL:           return new_multi_sys<PrCtlSystemCall>(info);
+	case SystemCallNr::PRCTL:           return new_multi_sys(create_prctl_syscall, info);
 	case SystemCallNr::FADVISE64:       /* fallthrough */
 	case SystemCallNr::FADVISE64_64:    return new_sys<FAdviseSystemCall>(nr);
 	case SystemCallNr::UMASK:           return new_sys<UmaskSystemCall>();
@@ -175,6 +175,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::CHDIR:           return new_sys<ChDirSystemCall>();
 	case SystemCallNr::FCHDIR:          return new_sys<FChDirSystemCall>();
 	case SystemCallNr::SOCKET:          return new_sys<SocketSystemCall>();
+	case SystemCallNr::SOCKETCALL:      return new_multi_sys(create_socket_call_syscall, info);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,
@@ -205,7 +206,7 @@ SystemCallPtr SystemCallDB::get(const SystemCallInfo &info) {
 			/*
 			 * For a few multi-personality system calls (i.e.
 			 * highly overloaded system calls in an ioctl() style)
-			 * we are using multiple specializes types to reduce
+			 * we are using multiple specialized types to reduce
 			 * the complexity of individual classes. The current
 			 * caching scheme doesn't allow this, since we expect
 			 * a 1:1 relationship between system call nr and

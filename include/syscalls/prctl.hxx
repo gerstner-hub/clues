@@ -141,9 +141,6 @@ struct PrCtlSystemCall :
 		setParameters(op);
 	}
 
-	/// Factory function to create a concrete PrCtlSystemCall() instance.
-	static SystemCallPtr createSystemCall(const SystemCallInfo &info);
-
 	/* fixed parameters */
 
 	/// The only fixed parameter: the type of process operation.
@@ -962,5 +959,8 @@ public: // data
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns prctl
+
+/// Factory function to create a concrete PrCtlSystemCall() instance.
+SystemCallPtr create_prctl_syscall(const SystemCallInfo &info);
 
 } // end ns

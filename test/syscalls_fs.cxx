@@ -29,7 +29,9 @@ const auto LINKTARGET = "/test/link/target";
 const auto TESTS = std::array{
 #ifdef CLUES_HAVE_ACCESS
 	TestSpec{SystemCallNr::ACCESS, []() {
-			access("/etc/", R_OK|X_OK);
+			if (access("/etc/", R_OK|X_OK) != 0) {
+
+			}
 		}, ENTRY_VERIFY_CB(AccessSystemCall, {
 			VERIFY(sc.path.data() == "/etc/");
 			using cosmos::fs::AccessCheck;

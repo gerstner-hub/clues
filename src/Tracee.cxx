@@ -1093,6 +1093,11 @@ void Tracee::dropFD(const cosmos::FileNum fd) const {
 template void Tracee::readVector<std::vector<uintptr_t>>(const ForeignPtr,
 		std::vector<uintptr_t>&, const size_t) const;
 #endif
+
+#ifdef COSMOS_I386
+template void Tracee::readVector<std::vector<unsigned long>>(const ForeignPtr,
+		std::vector<unsigned long>&, const size_t) const;
+#endif
 /* for 32-bit emulation */
 template void Tracee::readVector<std::vector<uint32_t>>(const ForeignPtr,
 		std::vector<uint32_t>&, const size_t) const;

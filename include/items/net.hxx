@@ -4,10 +4,11 @@
 #include <variant>
 
 // Linux
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <net/ethernet.h>
+#include <linux/net.h>
 #include <linux/netlink.h>
+#include <net/ethernet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 
 // clues
 #include <clues/items/items.hxx>
@@ -326,6 +327,100 @@ protected: // data
 
 	int m_raw{};
 	ProtocolVariant m_prot;
+};
+
+/// `socketcall()` sub-system call enum.
+class SocketCallType :
+		public ValueInParameter {
+public: // types
+
+	enum class Call : int {
+		INVALID     = 0,
+		SOCKET      = SYS_SOCKET,
+		BIND        = SYS_BIND,
+		CONNECT     = SYS_CONNECT,
+		LISTEN      = SYS_LISTEN,
+		ACCEPT      = SYS_ACCEPT,
+		GETSOCKNAME = SYS_GETSOCKNAME,
+		GETPEERNAME = SYS_GETPEERNAME,
+		SOCKETPAIR  = SYS_SOCKETPAIR,
+		SEND        = SYS_SEND,
+		RECV        = SYS_RECV,
+		SENDTO      = SYS_SENDTO,
+		RECVFROM    = SYS_RECVFROM,
+		SHUTDOWN    = SYS_SHUTDOWN,
+		SETSOCKOPT  = SYS_SETSOCKOPT,
+		GETSOCKOPT  = SYS_GETSOCKOPT,
+		SENDMSG     = SYS_SENDMSG,
+		RECVMSG     = SYS_RECVMSG,
+		ACCEPT4     = SYS_ACCEPT4,
+		RECVMMSG    = SYS_RECVMMSG,
+		SENDMMSG    = SYS_SENDMMSG,
+	};
+
+	using enum Call;
+
+public: // functions
+
+	SocketCallType() :
+			ValueInParameter{make_item_cfg("call", "socket sub-system call")} {
+	}
+
+	std::string str() const override;
+
+	Call call() const {
+		return m_call;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override {
+		m_call = Call{valueAs<int>()};
+	}
+
+protected: // data
+
+	Call m_call{};
+};
+
+/// Array of `unsigned long` containing context-dependent parameters for `socketcall()`.
+/**
+ * The multiplexed `socketcall()` system call passes the actual system call
+ * parameters in an array of `unsigned long`. These values need to be casted
+ * to the proper context-dependent type (can also be pointers).
+ *
+ * The helper class `SocketCallBase` and its specializations interpret the
+ * individual `unsigned long` values as needed. The `str()` override will
+ * format the parameters of the base class `SocketCallBase`.
+ **/
+class SocketCallArgs :
+		public PointerInValue {
+public: // functions
+
+	explicit SocketCallArgs(const SocketCallType &type) :
+			PointerInValue{make_item_cfg("args", "socketcall argument block")},
+       			m_type{type} {
+	}
+
+	std::string str() const override;
+
+	bool valid() const {
+		// all sub-calls use > 0 arguments
+		return !m_args.empty();
+	}
+
+	const std::vector<unsigned long>& args() const {
+		return m_args;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+protected: // data
+
+	const SocketCallType &m_type;
+	std::vector<unsigned long> m_args;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

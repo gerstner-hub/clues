@@ -532,6 +532,9 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(socket\(domain=AF_PACKET, type=0x3 \(SOCK_RAW\), prot=ETH_P_DIAG\) = 1 \(EPERM\) \(errno\))",
 	}},
 #ifdef COSMOS_I386
+	TestSpec{"socket", "socketcall", {
+		R"(socketcall\(call=SYS_SOCKET, args=\{domain=AF_INET6, type=0x2 \(SOCK_DGRAM\), prot=IPPROTO_UDP\}\) = 3 \(fd\))",
+	}},
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"
 	}},
