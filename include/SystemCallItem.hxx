@@ -67,6 +67,9 @@ inline ItemCfg make_item_cfg(const std::string_view label, const std::string_vie
  **/
 class CLUES_API SystemCallItem {
 	friend SystemCall;
+
+	template <typename BASE>
+	friend class SocketCallBase;
 public: // types
 
 

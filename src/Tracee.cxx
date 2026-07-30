@@ -1106,6 +1106,9 @@ template void Tracee::readVector<std::vector<unsigned long>>(const ForeignPtr,
 template void Tracee::readVector<std::vector<uint32_t>>(const ForeignPtr,
 		std::vector<uint32_t>&, const size_t) const;
 
+template void Tracee::readVector<std::vector<int>>(const ForeignPtr,
+		std::vector<int>&, const size_t) const;
+
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const clues::Tracee::State &state) {

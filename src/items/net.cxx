@@ -2,6 +2,7 @@
 #include <cosmos/utils.hxx>
 
 // clues
+#include <clues/format.hxx>
 #include <clues/items/net.hxx>
 #include <clues/macros.h>
 #include <clues/private/utils.hxx>
@@ -76,11 +77,9 @@ void SocketProtocol::processValue(const Tracee&) {
 	m_raw = valueAs<int>();
 	m_prot = std::monostate{};
 
-	const auto &socket_call = dynamic_cast<const SocketSystemCall&>(*m_call);
-
 	using Domain = SocketDomain::Domain;
 
-	switch (socket_call.domain.domain()) {
+	switch (m_domain.domain()) {
 		case Domain::INET: [[ fallthrough ]];
 		case Domain::INET6:
 			if (m_raw != 0) {
@@ -303,26 +302,25 @@ static constexpr std::array<size_t, NUM_SOCKETCALLS> NUM_SOCKETCALL_ARGS{
 };
 
 void SocketCallArgs::processValue(const Tracee &proc) {
-	m_args.clear();
 	const auto callnum = cosmos::to_integral(m_type.call());
 	const auto num_args = NUM_SOCKETCALL_ARGS[callnum];
 
-	if (m_call->is32BitEmulationABI()) {
-		/* the tracee uses smaller `unsigned long` than us */
-		std::vector<uint32_t> args;
-		/* if this throws just pass it on */
-		proc.readVector(asPtr(), args, num_args);
+	try {
+		if (m_call->is32BitEmulationABI()) {
+			/* the tracee uses smaller `unsigned long` than us */
+			std::vector<uint32_t> args(num_args);
+			proc.readStructs(asPtr(), args);
 
-		for (const auto arg: args) {
-			m_args.push_back(arg);
+			for (const auto arg: args) {
+				m_args.push_back(arg);
+			}
+		} else {
+			m_args.resize(num_args);
+			proc.readStructs(asPtr(), m_args);
 		}
-	} else {
-		try {
-			proc.readVector(asPtr(), m_args, num_args);
-		} catch (...) {
-			m_args.clear();
-			throw;
-		}
+	} catch(...) {
+		m_args.clear();
+		throw;
 	}
 }
 
@@ -342,10 +340,50 @@ std::string SocketCallArgs::str() const {
 		);
 		break;
 	}
-	default: return "???";
+	case SOCKETPAIR: {
+		const auto &call = dynamic_cast<const SocketPairSystemCall&>(*m_call);
+		ret += std::format("domain={}, type={}, prot={}, sv={}",
+			call.domain.str(),
+			call.type.str(),
+			call.prot.str(),
+			call.pair.str()
+		);
+		break;
 	}
+	default: return "???";
+	} // end switch
 
 	return ret + "}";
+}
+
+void SocketPair::processValue(const Tracee &) {
+	m_valid = false;
+	m_pair.fill(cosmos::FileNum::INVALID);
+}
+
+void SocketPair::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue())
+		return;
+	std::vector<int> fds;
+	proc.readVector(asPtr(), fds, 2);
+
+	for (size_t i = 0; i < fds.size(); i++) {
+		m_pair[i] = cosmos::FileNum{fds[i]};
+	}
+
+	m_valid = true;
+}
+
+std::string SocketPair::str() const {
+	if (!m_call->hasResultValue()) {
+		return format::pointer(ptr());
+	} else if (!m_valid) {
+		return formatBadPointer();
+	}
+
+	return std::format("[{}, {}]",
+		cosmos::to_integral(m_pair[0]),
+		cosmos::to_integral(m_pair[1]));
 }
 
 } // end ns

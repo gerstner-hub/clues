@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <array>
 #include <variant>
 
 // Linux
@@ -297,8 +298,9 @@ public: // types
 
 public: // functions
 
-	explicit SocketProtocol() :
-		ValueInParameter{make_item_cfg("prot", "protocol")} {
+	explicit SocketProtocol(const SocketDomain &domain) :
+			ValueInParameter{make_item_cfg("prot", "protocol")},
+			m_domain{domain} {
 	}
 
 	std::string str() const override;
@@ -327,6 +329,7 @@ protected: // data
 
 	int m_raw{};
 	ProtocolVariant m_prot;
+	const SocketDomain &m_domain;
 };
 
 /// `socketcall()` sub-system call enum.
@@ -394,11 +397,11 @@ protected: // data
  * format the parameters of the base class `SocketCallBase`.
  **/
 class SocketCallArgs :
-		public PointerInValue {
+		public PointerValue {
 public: // functions
 
 	explicit SocketCallArgs(const SocketCallType &type) :
-			PointerInValue{make_item_cfg("args", "socketcall argument block")},
+			PointerValue{ItemCfg(ItemType::PARAM_IN_OUT, "args", "socketcall argument block")},
        			m_type{type} {
 	}
 
@@ -417,10 +420,49 @@ protected: // functions
 
 	void processValue(const Tracee&) override;
 
+	void updateData(const Tracee&) override {
+		/*
+		 * This is sometimes an IN/OUT type parameter, but we cover
+		 * that indirectly via the update of the base class items that
+		 * are not registerd as actual parameters of the system call.
+		 * This update is done in SocketCallBase::postSystemCall().
+		 *
+		 * This stills needs to be marked as PARAM_IN_OUT to maintain
+		 * the proper semantics (e.g. don't call str() on this type
+		 * before system call exit happened).
+		 */
+	}
+
 protected: // data
 
 	const SocketCallType &m_type;
 	std::vector<unsigned long> m_args;
+};
+
+class SocketPair :
+		public PointerOutValue {
+public: // functions
+
+	explicit SocketPair() :
+			PointerOutValue{make_item_cfg("sv", "int[2] output pointer")} {
+	}
+
+	std::string str() const override;
+
+	const std::array<cosmos::FileNum, 2> pair() const {
+		return m_pair;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee&) override;
+
+	void updateData(const Tracee&) override;
+
+protected: // data
+
+	bool m_valid = false;
+	std::array<cosmos::FileNum, 2> m_pair;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

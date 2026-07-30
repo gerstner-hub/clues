@@ -23,12 +23,23 @@ int main() {
 	fd = socket(AF_PACKET, SOCK_RAW, ETH_P_DIAG);
 	close(fd);
 
+	int pair[2];
+	syscall(SYS_socketpair, AF_UNIX, SOCK_STREAM, 0, pair);
+	close(pair[0]);
+	close(pair[1]);
+
 #ifdef COSMOS_I386
-	int args[6] = {0};
+	unsigned long args[6] = {0};
 
 	args[0] = AF_INET6;
 	args[1] = SOCK_DGRAM;
 	args[2] = IPPROTO_UDP;
 	syscall(SYS_socketcall, SYS_SOCKET, args);
+
+	args[0] = AF_UNIX;
+	args[1] = SOCK_STREAM;
+	args[2] = 0;
+	args[3] = reinterpret_cast<unsigned long>(pair);
+	syscall(SYS_socketcall, SYS_SOCKETPAIR, args);
 #endif
 }

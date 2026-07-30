@@ -1,5 +1,8 @@
 #pragma once
 
+// C++
+#include <vector>
+
 // clues
 #include <clues/items/fs.hxx>
 #include <clues/items/net.hxx>
@@ -16,6 +19,7 @@ struct SocketSystemCall :
 
 	explicit SocketSystemCall(const SystemCallNr nr = SystemCallNr::SOCKET) :
 			SystemCall{nr},
+			prot{domain},
 			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
 		setParameters(domain, type, prot);
 		setReturnItem(new_fd);
@@ -26,6 +30,28 @@ struct SocketSystemCall :
 	item::SocketProtocol prot;
 
 	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &proc) override;
+};
+
+struct SocketPairSystemCall :
+		public SystemCall {
+
+	explicit SocketPairSystemCall(const SystemCallNr nr = SystemCallNr::SOCKETPAIR) :
+			SystemCall{nr},
+			prot{domain} {
+		setParameters(domain, type, prot, pair);
+		setReturnItem(res);
+	}
+
+	item::SocketDomain domain;
+	item::SocketType type;
+	item::SocketProtocol prot;
+	item::SocketPair pair;
+
+	item::SuccessResult res;
 
 protected: // functions
 
@@ -50,19 +76,19 @@ protected: // functions
 template <typename BASE>
 class SocketCallBase :
 		public BASE {
-
 protected:
 
-	explicit SocketCallBase() :
-			BASE{SystemCallNr::SOCKETCALL},
-			args{call} {
-		BASE::setParameters(call, args);
-	}
+	explicit SocketCallBase();
 
 	bool check2ndPass(const Tracee &proc) override {
-		transferValues(proc);
+		if (args.valid()) {
+			transferValues(proc);
+		}
+
 		return false;
 	}
+
+	void postSystemCall(const Tracee &) override;
 
 	/// Transfer values from `args` into BASE class items.
 	/**
@@ -73,6 +99,10 @@ protected:
 	 **/
 	virtual void transferValues(const Tracee&) = 0;
 
+	/// Base class items that need to be updated after system call exit.
+	std::vector<SystemCallItem*> m_update_args;
+
+public: // data
 	item::SocketCallType call;
 	item::SocketCallArgs args;
 };
@@ -80,6 +110,13 @@ protected:
 /// Implementation of socketcall(SYS_SOCKET, ...).
 class SocketCall_Socket :
 		public SocketCallBase<SocketSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
+class SocketCall_SocketPair :
+		public SocketCallBase<SocketPairSystemCall> {
 protected: // functions
 
 	void transferValues(const Tracee&) override;
