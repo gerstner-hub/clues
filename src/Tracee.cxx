@@ -1067,6 +1067,10 @@ void Tracee::unshareProcessData() {
 
 void Tracee::trackFD(FDInfo &&info) const {
 	const auto fd = info.fd;
+	if (fd == cosmos::FileNum::INVALID) {
+		LOG_WARN_PID("Attempt to register invalid FD");
+		return;
+	}
 	auto res = m_process_data->fd_info_map.insert(
 		std::make_pair(fd, std::move(info))
 	);
