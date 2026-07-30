@@ -97,11 +97,11 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 		}
 	}
 
+	postSystemCall(proc);
+
 	if (exit_info.isValue()) {
 		updateFDTracking(proc);
 	}
-
-	postSystemCall(proc);
 
 	m_info = nullptr;
 }
