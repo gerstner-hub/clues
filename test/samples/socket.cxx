@@ -89,5 +89,12 @@ int main() {
 	args[2] = 0;
 	args[3] = reinterpret_cast<unsigned long>(pair);
 	syscall(SYS_socketcall, SYS_SOCKETPAIR, args);
+
+	fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	args[0] = fd;
+	args[1] = reinterpret_cast<unsigned long>(&ip6);
+	args[2] = sizeof(ip6);
+	syscall(SYS_socketcall, SYS_BIND, args);
+	close(fd);
 #endif
 }

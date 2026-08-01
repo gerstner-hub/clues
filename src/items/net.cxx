@@ -346,8 +346,7 @@ std::string SocketCallArgs::str() const {
 			call.prot.str()
 		);
 		break;
-	}
-	case SOCKETPAIR: {
+	} case SOCKETPAIR: {
 		const auto &call = dynamic_cast<const SocketPairSystemCall&>(*m_call);
 		ret += std::format("domain={}, type={}, prot={}, sv={}",
 			call.domain.str(),
@@ -356,8 +355,15 @@ std::string SocketCallArgs::str() const {
 			call.pair.str()
 		);
 		break;
-	}
-	default: return "???";
+	} case BIND: {
+		const auto &call = dynamic_cast<const BindSystemCall&>(*m_call);
+		ret += std::format("sockfd={}, sockaddr={}, addrlen={}",
+			call.sockfd.str(),
+			call.addr.str(),
+			call.addrlen.str()
+		);
+		break;
+	} default: return "???";
 	} // end switch
 
 	return ret + "}";

@@ -49,6 +49,14 @@ void check_bind_entry(const clues::BindSystemCall &sc, bool &good) {
 	VERIFY(uaddr.getPath() == "clues-test");
 }
 
+size_t setup_unixaddr(sockaddr_un &unix) {
+	memset(&unix, 0, sizeof(unix));
+	unix.sun_family = AF_UNIX;
+	memcpy(unix.sun_path,
+			UNIX_PATH.data(), UNIX_PATH.size());
+	return sizeof(unix.sun_family) + UNIX_PATH.size();
+}
+
 #ifdef TEST_I386_EMU
 uint32_t* alloc_args32(const size_t count) {
 	return alloc32<uint32_t*>(sizeof(uint32_t) * count);
@@ -143,11 +151,9 @@ const auto TESTS = std::array{
 	TestSpec{SystemCallNr::BIND, []() {
 			int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
 			sockaddr_un unix;
-			memset(&unix, 0, sizeof(unix));
-			unix.sun_family = AF_UNIX;
-			memcpy(unix.sun_path,
-					UNIX_PATH.data(), UNIX_PATH.size());
-			if (bind(sock, (struct sockaddr*)&unix, sizeof(unix.sun_family) + UNIX_PATH.size()) < 0) {
+			const auto addrlen = setup_unixaddr(unix);
+			if (syscall(SYS_bind, sock,
+				(struct sockaddr*)&unix, addrlen) < 0) {
 
 			}
 		}, ENTRY_VERIFY_CB(BindSystemCall, {
@@ -158,16 +164,42 @@ const auto TESTS = std::array{
 			I386_CROSS_ABI(IgnoreCalls{2}, []() {
 				int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
 				auto unix = alloc_struct32<sockaddr_un>();
-				memset(unix, 0, sizeof(*unix));
-				unix->sun_family = AF_UNIX;
-				memcpy(unix->sun_path,
-						UNIX_PATH.data(),
-						UNIX_PATH.size());
+				const auto addrlen = setup_unixaddr(*unix);
 				syscall32(SyscallNr32::BIND,
-						sock, unix,
-						sizeof(unix->sun_family) + UNIX_PATH.size());
+						sock, unix, addrlen);
 			})
 		}
+	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+			struct sockaddr_un unix;
+			const auto addrlen = setup_unixaddr(unix);
+			unsigned long args[3];
+			args[0] = sock;
+			args[1] = reinterpret_cast<unsigned long>(&unix);
+			args[2] = addrlen;
+			syscall(SYS_socketcall, SYS_BIND, args);
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_Bind, {
+			check_bind_entry(sc, good);
+		}), EXIT_VERIFY_CB(SocketCall_Bind, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+				auto args = alloc_args32(3);
+				auto unix = alloc_struct32<struct sockaddr_un>();
+				const auto addrlen = setup_unixaddr(*unix);
+				args[0] = sock;
+				args[1] = reinterpret_cast<unsigned long>(unix);
+				args[2] = addrlen;
+				syscall32(SyscallNr32::SOCKETCALL,
+						SYS_BIND, args);
+			})
+		},
+		"bind()",
+		{clues::ABI::I386}
 	}
 };
 
