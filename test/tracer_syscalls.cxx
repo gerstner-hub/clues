@@ -546,7 +546,8 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(socketcall\(call=SYS_SOCKET, args=\{domain=AF_INET6, type=0x2 \(SOCK_DGRAM\), prot=IPPROTO_UDP\}\) = 3 \(fd\))",
 		R"(socketcall\(call=SYS_SOCKETPAIR, args=\{domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0, sv=\[4, 5\]\}\) = 0 \(success\))",
 		R"(socketcall\(call=SYS_BIND, args=\{sockfd=6, sockaddr=\{family=AF_INET6, port=1234, flowinfo=4321, addr="::1", scope_id=0\}, addrlen=28\}\) = 0 \(success\))",
-		R"(socketcall\(call=SYS_CONNECT, args=\{sockfd=7, sockaddr=\{family=AF_INET6, port=1234, flowinfo=4321, addr="::1", scope_id=0\}, addrlen=28\}\) = 0 \(success\))"
+		R"(socketcall\(call=SYS_CONNECT, args=\{sockfd=7, sockaddr=\{family=AF_INET6, port=1234, flowinfo=4321, addr="::1", scope_id=0\}, addrlen=28\}\) = 0 \(success\))",
+		R"(socketcall\(call=SYS_LISTEN, args=\{sockfd=6, backlog=15\}\) = 95 \(EOPNOTSUPP\) \(errno\))",
 	}},
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

@@ -296,6 +296,40 @@ const auto TESTS = std::array{
 			})
 		}
 	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+			sockaddr_un unix;
+			const auto addrlen = setup_unixaddr(unix);
+			bind(sock, (sockaddr*)&unix, addrlen);
+			unsigned long args[2];
+			args[0] = sock;
+			args[1] = 15;
+			syscall(SYS_socketcall, SYS_LISTEN, args);
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_Listen, {
+			VERIFY(sc.sockfd.fd() == FIRST_FD);
+			VERIFY(sc.backlog.value() == 15);
+		}), EXIT_VERIFY_CB(SocketCall_Listen, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+				sockaddr_un unix;
+				const auto addrlen = setup_unixaddr(unix);
+				if (bind(sock, (sockaddr*)&unix, addrlen) < 0) {
+
+				}
+				auto args = alloc_args32(2);
+				args[0] = sock;
+				args[1] = 15;
+				syscall32(SyscallNr32::SOCKETCALL,
+						SYS_LISTEN, args);
+			})
+		},
+		"listen()",
+		{clues::ABI::I386}
+	},
 };
 
 } // end anon ns

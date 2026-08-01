@@ -121,8 +121,12 @@ int main() {
 	args[1] = reinterpret_cast<unsigned long>(&ip6);
 	args[2] = sizeof(ip6);
 	if (syscall(SYS_socketcall, SYS_BIND, args) == 0) {
+		args[1] = 15;
+		syscall(SYS_socketcall, SYS_LISTEN, args);
+
 		fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 		args[0] = fd;
+		args[1] = reinterpret_cast<unsigned long>(&ip6);
 		syscall(SYS_socketcall, SYS_CONNECT, args);
 	}
 	close(fd);

@@ -371,6 +371,15 @@ std::string SocketCallArgs::str() const {
 		const auto &call = dynamic_cast<const ConnectSystemCall&>(*m_call);
 		handle_bind_connect(call);
 		break;
+	} case LISTEN: {
+		const auto &call = dynamic_cast<const ListenSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, backlog={}",
+			call.sockfd.str(),
+			call.backlog.str()
+		);
+
+		break;
 	} default: return "???";
 	} // end switch
 
