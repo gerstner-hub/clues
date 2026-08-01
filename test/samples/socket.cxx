@@ -36,10 +36,10 @@ int main() {
 	ip6.sin6_family = AF_INET6;
 	unix.sun_family = AF_UNIX;
 
-	ip4.sin_port = 1234;
+	ip4.sin_port = htons(1234);
 	ip4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-	ip6.sin6_port = 1234;
+	ip6.sin6_port = htons(1234);
 	ip6.sin6_flowinfo = 4321;
 	std::memcpy(ip6.sin6_addr.s6_addr, &in6addr_loopback, sizeof(in6addr_loopback));
 	ip6.sin6_scope_id = 0;
