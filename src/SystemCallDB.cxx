@@ -178,6 +178,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::SOCKETCALL:      return new_multi_sys(create_socket_call_syscall, info);
 	case SystemCallNr::SOCKETPAIR:      return new_sys<SocketPairSystemCall>();
 	case SystemCallNr::BIND:            return new_sys<BindSystemCall>();
+	case SystemCallNr::CONNECT:         return new_sys<ConnectSystemCall>();
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

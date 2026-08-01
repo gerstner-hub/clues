@@ -17,10 +17,27 @@
 
 // clues
 #include <clues/items/items.hxx>
+#include <clues/items/fs.hxx>
 
 namespace clues::item {
 
 CLUES_DEFAULT_VISIBILITY_ON
+
+struct SocketFD :
+		public FileDescriptor {
+	explicit SocketFD() :
+			FileDescriptor{make_item_cfg(
+					"sockfd",
+					"socket file descriptor")} {
+	}
+};
+
+struct AddressLength :
+		public IntValue {
+	explicit AddressLength() :
+			IntValue{ItemCfg{.label = "addrlen"}} {
+	}
+};
 
 /// The basic socket domain of a newly created socket.
 class SocketDomain :

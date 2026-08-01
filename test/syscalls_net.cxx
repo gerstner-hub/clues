@@ -49,6 +49,17 @@ void check_bind_entry(const clues::BindSystemCall &sc, bool &good) {
 	VERIFY(uaddr.getPath() == "clues-test");
 }
 
+void check_connect_entry(const clues::ConnectSystemCall &sc, bool &good) {
+	VERIFY(sc.sockfd.fd() == FIRST_FD);
+	VERIFY(sc.addrlen.value() == sizeof(sockaddr_in));
+	const auto &addr = sc.addr;
+	VERIFY(addr.valid());
+	VERIFY(addr.domain() == clues::item::SocketDomain::INET);
+	const auto ip4 = std::get<cosmos::IP4Address>(*addr.addr());
+	VERIFY(ip4.addr().toHost() == INADDR_LOOPBACK);
+	VERIFY(ip4.port().toHost() == 1234);
+}
+
 size_t setup_unixaddr(sockaddr_un &unix) {
 	memset(&unix, 0, sizeof(unix));
 	unix.sun_family = AF_UNIX;
@@ -200,7 +211,33 @@ const auto TESTS = std::array{
 		},
 		"bind()",
 		{clues::ABI::I386}
-	}
+	},
+	TestSpec{SystemCallNr::CONNECT, []() {
+			int sock = socket(AF_INET, SOCK_DGRAM, 0);
+			sockaddr_in ip4;
+			ip4.sin_family = AF_INET;
+			ip4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			ip4.sin_port = htons(1234);
+			if (syscall(SYS_connect, sock,
+				(struct sockaddr*)&ip4, sizeof(ip4)) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(ConnectSystemCall, {
+			check_connect_entry(sc, good);
+		}), EXIT_VERIFY_CB(ConnectSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int sock = socket(AF_INET, SOCK_DGRAM, 0);
+				auto ip4 = alloc_struct32<sockaddr_in>();
+				ip4->sin_family = AF_INET;
+				ip4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+				ip4->sin_port = htons(1234);
+				syscall32(SyscallNr32::CONNECT, sock, ip4,
+						sizeof(*ip4));
+			})
+		}
+	},
 };
 
 } // end anon ns

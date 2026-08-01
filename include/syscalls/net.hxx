@@ -63,17 +63,31 @@ struct BindSystemCall :
 
 	explicit BindSystemCall(const SystemCallNr nr = SystemCallNr::BIND) :
 			SystemCall{nr},
-			sockfd{make_item_cfg("sockfd",
-					"socket file descriptor")},
-			addr{ItemCfg{.type = ItemType::PARAM_IN}, addrlen},
-			addrlen{ItemCfg{.label="addrlen"}} {
+			addr{ItemCfg{.type = ItemType::PARAM_IN}, addrlen} {
 		addParameters(sockfd, addr, addrlen);
 		setReturnItem(res);
 	}
 
-	item::FileDescriptor sockfd;
+	item::SocketFD sockfd;
 	item::SocketAddress addr;
-	item::IntValue addrlen;
+	item::AddressLength addrlen;
+
+	item::SuccessResult res;
+};
+
+struct ConnectSystemCall :
+		public SystemCall {
+
+	explicit ConnectSystemCall(const SystemCallNr nr = SystemCallNr::CONNECT) :
+			SystemCall{nr},
+			addr{ItemCfg{.type = ItemType::PARAM_IN}, addrlen} {
+		addParameters(sockfd, addr, addrlen);
+		setReturnItem(res);
+	}
+
+	item::SocketFD sockfd;
+	item::SocketAddress addr;
+	item::AddressLength addrlen;
 
 	item::SuccessResult res;
 };

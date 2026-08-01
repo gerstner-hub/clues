@@ -10,6 +10,8 @@
 #include <cstring>
 #include <string>
 
+#include <optional>
+
 #include <cosmos/compiler.hxx>
 #include <cosmos/memory.hxx>
 
@@ -18,8 +20,26 @@ int socket(int af, int type, int prot) {
 }
 
 template <typename ADDR>
-int bind(int fd, const ADDR &addr, socklen_t addrlen) {
-	return syscall(SYS_bind, fd, &addr, addrlen);
+int bind(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
+	auto ret = syscall(SYS_bind, fd, &addr, addrlen ? *addrlen : sizeof(addr));
+
+	if (ret == 0) {
+		listen(fd, 15);
+	}
+
+	return ret;
+}
+
+template <typename ADDR>
+int connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
+	const struct sockaddr *saddr = reinterpret_cast<const struct sockaddr*>(&addr);
+	auto sock = socket(saddr->sa_family, type, 0);
+
+	int ret = syscall(SYS_connect, sock, saddr, addrlen ? *addrlen : sizeof(addr));
+
+	close(sock);
+
+	return ret;
 }
 
 int main() {
@@ -50,19 +70,25 @@ int main() {
 	std::memcpy(unix.sun_path, un_path.data(), un_path.size());
 
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (bind(fd, unix, un_path.size() + 2) < 0) {
+	if (bind(fd, unix, un_path.size() + 2) == 0) {
+		if (connect(SOCK_STREAM, unix, un_path.size() + 2) < 0) {
 
+		}
 	}
 	close(fd);
 	fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	if (bind(fd, ip6, sizeof(ip6)) < 0) {
+	if (bind(fd, ip6) == 0) {
+		if (connect(SOCK_DGRAM, ip6) < 0) {
 
+		}
 	}
 	close(fd);
 
 	fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (bind(fd, ip4, sizeof(ip4)) < 0) {
+	if (bind(fd, ip4) == 0) {
+		if (connect(SOCK_STREAM, ip4) < 0 ) {
 
+		}
 	}
 	close(fd);
 
