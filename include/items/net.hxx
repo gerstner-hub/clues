@@ -11,6 +11,10 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+// cosmos
+#include <cosmos/net/IPAddress.hxx>
+#include <cosmos/net/UnixAddress.hxx>
+
 // clues
 #include <clues/items/items.hxx>
 
@@ -24,6 +28,7 @@ class SocketDomain :
 public: // types
 
 	enum class Domain : int {
+		UNSPEC    = AF_UNSPEC,
 		ALG       = AF_ALG,
 		APPLETALK = AF_APPLETALK,
 		AX25      = AF_AX25,
@@ -63,6 +68,8 @@ public: // functions
 	Domain domain() const {
 		return m_domain;
 	}
+
+	static std::string_view label(const Domain domain);
 
 protected: // functions
 
@@ -463,6 +470,60 @@ protected: // data
 
 	bool m_valid = false;
 	std::array<cosmos::FileNum, 2> m_pair;
+};
+
+/// `struct sockaddr*` type parameters for the socket family of syscalls.
+class SocketAddress :
+		public PointerValue {
+public: // types
+
+	using AddressVariant = std::variant<
+	      cosmos::IP4Address,
+	      cosmos::IP6Address,
+	      cosmos::UnixAddress>;
+
+public: // functions
+
+	explicit SocketAddress(const ItemCfg &cfg, const IntValue &len) :
+			PointerValue(cfg.applyDefaults(ItemCfg{
+				.label = "addr",
+				.desc = "struct sockaddr*"})),
+			m_len{len} {
+		if (this->isIn() || this->isInOut()) {
+			/* `len` generally comes after the `addr` */
+			m_flags.set(Flag::DEFER_FILL);
+		}
+	}
+
+	std::string str() const override;
+
+	/// Provides a specialized type with detailed address information.
+	/**
+	 * Only more the more common address families are currently modeled.
+	 * If std::nullopt is returned then there is currently no support for
+	 * the address family in effect (or no valid address is stored).
+	 **/
+	std::optional<AddressVariant> addr() const;
+
+	SocketDomain::Domain domain() const {
+		if (!valid())
+			return SocketDomain::UNSPEC;
+
+		return SocketDomain::Domain{m_addr->ss_family};
+	}
+
+	bool valid() const {
+		return m_addr != std::nullopt;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+protected: // data
+
+	std::optional<sockaddr_storage> m_addr;
+	const IntValue &m_len;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

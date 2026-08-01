@@ -11,7 +11,11 @@
 #include <sys/socket.h>
 #include <linux/net.h>
 
+using namespace std::literals;
+
 namespace {
+
+constexpr std::string_view UNIX_PATH{"\0clues-test"sv};
 
 void check_socket_entry(const clues::SocketSystemCall &sc, bool &good) {
 	VERIFY(sc.domain.domain() == clues::item::SocketDomain::INET6);
@@ -32,6 +36,17 @@ void check_socketpair_entry(const clues::SocketPairSystemCall &sc, bool &good) {
 	VERIFY(!flags[SocketType::NONBLOCK]);
 	VERIFY(flags[SocketType::CLOEXEC]);
 	VERIFY(sc.prot.raw() == 0);
+}
+
+void check_bind_entry(const clues::BindSystemCall &sc, bool &good) {
+	VERIFY(sc.sockfd.fd() == FIRST_FD);
+	VERIFY(sc.addrlen.value() > 2);
+	const auto &addr = sc.addr;
+	VERIFY(addr.valid());
+	VERIFY(addr.domain() == clues::item::SocketDomain::UNIX);
+	const auto uaddr = std::get<cosmos::UnixAddress>(*addr.addr());
+	VERIFY(uaddr.isAbstract());
+	VERIFY(uaddr.getPath() == "clues-test");
 }
 
 #ifdef TEST_I386_EMU
@@ -99,7 +114,7 @@ const auto TESTS = std::array{
 			int sv[2];
 			unsigned long args[4];
 			args[0] = AF_UNIX;
-			args[1]= SOCK_DGRAM|SOCK_CLOEXEC;
+			args[1] = SOCK_DGRAM|SOCK_CLOEXEC;
 			args[2] = 0;
 			args[3] = (unsigned long)sv;
 			syscall(SYS_socketcall, SYS_SOCKETPAIR, args);
@@ -124,6 +139,35 @@ const auto TESTS = std::array{
 		},
 		"socketpair()",
 		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::BIND, []() {
+			int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+			sockaddr_un unix;
+			memset(&unix, 0, sizeof(unix));
+			unix.sun_family = AF_UNIX;
+			memcpy(unix.sun_path,
+					UNIX_PATH.data(), UNIX_PATH.size());
+			if (bind(sock, (struct sockaddr*)&unix, sizeof(unix.sun_family) + UNIX_PATH.size()) < 0) {
+
+			}
+		}, ENTRY_VERIFY_CB(BindSystemCall, {
+			check_bind_entry(sc, good);
+		}), EXIT_VERIFY_CB(BindSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+				auto unix = alloc_struct32<sockaddr_un>();
+				memset(unix, 0, sizeof(*unix));
+				unix->sun_family = AF_UNIX;
+				memcpy(unix->sun_path,
+						UNIX_PATH.data(),
+						UNIX_PATH.size());
+				syscall32(SyscallNr32::BIND,
+						sock, unix,
+						sizeof(unix->sun_family) + UNIX_PATH.size());
+			})
+		}
 	}
 };
 

@@ -58,6 +58,26 @@ protected: // functions
 	void updateFDTracking(const Tracee &proc) override;
 };
 
+struct BindSystemCall :
+		public SystemCall {
+
+	explicit BindSystemCall(const SystemCallNr nr = SystemCallNr::BIND) :
+			SystemCall{nr},
+			sockfd{make_item_cfg("sockfd",
+					"socket file descriptor")},
+			addr{ItemCfg{.type = ItemType::PARAM_IN}, addrlen},
+			addrlen{ItemCfg{.label="addrlen"}} {
+		addParameters(sockfd, addr, addrlen);
+		setReturnItem(res);
+	}
+
+	item::FileDescriptor sockfd;
+	item::SocketAddress addr;
+	item::IntValue addrlen;
+
+	item::SuccessResult res;
+};
+
 /// Base class for `socketcall()` specializations.
 /**
  * The socketcall() system call on legacy ABIs multiplexes all socket-related

@@ -1,3 +1,6 @@
+// C++
+#include <algorithm>
+
 // cosmos
 #include <cosmos/utils.hxx>
 
@@ -12,31 +15,35 @@
 namespace clues::item {
 
 std::string SocketDomain::str() const {
-	switch (cosmos::to_integral(m_domain)) {
-	CASE_ENUM_TO_STR(AF_ALG);
-	CASE_ENUM_TO_STR(AF_APPLETALK);
-	CASE_ENUM_TO_STR(AF_AX25);
-	CASE_ENUM_TO_STR(AF_BLUETOOTH);
-	CASE_ENUM_TO_STR(AF_CAN);
-	CASE_ENUM_TO_STR(AF_DECnet);
-	CASE_ENUM_TO_STR(AF_IB);
-	CASE_ENUM_TO_STR(AF_INET6);
-	CASE_ENUM_TO_STR(AF_INET);
-	CASE_ENUM_TO_STR(AF_IPX);
-	CASE_ENUM_TO_STR(AF_KCM);
-	CASE_ENUM_TO_STR(AF_KEY);
-	CASE_ENUM_TO_STR(AF_LLC);
-	CASE_ENUM_TO_STR(AF_MPLS);
-	CASE_ENUM_TO_STR(AF_NETLINK);
-	CASE_ENUM_TO_STR(AF_PACKET);
-	CASE_ENUM_TO_STR(AF_PPPOX);
-	CASE_ENUM_TO_STR(AF_RDS);
-	CASE_ENUM_TO_STR(AF_TIPC);
-	CASE_ENUM_TO_STR(AF_UNIX); // synonym to AF_LOCAL
-	CASE_ENUM_TO_STR(AF_VSOCK);
-	CASE_ENUM_TO_STR(AF_X25);
-	CASE_ENUM_TO_STR(AF_XDP);
-	default: return "AF_???";
+	return std::string{label(m_domain)};
+}
+
+std::string_view SocketDomain::label(const Domain domain) {
+	switch (cosmos::to_integral(domain)) {
+		CASE_ENUM_TO_STR(AF_ALG);
+		CASE_ENUM_TO_STR(AF_APPLETALK);
+		CASE_ENUM_TO_STR(AF_AX25);
+		CASE_ENUM_TO_STR(AF_BLUETOOTH);
+		CASE_ENUM_TO_STR(AF_CAN);
+		CASE_ENUM_TO_STR(AF_DECnet);
+		CASE_ENUM_TO_STR(AF_IB);
+		CASE_ENUM_TO_STR(AF_INET6);
+		CASE_ENUM_TO_STR(AF_INET);
+		CASE_ENUM_TO_STR(AF_IPX);
+		CASE_ENUM_TO_STR(AF_KCM);
+		CASE_ENUM_TO_STR(AF_KEY);
+		CASE_ENUM_TO_STR(AF_LLC);
+		CASE_ENUM_TO_STR(AF_MPLS);
+		CASE_ENUM_TO_STR(AF_NETLINK);
+		CASE_ENUM_TO_STR(AF_PACKET);
+		CASE_ENUM_TO_STR(AF_PPPOX);
+		CASE_ENUM_TO_STR(AF_RDS);
+		CASE_ENUM_TO_STR(AF_TIPC);
+		CASE_ENUM_TO_STR(AF_UNIX); // synonym to AF_LOCAL
+		CASE_ENUM_TO_STR(AF_VSOCK);
+		CASE_ENUM_TO_STR(AF_X25);
+		CASE_ENUM_TO_STR(AF_XDP);
+		default: return "AF_???";
 	}
 }
 
@@ -384,6 +391,101 @@ std::string SocketPair::str() const {
 	return std::format("[{}, {}]",
 		cosmos::to_integral(m_pair[0]),
 		cosmos::to_integral(m_pair[1]));
+}
+
+namespace {
+
+void format_addr(std::string &out, const cosmos::IP4Address &addr) {
+	out += std::format(", port={}, addr=\"{}\"",
+		addr.port().toHost(),
+		addr.ipAsString()
+	);
+};
+
+void format_addr(std::string &out, const cosmos::IP6Address &addr) {
+	out += std::format(", port={}, flowinfo={}, addr=\"{}\", scope_id={}",
+		addr.port().toHost(),
+		addr.getFlowInfo(),
+		addr.ipAsString(),
+		cosmos::to_integral(addr.getScopeID())
+	);
+};
+
+void format_addr(std::string &out, const cosmos::UnixAddress &addr) {
+	out += std::format(", path=\"{}\"",
+		addr.label()
+	);
+};
+
+} // end anon ns
+
+std::string SocketAddress::str() const {
+	if (!m_addr) {
+		return formatBadPointer();
+	}
+
+	std::string ret{"{"};
+
+	ret += std::format("family={}",
+		SocketDomain::label(SocketDomain::Domain{m_addr->ss_family})
+	);
+
+	if (const auto addr_var = addr(); addr_var) {
+		const auto addr = *addr_var;
+
+		std::visit([&ret](const auto &_addr) {
+				format_addr(ret, _addr);
+			}, addr);
+	} else {
+		ret += ", ???";
+	}
+
+
+	return ret + "}";
+}
+
+void SocketAddress::processValue(const Tracee &proc) {
+
+	m_addr.emplace();
+
+	/* if the caller passed an excess size here let's try with what we
+	 * have */
+	const auto addr_len = std::min(
+			m_len.value() >= 0 ?
+				static_cast<size_t>(m_len.value()) :
+				0,
+			sizeof(*m_addr));
+
+	if (!addr_len) {
+		m_addr.reset();
+		return;
+	}
+
+	try {
+		proc.readBlob(ptr(),
+				reinterpret_cast<char*>(&(*m_addr)),
+				addr_len);
+	} catch (const std::exception &) {
+		m_addr.reset();
+	}
+}
+
+std::optional<SocketAddress::AddressVariant> SocketAddress::addr() const {
+	if (!valid())
+		return {};
+
+	using enum SocketDomain::Domain;
+
+	switch (domain()) {
+		default: return {};
+		case INET: return cosmos::IP4Address{reinterpret_cast<const sockaddr_in&>(*m_addr)};
+		case INET6: return cosmos::IP6Address{reinterpret_cast<const sockaddr_in6&>(*m_addr)};
+		case UNIX: return cosmos::UnixAddress{
+				   reinterpret_cast<const sockaddr_un&>(*m_addr),
+				   m_len.value() >= 0 ?
+					   static_cast<size_t>(m_len.value()) :
+					   0};
+	}
 }
 
 } // end ns
