@@ -92,6 +92,22 @@ struct ConnectSystemCall :
 	item::SuccessResult res;
 };
 
+struct ListenSystemCall :
+		public SystemCall {
+
+	explicit ListenSystemCall(const SystemCallNr nr = SystemCallNr::LISTEN) :
+			SystemCall{nr},
+       			backlog{ItemCfg{.label = "backlog"}} {
+		addParameters(sockfd, backlog);
+		setReturnItem(res);
+	}
+
+	item::SocketFD sockfd;
+	item::IntValue backlog;
+
+	item::SuccessResult res;
+};
+
 /// Base class for `socketcall()` specializations.
 /**
  * The socketcall() system call on legacy ABIs multiplexes all socket-related

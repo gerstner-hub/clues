@@ -525,7 +525,7 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(getcwd\(path="/tmp", size=4096\) = 5 \(length\))",
 		R"(fchdir\(fd=3\) = 0 \(success\))",
 	}},
-	TestSpec{"socket", "socket,bind,connect", {
+	TestSpec{"socket", "socket,bind,connect,listen", {
 		R"(socket\(domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0\) = 3 \(fd\))",
 		R"(socket\(domain=AF_INET6, type=0x2 \(SOCK_DGRAM\), prot=IPPROTO_UDP\) = 3 \(fd\))",
 		R"(socket\(domain=AF_NETLINK, type=0x3 \(SOCK_RAW\), prot=NETLINK_ROUTE\) = 3 \(fd\))",
@@ -536,6 +536,7 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(connect\(sockfd=4, addr=\{family=AF_UNIX, path="@testsocket"\}, addrlen=13\) = 0 \(success\))",
 		R"(connect\(sockfd=4, addr=\{family=AF_INET6, port=1234, flowinfo=4321, addr="::1", scope_id=0\}, addrlen=28\) = 0 \(success\))",
 		R"(connect\(sockfd=4, addr=\{family=AF_INET, port=1234, addr="127.0.0.1"\}, addrlen=16\) = 0 \(success\))",
+		R"(listen\(sockfd=3, backlog=15\) = 0 \(success\))",
 	}},
 	TestSpec{"socket", "socketpair", {
 		R"(socketpair\(domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0, sv=\[3, 4\]\) = 0 \(success\))",

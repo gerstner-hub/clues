@@ -273,6 +273,29 @@ const auto TESTS = std::array{
 		"connect()",
 		{clues::ABI::I386}
 	},
+	TestSpec{SystemCallNr::LISTEN, []() {
+			int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+			sockaddr_un unix;
+			const auto addrlen = setup_unixaddr(unix);
+			if (bind(sock, (sockaddr*)&unix, addrlen) == 0) {
+				syscall(SYS_listen, sock, 15);
+			}
+		}, ENTRY_VERIFY_CB(ListenSystemCall, {
+			VERIFY(sc.sockfd.fd() == FIRST_FD);
+			VERIFY(sc.backlog.value() == 15);
+		}), EXIT_VERIFY_CB(ListenSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{2}, []() {
+				int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+				sockaddr_un unix;
+				const auto addrlen = setup_unixaddr(unix);
+				if (bind(sock, (sockaddr*)&unix, addrlen) == 0) {
+					syscall32(SyscallNr32::LISTEN, sock, 15);
+				}
+			})
+		}
+	},
 };
 
 } // end anon ns
