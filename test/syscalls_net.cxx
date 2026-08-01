@@ -238,6 +238,41 @@ const auto TESTS = std::array{
 			})
 		}
 	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			int sock = socket(AF_INET, SOCK_DGRAM, 0);
+			sockaddr_in ip4;
+			ip4.sin_family = AF_INET;
+			ip4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			ip4.sin_port = htons(1234);
+			unsigned long args[3];
+			args[0] = sock;
+			args[1] = reinterpret_cast<unsigned long>(&ip4);
+			args[2] = sizeof(ip4);
+			syscall(SYS_socketcall, SYS_CONNECT, args);
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_Connect, {
+			check_connect_entry(sc, good);
+		}), EXIT_VERIFY_CB(SocketCall_Connect, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{1}, {
+			I386_CROSS_ABI(IgnoreCalls{3}, []() {
+				int sock = socket(AF_INET, SOCK_DGRAM, 0);
+				auto args = alloc_args32(3);
+				auto ip4 = alloc_struct32<sockaddr_in>();
+				ip4->sin_family = AF_INET;
+				ip4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+				ip4->sin_port = htons(1234);
+				args[0] = sock;
+				args[1] = reinterpret_cast<unsigned long>(ip4);
+				args[2] = sizeof(*ip4);
+				syscall32(SyscallNr32::SOCKETCALL,
+						SYS_CONNECT, args);
+			})
+		},
+		"connect()",
+		{clues::ABI::I386}
+	},
 };
 
 } // end anon ns

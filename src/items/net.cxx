@@ -337,6 +337,14 @@ std::string SocketCallArgs::str() const {
 
 	using enum SocketCallType::Call;
 
+	auto handle_bind_connect = [&ret](const auto &call) {
+		ret += std::format("sockfd={}, sockaddr={}, addrlen={}",
+			call.sockfd.str(),
+			call.addr.str(),
+			call.addrlen.str()
+		);
+	};
+
 	switch (m_type.call()) {
 	case SOCKET: {
 		const auto &call = dynamic_cast<const SocketSystemCall&>(*m_call);
@@ -357,11 +365,11 @@ std::string SocketCallArgs::str() const {
 		break;
 	} case BIND: {
 		const auto &call = dynamic_cast<const BindSystemCall&>(*m_call);
-		ret += std::format("sockfd={}, sockaddr={}, addrlen={}",
-			call.sockfd.str(),
-			call.addr.str(),
-			call.addrlen.str()
-		);
+		handle_bind_connect(call);
+		break;
+	} case CONNECT: {
+		const auto &call = dynamic_cast<const ConnectSystemCall&>(*m_call);
+		handle_bind_connect(call);
 		break;
 	} default: return "???";
 	} // end switch

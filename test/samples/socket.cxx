@@ -24,7 +24,7 @@ int bind(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
 	auto ret = syscall(SYS_bind, fd, &addr, addrlen ? *addrlen : sizeof(addr));
 
 	if (ret == 0) {
-		listen(fd, 15);
+		syscall(SYS_listen, fd, 15);
 	}
 
 	return ret;
@@ -120,7 +120,11 @@ int main() {
 	args[0] = fd;
 	args[1] = reinterpret_cast<unsigned long>(&ip6);
 	args[2] = sizeof(ip6);
-	syscall(SYS_socketcall, SYS_BIND, args);
+	if (syscall(SYS_socketcall, SYS_BIND, args) == 0) {
+		fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+		args[0] = fd;
+		syscall(SYS_socketcall, SYS_CONNECT, args);
+	}
 	close(fd);
 #endif
 }

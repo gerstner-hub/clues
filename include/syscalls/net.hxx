@@ -163,6 +163,13 @@ protected: // functions
 	void transferValues(const Tracee&) override;
 };
 
+class SocketCall_Connect :
+		public SocketCallBase<ConnectSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 SystemCallPtr create_socket_call_syscall(const SystemCallInfo &info);
