@@ -467,6 +467,31 @@ std::string SocketAddress::str() const {
 	return ret + "}";
 }
 
+SocketAddress::SocketAddress(
+		const ItemCfg &cfg,
+		std::variant<const IntValue*,
+			const PointerToScalar<int>*> len) :
+		PointerValue(cfg.applyDefaults(ItemCfg{
+			.label = "addr",
+			.desc = "struct sockaddr*"})) {
+
+	if (std::holds_alternative<const IntValue*>(len)) {
+		m_len = std::get<const IntValue*>(len);
+	} else {
+		m_lenp = std::get<const PointerToScalar<int>*>(len);
+	}
+
+	/* `len` generally comes after the `addr` */
+	m_flags.set(Flag::DEFER_FILL);
+}
+
+int SocketAddress::addrLen() const {
+	if (m_len)
+		return m_len->value();
+	else
+		return *m_lenp->value();
+}
+
 void SocketAddress::processValue(const Tracee &proc) {
 
 	m_addr.emplace();
@@ -474,8 +499,8 @@ void SocketAddress::processValue(const Tracee &proc) {
 	/* if the caller passed an excess size here let's try with what we
 	 * have */
 	const auto addr_len = std::min(
-			m_len.value() >= 0 ?
-				static_cast<size_t>(m_len.value()) :
+			addrLen() >= 0 ?
+				static_cast<size_t>(addrLen()) :
 				0,
 			sizeof(*m_addr));
 
@@ -505,10 +530,49 @@ std::optional<SocketAddress::AddressVariant> SocketAddress::addr() const {
 		case INET6: return cosmos::IP6Address{reinterpret_cast<const sockaddr_in6&>(*m_addr)};
 		case UNIX: return cosmos::UnixAddress{
 				   reinterpret_cast<const sockaddr_un&>(*m_addr),
-				   m_len.value() >= 0 ?
-					   static_cast<size_t>(m_len.value()) :
+				   addrLen() >= 0 ?
+					   static_cast<size_t>(addrLen()) :
 					   0};
 	}
+}
+
+std::string AcceptFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+
+	BITFLAGS_ADD(SOCK_NONBLOCK);
+	BITFLAGS_ADD(SOCK_CLOEXEC);
+
+	return BITFLAGS_STR();
+}
+
+void AddressLengthPointer::processValue(const Tracee &proc) {
+	m_available.reset();
+	m_filled.reset();
+
+	PointerToScalar<int>::processValue(proc);
+
+	m_available = value();
+}
+
+void AddressLengthPointer::updateData(const Tracee &proc) {
+	PointerToScalar<int>::updateData(proc);
+
+	if (m_call->hasResultValue()) {
+		m_filled = value();
+	}
+}
+
+std::string AddressLengthPointer::str() const {
+	if (!m_available)
+		return formatBadPointer();
+
+	std::string ret = std::to_string(*m_available);
+
+	if (m_filled) {
+		ret += std::format(" → {}", *m_filled);
+	}
+
+	return ret;
 }
 
 } // end ns

@@ -1,14 +1,16 @@
 // clues
+#include <clues/logger.hxx>
 #include <clues/syscalls/net.hxx>
 #include <clues/SystemCallInfo.hxx>
+#include <clues/Tracee.hxx>
 
 namespace clues {
 
 namespace {
 
-FDInfo make_socket_info(const cosmos::FileNum fd, const item::SocketType &type) {
+FDInfo make_socket_info(const cosmos::FileNum fd,
+		const item::SocketType::Flags flags) {
 	FDInfo info{FDInfo::Type::SOCKET, fd};
-	const auto flags = type.flags();
 	info.flags.emplace();
 	using enum item::SocketType::Flag;
 	if (flags[NONBLOCK]) {
@@ -24,7 +26,7 @@ FDInfo make_socket_info(const cosmos::FileNum fd, const item::SocketType &type) 
 } // end anon ns
 
 void SocketSystemCall::updateFDTracking(const Tracee &proc) {
-	auto info = make_socket_info(new_fd.fd(), type);
+	auto info = make_socket_info(new_fd.fd(), type.flags());
 	trackFD(proc, std::move(info));
 }
 
@@ -106,9 +108,14 @@ SystemCallPtr create_socket_call_syscall(const SystemCallInfo &info) {
 
 void SocketPairSystemCall::updateFDTracking(const Tracee &proc) {
 	for (auto fd: pair.pair()) {
-		auto info = make_socket_info(fd, type);
+		auto info = make_socket_info(fd, type.flags());
 		trackFD(proc, std::move(info));
 	}
+}
+
+void AcceptSystemCall::updateFDTracking(const Tracee &proc) {
+	auto info = make_socket_info(new_fd.fd(), flags.flags());
+	trackFD(proc, std::move(info));
 }
 
 } // end ns

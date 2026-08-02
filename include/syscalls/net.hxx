@@ -63,7 +63,7 @@ struct BindSystemCall :
 
 	explicit BindSystemCall(const SystemCallNr nr = SystemCallNr::BIND) :
 			SystemCall{nr},
-			addr{ItemCfg{.type = ItemType::PARAM_IN}, addrlen} {
+			addr{ItemCfg{.type = ItemType::PARAM_IN}, &addrlen} {
 		addParameters(sockfd, addr, addrlen);
 		setReturnItem(res);
 	}
@@ -80,7 +80,7 @@ struct ConnectSystemCall :
 
 	explicit ConnectSystemCall(const SystemCallNr nr = SystemCallNr::CONNECT) :
 			SystemCall{nr},
-			addr{ItemCfg{.type = ItemType::PARAM_IN}, addrlen} {
+			addr{ItemCfg{.type = ItemType::PARAM_IN}, &addrlen} {
 		addParameters(sockfd, addr, addrlen);
 		setReturnItem(res);
 	}
@@ -106,6 +106,39 @@ struct ListenSystemCall :
 	item::IntValue backlog;
 
 	item::SuccessResult res;
+};
+
+/// Type used for accept() and accept4().
+/**
+ * This type is used for both accept() and accept4(). In the case of accept()
+ * the `flags` item is always set to 0.
+ **/
+struct AcceptSystemCall :
+		public SystemCall {
+
+	explicit AcceptSystemCall(const SystemCallNr nr =
+				SystemCallNr::ACCEPT) :
+			SystemCall{nr},
+			addr{ItemCfg{.type = ItemType::PARAM_OUT}, &addrlen},
+			new_fd{ItemCfg{.type = ItemType::RETVAL}} {
+		setParameters(sockfd, addr, addrlen);
+		setReturnItem(new_fd);
+
+		if (nr == SystemCallNr::ACCEPT4) {
+			addParameters(flags);
+		}
+	}
+
+	item::SocketFD sockfd;
+	item::SocketAddress addr;
+	item::AddressLengthPointer addrlen;
+	item::AcceptFlags flags;
+
+	item::FileDescriptor new_fd;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &proc) override;
 };
 
 /// Base class for `socketcall()` specializations.

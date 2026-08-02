@@ -31,9 +31,10 @@ int bind(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
 }
 
 template <typename ADDR>
-int connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
+int connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {},
+		int flags=0) {
 	const struct sockaddr *saddr = reinterpret_cast<const struct sockaddr*>(&addr);
-	auto sock = socket(saddr->sa_family, type, 0);
+	auto sock = socket(saddr->sa_family, type|flags, 0);
 
 	int ret = syscall(SYS_connect, sock, saddr, addrlen ? *addrlen : sizeof(addr));
 
@@ -71,8 +72,19 @@ int main() {
 
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (bind(fd, unix, un_path.size() + 2) == 0) {
-		if (connect(SOCK_STREAM, unix, un_path.size() + 2) < 0) {
-
+#ifdef SYS_accept
+		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
+			sockaddr_un peer;
+			socklen_t len = sizeof(peer);
+			int acc_sock = syscall(SYS_accept, fd, (sockaddr*)&peer, &len);
+			close(acc_sock);
+		}
+#endif
+		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
+			sockaddr_un peer;
+			socklen_t len = sizeof(peer);
+			int acc_sock = syscall(SYS_accept4, fd, (sockaddr*)&peer, &len, SOCK_CLOEXEC);
+			close(acc_sock);
 		}
 	}
 	close(fd);

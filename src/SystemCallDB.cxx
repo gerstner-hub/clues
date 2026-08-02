@@ -180,6 +180,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::BIND:            return new_sys<BindSystemCall>();
 	case SystemCallNr::CONNECT:         return new_sys<ConnectSystemCall>();
 	case SystemCallNr::LISTEN:          return new_sys<ListenSystemCall>();
+	case SystemCallNr::ACCEPT:          [[ fallthrough ]];
+	case SystemCallNr::ACCEPT4:         return new_sys<AcceptSystemCall>(nr);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

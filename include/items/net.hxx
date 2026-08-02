@@ -32,11 +32,55 @@ struct SocketFD :
 	}
 };
 
+/// Pass-by-value address length for socket-related system calls.
 struct AddressLength :
 		public IntValue {
 	explicit AddressLength() :
 			IntValue{ItemCfg{.label = "addrlen"}} {
 	}
+};
+
+/// Value-result address length parameter for socket-related system calls.
+/**
+ * On input this points to a `socklen_t` (`int`) providing the maximum amount
+ * of space in the `struct sockaddr*` which is also passed to the system call.
+ * On output the actually filled-in amount of bytes in the `structk sockaddr*`
+ * is reported. These two usually only differ for certain address families
+ * like `AF_UNIX`, or if applications use `sockaddr_storage`.
+ **/
+struct AddressLengthPointer :
+		public PointerToScalar<int> {
+public: // functions
+
+	explicit AddressLengthPointer() :
+			clues::item::PointerToScalar<int>{
+				ItemCfg{
+					ItemType::PARAM_IN_OUT,
+					"addrlen",
+					"socklen_t*"
+				}} {
+	}
+
+	std::optional<int> available() const {
+		return m_available;
+	}
+
+	std::optional<int> filled() const {
+		return m_filled;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+	void updateData(const Tracee &) override;
+
+protected: // data
+
+	std::optional<int> m_available;
+	std::optional<int> m_filled;
 };
 
 /// The basic socket domain of a newly created socket.
@@ -123,7 +167,7 @@ public: // types
 
 	enum class Flag : int {
 		NONBLOCK = SOCK_NONBLOCK,
-		CLOEXEC = SOCK_CLOEXEC
+		CLOEXEC  = SOCK_CLOEXEC
 	};
 
 	using enum Flag;
@@ -363,26 +407,26 @@ public: // types
 
 	enum class Call : int {
 		INVALID     = 0,
-		SOCKET      = SYS_SOCKET,
+		ACCEPT4     = SYS_ACCEPT4,
+		ACCEPT      = SYS_ACCEPT,
 		BIND        = SYS_BIND,
 		CONNECT     = SYS_CONNECT,
-		LISTEN      = SYS_LISTEN,
-		ACCEPT      = SYS_ACCEPT,
-		GETSOCKNAME = SYS_GETSOCKNAME,
 		GETPEERNAME = SYS_GETPEERNAME,
-		SOCKETPAIR  = SYS_SOCKETPAIR,
-		SEND        = SYS_SEND,
-		RECV        = SYS_RECV,
-		SENDTO      = SYS_SENDTO,
-		RECVFROM    = SYS_RECVFROM,
-		SHUTDOWN    = SYS_SHUTDOWN,
-		SETSOCKOPT  = SYS_SETSOCKOPT,
+		GETSOCKNAME = SYS_GETSOCKNAME,
 		GETSOCKOPT  = SYS_GETSOCKOPT,
-		SENDMSG     = SYS_SENDMSG,
-		RECVMSG     = SYS_RECVMSG,
-		ACCEPT4     = SYS_ACCEPT4,
+		LISTEN      = SYS_LISTEN,
+		RECVFROM    = SYS_RECVFROM,
 		RECVMMSG    = SYS_RECVMMSG,
+		RECVMSG     = SYS_RECVMSG,
+		RECV        = SYS_RECV,
 		SENDMMSG    = SYS_SENDMMSG,
+		SENDMSG     = SYS_SENDMSG,
+		SEND        = SYS_SEND,
+		SENDTO      = SYS_SENDTO,
+		SETSOCKOPT  = SYS_SETSOCKOPT,
+		SHUTDOWN    = SYS_SHUTDOWN,
+		SOCKETPAIR  = SYS_SOCKETPAIR,
+		SOCKET      = SYS_SOCKET,
 	};
 
 	using enum Call;
@@ -501,16 +545,9 @@ public: // types
 
 public: // functions
 
-	explicit SocketAddress(const ItemCfg &cfg, const IntValue &len) :
-			PointerValue(cfg.applyDefaults(ItemCfg{
-				.label = "addr",
-				.desc = "struct sockaddr*"})),
-			m_len{len} {
-		if (this->isIn() || this->isInOut()) {
-			/* `len` generally comes after the `addr` */
-			m_flags.set(Flag::DEFER_FILL);
-		}
-	}
+	explicit SocketAddress(
+		const ItemCfg &cfg,
+		std::variant<const IntValue*, const PointerToScalar<int>*> len);
 
 	std::string str() const override;
 
@@ -537,10 +574,47 @@ protected: // functions
 
 	void processValue(const Tracee &) override;
 
+	int addrLen() const;
+
 protected: // data
 
 	std::optional<sockaddr_storage> m_addr;
-	const IntValue &m_len;
+	const IntValue *m_len{};
+	const PointerToScalar<int> *m_lenp{};
+};
+
+/// Flags used with accept4() style system calls.
+class AcceptFlags :
+		public ValueInParameter {
+public: // types
+
+	using Flag = SocketType::Flag;
+	using enum Flag;
+	using Flags = SocketType::Flags;
+
+public: // functions
+
+	explicit AcceptFlags() :
+			ValueInParameter{ItemCfg{
+				.label = "flags",
+				.desc = "initial socket flags"}} {
+	}
+
+	std::string str() const override;
+
+	Flags flags() const {
+		return m_flags;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_flags = Flags{valueAs<int>()};
+	}
+
+protected: // data
+
+	Flags m_flags{};
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
