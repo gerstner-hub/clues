@@ -44,6 +44,9 @@ int connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {},
 }
 
 int main() {
+#ifdef COSMOS_I386
+	unsigned long args[6] = {0};
+#endif
 
 	sockaddr_in ip4;
 	sockaddr_in6 ip6;
@@ -86,6 +89,27 @@ int main() {
 			int acc_sock = syscall(SYS_accept4, fd, (sockaddr*)&peer, &len, SOCK_CLOEXEC);
 			close(acc_sock);
 		}
+#ifdef COSMOS_I386
+		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
+			sockaddr_un peer;
+			socklen_t len = sizeof(peer);
+			args[0] = fd;
+			args[1] = (unsigned long)&peer;
+			args[2] = (unsigned long)&len;
+			int acc_sock = syscall(SYS_socketcall, SYS_ACCEPT, args);
+			close(acc_sock);
+		}
+		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
+			sockaddr_un peer;
+			socklen_t len = sizeof(peer);
+			args[0] = fd;
+			args[1] = (unsigned long)&peer;
+			args[2] = (unsigned long)&len;
+			args[3] = SOCK_NONBLOCK;
+			int acc_sock = syscall(SYS_socketcall, SYS_ACCEPT4, args);
+			close(acc_sock);
+		}
+#endif
 	}
 	close(fd);
 	fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
@@ -115,8 +139,6 @@ int main() {
 	close(pair[1]);
 
 #ifdef COSMOS_I386
-	unsigned long args[6] = {0};
-
 	args[0] = AF_INET6;
 	args[1] = SOCK_DGRAM;
 	args[2] = IPPROTO_UDP;

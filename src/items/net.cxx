@@ -380,6 +380,21 @@ std::string SocketCallArgs::str() const {
 		);
 
 		break;
+	} case ACCEPT: [[ fallthrough ]];
+	  case ACCEPT4: {
+		const auto &call = dynamic_cast<const AcceptSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, addr={}, addrlen={}",
+			call.sockfd.str(),
+			call.addr.str(),
+			call.addrlen.str()
+		);
+
+		if (m_type.call() == ACCEPT4) {
+			ret += std::format(", flags={}", call.flags.str());
+		}
+
+		break;
 	} default: return "???";
 	} // end switch
 

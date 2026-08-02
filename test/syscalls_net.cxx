@@ -410,6 +410,78 @@ const auto TESTS = std::array{
 			})
 		}
 	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			accept_conn([](int sock) {
+				struct sockaddr_in addr;
+				socklen_t len = sizeof(addr);
+				unsigned long args[3];
+				args[0] = sock;
+				args[1] = (unsigned long)&addr;
+				args[2] = (unsigned long)&len;
+				syscall(SYS_socketcall, SYS_ACCEPT, args);
+			});
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_Accept, {
+			check_accept_entry(sc, good);
+			VERIFY(sc.flags.flags().none());
+		}), EXIT_VERIFY_CB(SocketCall_Accept, {
+			check_accept_exit(sc, good);
+		}), IgnoreCalls{6}, {
+			I386_CROSS_ABI(IgnoreCalls{9}, []() {
+				accept_conn([](int sock) {
+					auto addr = alloc_struct32<sockaddr_in>();
+					auto len = alloc_struct32<socklen_t>();
+					*len = sizeof(*addr);
+					auto args = alloc_args32(3);
+					args[0] = sock;
+					args[1] = (unsigned long)addr;
+					args[2] = (unsigned long)len;
+					syscall32(SyscallNr32::SOCKETCALL, SYS_ACCEPT, args);
+				});
+			})
+		},
+		"accept()",
+		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			accept_conn([](int sock) {
+				struct sockaddr_in addr;
+				socklen_t len = sizeof(addr);
+				unsigned long args[4];
+				args[0] = sock;
+				args[1] = (unsigned long)&addr;
+				args[2] = (unsigned long)&len;
+				args[3] = SOCK_CLOEXEC;
+				syscall(SYS_socketcall, SYS_ACCEPT4, args);
+			});
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_Accept, {
+			check_accept_entry(sc, good);
+			const auto flags = sc.flags.flags();
+			VERIFY(flags.count() == 1);
+			VERIFY(flags[clues::item::AcceptFlags::Flag::CLOEXEC]);
+		}), EXIT_VERIFY_CB(SocketCall_Accept, {
+			check_accept_exit(sc, good);
+		}), IgnoreCalls{6}, {
+			I386_CROSS_ABI(IgnoreCalls{9}, []() {
+				accept_conn([](int sock) {
+					auto addr = alloc_struct32<sockaddr_in>();
+					auto len = alloc_struct32<socklen_t>();
+					*len = sizeof(*addr);
+					auto args = alloc_args32(4);
+					args[0] = sock;
+					args[1] = (unsigned long)addr;
+					args[2] = (unsigned long)len;
+					args[3] = SOCK_CLOEXEC;
+					syscall32(SyscallNr32::SOCKETCALL, SYS_ACCEPT4, args);
+				});
+			})
+		},
+		"accept4()",
+		{clues::ABI::I386}
+	},
 };
 
 } // end anon ns
