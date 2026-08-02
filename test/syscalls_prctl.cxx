@@ -986,8 +986,14 @@ const auto TESTS = std::array{
 			})
 		}, "PR_GET_THP_DISABLE(thp_disable=false)"
 	}, TestSpec{SystemCallNr::PRCTL, []() {
-			int *addr = nullptr;
-			prctl(PR_GET_TID_ADDRESS, &addr, 0, 0, 0);
+			/* this prctl does not have a compat emulation call
+			 * for 32-bit on x86_64, thus the kernel will always
+			 * write out 8 bytes here in emulation context. this
+			 * can cause stack corruption if we use an actual
+			 * pointer variable here. Cast this pointer to int64_t
+			 * to (int*) instead to cover all situations */
+			int64_t addr;
+			prctl(PR_GET_TID_ADDRESS, (int*)&addr, 0, 0, 0);
 		}, ENTRY_VERIFY_CB(prctl::GetTIDAddressSystemCall, {
 			VERIFY(sc.op.operation() == ProcessOp::GET_TID_ADDRESS);
 			VERIFY(sc.res.has_value());
