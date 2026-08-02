@@ -84,6 +84,8 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 	m_info = &info;
 	const auto exit_info = *info.exitInfo();
 
+	std::vector<SystemCallItem*> deferred;
+
 	if (exit_info.isValue()) {
 		m_return->fill(proc, Word{static_cast<Word>(*exit_info.retVal())});
 	} else {
@@ -93,8 +95,16 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 
 	for (auto &par: m_pars) {
 		if (par->needsUpdate()) {
-			par->updateData(proc);
+			if (!par->deferFill()) {
+				par->updateData(proc);
+			} else {
+				deferred.push_back(par);
+			}
 		}
+	}
+
+	for (auto par: deferred) {
+		par->updateData(proc);
 	}
 
 	postSystemCall(proc);
