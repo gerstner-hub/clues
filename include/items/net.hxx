@@ -12,8 +12,8 @@
 #include <sys/socket.h>
 
 // cosmos
-#include <cosmos/net/IPAddress.hxx>
-#include <cosmos/net/UnixAddress.hxx>
+#include <cosmos/net/inet/IPAddress.hxx>
+#include <cosmos/net/unix/UnixAddress.hxx>
 
 // clues
 #include <clues/items/items.hxx>
