@@ -1,5 +1,6 @@
 // C++
 #include <format>
+#include <new>
 
 // Linux
 #include <sys/utsname.h>
@@ -47,19 +48,36 @@ void RSeqParameter::updateData(const Tracee &tracee) {
 	if (!rseq_call.hasResultValue())
 		return;
 
-	m_data.resize(rseq_call.rseq_len.value());
+	/*
+	 * struct rseq also has a 32-bit alignment requirement, thus keeping
+	 * around a std::vector<char> won't suffice (UBAN sanitizer complains
+	 * about it). Since it's also a dynamically sized structure a regular
+	 * unique_ptr also won't do: we need custom allocators and deleters
+	 * that we don't want to expose in the header necessarily. For these
+	 * reasons do manual memory management of this pointer at the moment.
+	 */
+	m_size = rseq_call.rseq_len.value();
+	m_data = reinterpret_cast<struct rseq*>(
+			::operator new(m_size, std::align_val_t{32}));
 
 	try {
-		tracee.readBlob(this->ptr(), m_data.data(), m_data.size());
+		tracee.readBlob(this->ptr(), (char*)m_data, m_size);
 	} catch (const std::exception &ex) {
 		// shouldn't really happen
-		m_data.clear();
+		clear();
 		return;
 	}
 }
 
+void RSeqParameter::clear() {
+	m_size = 0;
+	if (m_data) {
+		::operator delete(m_data, std::align_val_t{32});
+	}
+}
+
 std::string RSeqParameter::str() const {
-	if (m_data.empty() || m_data.size() < sizeof(struct rseq)) {
+	if (!m_data || m_size < sizeof(struct rseq)) {
 		return "<invalid>";
 	}
 

@@ -55,13 +55,17 @@ public: // functions
 			PointerValue{ItemCfg{ItemType::PARAM_IN_OUT, "rseq", "struct rseq*"}} {
 	};
 
+	~RSeqParameter() {
+		clear();
+	}
+
 	std::string str() const override;
 
 	const struct rseq* data() const {
-		if (m_data.empty())
+		if (m_size == 0)
 			return nullptr;
 
-		return reinterpret_cast<const struct rseq*>(m_data.data());
+		return m_data;
 	}
 
 	/// The size of the data structure returned via data() in bytes.
@@ -71,7 +75,7 @@ public: // functions
 	 * system call context.
 	 **/
 	size_t rseqSize() const {
-		return m_data.size();
+		return m_size;
 	}
 
 protected: // functions
@@ -80,14 +84,17 @@ protected: // functions
 		/* we only look at the struct during system call exit time,
 		 * when we will also know the size of the struct and see any
 		 * updates the kernel made */
-		m_data.clear();
+		clear();
 	}
+
+	void clear();
 
 	void updateData(const Tracee&) override;
 
 protected: // data
 
-	std::vector<char> m_data;
+	struct rseq *m_data = nullptr;
+	size_t m_size = 0;
 };
 
 /// The `flags` argument used with RSeqSystemCall.
