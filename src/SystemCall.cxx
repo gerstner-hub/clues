@@ -26,7 +26,9 @@ bool SystemCall::validNr(const SystemCallNr nr) {
 }
 
 void SystemCall::dropParameters(const size_t start_index) {
-	m_pars.erase(m_pars.begin() + start_index, m_pars.end());
+	while (m_pars.size() > start_index) {
+		m_pars.pop_back();
+	}
 }
 
 SystemCall::SystemCall(const SystemCallNr nr) :
@@ -35,7 +37,7 @@ SystemCall::SystemCall(const SystemCallNr nr) :
 
 void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) {
 	const auto args = info.entryInfo()->args();
-	std::vector<std::pair<SystemCallItem*, Word>> deferred;
+	RegisterArray<std::pair<SystemCallItem*, Word>> deferred;
 
 	for (size_t numpar = 0; numpar < m_pars.size(); numpar++) {
 		auto &par = *m_pars[numpar];
@@ -61,7 +63,6 @@ void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
 	m_info = &info;
 
 	prepareNewSystemCall();
-
 	fillParameters(proc, info);
 
 	if (check2ndPass(proc)) {
@@ -84,7 +85,7 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 	m_info = &info;
 	const auto exit_info = *info.exitInfo();
 
-	std::vector<SystemCallItem*> deferred;
+	ParameterArray deferred;
 
 	if (exit_info.isValue()) {
 		m_return->fill(proc, Word{static_cast<Word>(*exit_info.retVal())});

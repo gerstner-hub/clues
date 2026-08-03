@@ -78,8 +78,8 @@ protected: // functions
 	std::string formatTraceeInvocation(const Tracee &tracee);
 	std::string formatTraceeInvocation(const std::string &exe, const cosmos::StringVector &cmdline) const;
 	void printPar(std::ostream &trace, const SystemCallItem &value) const;
-	void printParsOnEntry(std::ostream &trace, const SystemCall::ParameterVector &pars) const;
-	void printParsOnExit(std::ostream &trace, const SystemCall::ParameterVector &pars) const;
+	void printParsOnEntry(std::ostream &trace, const SystemCall::ParameterArray &pars) const;
+	void printParsOnExit(std::ostream &trace, const SystemCall::ParameterArray &pars) const;
 
 	bool followExecutionContext(Tracee &tracee);
 

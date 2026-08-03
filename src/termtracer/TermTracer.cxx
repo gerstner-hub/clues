@@ -256,7 +256,7 @@ void TermTracer::configureLogger() {
 	clues::set_logger(m_logger);
 }
 
-void TermTracer::printParsOnEntry(std::ostream &trace, const SystemCall::ParameterVector &pars) const {
+void TermTracer::printParsOnEntry(std::ostream &trace, const SystemCall::ParameterArray &pars) const {
 	/*
 	 * This logic covers printing of parameters during system-call entry.
 	 *
@@ -301,7 +301,7 @@ void TermTracer::printParsOnEntry(std::ostream &trace, const SystemCall::Paramet
 	}
 }
 
-void TermTracer::printParsOnExit(std::ostream &trace, const SystemCall::ParameterVector &pars) const {
+void TermTracer::printParsOnExit(std::ostream &trace, const SystemCall::ParameterArray &pars) const {
 	if (pars.empty())
 		return;
 

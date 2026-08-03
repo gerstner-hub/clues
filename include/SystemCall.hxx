@@ -4,11 +4,11 @@
 #include <iosfwd>
 #include <optional>
 #include <string_view>
-#include <vector>
 
 // cosmos
 #include <cosmos/error/RuntimeError.hxx>
 #include <cosmos/proc/ptrace.hxx>
+#include <cosmos/SizedArray.hxx>
 
 // clues
 #include <clues/ErrnoResult.hxx>
@@ -46,8 +46,17 @@ class CLUES_API SystemCall {
 	friend std::ostream& ::operator<<(std::ostream&, const SystemCall&);
 public: // types
 
-	/// Vector of the parameters required for a system call.
-	using ParameterVector = std::vector<SystemCallItemPtr>;
+	/// Maximum number of system call arguments on any ABI.
+	static constexpr auto MAX_ARGS =
+		cosmos::ptrace::SyscallInfo::EntryInfo::MAX_ARGS;
+
+	template <typename T>
+	/// SizedArray capable of holding any number of system call pars.
+	using RegisterArray = cosmos::SizedArray<T, MAX_ARGS>;
+
+	/// Array of the parameters required for a system call.
+	using ParameterArray = RegisterArray<SystemCallItemPtr>;
+
 
 public: // functions
 
@@ -68,7 +77,7 @@ public: // functions
 	/**
 	 * The given tracee is about to start the system call in question.
 	 * Introspect the parameter values and store them in the current
-	 * object's ParameterVector.
+	 * object's ParameterArray.
 	 **/
 	void setEntryInfo(const Tracee &proc, const SystemCallInfo &info);
 
@@ -88,7 +97,7 @@ public: // functions
 	SystemCallNr callNr() const { return m_nr; }
 
 	/// Access to the parameters associated with this system call.
-	const ParameterVector& parameters() const { return m_pars; }
+	const ParameterArray& parameters() const { return m_pars; }
 	/// Access to the return value parameter associated with this system call.
 	SystemCallItemPtr result() const { return hasResultValue() ? m_return : nullptr; }
 	/// Access to the errno result seen for this system call.
@@ -237,7 +246,7 @@ protected: // data
 	/// If the system call fails, this is the error code.
 	std::optional<ErrnoResult> m_error;
 	/// The array of system call parameters, if any.
-	ParameterVector m_pars;
+	ParameterArray m_pars;
 	/// The current system call ABI which is in effect.
 	ABI m_abi = ABI::UNKNOWN;
 };
