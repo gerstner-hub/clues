@@ -163,6 +163,9 @@ int main() {
 		args[0] = fd;
 		args[1] = reinterpret_cast<unsigned long>(&ip6);
 		syscall(SYS_socketcall, SYS_CONNECT, args);
+
+		args[1] = SHUT_WR;
+		syscall(SYS_socketcall, SYS_SHUTDOWN, args);
 	}
 	close(fd);
 #endif

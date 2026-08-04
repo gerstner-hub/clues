@@ -506,6 +506,41 @@ const auto TESTS = std::array{
 			})
 		}
 	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			accept_conn([](int sock) {
+				struct sockaddr_in addr;
+				socklen_t len = sizeof(addr);
+				int conn = accept(sock, (sockaddr*)&addr, &len);
+				unsigned long args[2];
+				args[0] = conn;
+				args[1] = SHUT_WR;
+				syscall(SYS_socketcall, SYS_SHUTDOWN, args);
+			});
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_Shutdown, {
+			VERIFY(sc.sockfd.fd() == THIRD_FD);
+			VERIFY(sc.how.direction() ==
+					clues::item::ShutdownType::Direction::WRITE);
+		}), EXIT_VERIFY_CB(SocketCall_Shutdown, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{7}, {
+			I386_CROSS_ABI(IgnoreCalls{8}, []() {
+				accept_conn([](int sock) {
+					struct sockaddr_in addr;
+					socklen_t len = sizeof(addr);
+					int conn = accept(sock, (sockaddr*)&addr, &len);
+			
+					auto args = alloc_args32(2);
+					args[0] = conn;
+					args[1] = SHUT_WR;
+					syscall32(SyscallNr32::SOCKETCALL, SYS_SHUTDOWN, args);
+				});
+			})
+		},
+		"shutdown()",
+		{clues::ABI::I386}
+	},
 };
 
 } // end anon ns

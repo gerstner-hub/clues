@@ -84,6 +84,12 @@ void SocketCall_Accept::transferValues(const Tracee &proc) {
 	addr.fill(proc, Word{vec[1]});
 }
 
+void SocketCall_Shutdown::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+	sockfd.fill(proc, Word{vec[0]});
+	how.fill(proc, Word{vec[1]});
+}
+
 template <typename BASE>
 SocketCallBase<BASE>::SocketCallBase() :
 		BASE{SystemCallNr::SOCKETCALL},
@@ -111,14 +117,15 @@ SystemCallPtr create_socket_call_syscall(const SystemCallInfo &info) {
 	const auto subcall = item::SocketCallType::Call(info.entryInfo()->args()[0]);
 
 	switch (subcall) {
-		case SOCKET: return std::make_shared<SocketCall_Socket>();
-		case SOCKETPAIR: return std::make_shared<SocketCall_SocketPair>();
-		case BIND:    return std::make_shared<SocketCall_Bind>();
-		case CONNECT: return std::make_shared<SocketCall_Connect>();
-		case LISTEN:  return std::make_shared<SocketCall_Listen>();
-		case ACCEPT:  [[ fallthrough ]];
-		case ACCEPT4: return std::make_shared<SocketCall_Accept>();
-		default: throw cosmos::RuntimeError{"unsupported socketcall() sub-call"};
+	case SOCKET:     return std::make_shared<SocketCall_Socket>();
+	case SOCKETPAIR: return std::make_shared<SocketCall_SocketPair>();
+	case BIND:       return std::make_shared<SocketCall_Bind>();
+	case CONNECT:    return std::make_shared<SocketCall_Connect>();
+	case LISTEN:     return std::make_shared<SocketCall_Listen>();
+	case ACCEPT:     [[ fallthrough ]];
+	case ACCEPT4:    return std::make_shared<SocketCall_Accept>();
+	case SHUTDOWN:   return std::make_shared<SocketCall_Shutdown>();
+	default: throw cosmos::RuntimeError{"unsupported socketcall() sub-call"};
 	}
 }
 

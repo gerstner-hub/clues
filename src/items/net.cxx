@@ -395,6 +395,15 @@ std::string SocketCallArgs::str() const {
 		}
 
 		break;
+	} case SHUTDOWN: {
+		const auto &call = dynamic_cast<const ShutdownSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, how={}",
+			call.sockfd.str(),
+			call.how.str()
+		);
+
+		break;
 	} default: return "???";
 	} // end switch
 

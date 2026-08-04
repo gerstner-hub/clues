@@ -555,6 +555,7 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(socketcall\(call=SYS_LISTEN, args=\{sockfd=6, backlog=15\}\) = 95 \(EOPNOTSUPP\) \(errno\))",
 		R"(socketcall\(call=SYS_ACCEPT, args=\{sockfd=3, addr=\{family=AF_UNIX, path="<unnamed>"\}, addrlen=110 → 2\}\) = 4 \(fd\))",
 		R"(socketcall\(call=SYS_ACCEPT4, args=\{sockfd=3, addr=\{family=AF_UNIX, path="<unnamed>"\}, addrlen=110 → 2, flags=0x800 \(SOCK_NONBLOCK\)\}\) = 4 \(fd\))",
+		R"(socketcall\(call=SYS_SHUTDOWN, args=\{sockfd=7, how=SHUT_WR\}\) = 0 \(success\))",
 	}},
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"
