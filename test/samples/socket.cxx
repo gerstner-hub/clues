@@ -51,10 +51,12 @@ int main() {
 	sockaddr_in ip4;
 	sockaddr_in6 ip6;
 	sockaddr_un unix;
+	sockaddr_un unix2;
 
 	cosmos::zero_object(ip4);
 	cosmos::zero_object(ip6);
 	cosmos::zero_object(unix);
+	cosmos::zero_object(unix2);
 
 	ip4.sin_family = AF_INET;
 	ip6.sin6_family = AF_INET6;
@@ -75,11 +77,16 @@ int main() {
 
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (bind(fd, unix, un_path.size() + 2) == 0) {
+		{
+			socklen_t len = sizeof(unix2);
+			syscall(SYS_getsockname, fd, (sockaddr*)&unix2, &len);
+		}
 #ifdef SYS_accept
 		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
 			sockaddr_un peer;
 			socklen_t len = sizeof(peer);
 			int acc_sock = syscall(SYS_accept, fd, (sockaddr*)&peer, &len);
+
 			close(acc_sock);
 		}
 #endif
@@ -87,6 +94,8 @@ int main() {
 			sockaddr_un peer;
 			socklen_t len = sizeof(peer);
 			int acc_sock = syscall(SYS_accept4, fd, (sockaddr*)&peer, &len, SOCK_CLOEXEC);
+			len = sizeof(unix2);
+			syscall(SYS_getpeername, acc_sock, (sockaddr*)&unix2, &len);
 			syscall(SYS_shutdown, acc_sock, SHUT_RDWR);
 			close(acc_sock);
 		}

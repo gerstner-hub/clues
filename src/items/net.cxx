@@ -518,6 +518,11 @@ int SocketAddress::addrLen() const {
 
 void SocketAddress::processValue(const Tracee &proc) {
 
+	if (this->isOut() && proc.isEnterStop()) {
+		m_addr.reset();
+		return;
+	}
+
 	m_addr.emplace();
 
 	/* if the caller passed an excess size here let's try with what we

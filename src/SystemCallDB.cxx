@@ -183,6 +183,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::ACCEPT:          [[ fallthrough ]];
 	case SystemCallNr::ACCEPT4:         return new_sys<AcceptSystemCall>(nr);
 	case SystemCallNr::SHUTDOWN:        return new_sys<ShutdownSystemCall>(nr);
+	case SystemCallNr::GETPEERNAME:     return new_sys<GetPeerNameSystemCall>(nr);
+	case SystemCallNr::GETSOCKNAME:     return new_sys<GetSockNameSystemCall>(nr);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

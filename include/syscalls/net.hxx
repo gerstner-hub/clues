@@ -157,6 +157,32 @@ struct ShutdownSystemCall :
 	item::SuccessResult res;
 };
 
+template <SystemCallNr NR>
+/// Template type for getpeername() and getsockname() system calls.
+/**
+ * These two system calls share the same signatures and related semantics,
+ * thus use a template class to cover both.
+ **/
+struct GetNameSystemCallT :
+		public SystemCall {
+
+	explicit GetNameSystemCallT(const SystemCallNr nr = NR) :
+			SystemCall{nr},
+			addr{ItemCfg{.type = ItemType::PARAM_OUT}, &addrlen} {
+		setParameters(sockfd, addr, addrlen);
+		setReturnItem(res);
+	}
+
+	item::SocketFD sockfd;
+	item::SocketAddress addr;
+	item::AddressLengthPointer addrlen;
+
+	item::SuccessResult res;
+};
+
+using GetPeerNameSystemCall = GetNameSystemCallT<SystemCallNr::GETPEERNAME>;
+using GetSockNameSystemCall = GetNameSystemCallT<SystemCallNr::GETSOCKNAME>;
+
 /// Base class for `socketcall()` specializations.
 /**
  * The socketcall() system call on legacy ABIs multiplexes all socket-related
