@@ -535,7 +535,7 @@ int SocketAddress::addrLen() const {
 
 void SocketAddress::processValue(const Tracee &proc) {
 
-	if (this->isOut() && proc.isEnterStop()) {
+	if ((this->isOut() && proc.isEnterStop()) || isZero()) {
 		m_addr.reset();
 		return;
 	}
@@ -628,6 +628,29 @@ std::string ShutdownType::str() const {
 		CASE_ENUM_TO_STR(SHUT_RDWR);
 		default: return "SHUT_???";
 	}
+}
+
+std::string SendRecvFlags::str() const {
+	BITFLAGS_FORMAT_START(m_flags);
+
+	BITFLAGS_ADD(MSG_CONFIRM);
+	BITFLAGS_ADD(MSG_DONTROUTE);
+	BITFLAGS_ADD(MSG_DONTWAIT);
+	BITFLAGS_ADD(MSG_EOR);
+	BITFLAGS_ADD(MSG_MORE);
+	BITFLAGS_ADD(MSG_NOSIGNAL);
+	BITFLAGS_ADD(MSG_OOB);
+	BITFLAGS_ADD(MSG_FASTOPEN);
+	BITFLAGS_ADD(MSG_CMSG_CLOEXEC);
+	BITFLAGS_ADD(MSG_ERRQUEUE);
+	BITFLAGS_ADD(MSG_PEEK);
+	BITFLAGS_ADD(MSG_TRUNC);
+	BITFLAGS_ADD(MSG_CTRUNC);
+	BITFLAGS_ADD(MSG_WAITALL);
+	BITFLAGS_ADD(MSG_WAITFORONE);
+	BITFLAGS_ADD(MSG_ZEROCOPY);
+
+	return BITFLAGS_STR();
 }
 
 } // end ns

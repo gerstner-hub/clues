@@ -32,15 +32,25 @@ int bind(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
 
 template <typename ADDR>
 int connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {},
-		int flags=0) {
+		int flags=0, bool auto_close=true) {
 	const struct sockaddr *saddr = reinterpret_cast<const struct sockaddr*>(&addr);
 	auto sock = socket(saddr->sa_family, type|flags, 0);
 
 	int ret = syscall(SYS_connect, sock, saddr, addrlen ? *addrlen : sizeof(addr));
 
-	close(sock);
+	if (ret != 0 || auto_close)
+		close(sock);
 
-	return ret;
+	return auto_close ? ret : (ret == 0 ? sock : ret);
+}
+
+void send_recv(int send_sock, int recv_sock) {
+	const char outbuf[] = "test message";
+	syscall(SYS_sendto, send_sock, outbuf, sizeof(outbuf)-1, MSG_NOSIGNAL, nullptr, 0);
+
+	char inbuf[1024];
+	const auto bytes = syscall(SYS_recvfrom, recv_sock, inbuf, sizeof(inbuf), MSG_DONTROUTE, nullptr, 0);
+	(void)bytes;
 }
 
 int main() {
@@ -90,14 +100,16 @@ int main() {
 			close(acc_sock);
 		}
 #endif
-		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
+		if (auto conn = connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK, /*auto_close=*/false); conn >= 0) {
 			sockaddr_un peer;
 			socklen_t len = sizeof(peer);
 			int acc_sock = syscall(SYS_accept4, fd, (sockaddr*)&peer, &len, SOCK_CLOEXEC);
 			len = sizeof(unix2);
 			syscall(SYS_getpeername, acc_sock, (sockaddr*)&unix2, &len);
+			send_recv(conn, acc_sock);
 			syscall(SYS_shutdown, acc_sock, SHUT_RDWR);
 			close(acc_sock);
+			close(conn);
 		}
 #ifdef COSMOS_I386
 		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {

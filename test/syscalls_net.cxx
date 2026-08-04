@@ -16,6 +16,8 @@ using namespace std::literals;
 namespace {
 
 constexpr std::string_view UNIX_PATH{"\0clues-test"sv};
+const std::string_view UNIX_SENDER{"\0send", 5};
+const std::string_view UNIX_RECEIVER{"\0recv", 5};
 
 void check_socket_entry(const clues::SocketSystemCall &sc, bool &good) {
 	VERIFY(sc.domain.domain() == clues::item::SocketDomain::INET6);
@@ -66,6 +68,39 @@ size_t setup_unixaddr(sockaddr_un &unix) {
 	memcpy(unix.sun_path,
 			UNIX_PATH.data(), UNIX_PATH.size());
 	return sizeof(unix.sun_family) + UNIX_PATH.size();
+}
+
+void do_send_unix(std::function<void(int, int)> cb) {
+	int socks[2];
+	if (socketpair(AF_UNIX, SOCK_DGRAM, 0, socks) < 0) {
+		return;
+	}
+
+	sockaddr_un unix;
+	unix.sun_family = AF_UNIX;
+	memcpy(unix.sun_path, UNIX_SENDER.data(), UNIX_SENDER.size());
+	if (bind(socks[0], (sockaddr*)&unix, 2 + UNIX_SENDER.size()) < 0) {
+		return;
+	}
+
+	memcpy(unix.sun_path, UNIX_RECEIVER.data(), UNIX_RECEIVER.size());
+	if (bind(socks[1], (sockaddr*)&unix, 2 + UNIX_RECEIVER.size()) < 0) {
+		return;
+	}
+
+	cb(socks[0], socks[1]);
+}
+
+/* performs 4 system calls, sends 8 byte of data, binds to '\0send'  */
+void do_receive_unix(std::function<void(int)> cb) {
+	do_send_unix([cb](int send_sock, int recv_sock) {
+		constexpr std::string_view SEND_DATA{"testdata"};
+
+		syscall(SYS_sendto, send_sock, SEND_DATA.data(), SEND_DATA.size(),
+				MSG_NOSIGNAL, nullptr, 0);
+
+		cb(recv_sock);
+	});
 }
 
 void accept_conn(std::function<void(int)> cb) {
@@ -707,6 +742,91 @@ const auto TESTS = std::array{
 		},
 		"getpeername()",
 		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::RECVFROM, []() {
+			do_receive_unix([](int sock) {
+				sockaddr_un unix;
+				unix.sun_family = AF_UNIX;
+				char in_data[128];
+
+				socklen_t addrlen = sizeof(unix);
+
+				syscall(SYS_recvfrom, sock, in_data, sizeof(in_data),
+						MSG_NOSIGNAL, (sockaddr*)&unix, &addrlen);
+			});
+		}, ENTRY_VERIFY_CB(RecvFromSystemCall, {
+			VERIFY(sc.sock.fd() == SECOND_FD);
+			VERIFY(sc.buf.availableBytes() == 0);
+			VERIFY(sc.count.value() == 128);
+			const auto flags = sc.flags.flags();
+			VERIFY(flags.count() == 1);
+			VERIFY(flags[clues::item::SendRecvFlags::NO_SIGNAL]);
+		}), EXIT_VERIFY_CB(RecvFromSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.buf.availableBytes() == 8);
+			VERIFY(std::string_view{(const char*)sc.buf.data().data(), sc.buf.data().size()}
+					== "testdata");
+			VERIFY(sc.addr.valid());
+			const auto addr = std::get<cosmos::UnixAddress>(*sc.addr.addr());
+			VERIFY(addr.getPath() == "send");
+		}), IgnoreCalls{4}, {
+			I386_CROSS_ABI(IgnoreCalls{7}, []() {
+				do_receive_unix([](int sock) {
+					auto unix = alloc_struct32<sockaddr_un>();
+					unix->sun_family = AF_UNIX;
+					auto in_data = alloc32<char*>(128);
+					auto addrlen = alloc_struct32<socklen_t>();
+					*addrlen = sizeof(*unix);
+
+					syscall32(SyscallNr32::RECVFROM, sock, in_data,
+							128, MSG_NOSIGNAL, unix, addrlen);
+				});
+			})
+		}
+	},
+	TestSpec{SystemCallNr::SENDTO, []() {
+			do_send_unix([](int send_sock, int) {
+				sockaddr_un unix;
+				unix.sun_family = AF_UNIX;
+				memcpy(unix.sun_path, UNIX_RECEIVER.data(), UNIX_RECEIVER.size());
+				constexpr std::string_view SEND_DATA{"testdata"};
+
+				socklen_t addrlen = 2 + UNIX_RECEIVER.size();
+
+				syscall(SYS_sendto, send_sock, SEND_DATA.data(), SEND_DATA.size(),
+						MSG_NOSIGNAL, (sockaddr*)&unix, addrlen);
+			});
+		}, ENTRY_VERIFY_CB(SendToSystemCall, {
+			VERIFY(sc.sock.fd() == FIRST_FD);
+			VERIFY(sc.buf.availableBytes() == 8);
+			const auto flags = sc.flags.flags();
+			VERIFY(flags.count() == 1);
+			VERIFY(flags[clues::item::SendRecvFlags::NO_SIGNAL]);
+			VERIFY(std::string_view{(const char*)sc.buf.data().data(), sc.buf.data().size()}
+					== "testdata");
+			VERIFY(sc.addr.valid());
+			const auto addr = std::get<cosmos::UnixAddress>(*sc.addr.addr());
+			VERIFY(addr.getPath() == "recv");
+		}), EXIT_VERIFY_CB(SendToSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.written.value() == 8);
+		}), IgnoreCalls{3}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				do_send_unix([](int sock, int) {
+					auto unix = alloc_struct32<sockaddr_un>();
+					unix->sun_family = AF_UNIX;
+					memcpy(unix->sun_path, UNIX_RECEIVER.data(), UNIX_RECEIVER.size());
+					constexpr size_t SEND_DATA_SIZE = 8;
+					auto send_data = alloc32<char*>(SEND_DATA_SIZE);
+					memcpy(send_data, "testdata", SEND_DATA_SIZE);
+
+					socklen_t addrlen = 2 + UNIX_RECEIVER.size();
+
+					syscall32(SyscallNr32::SENDTO, sock, send_data,
+							SEND_DATA_SIZE, MSG_NOSIGNAL, unix, addrlen);
+				});
+			})
+		}
 	},
 };
 

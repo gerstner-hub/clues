@@ -183,6 +183,95 @@ struct GetNameSystemCallT :
 using GetPeerNameSystemCall = GetNameSystemCallT<SystemCallNr::GETPEERNAME>;
 using GetSockNameSystemCall = GetNameSystemCallT<SystemCallNr::GETSOCKNAME>;
 
+/// Plain recv() system call.
+/**
+ * There actually doesn't exist a dedicated RECV system call number on the
+ * currently supported ABIs. The SOCKETCALL legacy API does support a RECV
+ * sub-operation, however, which is why we're modelling this base class
+ * anyway.
+ **/
+struct RecvSystemCall :
+		public SystemCall {
+
+	explicit RecvSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+			buf{read, ItemCfg{ItemType::PARAM_OUT,
+				"buf", "target buffer"}},
+			count{make_item_cfg("count", "buffer length")},
+			read{ItemCfg{ItemType::RETVAL,
+				"bytes", "bytes received"}} {
+
+		setParameters(sock, buf, count, flags);
+		setReturnItem(read);
+	}
+
+	item::SocketFD sock;
+	item::BufferPointer buf;
+	item::SizeValue count;
+	item::SendRecvFlags flags;
+
+	/// Number of bytes received into `buf`.
+	item::SizeValue read;
+};
+
+struct RecvFromSystemCall :
+		public RecvSystemCall {
+
+	explicit RecvFromSystemCall(
+			const SystemCallNr nr = SystemCallNr::RECVFROM) :
+			RecvSystemCall{nr},
+			addr{ItemCfg{ItemType::PARAM_OUT}, &addrlen} {
+		addParameters(addr, addrlen);
+	}
+
+	item::SocketAddress addr;
+	item::AddressLengthPointer addrlen;
+};
+
+/// Plain send() system call.
+/**
+ * There actually doesn't exist a dedicated SEND system call number on the
+ * currently supported ABIs. The SOCKETCALL legacy API does support a SEND
+ * sub-operation, however, which is why we're modelling this base class
+ * anyway.
+ **/
+struct SendSystemCall :
+		public SystemCall {
+
+	explicit SendSystemCall(const SystemCallNr nr) :
+			SystemCall{nr},
+			buf{count, ItemCfg{ItemType::PARAM_IN,
+				"buf", "receive buffer"}},
+			count{make_item_cfg("count", "buffer length")},
+			written{ItemCfg{ItemType::RETVAL,
+				"bytes", "bytes sent"}} {
+
+		setParameters(sock, buf, count, flags);
+		setReturnItem(written);
+	}
+
+	item::SocketFD sock;
+	item::BufferPointer buf;
+	item::SizeValue count;
+	item::SendRecvFlags flags;
+
+	/// Number of bytes from `buf` written out.
+	item::SizeValue written;
+};
+
+struct SendToSystemCall :
+		public SendSystemCall {
+
+	explicit SendToSystemCall(const SystemCallNr nr) :
+			SendSystemCall{nr},
+       			addr{ItemCfg{ItemType::PARAM_IN}, &addrlen} {
+		addParameters(addr, addrlen);
+	}
+
+	item::SocketAddress addr;
+	item::AddressLength addrlen;
+};
+
 /// Base class for `socketcall()` specializations.
 /**
  * The socketcall() system call on legacy ABIs multiplexes all socket-related

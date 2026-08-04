@@ -652,6 +652,45 @@ protected: // data
 	Direction m_dir{};
 };
 
+/// Flags used with the recv() and send() family of functions.
+/**
+ * This type reuses cosmos::MessageFlag, which combines the options for
+ * send/receive, since they don't overlap.
+ **/
+class SendRecvFlags :
+		public ValueInParameter {
+public: // types
+
+	using MessageFlag = cosmos::MessageFlag;
+	using MessageFlags = cosmos::MessageFlags;
+
+	using enum MessageFlag;
+
+public: // functions
+
+	explicit SendRecvFlags() :
+			ValueInParameter{ItemCfg{
+				.label = "flags",
+				.desc = "send/receive options"}} {
+	}
+
+	std::string str() const override;
+
+	MessageFlags flags() const {
+		return m_flags;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_flags = MessageFlags{valueAs<int>()};
+	}
+
+protected: // data
+
+	MessageFlags m_flags{};
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
