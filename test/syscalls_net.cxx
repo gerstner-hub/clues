@@ -482,6 +482,30 @@ const auto TESTS = std::array{
 		"accept4()",
 		{clues::ABI::I386}
 	},
+	TestSpec{SystemCallNr::SHUTDOWN, []() {
+			accept_conn([](int sock) {
+				sockaddr_in ip;
+				socklen_t len = sizeof(ip);
+				int sock2 = accept(sock, (sockaddr*)&ip, &len);
+				syscall(SYS_shutdown, sock2, SHUT_WR);
+			});
+		}, ENTRY_VERIFY_CB(ShutdownSystemCall, {
+			VERIFY(sc.sockfd.fd() == THIRD_FD);
+			VERIFY(sc.how.direction() ==
+					clues::item::ShutdownType::Direction::WRITE);
+		}), EXIT_VERIFY_CB(ShutdownSystemCall, {
+			VERIFY(sc.hasResultValue());
+		}), IgnoreCalls{7}, {
+			I386_CROSS_ABI(IgnoreCalls{7}, []() {
+				accept_conn([](int sock) {
+					sockaddr_in ip;
+					socklen_t len = sizeof(ip);
+					int sock2 = accept(sock, (sockaddr*)&ip, &len);
+					syscall32(SyscallNr32::SHUTDOWN, sock2, SHUT_WR);
+				});
+			})
+		}
+	},
 };
 
 } // end anon ns

@@ -87,6 +87,7 @@ int main() {
 			sockaddr_un peer;
 			socklen_t len = sizeof(peer);
 			int acc_sock = syscall(SYS_accept4, fd, (sockaddr*)&peer, &len, SOCK_CLOEXEC);
+			syscall(SYS_shutdown, acc_sock, SHUT_RDWR);
 			close(acc_sock);
 		}
 #ifdef COSMOS_I386

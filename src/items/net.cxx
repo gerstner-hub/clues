@@ -590,4 +590,13 @@ std::string AddressLengthPointer::str() const {
 	return ret;
 }
 
+std::string ShutdownType::str() const {
+	switch (cosmos::to_integral(m_dir)) {
+		CASE_ENUM_TO_STR(SHUT_RD);
+		CASE_ENUM_TO_STR(SHUT_WR);
+		CASE_ENUM_TO_STR(SHUT_RDWR);
+		default: return "SHUT_???";
+	}
+}
+
 } // end ns

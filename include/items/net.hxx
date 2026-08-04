@@ -13,6 +13,7 @@
 
 // cosmos
 #include <cosmos/net/inet/IPAddress.hxx>
+#include <cosmos/net/Socket.hxx>
 #include <cosmos/net/unix/UnixAddress.hxx>
 
 // clues
@@ -615,6 +616,40 @@ protected: // functions
 protected: // data
 
 	Flags m_flags{};
+};
+
+/// Enum type used with ShutdownSystemCall.
+class ShutdownType :
+		public ValueInParameter {
+public: // types
+
+	using Direction = cosmos::Socket::Direction;
+
+	using enum cosmos::Socket::Direction;
+
+public: // functions
+
+	explicit ShutdownType() :
+			ValueInParameter{ItemCfg{
+				.label = "how",
+				.desc = "direction to shutdown"}} {
+	}
+
+	std::string str() const override;
+
+	Direction direction() const {
+		return m_dir;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override {
+		m_dir = Direction{valueAs<int>()};
+	}
+
+protected: // data
+
+	Direction m_dir{};
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

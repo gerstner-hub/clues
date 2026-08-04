@@ -141,6 +141,22 @@ protected: // functions
 	void updateFDTracking(const Tracee &proc) override;
 };
 
+struct ShutdownSystemCall :
+		public SystemCall {
+
+	explicit ShutdownSystemCall(
+			const SystemCallNr nr = SystemCallNr::SHUTDOWN) :
+			SystemCall{nr} {
+		addParameters(sockfd, how);
+		setReturnItem(res);
+	}
+
+	item::SocketFD sockfd;
+	item::ShutdownType how;
+
+	item::SuccessResult res;
+};
+
 /// Base class for `socketcall()` specializations.
 /**
  * The socketcall() system call on legacy ABIs multiplexes all socket-related

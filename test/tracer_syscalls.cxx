@@ -525,7 +525,7 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(getcwd\(path="/tmp", size=4096\) = 5 \(length\))",
 		R"(fchdir\(fd=3\) = 0 \(success\))",
 	}},
-	TestSpec{"socket", "socket,bind,connect,listen,accept,accept4", {
+	TestSpec{"socket", "socket,bind,connect,listen,accept,accept4,shutdown", {
 		R"(socket\(domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0\) = 3 \(fd\))",
 		R"(socket\(domain=AF_INET6, type=0x2 \(SOCK_DGRAM\), prot=IPPROTO_UDP\) = 3 \(fd\))",
 		R"(socket\(domain=AF_NETLINK, type=0x3 \(SOCK_RAW\), prot=NETLINK_ROUTE\) = 3 \(fd\))",
@@ -541,6 +541,7 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(accept\(sockfd=3, addr=\{family=AF_UNIX, path="<unnamed>"\}, addrlen=110 → 2\) = 4 \(fd\))",
 #endif
 		R"(accept4\(sockfd=3, addr=\{family=AF_UNIX, path="<unnamed>"\}, addrlen=110 → 2, flags=0x80000 \(SOCK_CLOEXEC\)\) = 4 \(fd\))",
+		R"(shutdown\(sockfd=4, how=SHUT_RDWR\) = 0 \(success\))",
 	}},
 	TestSpec{"socket", "socketpair", {
 		R"(socketpair\(domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0, sv=\[3, 4\]\) = 0 \(success\))",
