@@ -558,6 +558,8 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(socketcall\(call=SYS_ACCEPT, args=\{sockfd=3, addr=\{family=AF_UNIX, path="<unnamed>"\}, addrlen=110 → 2\}\) = 4 \(fd\))",
 		R"(socketcall\(call=SYS_ACCEPT4, args=\{sockfd=3, addr=\{family=AF_UNIX, path="<unnamed>"\}, addrlen=110 → 2, flags=0x800 \(SOCK_NONBLOCK\)\}\) = 4 \(fd\))",
 		R"(socketcall\(call=SYS_SHUTDOWN, args=\{sockfd=7, how=SHUT_WR\}\) = 0 \(success\))",
+		R"(socketcall\(call=SYS_GETPEERNAME, args=\{sockfd=7, addr=\{family=AF_INET6, port=1234, flowinfo=0, addr="::1", scope_id=0\}, addrlen=28 → 28\}\) = 0 \(success\))",
+		R"(socketcall\(call=SYS_GETSOCKNAME, args=\{sockfd=6, addr=\{family=AF_INET6, port=1234, flowinfo=0, addr="::1", scope_id=0\}, addrlen=28 → 28\}\) = 0 \(success\))",
 	}},
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

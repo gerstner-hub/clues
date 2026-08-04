@@ -90,6 +90,22 @@ void SocketCall_Shutdown::transferValues(const Tracee &proc) {
 	how.fill(proc, Word{vec[1]});
 }
 
+void SocketCall_GetSockName::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+	sockfd.fill(proc, Word{vec[0]});
+	addrlen.fill(proc, Word{vec[2]});
+	/* respect DEFER */
+	addr.fill(proc, Word{vec[1]});
+}
+
+void SocketCall_GetPeerName::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+	sockfd.fill(proc, Word{vec[0]});
+	addrlen.fill(proc, Word{vec[2]});
+	/* respect DEFER */
+	addr.fill(proc, Word{vec[1]});
+}
+
 template <typename BASE>
 SocketCallBase<BASE>::SocketCallBase() :
 		BASE{SystemCallNr::SOCKETCALL},
@@ -125,6 +141,8 @@ SystemCallPtr create_socket_call_syscall(const SystemCallInfo &info) {
 	case ACCEPT:     [[ fallthrough ]];
 	case ACCEPT4:    return std::make_shared<SocketCall_Accept>();
 	case SHUTDOWN:   return std::make_shared<SocketCall_Shutdown>();
+	case GETSOCKNAME:return std::make_shared<SocketCall_GetSockName>();
+	case GETPEERNAME:return std::make_shared<SocketCall_GetPeerName>();
 	default: throw cosmos::RuntimeError{"unsupported socketcall() sub-call"};
 	}
 }

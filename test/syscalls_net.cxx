@@ -619,6 +619,95 @@ const auto TESTS = std::array{
 			})
 		}
 	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+			sockaddr_un unix;
+			const auto addrlen = setup_unixaddr(unix);
+			if (bind(sock, (struct sockaddr*)&unix, addrlen) == 0) {
+				socklen_t len = sizeof(unix);
+				unsigned long args[3];
+				args[0] = sock;
+				args[1] = reinterpret_cast<unsigned long>(&unix);
+				args[2] = reinterpret_cast<unsigned long>(&len);
+				syscall(SYS_socketcall, SYS_GETSOCKNAME, args);
+			}
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_GetSockName, {
+			check_getaddr_entry(sc, good, sizeof(sockaddr_un));
+		}), EXIT_VERIFY_CB(SocketCall_GetSockName, {
+			check_getaddr_exit(sc, good);
+			auto addr = std::get<cosmos::UnixAddress>(*sc.addr.addr());
+			// skip the null-byte
+			VERIFY(addr.getPath() == UNIX_PATH.substr(1));
+			VERIFY(*sc.addrlen.filled() > 2);
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
+				auto unix = alloc_struct32<sockaddr_un>();
+				const auto bind_len = setup_unixaddr(*unix);
+				if (bind(sock, (struct sockaddr*)unix, bind_len) == 0) {
+					auto len = alloc_struct32<socklen_t>();
+					*len = sizeof(struct sockaddr_un);
+					auto args = alloc_args32(3);
+					args[0] = sock;
+					args[1] = reinterpret_cast<unsigned long>(unix);
+					args[2] = reinterpret_cast<unsigned long>(len);
+					syscall32(SyscallNr32::SOCKETCALL, SYS_GETSOCKNAME, args);
+				}
+			})
+		},
+		"getsockname()",
+		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+			int sock = socket(AF_INET, SOCK_DGRAM, 0);
+			sockaddr_in ip;
+			ip.sin_family = AF_INET;
+			ip.sin_port = htons(1234);
+			ip.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+			if (connect(sock, (struct sockaddr*)&ip, sizeof(ip)) == 0) {
+				socklen_t len = sizeof(ip);
+				unsigned long args[3];
+				args[0] = sock;
+				args[1] = reinterpret_cast<unsigned long>(&ip);
+				args[2] = reinterpret_cast<unsigned long>(&len);
+				syscall(SYS_socketcall, SYS_GETPEERNAME, args);
+			}
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_GetPeerName, {
+			check_getaddr_entry(sc, good, sizeof(sockaddr_in));
+		}), EXIT_VERIFY_CB(SocketCall_GetPeerName, {
+			check_getaddr_exit(sc, good);
+			auto addr = std::get<cosmos::IP4Address>(
+					*sc.addr.addr());
+			VERIFY(addr.ipAsString() == "127.0.0.1");
+			VERIFY(addr.port().toHost() == 1234);
+			VERIFY(*sc.addrlen.filled() == sizeof(sockaddr_in));
+		}), IgnoreCalls{2}, {
+			I386_CROSS_ABI(IgnoreCalls{5}, []() {
+				int sock = socket(AF_INET, SOCK_DGRAM, 0);
+				auto ip = alloc_struct32<sockaddr_in>();
+				ip->sin_family = AF_INET;
+				ip->sin_port = htons(1234);
+				ip->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+				if (connect(sock, (struct sockaddr*)ip, sizeof(*ip)) == 0) {
+					auto len = alloc_struct32<socklen_t>();
+					*len = sizeof(*ip);
+					auto args = alloc_args32(3);
+					args[0] = sock;
+					args[1] = reinterpret_cast<unsigned long>(ip);
+					args[2] = reinterpret_cast<unsigned long>(len);
+					syscall32(SyscallNr32::SOCKETCALL, SYS_GETPEERNAME, args);
+				}
+			})
+		},
+		"getpeername()",
+		{clues::ABI::I386}
+	},
 };
 
 } // end anon ns

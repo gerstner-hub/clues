@@ -404,6 +404,23 @@ std::string SocketCallArgs::str() const {
 		);
 
 		break;
+	} case GETPEERNAME: [[ fallthrough ]];
+	  case GETSOCKNAME: {
+		auto format = [&ret](const auto &call) {
+			ret += std::format("sockfd={}, addr={}, addrlen={}",
+				call.sockfd.str(),
+				call.addr.str(),
+				call.addrlen.str()
+			);
+		};
+
+		if (m_type.call() == GETPEERNAME) {
+			format(dynamic_cast<const GetPeerNameSystemCall&>(*m_call));
+		} else {
+			format(dynamic_cast<const GetSockNameSystemCall&>(*m_call));
+		}
+
+		break;
 	} default: return "???";
 	} // end switch
 

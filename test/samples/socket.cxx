@@ -168,13 +168,23 @@ int main() {
 		args[1] = 15;
 		syscall(SYS_socketcall, SYS_LISTEN, args);
 
-		fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-		args[0] = fd;
+		auto conn = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+		args[0] = conn;
 		args[1] = reinterpret_cast<unsigned long>(&ip6);
 		syscall(SYS_socketcall, SYS_CONNECT, args);
 
+		socklen_t len = sizeof(ip6);
+		args[2] = reinterpret_cast<unsigned long>(&len);
+		syscall(SYS_socketcall, SYS_GETPEERNAME, args);
+
 		args[1] = SHUT_WR;
 		syscall(SYS_socketcall, SYS_SHUTDOWN, args);
+
+		args[0] = fd;
+		args[1] = reinterpret_cast<unsigned long>(&ip6);
+		args[2] = reinterpret_cast<unsigned long>(&len);
+		syscall(SYS_socketcall, SYS_GETSOCKNAME, args);
+
 	}
 	close(fd);
 #endif
