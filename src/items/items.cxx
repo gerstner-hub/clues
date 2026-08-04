@@ -152,7 +152,7 @@ void BufferPointer::fillBuffer(const Tracee &tracee) {
 }
 
 size_t BufferPointer::availableBytes() const {
-	if (m_call->hasResultValue())
+	if (!this->isOut() || m_call->hasResultValue())
 		return m_size_par.valueAs<size_t>();
 	else
 		return 0;

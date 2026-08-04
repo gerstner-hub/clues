@@ -59,7 +59,9 @@ void SystemCall::fillParameters(const Tracee &proc, const SystemCallInfo &info) 
 
 void SystemCall::setEntryInfo(const Tracee &proc, const SystemCallInfo &info) {
 	m_abi = info.abi();
-	m_error.reset();
+	/* as long as there is no system call exit keep this synthezised errno
+	 * around to prevent invalid accesses to the return value */
+	m_error.emplace(ErrnoResult{cosmos::Errno::NO_DATA});
 	m_info = &info;
 
 	prepareNewSystemCall();
@@ -88,6 +90,7 @@ void SystemCall::setExitInfo(const Tracee &proc, const SystemCallInfo &info) {
 	ParameterArray deferred;
 
 	if (exit_info.isValue()) {
+		m_error.reset();
 		m_return->fill(proc, Word{static_cast<Word>(*exit_info.retVal())});
 	} else {
 		m_error = ErrnoResult{*exit_info.errVal()};

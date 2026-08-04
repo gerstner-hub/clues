@@ -105,10 +105,22 @@ public: // functions
 
 	bool hasOutParameter() const;
 
+	/// Returns whether a valid return value is present.
+	/**
+	 * This is only the case after system call exit and if no error
+	 * occurred.
+	 **/
 	bool hasResultValue() const {
 		return m_error == std::nullopt;
 	}
 
+	/// Returns whether an error result is present.
+	/**
+	 * During system call entry / execution there is always an error
+	 * result set to prevent invalid accesses to the return value. After
+	 * system call exit an error result is present if an error occurred,
+	 * a return value result otherwise.
+	 **/
 	bool hasErrorCode() const {
 		return !hasResultValue();
 	}

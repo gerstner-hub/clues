@@ -51,7 +51,7 @@ std::string ResourceLimit::str() const {
 
 void ResourceLimit::updateData(const Tracee &proc) {
 
-	if (!m_call->hasResultValue())
+	if (this->isOut() && !m_call->hasResultValue())
 		return;
 
 	auto update_rlimit = [this, &proc]<typename RLIM_T>() {
