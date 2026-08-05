@@ -106,12 +106,62 @@ void SocketCall_GetPeerName::transferValues(const Tracee &proc) {
 	addr.fill(proc, Word{vec[1]});
 }
 
+void SocketCall_Recv::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+	sockfd.fill(proc, Word{vec[0]});
+	count.fill(proc, Word{vec[2]});
+	flags.fill(proc, Word{vec[3]});
+
+	/* respect DEFER */
+	buf.fill(proc, Word{vec[1]});
+}
+
+void SocketCall_RecvFrom::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+	sockfd.fill(proc, Word{vec[0]});
+	count.fill(proc, Word{vec[2]});
+	flags.fill(proc, Word{vec[3]});
+	addrlen.fill(proc, Word{vec[5]});
+
+	/* respect DEFER */
+	addr.fill(proc, Word{vec[4]});
+	buf.fill(proc, Word{vec[1]});
+}
+
+void SocketCall_Send::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+	sockfd.fill(proc, Word{vec[0]});
+	count.fill(proc, Word{vec[2]});
+	flags.fill(proc, Word{vec[3]});
+
+	/* respect DEFER */
+	buf.fill(proc, Word{vec[1]});
+}
+
+void SocketCall_SendTo::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+	sockfd.fill(proc, Word{vec[0]});
+	count.fill(proc, Word{vec[2]});
+	flags.fill(proc, Word{vec[3]});
+	addrlen.fill(proc, Word{vec[5]});
+
+	/* respect DEFER */
+	addr.fill(proc, Word{vec[4]});
+	buf.fill(proc, Word{vec[1]});
+}
+
 template <typename BASE>
 SocketCallBase<BASE>::SocketCallBase() :
 		BASE{SystemCallNr::SOCKETCALL},
 		args{call} {
 	for (auto par: this->m_pars) {
-		if (par->needsUpdate()) {
+		if (par->needsUpdate() && !par->deferFill()) {
+			m_update_args.push_back(par);
+		}
+	}
+
+	for (auto par: this->m_pars) {
+		if (par->needsUpdate() && par->deferFill()) {
 			m_update_args.push_back(par);
 		}
 	}
@@ -143,6 +193,10 @@ SystemCallPtr create_socket_call_syscall(const SystemCallInfo &info) {
 	case SHUTDOWN:   return std::make_shared<SocketCall_Shutdown>();
 	case GETSOCKNAME:return std::make_shared<SocketCall_GetSockName>();
 	case GETPEERNAME:return std::make_shared<SocketCall_GetPeerName>();
+	case RECV:       return std::make_shared<SocketCall_Recv>();
+	case RECVFROM:   return std::make_shared<SocketCall_RecvFrom>();
+	case SEND:       return std::make_shared<SocketCall_Send>();
+	case SENDTO:     return std::make_shared<SocketCall_SendTo>();
 	default: throw cosmos::RuntimeError{"unsupported socketcall() sub-call"};
 	}
 }

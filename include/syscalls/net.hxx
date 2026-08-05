@@ -201,11 +201,11 @@ struct RecvSystemCall :
 			read{ItemCfg{ItemType::RETVAL,
 				"bytes", "bytes received"}} {
 
-		setParameters(sock, buf, count, flags);
+		setParameters(sockfd, buf, count, flags);
 		setReturnItem(read);
 	}
 
-	item::SocketFD sock;
+	item::SocketFD sockfd;
 	item::BufferPointer buf;
 	item::SizeValue count;
 	item::SendRecvFlags flags;
@@ -246,11 +246,11 @@ struct SendSystemCall :
 			written{ItemCfg{ItemType::RETVAL,
 				"bytes", "bytes sent"}} {
 
-		setParameters(sock, buf, count, flags);
+		setParameters(sockfd, buf, count, flags);
 		setReturnItem(written);
 	}
 
-	item::SocketFD sock;
+	item::SocketFD sockfd;
 	item::BufferPointer buf;
 	item::SizeValue count;
 	item::SendRecvFlags flags;
@@ -380,6 +380,34 @@ protected: // functions
 
 class SocketCall_GetPeerName :
 		public SocketCallBase<GetPeerNameSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
+class SocketCall_Recv :
+		public SocketCallBase<RecvSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
+class SocketCall_RecvFrom :
+		public SocketCallBase<RecvFromSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
+class SocketCall_Send :
+		public SocketCallBase<SendSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
+class SocketCall_SendTo :
+		public SocketCallBase<SendToSystemCall> {
 protected: // functions
 
 	void transferValues(const Tracee&) override;

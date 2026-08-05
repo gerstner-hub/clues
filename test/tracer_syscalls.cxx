@@ -553,7 +553,7 @@ const std::vector<TestSpec> TEST_SPECS{
 #ifdef COSMOS_I386
 	TestSpec{"socket", "socketcall", {
 		R"(socketcall\(call=SYS_SOCKET, args=\{domain=AF_INET6, type=0x2 \(SOCK_DGRAM\), prot=IPPROTO_UDP\}\) = 3 \(fd\))",
-		R"(socketcall\(call=SYS_SOCKETPAIR, args=\{domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0, sv=\[4, 5\]\}\) = 0 \(success\))",
+		R"(socketcall\(call=SYS_SOCKETPAIR, args=\{domain=AF_UNIX, type=0x2 \(SOCK_DGRAM\), prot=0, sv=\[4, 5\]\}\) = 0 \(success\))",
 		R"(socketcall\(call=SYS_BIND, args=\{sockfd=6, sockaddr=\{family=AF_INET6, port=1234, flowinfo=4321, addr="::1", scope_id=0\}, addrlen=28\}\) = 0 \(success\))",
 		R"(socketcall\(call=SYS_CONNECT, args=\{sockfd=7, sockaddr=\{family=AF_INET6, port=1234, flowinfo=4321, addr="::1", scope_id=0\}, addrlen=28\}\) = 0 \(success\))",
 		R"(socketcall\(call=SYS_LISTEN, args=\{sockfd=6, backlog=15\}\) = 95 \(EOPNOTSUPP\) \(errno\))",
@@ -562,6 +562,10 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(socketcall\(call=SYS_SHUTDOWN, args=\{sockfd=7, how=SHUT_WR\}\) = 0 \(success\))",
 		R"(socketcall\(call=SYS_GETPEERNAME, args=\{sockfd=7, addr=\{family=AF_INET6, port=1234, flowinfo=0, addr="::1", scope_id=0\}, addrlen=28 → 28\}\) = 0 \(success\))",
 		R"(socketcall\(call=SYS_GETSOCKNAME, args=\{sockfd=6, addr=\{family=AF_INET6, port=1234, flowinfo=0, addr="::1", scope_id=0\}, addrlen=28 → 28\}\) = 0 \(success\))",
+		R"(socketcall\(call=SYS_SEND, args=\{sockfd=4, buf="test message", count=12, flags=0x4000 \(MSG_NOSIGNAL\)\}\) = 12 \(bytes\))",
+		R"(socketcall\(call=SYS_RECV, args=\{sockfd=5, buf="test message", count=1024, flags=0x4 \(MSG_DONTROUTE\)\}\) = 12 \(bytes\))",
+		R"(socketcall\(call=SYS_SENDTO, args=\{sockfd=4, buf="test message", count=12, flags=0x4000 \(MSG_NOSIGNAL\), addr=\{family=AF_UNIX, path="@testsocket"\}, addrlen=13\}\) = 12 \(bytes\))",
+		R"(socketcall\(call=SYS_RECVFROM, args=\{sockfd=5, buf="test message", count=1024, flags=0x4 \(MSG_DONTROUTE\), addr=\{family=AF_UNIX, path="@sendsocket"\}, addrlen=110 → 13\}\) = 12 \(bytes\))",
 	}},
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"

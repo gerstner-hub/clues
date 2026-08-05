@@ -421,6 +421,40 @@ std::string SocketCallArgs::str() const {
 		}
 
 		break;
+	} case RECV: [[ fallthrough ]];
+	  case RECVFROM: {
+		const auto &call = dynamic_cast<const RecvSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, buf={}, count={}, flags={}",
+			call.sockfd.str(), call.buf.str(), call.count.str(), call.flags.str()
+		);
+
+		if (m_type.call() == RECVFROM) {
+			const auto &fromcall = dynamic_cast<const RecvFromSystemCall&>(*m_call);
+
+			ret += std::format(", addr={}, addrlen={}",
+				fromcall.addr.str(), fromcall.addrlen.str()
+			);
+		}
+
+		break;
+	} case SEND: [[ fallthrough ]];
+	  case SENDTO: {
+		const auto &call = dynamic_cast<const SendSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, buf={}, count={}, flags={}",
+			call.sockfd.str(), call.buf.str(), call.count.str(), call.flags.str()
+		);
+
+		if (m_type.call() == SENDTO) {
+			const auto &tocall = dynamic_cast<const SendToSystemCall&>(*m_call);
+
+			ret += std::format(", addr={}, addrlen={}",
+				tocall.addr.str(), tocall.addrlen.str()
+			);
+		}
+
+		break;
 	} default: return "???";
 	} // end switch
 
@@ -535,7 +569,9 @@ int SocketAddress::addrLen() const {
 
 void SocketAddress::processValue(const Tracee &proc) {
 
-	if ((this->isOut() && proc.isEnterStop()) || isZero()) {
+	if ((this->isOut() && proc.isEnterStop()) ||
+			isZero() ||
+			(proc.isExitStop() && !m_call->hasResultValue())) {
 		m_addr.reset();
 		return;
 	}

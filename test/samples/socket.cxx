@@ -53,6 +53,44 @@ void send_recv(int send_sock, int recv_sock) {
 	(void)bytes;
 }
 
+#ifdef COSMOS_I386
+void send_recv_socketcall(int send_sock, int recv_sock, const std::string &tgt_addr_path = {}) {
+	unsigned long args[6];
+
+	const char outbuf[] = "test message";
+	args[0] = send_sock;
+	args[1] = reinterpret_cast<unsigned long>(outbuf);
+	args[2] = sizeof(outbuf) - 1;
+	args[3] = MSG_NOSIGNAL;
+
+	struct sockaddr_un addr;
+	addr.sun_family = AF_UNIX;
+	memcpy(addr.sun_path, tgt_addr_path.c_str(), tgt_addr_path.size());
+
+	if (tgt_addr_path.empty()) {
+		syscall(SYS_socketcall, SYS_SEND, args);
+	} else {
+		args[4] = reinterpret_cast<unsigned long>(&addr);
+		args[5] = tgt_addr_path.size() + 2;
+		syscall(SYS_socketcall, SYS_SENDTO, args);
+	}
+
+	char inbuf[1024];
+	args[0] = recv_sock;
+	args[1] = reinterpret_cast<unsigned long>(inbuf);
+	args[2] = sizeof(inbuf);
+	args[3] = MSG_DONTROUTE;
+
+	if (tgt_addr_path.empty()) {
+		syscall(SYS_socketcall, SYS_RECV, args);
+	} else {
+		socklen_t addrlen = sizeof(sockaddr_un);
+		args[5] = reinterpret_cast<unsigned long>(&addrlen);
+		syscall(SYS_socketcall, SYS_RECVFROM, args);
+	}
+}
+#endif
+
 int main() {
 #ifdef COSMOS_I386
 	unsigned long args[6] = {0};
@@ -107,6 +145,9 @@ int main() {
 			len = sizeof(unix2);
 			syscall(SYS_getpeername, acc_sock, (sockaddr*)&unix2, &len);
 			send_recv(conn, acc_sock);
+#ifdef COSMOS_I386
+			send_recv_socketcall(conn, acc_sock);
+#endif
 			syscall(SYS_shutdown, acc_sock, SHUT_RDWR);
 			close(acc_sock);
 			close(conn);
@@ -167,10 +208,25 @@ int main() {
 	syscall(SYS_socketcall, SYS_SOCKET, args);
 
 	args[0] = AF_UNIX;
-	args[1] = SOCK_STREAM;
+	args[1] = SOCK_DGRAM;
 	args[2] = 0;
 	args[3] = reinterpret_cast<unsigned long>(pair);
 	syscall(SYS_socketcall, SYS_SOCKETPAIR, args);
+
+	if (bind(pair[1], unix, un_path.size() + 2) < 0) {
+		return 1;
+	}
+
+	std::string un_path2;
+	un_path2 += '\0';
+	un_path2 += "sendsocket";
+	memcpy(unix.sun_path, un_path2.data(), un_path2.size());
+
+	if (bind(pair[0], unix, un_path2.size() + 2) < 0) {
+		return 1;
+	}
+
+	send_recv_socketcall(pair[0], pair[1], un_path);
 
 	fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	args[0] = fd;
