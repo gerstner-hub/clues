@@ -113,4 +113,13 @@ void CLUES_API parse_proc_file(const cosmos::ProcessID pid, const std::string_vi
  **/
 void CLUES_API parse_proc_file(const Tracee &tracee, const std::string_view subpath, std::function<bool(const std::string&)> parser);
 
+inline Word ptr_to_word(void *ptr) {
+	return static_cast<Word>(reinterpret_cast<uintptr_t>(ptr));
+};
+
+template <typename T>
+Word scalar_to_word(const T t) {
+	return static_cast<Word>(t);
+}
+
 } // end ns

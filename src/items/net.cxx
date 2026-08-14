@@ -2,6 +2,8 @@
 #include <algorithm>
 
 // cosmos
+#include <cosmos/net/unix/aux.hxx>
+#include <cosmos/net/inet/aux.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -687,6 +689,291 @@ std::string SendRecvFlags::str() const {
 	BITFLAGS_ADD(MSG_ZEROCOPY);
 
 	return BITFLAGS_STR();
+}
+
+std::string RecvMessageHeader::str() const {
+	if (!m_in_header) {
+		return formatBadPointer();
+	}
+
+	std::string ret{"{"};
+
+	ret += std::format("msg_name={}, msg_namelen={} → {}, msg_iov={}, msg_iovlen={}, msg_control={}, msg_controllen={} → {}, msg_flags={}",
+		m_msg_name.str(),
+		m_in_header->msg_namelen, m_msg_namelen.str(),
+		m_msg_iov.str(), m_msg_iovlen.str(),
+		controlStr(),
+		m_in_header->msg_controllen, m_msg_controllen.str(),
+		m_msg_flags.str()
+	);
+
+	ret += "}";
+	return ret;
+}
+
+static std::string format_opt_level(const cosmos::OptLevel level) {
+	switch (cosmos::to_integral(level)) {
+	CASE_ENUM_TO_STR(SOL_SOCKET);
+	CASE_ENUM_TO_STR(IPPROTO_IP);
+	CASE_ENUM_TO_STR(IPPROTO_IPV6);
+	CASE_ENUM_TO_STR(IPPROTO_TCP);
+	CASE_ENUM_TO_STR(IPPROTO_UDP);
+	default: return "LEVEL_???";
+	}
+}
+
+using ControlMessage = cosmos::ReceiveMessageHeader::ControlMessage;
+
+static std::string format_ctrl_type(const ControlMessage &msg) {
+	if (const auto unix_msg = msg.asUnixMessage(); unix_msg) {
+		switch (cosmos::to_integral(*unix_msg)) {
+			CASE_ENUM_TO_STR(SCM_RIGHTS);
+			CASE_ENUM_TO_STR(SCM_CREDENTIALS);
+			default: return "SCM_???";
+		}
+	} else if (const auto ip4_msg = msg.asIP4Message(); ip4_msg) {
+		switch (cosmos::to_integral(*ip4_msg)) {
+			CASE_ENUM_TO_STR(IP_RECVERR);
+			CASE_ENUM_TO_STR(IP_PKTINFO);
+			CASE_ENUM_TO_STR(IP_ORIGDSTADDR);
+			CASE_ENUM_TO_STR(IP_TOS);
+			CASE_ENUM_TO_STR(IP_TTL);
+			default: return "IP_???";
+		}
+	} else if (const auto ip6_msg = msg.asIP6Message(); ip6_msg) {
+		switch (cosmos::to_integral(*ip6_msg)) {
+			CASE_ENUM_TO_STR(IPV6_RECVERR);
+			CASE_ENUM_TO_STR(IPV6_PKTINFO);
+			default: return "IPV6_???";
+		}
+	} else {
+		return std::to_string(msg.raw().cmsg_type);
+	}
+}
+
+static std::string format_unix_rights(const ControlMessage &msg) {
+	cosmos::UnixRightsMessage rights;
+	rights.deserialize(msg);
+	cosmos::UnixRightsMessage::FileNumVector vec;
+	rights.takeFDs(vec);
+
+	std::string ret{"["};
+	bool first = true;
+
+	for (const auto fd: vec) {
+		if (first)
+			first = false;
+		else
+			ret += ", ";
+		ret += std::to_string(cosmos::to_integral(fd));
+	}
+
+	ret += "]";
+	return ret;
+}
+
+std::string format_unix_creds(const ControlMessage &msg) {
+	cosmos::UnixCredentialsMessage creds_msg;
+	creds_msg.deserialize(msg);
+	const auto &creds = creds_msg.creds();
+
+	std::string ret{"{"};
+	ret += std::format("pid={}, uid={}, gid={}",
+		creds.processID(),
+		creds.userID(),
+		creds.groupID()
+	);
+	ret += "}";
+	return ret;
+}
+
+template <cosmos::SocketFamily FAMILY>
+std::string format_inet_recverr(const ControlMessage &msg) {
+	cosmos::SocketErrorMessage<FAMILY> err_msg;
+	err_msg.deserialize(msg);
+	const auto &err = *err_msg.error();
+
+	auto format_origin = [](auto origin) -> std::string {
+		switch (cosmos::to_integral(origin)) {
+			CASE_ENUM_TO_STR(SO_EE_ORIGIN_NONE);
+			CASE_ENUM_TO_STR(SO_EE_ORIGIN_LOCAL);
+			CASE_ENUM_TO_STR(SO_EE_ORIGIN_ICMP);
+			CASE_ENUM_TO_STR(SO_EE_ORIGIN_ICMP6);
+			CASE_ENUM_TO_STR(SO_EE_ORIGIN_TXSTATUS);
+			CASE_ENUM_TO_STR(SO_EE_ORIGIN_ZEROCOPY);
+			CASE_ENUM_TO_STR(SO_EE_ORIGIN_TXTIME);
+			default: return "SO_EE_ORIGIN_???";
+		}
+	};
+
+	std::string ret{"{"};
+
+	// TODO: complete evaluation of the remaining ee_??? fields
+
+	ret += std::format("ee_errno={} ({}), ee_origin={}",
+		get_errno_label(err.errnum()),
+		std::to_string(cosmos::to_integral(err.errnum())),
+		format_origin(err.origin())
+	);
+
+	ret += "}";
+
+	return ret;
+}
+
+static std::string format_ctrl_data(const ControlMessage &msg) {
+
+	// TODO: implement remaining aux message types in libcosmos and here
+
+	if (const auto unix_msg = msg.asUnixMessage(); unix_msg) {
+		using enum cosmos::UnixMessage;
+		switch (*unix_msg) {
+			case RIGHTS: return format_unix_rights(msg);
+			case CREDENTIALS: return format_unix_creds(msg);
+			default: break;
+		}
+	} else if (const auto ip4_msg = msg.asIP4Message(); ip4_msg) {
+		using enum cosmos::IP4Message;
+		switch (*ip4_msg) {
+			case RECVERR: return format_inet_recverr<
+				cosmos::SocketFamily::INET>(msg);
+			case PKTINFO: break;
+			case ORIGDSTADDR: break;
+			case TOS: break;
+			case TTL: break;
+		}
+	} else if (const auto ip6_msg = msg.asIP6Message(); ip6_msg) {
+		using enum cosmos::IP6Message;
+		switch (*ip6_msg) {
+			case RECVERR: return format_inet_recverr<
+				cosmos::SocketFamily::INET6>(msg);
+			case PKTINFO: break;
+		}
+	}
+
+	/* fallback for any unhandled message levels / types */
+	return clues::format::buffer(
+		reinterpret_cast<const std::byte*>(msg.data()),
+		msg.dataLength(), clues::format::Flag::BINARY);
+}
+
+std::string RecvMessageHeader::controlStr() const {
+	const auto header_opt = header();
+
+	if (!m_msg_control.availableBytes() || !header_opt) {
+		return m_msg_control.str();
+	}
+
+	const auto &header = *header_opt;
+
+	std::string ret{"["};
+
+	for (const auto &ctrl: header) {
+		ret += "{";
+		ret += std::format("cmsg_len={}, cmsg_level={}, cmsg_type={}, cmsg_data={}",
+			ctrl.dataLength(),
+			format_opt_level(ctrl.level()),
+			format_ctrl_type(ctrl),
+			format_ctrl_data(ctrl)
+		);
+		ret += "}";
+	}
+
+	ret += "]";
+	return ret;
+}
+
+namespace {
+
+class Header :
+	public cosmos::ReceiveMessageHeader {
+public: // functions
+
+	Header() = default;
+
+	Header(const struct msghdr &hdr,
+			const std::vector<std::byte> &control = {}) {
+		copyHeader(hdr);
+		copyControl(control);
+		m_header.msg_iov = nullptr;
+	}
+
+	void copyHeader(const struct msghdr &hdr) {
+		std::memcpy(rawHeader(), &hdr, sizeof(hdr));
+	}
+
+	void copyControl(const std::vector<std::byte> &data) {
+		m_control_buffer.resize(data.size());
+		std::memcpy(m_control_buffer.data(), data.data(), data.size());
+		m_header.msg_control =
+			reinterpret_cast<void*>(m_control_buffer.data());
+	}
+};
+
+} // end anon ns
+
+void RecvMessageHeader::processValue(const Tracee &proc) {
+	m_in_header.emplace();
+	m_out_header.reset();
+
+	try {
+		proc.readStruct(asPtr(), *m_in_header);
+	} catch(...) {
+		m_in_header.reset();
+		return;
+	}
+
+	processSubItemValue(m_msg_namelen,
+			scalar_to_word(m_in_header->msg_namelen), proc);
+	processSubItemValue(m_msg_name,
+			ptr_to_word(m_in_header->msg_name), proc);
+	processSubItemValue(m_msg_iovlen,
+			scalar_to_word(m_in_header->msg_iovlen), proc);
+	processSubItemValue(m_msg_iov,
+			ptr_to_word(m_in_header->msg_iov), proc);
+	processSubItemValue(m_msg_controllen,
+			scalar_to_word(m_in_header->msg_controllen), proc);
+	processSubItemValue(m_msg_control,
+			ptr_to_word(m_in_header->msg_control), proc);
+}
+
+std::optional<cosmos::ReceiveMessageHeader> RecvMessageHeader::header() const {
+	if (!m_out_header) {
+		return {};
+	}
+
+	return Header{*m_out_header, m_msg_control.data()};
+}
+
+void RecvMessageHeader::updateData(const Tracee &proc) {
+	m_out_header.emplace();
+
+	try {
+		proc.readStruct(asPtr(), *m_out_header);
+	} catch(...) {
+		m_out_header.reset();
+		return;
+	}
+
+	/*
+	 * since some of these sub-items don't expect updates we need to call
+	 * `processValue()` on them here as well to actually update the data
+	 */
+	processSubItemValue(m_msg_namelen,
+			scalar_to_word(m_out_header->msg_namelen), proc);
+	updateSubItemData(m_msg_name, proc);
+	updateSubItemData(m_msg_iovlen, proc);
+	updateSubItemData(m_msg_iov, proc);
+	processSubItemValue(m_msg_flags,
+			scalar_to_word(m_out_header->msg_flags), proc);
+	processSubItemValue(m_msg_controllen,
+			scalar_to_word(m_out_header->msg_controllen), proc);
+	updateSubItemData(m_msg_control, proc);
+	/*
+	 *  make sure we always have all control data since we need to inspect
+	 *  e.g. passed file descriptors data and also need it in header().
+	 */
+	m_msg_control.fetchRemainingData(proc);
 }
 
 } // end ns

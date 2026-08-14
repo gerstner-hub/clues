@@ -13,12 +13,14 @@
 
 // cosmos
 #include <cosmos/net/inet/IPAddress.hxx>
+#include <cosmos/net/message_header.hxx>
 #include <cosmos/net/Socket.hxx>
 #include <cosmos/net/unix/UnixAddress.hxx>
 
 // clues
-#include <clues/items/items.hxx>
 #include <clues/items/fs.hxx>
+#include <clues/items/io.hxx>
+#include <clues/items/items.hxx>
 
 namespace clues::item {
 
@@ -33,7 +35,7 @@ struct SocketFD :
 	}
 };
 
-/// Pass-by-value address length for socket-related system calls.
+/// Pass-by-value address length `socklen_t` for socket-related system calls.
 struct AddressLength :
 		public IntValue {
 	explicit AddressLength() :
@@ -689,6 +691,76 @@ protected: // functions
 protected: // data
 
 	MessageFlags m_flags{};
+};
+
+class RecvMessageHeader :
+		public PointerValue {
+public: // functions
+
+	explicit RecvMessageHeader(const SystemCallItem &obtained_bytes) :
+			PointerValue{ItemCfg{ItemType::PARAM_IN_OUT, "msg"}},
+			m_msg_name{ItemCfg{ItemType::PARAM_OUT}, &m_msg_namelen},
+			m_msg_iov{m_msg_iovlen, obtained_bytes},
+			m_msg_iovlen{ItemCfg{.label = "num_iovs"}},
+			m_msg_control{m_msg_controllen, ItemCfg{ItemType::PARAM_OUT, "msg_control"}},
+			m_msg_controllen{ItemCfg{ItemType::PARAM_IN_OUT, "msg_controllen"}} {
+	}
+
+	std::string str() const override;
+
+	/// Provides access to message control data and flags.
+	/**
+	 * This is only valid after system call exit, else std::nullopt
+	 * will be returned. The returned object will contain a copy of the
+	 * control data as well as a copy of the receive flags observed in the
+	 * tracee. You can use the ControlMessage iterators to inspect
+	 * individual messages.
+	 **/
+	std::optional<cosmos::ReceiveMessageHeader> header() const;
+
+	/// Provides access to the raw payload data which was received.
+	/*
+	 * This is only valid after system call exit. The buffer contents will
+	 * be truncated if buffer fetch limits are in effect.
+	 */
+	const ReadVector::BufferVector& ioVector() const {
+		return m_msg_iov.buffers();
+	}
+
+	/// Provides access to the raw control data which was received.
+	/**
+	 * This is only valid after system call exit. This type will always
+	 * fetch the complete control data regardless of buffer fetch limits
+	 * in effect.
+	 **/
+	const std::vector<std::byte>& controlData() const {
+		return m_msg_control.data();
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+	void updateData(const Tracee &) override;
+
+	/// Returns a description of contained control messages.
+	std::string controlStr() const;
+
+protected: // data
+
+	/* let's reuse items as sub-items for this complex structure */
+	SocketAddress m_msg_name;
+	AddressLength m_msg_namelen;
+	ReadVector m_msg_iov;
+	SizeValue m_msg_iovlen;
+	SendRecvFlags m_msg_flags;
+	BufferPointer m_msg_control;
+	IntValue m_msg_controllen;
+
+	///! Header as observed during system call entry.
+	std::optional<struct msghdr> m_in_header;
+	///! Header as observed during system call exit.
+	std::optional<struct msghdr> m_out_header;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

@@ -228,6 +228,25 @@ protected: // functions
 		processValue(t);
 	}
 
+	/// Forward the given `word` towards the given `sub_item`.
+	/**
+	 * Sub-items are used in case of complex system call data structures
+	 * where reuse of code of other SystemCallItems is helpful. Sub-items
+	 * don't receive data from system call registers but data extracted
+	 * from more complex data structures, like it is the case with `struct
+	 * msghdr` in `recvmsg()` and `sendmsg()`, for example.
+	 *
+	 * This operation basically calls `sub_item.processValue(word, proc)`.
+	 **/
+	void processSubItemValue(SystemCallItem &sub_item, const Word word, const Tracee &proc);
+
+	/// Forward a system call update to the given sub `sub_item`
+	/**
+	 * Analogous to processSubItemValue() this basically calls
+	 * `sub_item.updateData(proc)`.
+	 **/
+	void updateSubItemData(SystemCallItem &sub_item, const Tracee &proc);
+
 	/// Sets the system call context this item is a part of.
 	void setSystemCall(const SystemCall &sc) { m_call = &sc; }
 

@@ -28,6 +28,20 @@ bool SystemCallItem::usesTime32() const {
 	return m_call->is32BitEmulationABI() || m_call->abi() == ABI::I386;
 }
 
+void SystemCallItem::processSubItemValue(SystemCallItem &sub_item,
+		const Word word, const Tracee &proc) {
+	if (!sub_item.m_call) {
+		sub_item.setSystemCall(*m_call);
+	}
+
+	sub_item.fill(proc, word);
+}
+
+void SystemCallItem::updateSubItemData(SystemCallItem &sub_item,
+		const Tracee &proc) {
+	sub_item.updateData(proc);
+}
+
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const clues::SystemCallItem &value) {

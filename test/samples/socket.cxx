@@ -11,6 +11,8 @@
 #include <string>
 
 #include <optional>
+#include <iostream>
+#include <vector>
 
 #include <cosmos/compiler.hxx>
 #include <cosmos/memory.hxx>
@@ -49,7 +51,37 @@ void send_recv(int send_sock, int recv_sock) {
 	syscall(SYS_sendto, send_sock, outbuf, sizeof(outbuf)-1, MSG_NOSIGNAL, nullptr, 0);
 
 	char inbuf[1024];
-	const auto bytes = syscall(SYS_recvfrom, recv_sock, inbuf, sizeof(inbuf), MSG_DONTROUTE, nullptr, 0);
+	const auto bytes = syscall(SYS_recvfrom, recv_sock, inbuf, sizeof(inbuf), MSG_DONTROUTE, nullptr, 0UL);
+	(void)bytes;
+}
+
+void send_recv_msg(int send_sock, int recv_sock, const sockaddr_un &send_addr, const size_t addrlen) {
+	int passcred = 1;
+	syscall(SYS_setsockopt, send_sock, SOL_SOCKET, SO_PASSCRED, &passcred, sizeof(passcred));
+	syscall(SYS_setsockopt, recv_sock, SOL_SOCKET, SO_PASSCRED, &passcred, sizeof(passcred));
+	const char outbuf[] = "test message";
+	struct msghdr hdr;
+	cosmos::zero_object(hdr);
+	hdr.msg_name = (void*)&send_addr;
+	hdr.msg_namelen = addrlen;
+	struct iovec vec;
+	vec.iov_base = (void*)outbuf;
+	vec.iov_len = sizeof(outbuf) - 1;
+	hdr.msg_iov = &vec;
+	hdr.msg_iovlen = 1;
+	auto bytes = syscall(SYS_sendmsg, send_sock, &hdr, MSG_NOSIGNAL);
+
+	char inbuf[1024];
+	sockaddr_un from_addr;
+	char ctrlbuf[1024];
+	hdr.msg_name = (void*)&from_addr;
+	hdr.msg_namelen = sizeof(from_addr);
+	hdr.msg_control = (void*)ctrlbuf;
+	hdr.msg_controllen = sizeof(ctrlbuf);
+	vec.iov_base = (void*)inbuf;
+	vec.iov_len = sizeof(inbuf);
+
+	bytes = syscall(SYS_recvmsg, recv_sock, &hdr, MSG_NOSIGNAL);
 	(void)bytes;
 }
 
@@ -91,6 +123,73 @@ void send_recv_socketcall(int send_sock, int recv_sock, const std::string &tgt_a
 }
 #endif
 
+void pass_fds_to(int sock_to) {
+	struct msghdr msg;
+	cosmos::zero_object(msg);
+	struct iovec vec;
+	char data = 42;
+	vec.iov_base = &data;
+	vec.iov_len = sizeof(char);
+	int fds[2] = {STDIN_FILENO, STDOUT_FILENO};
+
+	union {
+		char buf[CMSG_SPACE(sizeof(fds))];
+		struct cmsghdr align;
+	} u;
+
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = u.buf;
+	msg.msg_controllen = sizeof(u.buf);
+
+	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(fds));
+	memcpy(CMSG_DATA(cmsg), fds, sizeof(fds));
+
+
+	/* this returns only the amount of playoad data in msg_iov */
+	const auto sent = syscall(SYS_sendmsg, sock_to, &msg, 0);
+	if (sent < 0 || static_cast<size_t>(sent) != sizeof(data)) {
+		std::cerr << "failed to send full message: " << sent << " vs. " << sizeof(data) << "\n";
+		exit(1);
+	}
+}
+
+void recv_fds_from(int sock_from) {
+	struct msghdr msg;
+	cosmos::zero_object(msg);
+	struct iovec vec;
+	char data;
+	vec.iov_base = &data;
+	vec.iov_len = sizeof(char);
+	char ancillary[1024];
+
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = ancillary;
+	msg.msg_controllen = sizeof(ancillary);
+
+	const auto received = syscall(SYS_recvmsg, sock_from, &msg, MSG_CMSG_CLOEXEC);
+	if (received != sizeof(char)) {
+		std::cerr << "received unexpected byte count: " << received << "\n";
+		exit(1);
+	}
+
+	for (auto cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		const auto fd_len = cmsg->cmsg_len - CMSG_LEN(0);
+
+		std::vector<int> fds(fd_len / sizeof(int));
+		memcpy(fds.data(), CMSG_DATA(cmsg), fd_len);
+
+		for (auto fd: fds) {
+			std::cout << "received fd " << fd << "\n";
+			close(fd);
+		}
+	}
+}
+
 int main() {
 #ifdef COSMOS_I386
 	unsigned long args[6] = {0};
@@ -121,6 +220,11 @@ int main() {
 	std::string un_path;
 	un_path += '\0';
 	un_path += "testsocket";
+
+	std::string un_path2;
+	un_path2 += '\0';
+	un_path2 += "sendsocket";
+
 	std::memcpy(unix.sun_path, un_path.data(), un_path.size());
 
 	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -152,6 +256,21 @@ int main() {
 			close(acc_sock);
 			close(conn);
 		}
+
+		if (auto conn = connect(SOCK_STREAM, unix, un_path.size() + 2, 0, /*auto_close=*/false); conn >= 0) {
+			/* let's do a round of file descriptor passing to
+			 * utilize recvmsg() / sendmsg() */
+			int conn2 = accept(fd, NULL, 0);
+			if (conn2 < 0)
+				return 1;
+
+			pass_fds_to(conn2);
+			recv_fds_from(conn);
+
+			close(conn);
+			close(conn2);
+		}
+
 #ifdef COSMOS_I386
 		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
 			sockaddr_un peer;
@@ -201,6 +320,19 @@ int main() {
 	close(pair[0]);
 	close(pair[1]);
 
+	syscall(SYS_socketpair, AF_UNIX, SOCK_DGRAM, 0, pair);
+	std::memcpy(unix.sun_path, un_path.data(), un_path.size());
+	if (bind(pair[0], unix, un_path.size() + 2) < 0) {
+
+	}
+	std::memcpy(unix2.sun_path, un_path2.data(), un_path2.size());
+	if (bind(pair[1], unix2, un_path2.size() + 2) < 0) {
+
+	}
+	send_recv_msg(pair[0], pair[1], unix2, un_path2.size() + 2);
+	close(pair[0]);
+	close(pair[1]);
+
 #ifdef COSMOS_I386
 	args[0] = AF_INET6;
 	args[1] = SOCK_DGRAM;
@@ -217,9 +349,6 @@ int main() {
 		return 1;
 	}
 
-	std::string un_path2;
-	un_path2 += '\0';
-	un_path2 += "sendsocket";
 	memcpy(unix.sun_path, un_path2.data(), un_path2.size());
 
 	if (bind(pair[0], unix, un_path2.size() + 2) < 0) {

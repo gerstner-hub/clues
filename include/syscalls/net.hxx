@@ -228,6 +228,32 @@ struct RecvFromSystemCall :
 	item::AddressLengthPointer addrlen;
 };
 
+struct RecvMsgSystemCall :
+		public SystemCall {
+
+	explicit RecvMsgSystemCall(
+			const SystemCallNr nr = SystemCallNr::RECVMSG) :
+			SystemCall{nr},
+			read{ItemCfg{ItemType::RETVAL, "read", "number of payload bytes read"}},
+			msg{read} {
+		setParameters(sockfd, msg, flags);
+		setReturnItem(read);
+	}
+
+	/// Number of payload bytes received.
+	item::SizeValue read;
+
+	item::SocketFD sockfd;
+	item::RecvMessageHeader msg;
+	item::SendRecvFlags flags;
+
+protected: // functions
+
+	void updateFDTracking(const Tracee &proc) override;
+
+	void track(const cosmos::FileNum fd, const Tracee &proc);
+};
+
 /// Plain send() system call.
 /**
  * There actually doesn't exist a dedicated SEND system call number on the
