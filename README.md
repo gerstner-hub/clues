@@ -85,8 +85,8 @@ What is still Missing
 =====================
 
 The biggest lack at the moment is that only a small subset of the system calls
-available on `x86_64` are currently implemented, for the others only the
-system call name and its return value are decoded, ignoring the reset of the
+available on `x86_64` is currently implemented, for the others only the
+system call name and its return value are decoded, ignoring the rest of the
 system call parameters.
 
 At the moment **155 of 470 system calls** present in the supported ABIs are
