@@ -2,6 +2,8 @@
 /build*
 /install*
 *.swp
+*.swo
+*.swn
 /tags
 /.tags
 /.*.tag
