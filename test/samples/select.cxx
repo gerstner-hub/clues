@@ -42,10 +42,10 @@ int main() {
 	 */
 	clues::select_arg_struct args;
 	args.nfds = writefd + 1;
-	args.readset_p = reinterpret_cast<uint32_t>(&readset);
-	args.writeset_p = reinterpret_cast<uint32_t>(&writeset);
-	args.exceptset_p = 0;
-	args.timeval_p = reinterpret_cast<uint32_t>(&tv);
+	args.readset = reinterpret_cast<uint32_t>(&readset);
+	args.writeset = reinterpret_cast<uint32_t>(&writeset);
+	args.exceptset = 0;
+	args.timeval = reinterpret_cast<uint32_t>(&tv);
 	tv.tv_sec = 50;
 	tv.tv_usec = 100;
 
@@ -77,7 +77,7 @@ int main() {
 	FD_SET(readfd, &readset);
 	FD_SET(writefd, &writeset);
 	clues::sigset_argpack pack;
-	pack.sigset_p = &set;
+	pack.sigset = &set;
 	pack.size = 8;
 	syscall(SYS_pselect6_time64, writefd + 1, &readset, &writeset, NULL,
 			&ts64, &pack);

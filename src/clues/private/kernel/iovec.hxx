@@ -1,6 +1,11 @@
 #pragma once
 
+// C
 #include <stdint.h>
+#include <stddef.h>
+
+// clues
+#include <clues/private/kernel/types.hxx>
 
 namespace clues {
 
@@ -12,7 +17,7 @@ struct iovec {
 
 /// variant of struct iovec* as used in 64-bit <-> 32-bit cross ABI tracing.
 struct iovec32 {
-	uint32_t iov_base;
+	compat_uptr_t iov_base;
 	uint32_t iov_len;
 };
 

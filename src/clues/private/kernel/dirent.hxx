@@ -1,6 +1,11 @@
 #pragma once
 
+// C
 #include <stdint.h>
+
+// Linux
+#include <unistd.h>
+#include <sys/types.h>
 
 namespace clues {
 

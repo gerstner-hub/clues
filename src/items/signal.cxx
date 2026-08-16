@@ -184,7 +184,7 @@ void SigSetParameter::processValue(const Tracee &proc) {
 			if (!proc.readStruct(asPtr(), pack))
 				return false;
 
-			ForeignPtr ssp = ForeignPtr{(uintptr_t)pack.sigset_p};
+			ForeignPtr ssp = ForeignPtr{(uintptr_t)pack.sigset};
 
 			/* should always be a 64-bit sigset_t in this case */
 			if (!proc.readStruct(ssp, *m_sigset->raw())) {

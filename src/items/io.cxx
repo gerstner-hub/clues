@@ -329,10 +329,10 @@ void OldSelectArgs::processValue(const Tracee &proc) {
 	}
 
 	nfds = args.nfds;
-	readfds = ForeignPtr(args.readset_p);
-	writefds = ForeignPtr(args.writeset_p);
-	exceptfds = ForeignPtr(args.exceptset_p);
-	timeout = ForeignPtr(args.timeval_p);
+	readfds = ForeignPtr(args.readset);
+	writefds = ForeignPtr(args.writeset);
+	exceptfds = ForeignPtr(args.exceptset);
+	timeout = ForeignPtr(args.timeval);
 
 	m_valid = true;
 }

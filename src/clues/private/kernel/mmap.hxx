@@ -3,13 +3,16 @@
 // C++
 #include <cstdint>
 
+// clues
+#include <clues/private/kernel/types.hxx>
+
 namespace clues {
 
 extern "C" {
 
 /// Old mmap() parameter on 32-bit ABIs like I386.
 struct mmap_arg_struct {
-        uint32_t addr;
+        compat_uptr_t addr;
         uint32_t len;
         uint32_t prot;
         uint32_t flags;

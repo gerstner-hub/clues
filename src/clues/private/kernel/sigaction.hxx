@@ -4,7 +4,10 @@
 #include <cstdint>
 
 // Linux
-#include <signal.h>
+#include <sys/wait.h>
+
+// clues
+#include <clues/private/kernel/types.hxx>
 
 namespace clues {
 
@@ -35,7 +38,7 @@ struct kernel_sigaction {
 
 /// Variant of sigaction for 64-bit <-> 32-bit cross ABI tracing.
 struct kernel_sigaction32 {
-	uint32_t handler;
+	compat_uptr_t handler;
 	uint32_t flags;
 	uint32_t restorer;
 	sigset_t mask;
@@ -43,7 +46,7 @@ struct kernel_sigaction32 {
 
 /// Variant of sigaction used for the old sigaction() system call.
 struct kernel_old_sigaction {
-	uint32_t handler;
+	compat_uptr_t handler;
 	// old sigset_t consisting of only 4 bytes.
 	uint32_t mask;
 	uint32_t flags;

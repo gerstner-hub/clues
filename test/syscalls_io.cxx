@@ -81,7 +81,7 @@ void call_pselect(const int sysnr=SYS_pselect6) {
 	sigaddset(&mask, SIGQUIT);
 	sigaddset(&mask, SIGINT);
 	clues::sigset_argpack pack;
-	pack.sigset_p = &mask;
+	pack.sigset = &mask;
 	pack.size = 8;
 	syscall(sysnr, writefd + 1, &readset, &writeset, nullptr, &ts, &pack);
 }
@@ -114,7 +114,7 @@ void call_pselect32(const SyscallNr32 nr = SyscallNr32::PSELECT6) {
 	sigaddset(ss, SIGQUIT);
 
 	auto pack = alloc_struct32<clues::sigset_argpack32>();
-	pack->sigset_p = (uint32_t)(uintptr_t)ss;
+	pack->sigset = (uint32_t)(uintptr_t)ss;
 	pack->size = 8;
 
 	syscall32(nr, writefd + 1, readset, writeset, NULL, ts32, pack);
@@ -1140,10 +1140,10 @@ const auto TESTS = std::array{
 			clues::select_arg_struct args;
 
 			args.nfds = writefd + 1;
-			args.readset_p = reinterpret_cast<uint32_t>(&readset);
-			args.writeset_p = reinterpret_cast<uint32_t>(&writeset);
-			args.exceptset_p = 0;
-			args.timeval_p = reinterpret_cast<uint32_t>(&tv);
+			args.readset = reinterpret_cast<uint32_t>(&readset);
+			args.writeset = reinterpret_cast<uint32_t>(&writeset);
+			args.exceptset = 0;
+			args.timeval = reinterpret_cast<uint32_t>(&tv);
 
 			syscall(SYS_select, &args);
 #	endif // I386
@@ -1175,10 +1175,10 @@ const auto TESTS = std::array{
 					clues::select_arg_struct>();
 
 				args->nfds = writefd + 1;
-				args->readset_p = (uintptr_t)(readset);
-				args->writeset_p = (uintptr_t)(writeset);
-				args->exceptset_p = 0;
-				args->timeval_p = (uintptr_t)(tv);
+				args->readset = (uintptr_t)(readset);
+				args->writeset = (uintptr_t)(writeset);
+				args->exceptset = 0;
+				args->timeval = (uintptr_t)(tv);
 
 				syscall32(SyscallNr32::SELECT, args);
 			})

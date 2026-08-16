@@ -1,5 +1,8 @@
 #pragma once
 
+// C
+#include <stddef.h>
+
 namespace clues {
 
 extern "C" {
