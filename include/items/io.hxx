@@ -151,6 +151,8 @@ public: // types
 		std::vector<std::byte> data;
 	};
 
+	using BufferVector = std::vector<Buffer>;
+
 public: // functions
 
 	explicit IOVectorBase(
@@ -167,7 +169,7 @@ public: // functions
 	}
 
 	/// Provides access to the individual buffers specified in the vector.
-	const auto& buffers() const {
+	const BufferVector& buffers() const {
 		return m_buffers;
 	}
 
@@ -193,7 +195,7 @@ protected: // functions
 protected: // data
 
 	const SystemCallItem &m_vector_count_par;
-	std::vector<Buffer> m_buffers;
+	BufferVector m_buffers;
 };
 
 /// A pointer to an array of struct iovec for reading.
