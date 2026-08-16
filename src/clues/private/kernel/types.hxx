@@ -19,5 +19,11 @@ namespace clues {
 	using compat_timer_t   =  int32_t;
 	using compat_ulong_t   = uint32_t;
 	using compat_long_t    =  int32_t;
+	using compat_size_t    = uint32_t;
+
+	template<typename PTR=void*>
+	inline PTR convert_compat_ptr(const compat_uptr_t ptr32) {
+		return reinterpret_cast<PTR>(ptr32);
+	}
 
 } // end ns

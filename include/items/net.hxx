@@ -715,6 +715,16 @@ public: // functions
 	 * control data as well as a copy of the receive flags observed in the
 	 * tracee. You can use the ControlMessage iterators to inspect
 	 * individual messages.
+	 *
+	 * \warning when 32-bit cross ABI tracing is in effect then accessing
+	 * control data is a very messy endeavour. This is because the binary
+	 * data in the control data can also be subject to ABI differences.
+	 * This function will return a control data structure converted from
+	 * 32-bit to 64-bit representation such that the 64-bit tracer can
+	 * safely iterate over individual control messages.
+	 *
+	 * Regarding control message payload libclues currently only considers
+	 * UNIX domain socket ancillary messages for this scenario.
 	 **/
 	std::optional<cosmos::ReceiveMessageHeader> header() const;
 
@@ -745,6 +755,10 @@ protected: // functions
 
 	/// Returns a description of contained control messages.
 	std::string controlStr() const;
+
+	bool fetchMsgHdr32(const Tracee &proc, struct msghdr &out);
+
+	std::vector<std::byte> convertControlHeader32() const;
 
 protected: // data
 
