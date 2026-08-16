@@ -56,18 +56,12 @@ std::string IntValueT<INT>::str() const {
 
 template <typename INT>
 void PointerToScalar<INT>::fetchValue(const Tracee &tracee) {
-	INT val;
-
 	m_val.reset();
 
 	if (m_ptr == ForeignPtr::NO_POINTER)
 		return;
 
-	if (tracee.readStruct(m_ptr, val)) {
-		m_val = val;
-	} else {
-		// probably a bad address
-	}
+	tracee.readStructIntoOptional(m_ptr, m_val);
 }
 
 template <typename INT>

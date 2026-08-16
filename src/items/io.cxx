@@ -364,19 +364,7 @@ void EPollOperation::processValue(const Tracee &) {
 static_assert(sizeof(EPollEvent) == sizeof(epoll_event), "struct epoll_event size mismatch");
 
 void EPollEventSettings::processValue(const Tracee &proc) {
-	if (isZero()) {
-		m_ev.reset();
-		return;
-	}
-
-	if (!m_ev) {
-		m_ev.emplace();
-	}
-
-	if (!proc.readStruct(asPtr(), *m_ev)) {
-		m_ev.reset();
-		return;
-	}
+	proc.readStructIntoOptional(asPtr(), m_ev);
 }
 
 std::string EPollEvent::formatFlags() const {

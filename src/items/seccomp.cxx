@@ -64,20 +64,16 @@ std::string FilterProg::str() const {
 
 void FilterProg::processValue(const Tracee &proc) {
 	m_filters.clear();
-	m_prog.emplace();
 
 	if (!m_call->is32BitEmulationABI()) {
-		if (!proc.readStruct(ptr(), *m_prog)) {
-			m_prog.reset();
-			return;
-		}
+		proc.readStructIntoOptional(ptr(), m_prog);
 	} else {
 		clues::sock_fprog32 prog32;
 		if (!proc.readStruct(ptr(), prog32)) {
-			m_prog.reset();
 			return;
 		}
 
+		m_prog.emplace();
 		/* translate into our bigger 64-bit sock_fprog structure */
 		m_prog->len = prog32.len;
 		m_prog->filter = reinterpret_cast<struct sock_filter*>(prog32.filter);

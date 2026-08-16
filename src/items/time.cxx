@@ -48,10 +48,6 @@ bool TimeSpecParameter::needTime32Conversion() const {
 
 void TimeSpecParameter::fetch(const Tracee &proc,
 		std::optional<struct timespec> &spec) {
-	if (!spec) {
-		spec.emplace();
-	}
-
 	if (needTime32Conversion()) {
 		struct timespec32 ts32;
 		if (!proc.readStruct(asPtr(), ts32)) {
@@ -59,10 +55,11 @@ void TimeSpecParameter::fetch(const Tracee &proc,
 			return;
 		}
 
+		spec.emplace();
 		spec->tv_sec = ts32.tv_sec;
 		spec->tv_nsec = ts32.tv_nsec;
-	} else if (!proc.readStruct(asPtr(), *spec)) {
-		spec.reset();
+	} else {
+		proc.readStructIntoOptional(asPtr(), spec);
 	}
 }
 
@@ -156,10 +153,6 @@ bool TimeValParameter::needTime32Conversion() const {
 
 void TimeValParameter::fetch(const Tracee &proc,
 		std::optional<struct timeval> &val) {
-	if (!val) {
-		val.emplace();
-	}
-
 	if (needTime32Conversion()) {
 		struct timeval32 tv32;
 		if (!proc.readStruct(asPtr(), tv32)) {
@@ -167,10 +160,11 @@ void TimeValParameter::fetch(const Tracee &proc,
 			return;
 		}
 
+		val.emplace();
 		val->tv_sec = tv32.tv_sec;
 		val->tv_usec = tv32.tv_usec;
-	} else if (!proc.readStruct(asPtr(), *val)) {
-		val.reset();
+	} else {
+		proc.readStructIntoOptional(asPtr(), val);
 	}
 }
 

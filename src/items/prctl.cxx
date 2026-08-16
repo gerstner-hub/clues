@@ -105,17 +105,12 @@ void MemoryMapStruct::processValue(const Tracee &proc) {
 	/*
 	 * zero-initialize the struct and only read at max the size of the
 	 * struct or the size specified by the tracee into it. unused fields
-	 * will be zero this ways in case the tracee uses an older version of
+	 * will be zero this way in case the tracee uses an older version of
 	 * the struct.
 	 */
-	m_map.emplace(prctl_mm_map{});
-
 	const auto &prctl_call = dynamic_cast<const prctl::MemoryMapSystemCall&>(*m_call);
 
-	if (!proc.readStruct(asPtr(),
-				*m_map, prctl_call.mm_struct_size->value())) {
-		m_map.reset();
-	}
+	proc.readStructIntoOptional(asPtr(), m_map, prctl_call.mm_struct_size->value());
 }
 
 std::string MemoryMapStruct::str() const {
