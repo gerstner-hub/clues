@@ -919,18 +919,22 @@ public: // functions
  * in 32-bit emulation context fetch the 32-bit msghdr struct and copy its
  * fields into `out`.
  */
-bool RecvMessageHeader::fetchMsgHdr32(const Tracee &proc, struct msghdr &out) {
+bool RecvMessageHeader::fetchMsgHdr32(const Tracee &proc, std::optional<struct msghdr> &out) {
 	msghdr32 hdr32;
-	if (!proc.readStruct(asPtr(), hdr32))
+	if (!proc.readStruct(asPtr(), hdr32)) {
+		out.reset();
 		return false;
+	}
 
-	out.msg_name = convert_compat_ptr(hdr32.msg_name);
-	out.msg_namelen = hdr32.msg_namelen;
-	out.msg_iov = convert_compat_ptr<iovec*>(hdr32.msg_iov);
-	out.msg_iovlen = hdr32.msg_iovlen;
-	out.msg_control = convert_compat_ptr(hdr32.msg_control);
-	out.msg_controllen = hdr32.msg_controllen;
-	out.msg_flags = hdr32.msg_flags;
+	out.emplace();
+
+	out->msg_name = convert_compat_ptr(hdr32.msg_name);
+	out->msg_namelen = hdr32.msg_namelen;
+	out->msg_iov = convert_compat_ptr<iovec*>(hdr32.msg_iov);
+	out->msg_iovlen = hdr32.msg_iovlen;
+	out->msg_control = convert_compat_ptr(hdr32.msg_control);
+	out->msg_controllen = hdr32.msg_controllen;
+	out->msg_flags = hdr32.msg_flags;
 
 	return true;
 }
@@ -945,21 +949,17 @@ std::optional<ReceiveMessageHeader> RecvMessageHeader::header() const {
 }
 
 void RecvMessageHeader::processValue(const Tracee &proc) {
-	m_in_header.emplace();
 	m_out_header.reset();
 
 	if (m_call->is32BitEmulationABI()) {
-		if (!fetchMsgHdr32(proc, *m_in_header)) {
-			m_in_header.reset();
-			return;
-		}
+		fetchMsgHdr32(proc, m_in_header);
 	} else {
-		try {
-			proc.readStruct(asPtr(), *m_in_header);
-		} catch(...) {
-			m_in_header.reset();
-			return;
-		}
+		proc.readStructIntoOptional(asPtr(), m_in_header);
+	}
+
+	if (!m_in_header) {
+		resetSubItems(proc);
+		return;
 	}
 
 	processSubItemValue(m_msg_namelen,
@@ -977,21 +977,14 @@ void RecvMessageHeader::processValue(const Tracee &proc) {
 }
 
 void RecvMessageHeader::updateData(const Tracee &proc) {
-	m_out_header.emplace();
-
 	if (m_call->is32BitEmulationABI()) {
-		if (!fetchMsgHdr32(proc, *m_out_header)) {
-			m_out_header.reset();
-			return;
-		}
+		fetchMsgHdr32(proc, m_out_header);
 	} else {
-		try {
-			proc.readStruct(asPtr(), *m_out_header);
-		} catch(...) {
-			m_out_header.reset();
-			return;
-		}
+		proc.readStructIntoOptional(asPtr(), m_out_header);
 	}
+
+	if (!m_out_header)
+		return;
 
 	/*
 	 * since some of these sub-items don't expect updates we need to call
@@ -1012,6 +1005,15 @@ void RecvMessageHeader::updateData(const Tracee &proc) {
 	 *  e.g. passed file descriptors data; we will need it in `header()`.
 	 */
 	m_msg_control.fetchRemainingData(proc);
+}
+
+void RecvMessageHeader::resetSubItems(const Tracee &proc) {
+	processSubItemValue(m_msg_namelen, Word::ZERO, proc);
+	processSubItemValue(m_msg_name, Word::ZERO, proc);
+	processSubItemValue(m_msg_iovlen, Word::ZERO, proc);
+	processSubItemValue(m_msg_iov, Word::ZERO, proc);
+	processSubItemValue(m_msg_controllen, Word::ZERO, proc);
+	processSubItemValue(m_msg_control, Word::ZERO, proc);
 }
 
 std::vector<std::byte> RecvMessageHeader::convertControlHeader32() const {

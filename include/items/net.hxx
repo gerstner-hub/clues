@@ -756,9 +756,11 @@ protected: // functions
 	/// Returns a description of contained control messages.
 	std::string controlStr() const;
 
-	bool fetchMsgHdr32(const Tracee &proc, struct msghdr &out);
+	bool fetchMsgHdr32(const Tracee &proc, std::optional<struct msghdr> &out);
 
 	std::vector<std::byte> convertControlHeader32() const;
+
+	void resetSubItems(const Tracee &proc);
 
 protected: // data
 
