@@ -248,6 +248,29 @@ public: // functions
 		return true;
 	}
 
+	/// Variant of readStruct() for std::optional members.
+	/**
+	 * This behaves just like `readStruct()` with the exception that the
+	 * std::optional `out` will be handed accordingly. A
+	 * default-constructed value will be placed into it before attempting
+	 * to read from tracee memory. On error it will be reset again. The
+	 * success status is returned as a `bool` return value.
+	 *
+	 * The optional `accessor` can be passed to produce the proper SUB_T
+	 * to actually fill into `out`. Otherwise the to-be-fetched struct is
+	 * considered to be T.
+	 **/
+	template <typename T, bool CHECK_TRIVIAL=true>
+	bool readStructIntoOptional(const ForeignPtr addr, std::optional<T> &out, size_t max_bytes=sizeof(T)) const {
+		out.emplace();
+		if (!readStruct<T, CHECK_TRIVIAL>(addr, *out, max_bytes)) {
+			out.reset();
+			return false;
+		}
+
+		return true;
+	}
+
 	/// Reads an array of structs from the tracee's address space into `vec`.
 	/**
 	 * This call expects `vec` to have the size of the expected number of
