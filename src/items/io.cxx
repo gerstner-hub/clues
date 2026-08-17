@@ -278,16 +278,12 @@ void FDSet::processValue(const Tracee &proc) {
 		return;
 	}
 
-	m_req_set.emplace();
-
 	/*
 	 * this data structure should always be 1024 bits in size no matter
 	 * what ABI.
 	 */
 
-	if (!proc.readStruct(asPtr(), *m_req_set->raw())) {
-		m_req_set.reset();
-	}
+	proc.readRawStructIntoOptional(asPtr(), m_req_set);
 }
 
 void FDSet::updateData(const Tracee &proc) {
@@ -297,13 +293,9 @@ void FDSet::updateData(const Tracee &proc) {
 	if (!m_call->hasResultValue())
 		return;
 
-	m_ev_set.emplace();
-
-	if (!proc.readStruct(asPtr(), *m_ev_set->raw())) {
-		/* this is an unfortunate state, we failed to read the updated
-		 * set from the kernel ... */
-		m_ev_set.reset();
-	}
+	/* if this fails then it is an unfortunate state, we failed to read
+	 * the updated set from the kernel ... */
+	proc.readRawStructIntoOptional(asPtr(), m_ev_set);
 }
 
 std::string FDSet::str() const {

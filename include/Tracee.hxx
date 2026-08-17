@@ -1,9 +1,9 @@
 #pragma once
 
 // C++
-#include "regs/RegisterData.hxx"
 #include <array>
 #include <iosfwd>
+#include <type_traits>
 
 // Linux
 #include <unistd.h>
@@ -266,6 +266,32 @@ public: // functions
 		if (!readStruct<T, CHECK_TRIVIAL>(addr, *out, max_bytes)) {
 			out.reset();
 			return false;
+		}
+
+		return true;
+	}
+
+	/// Variant of readStructIntoOptional() that fills `*out->raw()` instead of `out`.
+	template <typename T, bool CHECK_TRIVIAL=true>
+	bool readRawStructIntoOptional(const ForeignPtr addr, std::optional<T> &out, size_t max_bytes=sizeof(T)) const {
+		out.emplace();
+		decltype(auto) raw = out->raw();
+		using RawType = decltype(raw);
+
+		/* some raw() methods return a reference, some a pointer */
+
+		if constexpr (std::is_reference_v<RawType>) {
+			if (!readStruct<std::remove_reference_t<RawType>, CHECK_TRIVIAL>(addr, raw, max_bytes)) {
+				out.reset();
+				return false;
+			}
+		}
+
+		if constexpr (std::is_pointer_v<RawType>) {
+			if (!readStruct<std::remove_pointer_t<RawType>, CHECK_TRIVIAL>(addr, *raw, max_bytes)) {
+				out.reset();
+				return false;
+			}
 		}
 
 		return true;

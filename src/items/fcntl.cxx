@@ -352,11 +352,7 @@ std::string ExtFileDescOwner::str() const {
 }
 
 void ExtFileDescOwner::processValue(const Tracee &proc) {
-	m_owner = cosmos::FileDescriptor::Owner{};
-
-	if (!proc.readStruct(asPtr(), *m_owner->raw())) {
-		m_owner.reset();
-	}
+	proc.readRawStructIntoOptional(asPtr(), m_owner);
 }
 
 void LeaseType::processValue(const Tracee &) {

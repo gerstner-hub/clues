@@ -158,16 +158,8 @@ bool SigSetParameter::usesArgPack() const {
 }
 
 void SigSetParameter::processValue(const Tracee &proc) {
-	auto reset_guard = cosmos::DeferGuard{[this]() {
-		m_sigset.reset();
-	}};
-
 	if (proc.isEnterStop() && isOut()) {
 		return;
-	}
-
-	if (!m_sigset) {
-		m_sigset.emplace();
 	}
 
 	if (m_call->callNr() == SystemCallNr::SIGPROCMASK) {
@@ -177,8 +169,8 @@ void SigSetParameter::processValue(const Tracee &proc) {
 			return;
 		}
 
+		m_sigset.emplace();
 		m_sigset->raw()->__val[0] = mask;
-		reset_guard.disarm();
 	} else if (usesArgPack()) {
 		auto fetch_argpack = [&proc, this](auto &pack) {
 			if (!proc.readStruct(asPtr(), pack))
@@ -187,7 +179,7 @@ void SigSetParameter::processValue(const Tracee &proc) {
 			ForeignPtr ssp = ForeignPtr{(uintptr_t)pack.sigset};
 
 			/* should always be a 64-bit sigset_t in this case */
-			if (!proc.readStruct(ssp, *m_sigset->raw())) {
+			if (!proc.readRawStructIntoOptional(ssp, m_sigset)) {
 				return false;
 			}
 
@@ -206,12 +198,10 @@ void SigSetParameter::processValue(const Tracee &proc) {
 				return;
 		}
 	} else {
-		if (!proc.readStruct(asPtr(), *m_sigset->raw())) {
+		if (!proc.readRawStructIntoOptional(asPtr(), m_sigset)) {
 			return;
 		}
 	}
-
-	reset_guard.disarm();
 }
 
 std::string SigSetParameter::str() const {

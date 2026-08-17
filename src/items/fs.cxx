@@ -246,10 +246,6 @@ bool StatParameter::isRegularStat() const {
 }
 
 void StatParameter::updateData(const Tracee &proc) {
-	if (!m_stat) {
-		m_stat.emplace();
-	}
-
 #if defined(COSMOS_X86_64) || defined(COSMOS_AARCH64)
 	/*
 	 * on 64-bit platforms life is simple, we directly copy the data into
@@ -268,10 +264,10 @@ void StatParameter::updateData(const Tracee &proc) {
 	auto fetch_and_copy = [this, &proc]<typename STAT>() {
 		STAT st;
 		if (!proc.readStruct(asPtr(), st)) {
-			m_stat.reset();
 			return;
 		}
 
+		m_stat.emplace();
 		auto &raw = *m_stat->raw();
 		/*
 		 * to be layout-agnostic simply copy over field-by-field
@@ -317,9 +313,7 @@ void StatParameter::updateData(const Tracee &proc) {
 			 * there's only one type of stat
 			 * directly read into libcosmos's FileStatus
 			 */
-			if (!proc.readStruct(asPtr(), *m_stat->raw())) {
-				m_stat.reset();
-			}
+			proc.readRawStructIntoOptional(asPtr(), m_stat);
 			break;
 		} case ABI::I386: {
 			/*
@@ -642,16 +636,14 @@ void StatFSParameter::updateData(const Tracee &proc) {
 	 */
 	static_assert(sizeof(*m_stat->raw()) == sizeof(clues::statfs64));
 #endif
-	m_stat.emplace();
-
 #ifdef COSMOS_X86
 	auto fetch_and_copy = [this, &proc]<typename STATFS>() {
 		STATFS st;
 		if (!proc.readStruct(asPtr(), st)) {
-			m_stat.reset();
 			return;
 		}
 
+		m_stat.emplace();
 		auto &raw = *m_stat->raw();
 		/*
 		 * to be layout-agnostic simply copy over field-by-field
@@ -679,9 +671,7 @@ void StatFSParameter::updateData(const Tracee &proc) {
 			 * there's only one type of stat
 			 * directly read into libcosmos's FileSystemStatus
 			 */
-			if (!proc.readStruct(asPtr(), *m_stat->raw())) {
-				m_stat.reset();
-			}
+			proc.readRawStructIntoOptional(asPtr(), m_stat);
 			break;
 		} case ABI::I386: {
 #ifdef COSMOS_X86
@@ -695,9 +685,7 @@ void StatFSParameter::updateData(const Tracee &proc) {
 				if (m_call->is32BitEmulationABI()) {
 					fetch_and_copy.operator()<clues::statfs64>();
 				} else {
-					if (!proc.readStruct(asPtr(), *m_stat->raw())) {
-						m_stat.reset();
-					}
+					proc.readRawStructIntoOptional(asPtr(), m_stat);
 				}
 			} else if (isRegularStatFS()) {
 				if (m_call->is32BitEmulationABI()) {

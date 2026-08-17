@@ -495,6 +495,7 @@ public: // types
 	protected: // functions
 
 		friend class FDSet;
+		friend class clues::Tracee;
 
 		fd_set* raw() {
 			return const_cast<fd_set*>(const_cast<const Array&>(*this).raw());

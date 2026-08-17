@@ -1,6 +1,5 @@
 // C++
 #include <limits>
-#include <sstream>
 
 // clues
 #include <clues/format.hxx>
