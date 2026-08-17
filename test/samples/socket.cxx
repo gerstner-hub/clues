@@ -13,10 +13,20 @@
 #include <optional>
 #include <iostream>
 #include <vector>
-#include <array>
-
 #include <cosmos/compiler.hxx>
 #include <cosmos/memory.hxx>
+
+#ifdef COSMOS_I386
+#	include <array>
+#endif
+
+/*
+ * On I386 socketcall() is used by default by glibc, thus use explicit
+ * syscall() wrappers for the regular system calls and explicit socketcall()
+ * wrappers if we want to do socketcall().
+ */
+
+constexpr auto UNIXADDR_BASE_SIZE = offsetof(struct sockaddr_un, sun_path);
 
 int socket(int af, int type, int prot) {
 	return syscall(SYS_socket, af, type, prot);
@@ -52,18 +62,18 @@ int socketcall(int call, ARGS... args) {
 #endif
 
 template <typename ADDR>
-int bind(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
+void bind_and_listen(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
 	auto ret = syscall(SYS_bind, fd, &addr, addrlen ? *addrlen : sizeof(addr));
 
 	if (ret == 0) {
 		syscall(SYS_listen, fd, 15);
+	} else {
+		throw "failed to bind";
 	}
-
-	return ret;
 }
 
 template <typename ADDR>
-int connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {},
+int socket_connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {},
 		int flags=0, bool auto_close=true) {
 	const struct sockaddr *saddr = reinterpret_cast<const struct sockaddr*>(&addr);
 	auto sock = socket(saddr->sa_family, type|flags, 0);
@@ -72,8 +82,11 @@ int connect(int type, const ADDR &addr, std::optional<socklen_t> addrlen = {},
 
 	if (ret != 0 || auto_close)
 		close(sock);
+	if (ret != 0) {
+		throw "failed to connect";
+	}
 
-	return auto_close ? ret : (ret == 0 ? sock : ret);
+	return auto_close ? -1 : sock;
 }
 
 void send_recv(int send_sock, int recv_sock) {
@@ -121,12 +134,18 @@ void send_recv_socketcall(int send_sock, int recv_sock, const std::string &tgt_a
 
 	struct sockaddr_un addr;
 	addr.sun_family = AF_UNIX;
-	memcpy(addr.sun_path, tgt_addr_path.c_str(), tgt_addr_path.size());
+	memcpy(addr.sun_path, tgt_addr_path.c_str(), tgt_addr_path.size()+1);
+
+	int res;
 
 	if (tgt_addr_path.empty()) {
-		socketcall(SYS_SEND, send_sock, outbuf, sizeof(outbuf) - 1, MSG_NOSIGNAL);
+		res = socketcall(SYS_SEND, send_sock, outbuf, sizeof(outbuf) - 1, MSG_NOSIGNAL);
 	} else {
-		socketcall(SYS_SENDTO, send_sock, outbuf, sizeof(outbuf) - 1, MSG_NOSIGNAL, &addr, tgt_addr_path.size() + 2);
+		res = socketcall(SYS_SENDTO, send_sock, outbuf, sizeof(outbuf) - 1, MSG_NOSIGNAL, &addr, tgt_addr_path.size() + 1 + UNIXADDR_BASE_SIZE);
+	}
+
+	if (res < 0) {
+		throw "send(to) failed";
 	}
 
 	char inbuf[1024];
@@ -207,6 +226,12 @@ void recv_fds_from(int sock_from) {
 	}
 }
 
+socklen_t set_unix_addr(sockaddr_un &unix, const std::string &path) {
+	std::memcpy(unix.sun_path, path.data(), path.size());
+
+	return path.size() + UNIXADDR_BASE_SIZE + 1;
+}
+
 int main() {
 	sockaddr_in ip4;
 	sockaddr_in6 ip6;
@@ -221,6 +246,7 @@ int main() {
 	ip4.sin_family = AF_INET;
 	ip6.sin6_family = AF_INET6;
 	unix.sun_family = AF_UNIX;
+	unix2.sun_family = AF_UNIX;
 
 	ip4.sin_port = htons(1234);
 	ip4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -238,136 +264,127 @@ int main() {
 	un_path2 += '\0';
 	un_path2 += "sendsocket";
 
-	std::memcpy(unix.sun_path, un_path.data(), un_path.size());
+	socklen_t addrlen, addrlen2;
+	addrlen = set_unix_addr(unix, un_path);
 
-	int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (bind(fd, unix, un_path.size() + 2) == 0) {
-		{
-			socklen_t len = sizeof(unix2);
-			syscall(SYS_getsockname, fd, (sockaddr*)&unix2, &len);
-		}
-#ifdef SYS_accept
-		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
-			sockaddr_un peer;
-			socklen_t len = sizeof(peer);
-			int acc_sock = syscall(SYS_accept, fd, (sockaddr*)&peer, &len);
-
-			close(acc_sock);
-		}
-#endif
-		if (auto conn = connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK, /*auto_close=*/false); conn >= 0) {
-			sockaddr_un peer;
-			socklen_t len = sizeof(peer);
-			int acc_sock = syscall(SYS_accept4, fd, (sockaddr*)&peer, &len, SOCK_CLOEXEC);
-			len = sizeof(unix2);
-			syscall(SYS_getpeername, acc_sock, (sockaddr*)&unix2, &len);
-			send_recv(conn, acc_sock);
-#ifdef COSMOS_I386
-			send_recv_socketcall(conn, acc_sock);
-#endif
-			syscall(SYS_shutdown, acc_sock, SHUT_RDWR);
-			close(acc_sock);
-			close(conn);
-		}
-
-		if (auto conn = connect(SOCK_STREAM, unix, un_path.size() + 2, 0, /*auto_close=*/false); conn >= 0) {
-			/* let's do a round of file descriptor passing to
-			 * utilize recvmsg() / sendmsg() */
-			int conn2 = accept(fd, NULL, 0);
-			if (conn2 < 0)
-				return 1;
-
-			pass_fds_to(conn2);
-			recv_fds_from(conn);
-
-			close(conn);
-			close(conn2);
-		}
-
-#ifdef COSMOS_I386
-		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
-			sockaddr_un peer;
-			socklen_t len = sizeof(peer);
-			int acc_sock = socketcall(SYS_ACCEPT, fd, &peer, &len);
-			close(acc_sock);
-		}
-		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
-			sockaddr_un peer;
-			socklen_t len = sizeof(peer);
-			int acc_sock = socketcall(SYS_ACCEPT4, fd, &peer, &len, SOCK_NONBLOCK);
-			close(acc_sock);
-		}
-#endif
-	}
-	close(fd);
-	fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	if (bind(fd, ip6) == 0) {
-		if (connect(SOCK_DGRAM, ip6) < 0) {
-
-		}
-	}
-	close(fd);
-
-	fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (bind(fd, ip4) == 0) {
-		if (connect(SOCK_STREAM, ip4) < 0 ) {
-
-		}
-	}
-	close(fd);
-
-	fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-	close(fd);
-	fd = socket(AF_PACKET, SOCK_RAW, ETH_P_DIAG);
-	close(fd);
-
+	int sock1 = -1, sock2 = -1, sock3 = -1;
 	int pair[2];
+
+	/*
+	 *  AF_UNIX
+	 */
+
+	sock1 = socket(AF_UNIX, SOCK_STREAM, 0);
+	bind_and_listen(sock1, unix, addrlen);
+
+	addrlen2 = sizeof(unix2);
+	syscall(SYS_getsockname, sock1, (sockaddr*)&unix2, &addrlen2);
+
+#ifdef SYS_accept /* not all ABIs have the old accept() anymore */
+	socket_connect(SOCK_STREAM, unix, addrlen, SOCK_NONBLOCK);
+	addrlen2 = sizeof(unix2);
+	sock2 = syscall(SYS_accept, sock1, (sockaddr*)&unix2, &addrlen2);
+	close(sock2);
+#endif
+	sock2 = socket_connect(SOCK_STREAM, unix, addrlen, SOCK_NONBLOCK, /*auto_close=*/false);
+	addrlen2 = sizeof(unix2);
+	sock3 = syscall(SYS_accept4, sock1, (sockaddr*)&unix2, &addrlen2, SOCK_CLOEXEC);
+	addrlen2 = sizeof(unix2);
+	syscall(SYS_getpeername, sock3, (sockaddr*)&unix2, &addrlen2);
+	send_recv(sock2, sock3);
+#ifdef COSMOS_I386
+	send_recv_socketcall(sock2, sock3);
+#endif
+	syscall(SYS_shutdown, sock3, SHUT_RDWR);
+	close(sock3);
+	close(sock2);
+
+	sock2 = socket_connect(SOCK_STREAM, unix, addrlen, 0, /*auto_close=*/false);
+	/* let's do a round of file descriptor passing to
+	 * utilize recvmsg() / sendmsg() */
+	sock3 = accept(sock1, NULL, 0);
+	if (sock3 < 0) {
+		throw "failed to accept";
+	}
+
+	pass_fds_to(sock3);
+	recv_fds_from(sock2);
+
+	close(sock2);
+	close(sock3);
+
+#ifdef COSMOS_I386
+	socket_connect(SOCK_STREAM, unix, addrlen, SOCK_NONBLOCK);
+	addrlen2 = sizeof(unix2);
+	sock3 = socketcall(SYS_ACCEPT, sock1, &unix2, &addrlen2);
+	close(sock3);
+
+	socket_connect(SOCK_STREAM, unix, addrlen, SOCK_NONBLOCK);
+	addrlen2 = sizeof(unix2);
+	sock3 = socketcall(SYS_ACCEPT4, sock1, &unix2, &addrlen2, SOCK_NONBLOCK);
+	close(sock3);
+#endif
+
+	close(sock1);
+
+	/*
+	 * end AF_UNIX
+	 */
+
+	sock1 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	bind_and_listen(sock1, ip6);
+	socket_connect(SOCK_DGRAM, ip6);
+	close(sock1);
+
+	sock1 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	bind_and_listen(sock1, ip4);
+	socket_connect(SOCK_STREAM, ip4);
+	close(sock1);
+
+	sock1 = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	close(sock1);
+
+	sock1 = socket(AF_PACKET, SOCK_RAW, ETH_P_DIAG);
+	close(sock1);
+
 	syscall(SYS_socketpair, AF_UNIX, SOCK_STREAM, 0, pair);
 	close(pair[0]);
 	close(pair[1]);
 
 	syscall(SYS_socketpair, AF_UNIX, SOCK_DGRAM, 0, pair);
-	std::memcpy(unix.sun_path, un_path.data(), un_path.size());
-	if (bind(pair[0], unix, un_path.size() + 2) < 0) {
-
-	}
-	std::memcpy(unix2.sun_path, un_path2.data(), un_path2.size());
-	if (bind(pair[1], unix2, un_path2.size() + 2) < 0) {
-
-	}
-	send_recv_msg(pair[0], pair[1], unix2, un_path2.size() + 2);
+	bind_and_listen(pair[0], unix, addrlen);
+	addrlen2 = set_unix_addr(unix2, un_path2);
+	bind_and_listen(pair[1], unix2, addrlen2);
+	send_recv_msg(pair[0], pair[1], unix2, addrlen2);
 	close(pair[0]);
 	close(pair[1]);
 
 #ifdef COSMOS_I386
 	socketcall(SYS_SOCKET, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	socketcall(SYS_SOCKETPAIR, AF_UNIX, SOCK_DGRAM, 0, pair);
-
-	if (bind(pair[1], unix, un_path.size() + 2) < 0) {
-		return 1;
-	}
-
-	memcpy(unix.sun_path, un_path2.data(), un_path2.size());
-
-	if (bind(pair[0], unix, un_path2.size() + 2) < 0) {
-		return 1;
-	}
-
+	bind_and_listen(pair[1], unix, addrlen);
+	addrlen2 = set_unix_addr(unix2, un_path2);
+	bind_and_listen(pair[0], unix2, addrlen2);
 	send_recv_socketcall(pair[0], pair[1], un_path);
+	close(pair[0]);
+	close(pair[1]);
 
-	fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	if (socketcall(SYS_BIND, fd, &ip6, sizeof(ip6)) == 0) {
-		socketcall(SYS_LISTEN, fd, 15);
-
-		auto conn = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-		socketcall(SYS_CONNECT, conn, &ip6, sizeof(ip6));
-
-		socklen_t len = sizeof(ip6);
-		socketcall(SYS_GETPEERNAME, conn, &ip6, &len);
-		socketcall(SYS_SHUTDOWN, conn, SHUT_WR);
-		socketcall(SYS_GETSOCKNAME, fd, &ip6, &len);
-
+	sock1 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	if (socketcall(SYS_BIND, sock1, &ip6, sizeof(ip6)) < 0) {
+		throw "failed to socketcall-bind";
 	}
-	close(fd);
+
+	socketcall(SYS_LISTEN, sock1, 15);
+
+	sock2 = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	socketcall(SYS_CONNECT, sock2, &ip6, sizeof(ip6));
+
+	addrlen = sizeof(ip6);
+	socketcall(SYS_GETPEERNAME, sock2, &ip6, &addrlen);
+	socketcall(SYS_SHUTDOWN, sock2, SHUT_WR);
+	socketcall(SYS_GETSOCKNAME, sock1, &ip6, &addrlen);
+
+	close(sock1);
+	close(sock2);
 #endif
 }
