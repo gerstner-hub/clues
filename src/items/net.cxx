@@ -459,6 +459,13 @@ std::string SocketCallArgs::str() const {
 		}
 
 		break;
+	} case RECVMSG: {
+		const auto &call = dynamic_cast<const RecvMsgSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, msg={}, flags={}",
+			call.sockfd.str(), call.msg.str(), call.flags.str()
+		);
+		break;
 	} default: return "???";
 	} // end switch
 
