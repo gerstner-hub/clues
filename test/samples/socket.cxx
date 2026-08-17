@@ -13,6 +13,7 @@
 #include <optional>
 #include <iostream>
 #include <vector>
+#include <array>
 
 #include <cosmos/compiler.hxx>
 #include <cosmos/memory.hxx>
@@ -20,6 +21,35 @@
 int socket(int af, int type, int prot) {
 	return syscall(SYS_socket, af, type, prot);
 }
+
+#ifdef COSMOS_I386
+template <typename T>
+unsigned long to_ulong(T value) {
+    if constexpr (std::is_pointer_v<T>) {
+        return reinterpret_cast<unsigned long>(value);
+    } else {
+        return static_cast<unsigned long>(value);
+    }
+}
+
+template <typename... ARGS>
+requires (sizeof...(ARGS) <= 6)
+std::array<unsigned long, sizeof...(ARGS)> make_array(ARGS... args) {
+    std::array<unsigned long, sizeof...(ARGS)> result{};
+
+    std::size_t i = 0;
+    ((result[i++] = to_ulong(args)), ...);
+
+    return result;
+}
+
+template <typename... ARGS>
+int socketcall(int call, ARGS... args) {
+	const auto arr = make_array(std::forward<ARGS>(args)...);
+
+	return syscall(SYS_socketcall, call, arr.data());
+}
+#endif
 
 template <typename ADDR>
 int bind(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
@@ -87,38 +117,25 @@ void send_recv_msg(int send_sock, int recv_sock, const sockaddr_un &send_addr, c
 
 #ifdef COSMOS_I386
 void send_recv_socketcall(int send_sock, int recv_sock, const std::string &tgt_addr_path = {}) {
-	unsigned long args[6];
-
 	const char outbuf[] = "test message";
-	args[0] = send_sock;
-	args[1] = reinterpret_cast<unsigned long>(outbuf);
-	args[2] = sizeof(outbuf) - 1;
-	args[3] = MSG_NOSIGNAL;
 
 	struct sockaddr_un addr;
 	addr.sun_family = AF_UNIX;
 	memcpy(addr.sun_path, tgt_addr_path.c_str(), tgt_addr_path.size());
 
 	if (tgt_addr_path.empty()) {
-		syscall(SYS_socketcall, SYS_SEND, args);
+		socketcall(SYS_SEND, send_sock, outbuf, sizeof(outbuf) - 1, MSG_NOSIGNAL);
 	} else {
-		args[4] = reinterpret_cast<unsigned long>(&addr);
-		args[5] = tgt_addr_path.size() + 2;
-		syscall(SYS_socketcall, SYS_SENDTO, args);
+		socketcall(SYS_SENDTO, send_sock, outbuf, sizeof(outbuf) - 1, MSG_NOSIGNAL, &addr, tgt_addr_path.size() + 2);
 	}
 
 	char inbuf[1024];
-	args[0] = recv_sock;
-	args[1] = reinterpret_cast<unsigned long>(inbuf);
-	args[2] = sizeof(inbuf);
-	args[3] = MSG_DONTROUTE;
 
 	if (tgt_addr_path.empty()) {
-		syscall(SYS_socketcall, SYS_RECV, args);
+		socketcall(SYS_RECV, recv_sock, inbuf, sizeof(inbuf), MSG_DONTROUTE);
 	} else {
 		socklen_t addrlen = sizeof(sockaddr_un);
-		args[5] = reinterpret_cast<unsigned long>(&addrlen);
-		syscall(SYS_socketcall, SYS_RECVFROM, args);
+		socketcall(SYS_RECVFROM, recv_sock, inbuf, sizeof(inbuf), MSG_DONTROUTE, &addr, &addrlen);
 	}
 }
 #endif
@@ -191,10 +208,6 @@ void recv_fds_from(int sock_from) {
 }
 
 int main() {
-#ifdef COSMOS_I386
-	unsigned long args[6] = {0};
-#endif
-
 	sockaddr_in ip4;
 	sockaddr_in6 ip6;
 	sockaddr_un unix;
@@ -275,20 +288,13 @@ int main() {
 		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
 			sockaddr_un peer;
 			socklen_t len = sizeof(peer);
-			args[0] = fd;
-			args[1] = (unsigned long)&peer;
-			args[2] = (unsigned long)&len;
-			int acc_sock = syscall(SYS_socketcall, SYS_ACCEPT, args);
+			int acc_sock = socketcall(SYS_ACCEPT, fd, &peer, &len);
 			close(acc_sock);
 		}
 		if (connect(SOCK_STREAM, unix, un_path.size() + 2, SOCK_NONBLOCK) == 0) {
 			sockaddr_un peer;
 			socklen_t len = sizeof(peer);
-			args[0] = fd;
-			args[1] = (unsigned long)&peer;
-			args[2] = (unsigned long)&len;
-			args[3] = SOCK_NONBLOCK;
-			int acc_sock = syscall(SYS_socketcall, SYS_ACCEPT4, args);
+			int acc_sock = socketcall(SYS_ACCEPT4, fd, &peer, &len, SOCK_NONBLOCK);
 			close(acc_sock);
 		}
 #endif
@@ -334,16 +340,8 @@ int main() {
 	close(pair[1]);
 
 #ifdef COSMOS_I386
-	args[0] = AF_INET6;
-	args[1] = SOCK_DGRAM;
-	args[2] = IPPROTO_UDP;
-	syscall(SYS_socketcall, SYS_SOCKET, args);
-
-	args[0] = AF_UNIX;
-	args[1] = SOCK_DGRAM;
-	args[2] = 0;
-	args[3] = reinterpret_cast<unsigned long>(pair);
-	syscall(SYS_socketcall, SYS_SOCKETPAIR, args);
+	socketcall(SYS_SOCKET, AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	socketcall(SYS_SOCKETPAIR, AF_UNIX, SOCK_DGRAM, 0, pair);
 
 	if (bind(pair[1], unix, un_path.size() + 2) < 0) {
 		return 1;
@@ -358,29 +356,16 @@ int main() {
 	send_recv_socketcall(pair[0], pair[1], un_path);
 
 	fd = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	args[0] = fd;
-	args[1] = reinterpret_cast<unsigned long>(&ip6);
-	args[2] = sizeof(ip6);
-	if (syscall(SYS_socketcall, SYS_BIND, args) == 0) {
-		args[1] = 15;
-		syscall(SYS_socketcall, SYS_LISTEN, args);
+	if (socketcall(SYS_BIND, fd, &ip6, sizeof(ip6)) == 0) {
+		socketcall(SYS_LISTEN, fd, 15);
 
 		auto conn = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-		args[0] = conn;
-		args[1] = reinterpret_cast<unsigned long>(&ip6);
-		syscall(SYS_socketcall, SYS_CONNECT, args);
+		socketcall(SYS_CONNECT, conn, &ip6, sizeof(ip6));
 
 		socklen_t len = sizeof(ip6);
-		args[2] = reinterpret_cast<unsigned long>(&len);
-		syscall(SYS_socketcall, SYS_GETPEERNAME, args);
-
-		args[1] = SHUT_WR;
-		syscall(SYS_socketcall, SYS_SHUTDOWN, args);
-
-		args[0] = fd;
-		args[1] = reinterpret_cast<unsigned long>(&ip6);
-		args[2] = reinterpret_cast<unsigned long>(&len);
-		syscall(SYS_socketcall, SYS_GETSOCKNAME, args);
+		socketcall(SYS_GETPEERNAME, conn, &ip6, &len);
+		socketcall(SYS_SHUTDOWN, conn, SHUT_WR);
+		socketcall(SYS_GETSOCKNAME, fd, &ip6, &len);
 
 	}
 	close(fd);
