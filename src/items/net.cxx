@@ -466,6 +466,13 @@ std::string SocketCallArgs::str() const {
 			call.sockfd.str(), call.msg.str(), call.flags.str()
 		);
 		break;
+	} case SENDMSG: {
+		const auto &call = dynamic_cast<const SendMsgSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, msg={}, flags={}",
+			call.sockfd.str(), call.msg.str(), call.flags.str()
+		);
+		break;
 	} default: return "???";
 	} // end switch
 

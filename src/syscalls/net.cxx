@@ -161,6 +161,14 @@ void SocketCall_RecvMsg::transferValues(const Tracee &proc) {
 	flags.fill(proc, Word{vec[2]});
 }
 
+void SocketCall_SendMsg::transferValues(const Tracee &proc) {
+	const auto &vec = args.args();
+
+	sockfd.fill(proc, Word{vec[0]});
+	msg.fill(proc, Word{vec[1]});
+	flags.fill(proc, Word{vec[2]});
+}
+
 template <typename BASE>
 SocketCallBase<BASE>::SocketCallBase() :
 		BASE{SystemCallNr::SOCKETCALL},
@@ -209,6 +217,7 @@ SystemCallPtr create_socket_call_syscall(const SystemCallInfo &info) {
 	case SEND:       return std::make_shared<SocketCall_Send>();
 	case SENDTO:     return std::make_shared<SocketCall_SendTo>();
 	case RECVMSG:    return std::make_shared<SocketCall_RecvMsg>();
+	case SENDMSG:    return std::make_shared<SocketCall_SendMsg>();
 	default: throw cosmos::RuntimeError{"unsupported socketcall() sub-call"};
 	}
 }

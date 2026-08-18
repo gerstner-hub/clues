@@ -113,17 +113,15 @@ void send_recv_msg(int send_sock, int recv_sock, const sockaddr_un &send_addr, c
 	vec.iov_len = sizeof(outbuf) - 1;
 	hdr.msg_iov = &vec;
 	hdr.msg_iovlen = 1;
-#if 0
 	if (use_socketcall) {
 #ifdef COSMOS_I386
 		socketcall(SYS_SENDMSG, send_sock, &hdr, MSG_NOSIGNAL);
 #else
-		throw "no socketcall on non-i386"
+		throw "no socketcall on non-i386";
 #endif
 	} else {
-#endif
 		(void)syscall(SYS_sendmsg, send_sock, &hdr, MSG_NOSIGNAL);
-//	}
+	}
 
 	char inbuf[1024];
 	sockaddr_un from_addr;
