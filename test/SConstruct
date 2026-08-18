@@ -3,6 +3,7 @@ import os
 Import('env')
 
 tests = env.GatherSources(suffixes=['.cxx'], recursive=False)
+tests += env.GatherSources(suffixes=['.cxx'], subpath="syscalls", recursive=False)
 env.Append(CCFLAGS=["-Itest"])
 
 test_env = env.Clone()
@@ -20,14 +21,14 @@ run_env.ConfigureRunForLib('libclues')
 if env['sanitizer']:
     run_env['ENV']['ASAN_OPTIONS'] = 'detect_odr_violation=0'
 
-need_helpers = ("execve.cxx", "tracer.cxx", "syscalls.cxx", "syscalls_prctl.cxx", "syscalls_fs.cxx", "syscalls_other.cxx", "syscalls_signal.cxx")
+need_helpers = ("execve.cxx", "tracer.cxx", "syscalls/proc.cxx")
 need_samples = ("detach.cxx", "tracer_syscalls.cxx")
 need_tracer = ("tracer.cxx", "tracer_syscalls.cxx")
 
 for test in tests:
 
     label = '.'.join(test.split('.')[:-1])
-    test_prog_key = f'test_{label}'
+    test_prog_key = f'{label}'
 
     test_bin = test_env.Program(test_prog_key, [test] + static_lib_sources)
 
