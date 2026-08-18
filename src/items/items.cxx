@@ -94,8 +94,9 @@ std::string PointerToScalar<INT>::scalarToString() const {
 }
 
 void BufferPointer::processValue(const Tracee &tracee) {
-	if (isOut()) {
+	if (isOut() || isZero()) {
 		// this is an out buffer only, will be filled in updateData()
+		// or this is an optional buffer which is specified as NULL.
 		m_data.clear();
 		return;
 	}
@@ -136,6 +137,10 @@ void BufferPointer::fetchRemainingData(const Tracee &tracee) {
 void BufferPointer::fillBuffer(const Tracee &tracee) {
 	const auto to_fetch = std::min(tracee.maxBufferPrefetch(), availableBytes());
 	m_data.resize(to_fetch);
+
+	if (m_data.empty())
+		// valid pointer but zero size, do nothing
+		return;
 
 	try {
 		tracee.readBlob(asPtr(), reinterpret_cast<char*>(m_data.data()), to_fetch);

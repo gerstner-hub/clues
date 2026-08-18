@@ -711,7 +711,7 @@ std::string RecvMessageHeader::str() const {
 		m_msg_name.str(),
 		m_in_header->msg_namelen, m_msg_namelen.str(),
 		m_msg_iov.str(), m_msg_iovlen.str(),
-		controlStr(),
+		controlStr(header()),
 		m_in_header->msg_controllen, m_msg_controllen.str(),
 		m_msg_flags.str()
 	);
@@ -867,32 +867,6 @@ static std::string format_ctrl_data(const ControlMessage &msg) {
 		msg.dataLength(), clues::format::Flag::BINARY);
 }
 
-std::string RecvMessageHeader::controlStr() const {
-	const auto header_opt = header();
-
-	if (!m_msg_control.availableBytes() || !header_opt) {
-		return m_msg_control.str();
-	}
-
-	const auto &header = *header_opt;
-
-	std::string ret{"["};
-
-	for (const auto &ctrl: header) {
-		ret += "{";
-		ret += std::format("cmsg_len={}, cmsg_level={}, cmsg_type={}, cmsg_data={}",
-			ctrl.dataLength(),
-			format_opt_level(ctrl.level()),
-			format_ctrl_type(ctrl),
-			format_ctrl_data(ctrl)
-		);
-		ret += "}";
-	}
-
-	ret += "]";
-	return ret;
-}
-
 namespace {
 
 class Header :
@@ -926,7 +900,8 @@ public: // functions
  * in 32-bit emulation context fetch the 32-bit msghdr struct and copy its
  * fields into `out`.
  */
-bool RecvMessageHeader::fetchMsgHdr32(const Tracee &proc, std::optional<struct msghdr> &out) {
+bool MessageHeaderBase::fetchMsgHdr32(const Tracee &proc,
+		std::optional<struct msghdr> &out) {
 	msghdr32 hdr32;
 	if (!proc.readStruct(asPtr(), hdr32)) {
 		out.reset();
@@ -946,6 +921,104 @@ bool RecvMessageHeader::fetchMsgHdr32(const Tracee &proc, std::optional<struct m
 	return true;
 }
 
+std::vector<std::byte> MessageHeaderBase::convertControlHeader32() const {
+	if (!m_call->is32BitEmulationABI() || m_msg_controllen.value() == 0)
+		return m_msg_control.data();
+	/*
+	 * unfortunately the struct cmsghdr also differs in size between
+	 * 32-bit and 64-bit. this means we need to rearrange the binary data
+	 * structure to match what our 64 bit tracer process expects.
+	 *
+	 * TODO: this might also affect the payload, which is not currently
+	 * considered. The UNIX domain socket control messages don't differ in
+	 * payload between 32-bit and 64-bit, but others might?
+	 */
+	const auto &control32 = m_msg_control.data();
+	size_t convert_pos = 0;
+	std::vector<std::byte> ret;
+	/*
+	 * make sure no reallocations will occur while we are increasing the
+	 * size of the return vector, otherwise pointers might be invalidated
+	 * when resizing it.
+	 */
+	ret.reserve(control32.size() * 2);
+
+	auto add_bytes = [&ret](const size_t count) -> std::byte* {
+		const auto oldsize = ret.size();
+		ret.resize(ret.size() + count);
+		return ret.data() + oldsize;
+	};
+
+	auto add_cmsghdr = [add_bytes]() -> struct cmsghdr* {
+		const auto ptr = add_bytes(sizeof(struct cmsghdr));
+		return reinterpret_cast<cmsghdr*>(ptr);
+	};
+
+	auto get_cmsghdr32 = [&control32, &convert_pos]() {
+		auto ptr = reinterpret_cast<const cmsghdr32*>(control32.data() + convert_pos);
+		convert_pos += sizeof(cmsghdr32);
+		return ptr;
+	};
+
+	while (convert_pos < control32.size()) {
+		if (control32.size() - convert_pos < sizeof(cmsghdr32)) {
+			/* trailing data ? */
+			LOG_WARN("unexpected trailing data in control message");
+			break;
+		}
+		auto msg32 = get_cmsghdr32();
+		auto msg = add_cmsghdr();
+
+		msg->cmsg_level = msg32->cmsg_level;
+		msg->cmsg_type = msg32->cmsg_type;
+
+		const auto payload_bytes = msg32->cmsg_len - sizeof(cmsghdr32);
+		const auto payload_dst = add_bytes(payload_bytes);
+		std::memcpy(payload_dst, control32.data() + convert_pos, payload_bytes);
+		convert_pos += payload_bytes;
+
+		/* alignment for 32-bit is already considered in the length
+		 * field of msg32, but we might need to increase the length
+		 * for the 64-bit message, so recalculate it */
+		const auto aligned_len = CMSG_LEN(payload_bytes);
+		constexpr size_t HDR_DIFF_BYTES = sizeof(cmsghdr) - sizeof(cmsghdr32);
+		/* subtract the extra bytes we have in the 64-bit struct cmsghdr */
+		const auto extra_bytes = aligned_len - msg32->cmsg_len - HDR_DIFF_BYTES;
+		msg->cmsg_len = aligned_len;
+		if (extra_bytes > 0) {
+			for (size_t extra = 0; extra < extra_bytes; extra++) {
+				ret.push_back({});
+			}
+		}
+	}
+
+	return ret;
+}
+
+std::string MessageHeaderBase::controlStr(
+		const std::optional<cosmos::ReceiveMessageHeader> &_hdr) const {
+	if (!m_msg_control.availableBytes() || !_hdr) {
+		return m_msg_control.str();
+	}
+
+	const auto &header = *_hdr;
+
+	std::string ret{"["};
+
+	for (const auto &ctrl: header) {
+		ret += "{";
+		ret += std::format("cmsg_len={}, cmsg_level={}, cmsg_type={}, cmsg_data={}",
+			ctrl.dataLength(),
+			format_opt_level(ctrl.level()),
+			format_ctrl_type(ctrl),
+			format_ctrl_data(ctrl)
+		);
+		ret += "}";
+	}
+
+	ret += "]";
+	return ret;
+}
 
 std::optional<ReceiveMessageHeader> RecvMessageHeader::header() const {
 	if (!m_out_header) {
@@ -1021,79 +1094,75 @@ void RecvMessageHeader::resetSubItems(const Tracee &proc) {
 	processSubItemValue(m_msg_iov, Word::ZERO, proc);
 	processSubItemValue(m_msg_controllen, Word::ZERO, proc);
 	processSubItemValue(m_msg_control, Word::ZERO, proc);
+	processSubItemValue(m_msg_flags, Word::ZERO, proc);
 }
 
-std::vector<std::byte> RecvMessageHeader::convertControlHeader32() const {
-	if (!m_call->is32BitEmulationABI() || m_msg_controllen.value() == 0)
-		return m_msg_control.data();
-	/*
-	 * unfortunately the struct cmsghdr also differs in size between
-	 * 32-bit and 64-bit. this means we need to rearrange the binary data
-	 * structure to match what our 64 bit tracer process expects.
-	 *
-	 * TODO: this might also affect the payload, which is not currently
-	 * considered. The UNIX domain socket control messages don't differ in
-	 * payload between 32-bit and 64-bit, but others might?
-	 */
-	const auto &control32 = m_msg_control.data();
-	size_t convert_pos = 0;
-	std::vector<std::byte> ret;
-	/*
-	 * make sure no reallocations will occur while we are increasing the
-	 * size of the return vector, otherwise pointers might be invalidated
-	 * when resizing it.
-	 */
-	ret.reserve(control32.size() * 2);
+void SendMessageHeader::processValue(const Tracee &proc) {
 
-	auto add_bytes = [&ret](const size_t count) -> std::byte* {
-		const auto oldsize = ret.size();
-		ret.resize(ret.size() + count);
-		return ret.data() + oldsize;
-	};
-
-	auto add_cmsghdr = [add_bytes]() -> struct cmsghdr* {
-		const auto ptr = add_bytes(sizeof(struct cmsghdr));
-		return reinterpret_cast<cmsghdr*>(ptr);
-	};
-
-	auto get_cmsghdr32 = [&control32, &convert_pos]() {
-		auto ptr = reinterpret_cast<const cmsghdr32*>(control32.data() + convert_pos);
-		convert_pos += sizeof(cmsghdr32);
-		return ptr;
-	};
-
-	while (convert_pos < control32.size()) {
-		if (control32.size() - convert_pos < sizeof(cmsghdr32)) {
-			/* trailing data ? */
-			LOG_WARN("unexpected trailing data in control message");
-			break;
-		}
-		auto msg32 = get_cmsghdr32();
-		auto msg = add_cmsghdr();
-
-		msg->cmsg_level = msg32->cmsg_level;
-		msg->cmsg_type = msg32->cmsg_type;
-
-		const auto payload_bytes = msg32->cmsg_len - sizeof(cmsghdr32);
-		const auto payload_dst = add_bytes(payload_bytes);
-		std::memcpy(payload_dst, control32.data() + convert_pos, payload_bytes);
-		convert_pos += payload_bytes;
-
-		/* alignment for 32-bit is already considered in the length
-		 * field of msg32, but we might need to increase the length
-		 * for the 64-bit message, so recalculate it */
-		const auto aligned_len = CMSG_LEN(payload_bytes);
-		constexpr size_t HDR_DIFF_BYTES = sizeof(cmsghdr) - sizeof(cmsghdr32);
-		/* subtract the extra bytes we have in the 64-bit struct cmsghdr */
-		const auto extra_bytes = aligned_len - msg32->cmsg_len - HDR_DIFF_BYTES;
-		msg->cmsg_len = aligned_len;
-		if (extra_bytes > 0) {
-			for (size_t extra = 0; extra < extra_bytes; extra++) {
-				ret.push_back({});
-			}
-		}
+	if (m_call->is32BitEmulationABI()) {
+		fetchMsgHdr32(proc, m_header);
+	} else {
+		proc.readStructIntoOptional(asPtr(), m_header);
 	}
 
+	if (!m_header) {
+		resetSubItems(proc);
+		return;
+	}
+
+	processSubItemValue(m_msg_flags,
+			scalar_to_word(m_header->msg_flags), proc);
+	processSubItemValue(m_msg_namelen,
+			scalar_to_word(m_header->msg_namelen), proc);
+	processSubItemValue(m_msg_name,
+			ptr_to_word(m_header->msg_name), proc);
+	processSubItemValue(m_msg_iovlen,
+			scalar_to_word(m_header->msg_iovlen), proc);
+	processSubItemValue(m_msg_iov,
+			ptr_to_word(m_header->msg_iov), proc);
+	processSubItemValue(m_msg_controllen,
+			scalar_to_word(m_header->msg_controllen), proc);
+	processSubItemValue(m_msg_control,
+			ptr_to_word(m_header->msg_control), proc);
+}
+
+void SendMessageHeader::resetSubItems(const Tracee &proc) {
+	processSubItemValue(m_msg_namelen, Word::ZERO, proc);
+	processSubItemValue(m_msg_name, Word::ZERO, proc);
+	processSubItemValue(m_msg_iovlen, Word::ZERO, proc);
+	processSubItemValue(m_msg_flags, Word::ZERO, proc);
+	processSubItemValue(m_msg_iov, Word::ZERO, proc);
+	processSubItemValue(m_msg_controllen, Word::ZERO, proc);
+	processSubItemValue(m_msg_control, Word::ZERO, proc);
+	/* do this analogous to RecvMessageHeader */
+	m_msg_control.fetchRemainingData(proc);
+}
+
+std::optional<ReceiveMessageHeader> SendMessageHeader::header() const {
+	if (!m_header) {
+		return {};
+	}
+
+	return Header{*m_header, convertControlHeader32()};
+}
+
+std::string SendMessageHeader::str() const {
+	if (!m_header) {
+		return formatBadPointer();
+	}
+
+	std::string ret{"{"};
+
+	ret += std::format("msg_name={}, msg_namelen={}, msg_iov={}, msg_iovlen={}, msg_control={}, msg_controllen={}, msg_flags={}",
+		m_msg_name.str(),
+		m_header->msg_namelen,
+		m_msg_iov.str(), m_msg_iovlen.str(),
+		controlStr(header()),
+		m_header->msg_controllen,
+		m_msg_flags.str()
+	);
+
+	ret += "}";
 	return ret;
 }
 

@@ -298,6 +298,25 @@ struct SendToSystemCall :
 	item::AddressLength addrlen;
 };
 
+struct SendMsgSystemCall :
+		public SystemCall {
+
+	explicit SendMsgSystemCall(
+			const SystemCallNr nr = SystemCallNr::SENDMSG) :
+			SystemCall{nr},
+			written{ItemCfg{ItemType::RETVAL, "written", "number of payload bytes written"}} {
+		setParameters(sockfd, msg, flags);
+		setReturnItem(written);
+	}
+
+	/// Number of payload bytes actually sent.
+	item::SizeValue written;
+
+	item::SocketFD sockfd;
+	item::SendMessageHeader msg;
+	item::SendRecvFlags flags;
+};
+
 /// Base class for `socketcall()` specializations.
 /**
  * The socketcall() system call on legacy ABIs multiplexes all socket-related

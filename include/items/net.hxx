@@ -693,17 +693,47 @@ protected: // data
 	MessageFlags m_flags{};
 };
 
-class RecvMessageHeader :
+/// Base class for SendMessageHeader and ReceiveMessageHeader.
+/**
+ * This type keeps common logic which is shared between the two system calls,
+ * most notably dealing with control data and ABI conversion.
+ **/
+class MessageHeaderBase :
 		public PointerValue {
+protected: // functions
+
+	explicit MessageHeaderBase(const ItemCfg &cfg) :
+			PointerValue{cfg.applyDefaults(ItemCfg{.label = "msg"})},
+			m_msg_control{m_msg_controllen, ItemCfg{
+				cfg.type == ItemType::PARAM_IN ? ItemType::PARAM_IN : ItemType::PARAM_OUT,
+				"msg_control"}, /*is_binary=*/true},
+			m_msg_controllen{ItemCfg{
+				cfg.type == ItemType::PARAM_IN ? ItemType::PARAM_IN : ItemType::PARAM_IN_OUT,
+				"msg_controllen"}} {
+	}
+
+	bool fetchMsgHdr32(const Tracee &proc, std::optional<struct msghdr> &out);
+
+	std::vector<std::byte> convertControlHeader32() const;
+
+	/// Returns a description of contained control messages.
+	std::string controlStr(const std::optional<cosmos::ReceiveMessageHeader> &hdr) const;
+
+protected: // data
+
+	BufferPointer m_msg_control;
+	IntValue m_msg_controllen;
+};
+
+class RecvMessageHeader :
+		public MessageHeaderBase {
 public: // functions
 
 	explicit RecvMessageHeader(const SystemCallItem &obtained_bytes) :
-			PointerValue{ItemCfg{ItemType::PARAM_IN_OUT, "msg"}},
+			MessageHeaderBase{ItemCfg{ItemType::PARAM_IN_OUT}},
 			m_msg_name{ItemCfg{ItemType::PARAM_OUT}, &m_msg_namelen},
 			m_msg_iov{m_msg_iovlen, obtained_bytes},
-			m_msg_iovlen{ItemCfg{.label = "num_iovs"}},
-			m_msg_control{m_msg_controllen, ItemCfg{ItemType::PARAM_OUT, "msg_control"}},
-			m_msg_controllen{ItemCfg{ItemType::PARAM_IN_OUT, "msg_controllen"}} {
+			m_msg_iovlen{ItemCfg{.label = "num_iovs"}} {
 	}
 
 	std::string str() const override;
@@ -753,13 +783,6 @@ protected: // functions
 
 	void updateData(const Tracee &) override;
 
-	/// Returns a description of contained control messages.
-	std::string controlStr() const;
-
-	bool fetchMsgHdr32(const Tracee &proc, std::optional<struct msghdr> &out);
-
-	std::vector<std::byte> convertControlHeader32() const;
-
 	void resetSubItems(const Tracee &proc);
 
 protected: // data
@@ -770,13 +793,75 @@ protected: // data
 	ReadVector m_msg_iov;
 	SizeValue m_msg_iovlen;
 	SendRecvFlags m_msg_flags;
-	BufferPointer m_msg_control;
-	IntValue m_msg_controllen;
 
 	///! Header as observed during system call entry.
 	std::optional<struct msghdr> m_in_header;
 	///! Header as observed during system call exit.
 	std::optional<struct msghdr> m_out_header;
+};
+
+class SendMessageHeader :
+		public MessageHeaderBase {
+public: // functions
+
+	explicit SendMessageHeader() :
+			MessageHeaderBase{ItemCfg{ItemType::PARAM_IN}},
+			m_msg_name{ItemCfg{ItemType::PARAM_IN}, &m_msg_namelen},
+			m_msg_iov{m_msg_iovlen},
+			m_msg_iovlen{ItemCfg{.label = "num_iovs"}} {
+	}
+
+	std::string str() const override;
+
+	/// Provides access to message control data and flags.
+	/**
+	 * The returned object will contain a copy of the control data as well
+	 * as a copy of the receive flags observed in the tracee. You can use
+	 * the ControlMessage iterators to inspect individual messages. This
+	 * uses cosmos::ReceiveMessageHeader instead of
+	 * cosmos::SendMessageHeader, because the latter is intended for
+	 * constructing a new outgoing message, while we are dealing with an
+	 * already assembled messages used by the tracee.
+	 *
+	 * \warning See RecvMessageHeader::header() for limitations of
+	 * cross-ABI tracing.
+	 **/
+	std::optional<cosmos::ReceiveMessageHeader> header() const;
+
+	/// Provides access to the raw payload data which is to be sent out.
+	/*
+	 * The buffer contents will be truncated if buffer fetch limits are in
+	 * effect.
+	 */
+	const WriteVector::BufferVector& ioVector() const {
+		return m_msg_iov.buffers();
+	}
+
+	/// Provides access to the raw control data which is to be sent out.
+	/**
+	 * This type will always fetch the complete control data regardless of
+	 * buffer fetch limits in effect.
+	 **/
+	const std::vector<std::byte>& controlData() const {
+		return m_msg_control.data();
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+	void resetSubItems(const Tracee &proc);
+
+protected: // data
+
+	/* let's reuse items as sub-items for this complex structure */
+	SocketAddress m_msg_name;
+	AddressLength m_msg_namelen;
+	WriteVector m_msg_iov;
+	SizeValue m_msg_iovlen;
+	SendRecvFlags m_msg_flags;
+
+	std::optional<struct msghdr> m_header;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
