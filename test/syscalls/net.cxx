@@ -7,6 +7,7 @@
 
 // clues
 #include <clues/items/net.hxx>
+#include <clues/private/kernel/msghdr.hxx>
 
 // Linux
 #include <sys/socket.h>
@@ -246,6 +247,94 @@ void recv_fds(int sock) {
 		for (auto fd: fds) {
 			close(fd);
 		}
+	}
+}
+
+/* variant for 32-bit cross ABI tracing. Differences in data structures and
+ * memory management are too big to keep common code around :-/ */
+template <bool USE_SOCKETCALL>
+void send_fds32(int sock) {
+	auto msg = alloc_struct_abi<clues::msghdr32>();
+	cosmos::zero_object(*msg);
+	auto vec = alloc_struct_abi<clues::iovec32>();
+	auto data = alloc_abi<char*>(1);
+	*data = 77;
+	vec->iov_base = to_compat_ptr(data);
+	vec->iov_len = sizeof(char);
+	int fds[2] = {STDIN_FILENO, STDOUT_FILENO};
+
+	union ControlBuf {
+		char buf[CMSG_SPACE(sizeof(fds))];
+		clues::cmsghdr32 align;
+	};
+
+	auto control = alloc_struct_abi<ControlBuf>();
+
+	/*
+	 * we cannot use the CMSG_ macros for cross-abi system calls due to
+	 * differences in padding. Use the hard coded pre-computed value of 20
+	 * here for simplicity.
+	 */
+
+	msg->msg_iov = to_compat_ptr(vec);
+	msg->msg_iovlen = 1;
+	msg->msg_control = to_compat_ptr(control);
+	msg->msg_controllen = 20;
+
+	clues::cmsghdr32 *cmsg = &control->align;
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = 20;
+	memcpy((char*)cmsg + sizeof(*cmsg), fds, sizeof(fds));
+
+	int sent;
+
+	/* this returns only the amount of playoad data in msg_iov */
+	if constexpr (USE_SOCKETCALL) {
+		sent = syscall32(SyscallNr32::SOCKETCALL, SYS_SENDMSG, sock, &msg, 0);
+	} else {
+		sent = syscall32(SyscallNr32::SENDMSG, sock, msg, MSG_CONFIRM);
+	}
+
+	constexpr auto PAYLOAD_LEN = sizeof(*data);
+
+	if (sent < 0) {
+		std::cerr << "failed to sendmsg: " << strerror(errno) << "\n";
+		exit(1);
+	} else if (static_cast<size_t>(sent) != PAYLOAD_LEN) {
+		std::cerr << "failed to send full message: " << sent << " vs. " << PAYLOAD_LEN << "\n";
+		exit(1);
+	}
+}
+
+template <bool USE_SOCKETCALL>
+void recv_fds32(int sock) {
+	auto msg = alloc_struct_abi<clues::msghdr32>();
+	cosmos::zero_object(*msg);
+	auto vec = alloc_struct_abi<clues::iovec32>();
+	auto data = alloc_abi<char*>(1);
+	*data = 77;
+	vec->iov_base = to_compat_ptr(data);
+	vec->iov_len = sizeof(char);
+	constexpr auto CONTROLBUF_LEN = 1024;
+	auto control = alloc_abi<char*>(CONTROLBUF_LEN);
+
+	msg->msg_iov = to_compat_ptr(vec);
+	msg->msg_iovlen = 1;
+	msg->msg_control = to_compat_ptr(control);
+	msg->msg_controllen = CONTROLBUF_LEN;
+
+	int received;
+
+	if constexpr (USE_SOCKETCALL) {
+		received = syscall32(SyscallNr32::SOCKETCALL, SYS_RECVMSG, sock, msg, MSG_CMSG_CLOEXEC);
+	} else {
+		received = syscall32(SyscallNr32::RECVMSG, sock, msg, MSG_CMSG_CLOEXEC);
+	}
+
+	if (received != sizeof(char)) {
+		std::cerr << "received unexpected byte count: " << received << "\n";
+		exit(1);
 	}
 }
 
@@ -1145,17 +1234,15 @@ const auto TESTS = std::array{
 			VERIFY(msg.ioVector()[0].filled == 1);
 			VERIFY(msg.ioVector()[0].data[0] == std::byte{77});
 			verify_unix_msg_header(*msg.header(), good, true);
-		}), IgnoreCalls{4}, {
-#if 0
-			I386_CROSS_ABI(IgnoreCalls{6}, []() {
+		}), IgnoreCalls::AUTO, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
 				auto send_recv_cb = [](int send_sock, int recv_sock) {
-					send_fds<false>(send_sock);
-					recv_fds<false, true>(recv_sock);
+					send_fds32<false>(send_sock);
+					recv_fds32<false>(recv_sock);
 				};
 
 				do_send_unix(send_recv_cb);
 			})
-#endif
 		}
 	},
 	TestSpec{SystemCallNr::SENDMSG, []() {
@@ -1177,7 +1264,15 @@ const auto TESTS = std::array{
 		}), EXIT_VERIFY_CB(SendMsgSystemCall, {
 			VERIFY(sc.hasResultValue());
 			VERIFY(sc.written.value() == 1);
-		}), IgnoreCalls{3}, {
+		}), IgnoreCalls::AUTO, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
+				auto send_recv_cb = [](int send_sock, int recv_sock) {
+					send_fds32<false>(send_sock);
+					recv_fds32<false>(recv_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
 		}
 	}
 };
