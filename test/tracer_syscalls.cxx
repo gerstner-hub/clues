@@ -56,6 +56,7 @@ const std::vector<std::pair<std::string, std::string>> REGEX_SEARCH_REPLACE = {
 	{"{decimal}", R"([0-9]+)"},
 	{"{pid}", R"([0-9]+)"},
 	{"{uid}", R"([0-9]+)"},
+	{"{gid}", R"([0-9]+)"},
 	// match a string surrounded by double-quotes, also supporting
 	// embedded escaped \" characters.
 	// Optionally a suffix ending in (...) if the string was truncated.
@@ -525,7 +526,7 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(getcwd\(path="/tmp", size=4096\) = 5 \(length\))",
 		R"(fchdir\(fd=3\) = 0 \(success\))",
 	}},
-	TestSpec{"socket", "socket,bind,connect,listen,accept,accept4,shutdown,getpeername,getsockname,recvfrom,sendto", {
+	TestSpec{"socket", "socket,bind,connect,listen,accept,accept4,shutdown,getpeername,getsockname,recvfrom,sendto,sendmsg,recvmsg", {
 		R"(socket\(domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0\) = 3 \(fd\))",
 		R"(socket\(domain=AF_INET6, type=0x2 \(SOCK_DGRAM\), prot=IPPROTO_UDP\) = 3 \(fd\))",
 		R"(socket\(domain=AF_NETLINK, type=0x3 \(SOCK_RAW\), prot=NETLINK_ROUTE\) = 3 \(fd\))",
@@ -546,6 +547,10 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(getpeername\(sockfd={fd}, addr=\{family=AF_UNIX, path="<unnamed>"\}, addrlen=110 → 2\) = 0 \(success\))",
 		R"(sendto\(sockfd={fd}, buf="test message", count=12, flags=0x4000 \(MSG_NOSIGNAL\), addr=NULL, addrlen=0\) = 12 \(bytes\))",
 		R"(recvfrom\(sockfd={fd}, buf="test message", count=1024, flags=0x4 \(MSG_DONTROUTE\), addr=NULL, addrlen=NULL\) = 12 \(bytes\))",
+		R"(sendmsg\(sockfd={fd}, msg=\{msg_name=NULL, msg_namelen=0, msg_iov=\[\{iov_base={addr} → \["*"\], iov_len=1\}\], msg_iovlen=1, msg_control=\[\{cmsg_len=8, cmsg_level=SOL_SOCKET, cmsg_type=SCM_RIGHTS, cmsg_data=\[0, 1\]\}\], msg_controllen=20, msg_flags=0x0 \(\)\}, flags=0x0 \(\)\) = 1 \(written\))",
+		R"(recvmsg\(sockfd={fd}, msg=\{msg_name=NULL, msg_namelen=0, msg_iov=\[\{iov_base={addr} → \["*"\], iov_len=1\}\], msg_iovlen=1, msg_control=\[\{cmsg_len=8, cmsg_level=SOL_SOCKET, cmsg_type=SCM_RIGHTS, cmsg_data=\[6, 7\]\}\], msg_controllen=1024 → 20, msg_flags=0x40000000 \(MSG_CMSG_CLOEXEC\)\}, flags=0x40000000 \(MSG_CMSG_CLOEXEC\)\) = 1 \(read\))",
+		R"(sendmsg\(sockfd={fd}, msg=\{msg_name=\{family=AF_UNIX, path="@sendsocket"\}, msg_namelen=14, msg_iov=\[\{iov_base={addr} → \["test message"\], iov_len=12\}\], msg_iovlen=1, msg_control=NULL, msg_controllen=0, msg_flags=0x0 \(\)\}, flags=0x4000 \(MSG_NOSIGNAL\)\) = 12 \(written\))",
+		R"(recvmsg\(sockfd={fd}, msg=\{msg_name=\{family=AF_UNIX, path="@testsocket"\}, msg_namelen=110 → 14, msg_iov=\[\{iov_base={addr} → \["test message"\], iov_len=1024\}\], msg_iovlen=1, msg_control=\[\{cmsg_len=12, cmsg_level=SOL_SOCKET, cmsg_type=SCM_CREDENTIALS, cmsg_data=\{pid={pid}, uid={uid}, gid={gid}\}\}\], msg_controllen=1024 → 24, msg_flags=0x0 \(\)\}, flags=0x4000 \(MSG_NOSIGNAL\)\) = 12 \(read\))",
 	}},
 	TestSpec{"socket", "socketpair", {
 		R"(socketpair\(domain=AF_UNIX, type=0x1 \(SOCK_STREAM\), prot=0, sv=\[3, 4\]\) = 0 \(success\))",
@@ -566,6 +571,8 @@ const std::vector<TestSpec> TEST_SPECS{
 		R"(socketcall\(call=SYS_RECV, args=\{sockfd={fd}, buf="test message", count=1024, flags=0x4 \(MSG_DONTROUTE\)\}\) = 12 \(bytes\))",
 		R"(socketcall\(call=SYS_SENDTO, args=\{sockfd={fd}, buf="test message", count=12, flags=0x4000 \(MSG_NOSIGNAL\), addr=\{family=AF_UNIX, path="@testsocket"\}, addrlen=14\}\) = 12 \(bytes\))",
 		R"(socketcall\(call=SYS_RECVFROM, args=\{sockfd={fd}, buf="test message", count=1024, flags=0x4 \(MSG_DONTROUTE\), addr=\{family=AF_UNIX, path="@sendsocket"\}, addrlen=110 → 14\}\) = 12 \(bytes\))",
+		R"(socketcall\(call=SYS_SENDMSG, args=\{sockfd={fd}, msg=\{msg_name=\{family=AF_UNIX, path="@sendsocket"\}, msg_namelen=14, msg_iov=\[\{iov_base={addr} → \["test message"\], iov_len=12\}\], msg_iovlen=1, msg_control=NULL, msg_controllen=0, msg_flags=0x0 \(\)\}, flags=0x4000 \(MSG_NOSIGNAL\)\}\) = 12 \(written\))",
+		R"(socketcall\(call=SYS_RECVMSG, args=\{sockfd={fd}, msg=\{msg_name=\{family=AF_UNIX, path="@testsocket"\}, msg_namelen=110 → 14, msg_iov=\[\{iov_base={addr} → \["test message"\], iov_len=1024\}\], msg_iovlen=1, msg_control=\[\{cmsg_len=12, cmsg_level=SOL_SOCKET, cmsg_type=SCM_CREDENTIALS, cmsg_data=\{pid={pid}, uid={uid}, gid={gid}\}\}\], msg_controllen=1024 → 24, msg_flags=0x0 \(\)\}, flags=0x4000 \(MSG_NOSIGNAL\)\}\) = 12 \(read\))",
 	}},
 	TestSpec{"getids", "getuid32", {
 		R"(getuid32\(\) = [0-9]+)"
