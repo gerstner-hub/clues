@@ -163,6 +163,10 @@ std::string BufferPointer::str() const {
 		return format::pointer(asPtr());
 	}
 
+	if (isZero()) {
+		return "NULL";
+	}
+
 	const auto is_cut_off = availableBytes() != m_data.size();
 	format::Flags flags;
 	if (m_is_binary) {
