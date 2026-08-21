@@ -1,3 +1,5 @@
+#pragma once
+
 // C++
 #include <cstring>
 #include <format>

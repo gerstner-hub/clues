@@ -1,5 +1,6 @@
 // test
 #include "../utils/syscalls.hxx"
+#include "../utils/socketcall.inl"
 
 // cosmos
 #include <cosmos/compiler.hxx>
@@ -196,7 +197,7 @@ void send_fds(int sock) {
 	/* this returns only the amount of playoad data in msg_iov */
 	if constexpr (USE_SOCKETCALL) {
 #ifdef COSMOS_I386
-		sent = syscall(SYS_socketcall, SYS_SENDMSG, sock, &msg, 0);
+		sent = socketcall(SYS_SENDMSG, sock, &msg, MSG_CONFIRM);
 #endif
 	} else {
 		sent = syscall(SYS_sendmsg, sock, &msg, MSG_CONFIRM);
@@ -227,7 +228,7 @@ void recv_fds(int sock) {
 
 	if constexpr (USE_SOCKETCALL) {
 #ifdef COSMOS_I386
-		received = syscall(SYS_socketcall, SYS_RECVMSG, sock, &msg, MSG_CMSG_CLOEXEC);
+		received = socketcall(SYS_RECVMSG, sock, &msg, MSG_CMSG_CLOEXEC);
 #endif
 	} else {
 		received = syscall(SYS_recvmsg, sock, &msg, MSG_CMSG_CLOEXEC);
@@ -291,7 +292,7 @@ void send_fds32(int sock) {
 
 	/* this returns only the amount of playoad data in msg_iov */
 	if constexpr (USE_SOCKETCALL) {
-		sent = syscall32(SyscallNr32::SOCKETCALL, SYS_SENDMSG, sock, &msg, 0);
+		sent = socketcall32(SYS_SENDMSG, sock, msg, MSG_CONFIRM);
 	} else {
 		sent = syscall32(SyscallNr32::SENDMSG, sock, msg, MSG_CONFIRM);
 	}
@@ -327,7 +328,7 @@ void recv_fds32(int sock) {
 	int received;
 
 	if constexpr (USE_SOCKETCALL) {
-		received = syscall32(SyscallNr32::SOCKETCALL, SYS_RECVMSG, sock, msg, MSG_CMSG_CLOEXEC);
+		received = socketcall32(SYS_RECVMSG, sock, msg, MSG_CMSG_CLOEXEC);
 	} else {
 		received = syscall32(SyscallNr32::RECVMSG, sock, msg, MSG_CMSG_CLOEXEC);
 	}
@@ -395,12 +396,6 @@ void check_getaddr_exit(const SC &sc, bool &good) {
 	VERIFY(sc.addr.addr());
 }
 
-#ifdef TEST_I386_EMU
-uint32_t* alloc_args32(const size_t count) {
-	return alloc32<uint32_t*>(sizeof(uint32_t) * count);
-}
-#endif
-
 const auto TESTS = std::array{
 	TestSpec{SystemCallNr::SOCKET, []() {
 			syscall(SYS_socket, AF_INET6, SOCK_STREAM|SOCK_NONBLOCK, IPPROTO_TCP);
@@ -416,11 +411,7 @@ const auto TESTS = std::array{
 	},
 	TestSpec{SystemCallNr::SOCKETCALL, []() {
 #ifdef COSMOS_I386
-			unsigned long args[3];
-			args[0] = AF_INET6;
-			args[1]= SOCK_STREAM|SOCK_NONBLOCK;
-			args[2] = IPPROTO_TCP;
-			syscall(SYS_socketcall, SYS_SOCKET, args);
+			socketcall(SYS_SOCKET, AF_INET6, SOCK_STREAM|SOCK_NONBLOCK, IPPROTO_TCP);
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Socket, {
 			check_socket_entry(sc, good);
@@ -428,11 +419,7 @@ const auto TESTS = std::array{
 			VERIFY(!sc.hasErrorCode());
 		}), IgnoreCalls{}, {
 			I386_CROSS_ABI(IgnoreCalls{1}, []() {
-				auto args = alloc_args32(3);
-				args[0] = AF_INET6;
-				args[1]= SOCK_STREAM|SOCK_NONBLOCK;
-				args[2] = IPPROTO_TCP;
-				syscall32(SyscallNr32::SOCKETCALL, SYS_SOCKET, args);
+				socketcall32(SYS_SOCKET, AF_INET6, SOCK_STREAM|SOCK_NONBLOCK, IPPROTO_TCP);
 			})
 		},
 		"socket()",
@@ -458,12 +445,7 @@ const auto TESTS = std::array{
 	TestSpec{SystemCallNr::SOCKETCALL, []() {
 #ifdef COSMOS_I386
 			int sv[2];
-			unsigned long args[4];
-			args[0] = AF_UNIX;
-			args[1] = SOCK_DGRAM|SOCK_CLOEXEC;
-			args[2] = 0;
-			args[3] = (unsigned long)sv;
-			syscall(SYS_socketcall, SYS_SOCKETPAIR, args);
+			socketcall(SYS_SOCKETPAIR, AF_UNIX, SOCK_DGRAM|SOCK_CLOEXEC, 0, sv);
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_SocketPair, {
 			check_socketpair_entry(sc, good);
@@ -475,12 +457,7 @@ const auto TESTS = std::array{
 		}), IgnoreCalls{}, {
 			I386_CROSS_ABI(IgnoreCalls{2}, []() {
 				auto sv = alloc32<int*>(sizeof(int) * 2);
-				auto args = alloc_args32(4);
-				args[0] = AF_UNIX;
-				args[1] = SOCK_DGRAM|SOCK_CLOEXEC;
-				args[2] = 0;
-				args[3] = (uint32_t)(uintptr_t)sv;
-				syscall32(SyscallNr32::SOCKETCALL, SYS_SOCKETPAIR, args);
+				socketcall32(SYS_SOCKETPAIR, AF_UNIX, SOCK_DGRAM|SOCK_CLOEXEC, 0, sv);
 			})
 		},
 		"socketpair()",
@@ -513,11 +490,7 @@ const auto TESTS = std::array{
 			int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
 			struct sockaddr_un unix;
 			const auto addrlen = setup_unixaddr(unix);
-			unsigned long args[3];
-			args[0] = sock;
-			args[1] = reinterpret_cast<unsigned long>(&unix);
-			args[2] = addrlen;
-			syscall(SYS_socketcall, SYS_BIND, args);
+			socketcall(SYS_BIND, sock, &unix, addrlen);
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Bind, {
 			check_bind_entry(sc, good);
@@ -526,14 +499,9 @@ const auto TESTS = std::array{
 		}), IgnoreCalls{1}, {
 			I386_CROSS_ABI(IgnoreCalls{3}, []() {
 				int sock = socket(AF_UNIX, SOCK_DGRAM, 0);
-				auto args = alloc_args32(3);
 				auto unix = alloc_struct32<struct sockaddr_un>();
 				const auto addrlen = setup_unixaddr(*unix);
-				args[0] = sock;
-				args[1] = reinterpret_cast<unsigned long>(unix);
-				args[2] = addrlen;
-				syscall32(SyscallNr32::SOCKETCALL,
-						SYS_BIND, args);
+				socketcall32(SYS_BIND, sock, unix, addrlen);
 			})
 		},
 		"bind()",
@@ -572,11 +540,7 @@ const auto TESTS = std::array{
 			ip4.sin_family = AF_INET;
 			ip4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 			ip4.sin_port = htons(1234);
-			unsigned long args[3];
-			args[0] = sock;
-			args[1] = reinterpret_cast<unsigned long>(&ip4);
-			args[2] = sizeof(ip4);
-			syscall(SYS_socketcall, SYS_CONNECT, args);
+			socketcall(SYS_CONNECT, sock, &ip4, sizeof(ip4));
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Connect, {
 			check_connect_entry(sc, good);
@@ -585,16 +549,11 @@ const auto TESTS = std::array{
 		}), IgnoreCalls{1}, {
 			I386_CROSS_ABI(IgnoreCalls{3}, []() {
 				int sock = socket(AF_INET, SOCK_DGRAM, 0);
-				auto args = alloc_args32(3);
 				auto ip4 = alloc_struct32<sockaddr_in>();
 				ip4->sin_family = AF_INET;
 				ip4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 				ip4->sin_port = htons(1234);
-				args[0] = sock;
-				args[1] = reinterpret_cast<unsigned long>(ip4);
-				args[2] = sizeof(*ip4);
-				syscall32(SyscallNr32::SOCKETCALL,
-						SYS_CONNECT, args);
+				socketcall32(SYS_CONNECT, sock, ip4, sizeof(*ip4));
 			})
 		},
 		"connect()",
@@ -629,10 +588,7 @@ const auto TESTS = std::array{
 			sockaddr_un unix;
 			const auto addrlen = setup_unixaddr(unix);
 			bind(sock, (sockaddr*)&unix, addrlen);
-			unsigned long args[2];
-			args[0] = sock;
-			args[1] = 15;
-			syscall(SYS_socketcall, SYS_LISTEN, args);
+			socketcall(SYS_LISTEN, sock, 15);
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Listen, {
 			VERIFY(sc.sockfd.fd() == FIRST_FD);
@@ -647,11 +603,7 @@ const auto TESTS = std::array{
 				if (bind(sock, (sockaddr*)&unix, addrlen) < 0) {
 
 				}
-				auto args = alloc_args32(2);
-				args[0] = sock;
-				args[1] = 15;
-				syscall32(SyscallNr32::SOCKETCALL,
-						SYS_LISTEN, args);
+				socketcall32(SYS_LISTEN, sock, 15);
 			})
 		},
 		"listen()",
@@ -708,11 +660,7 @@ const auto TESTS = std::array{
 			accept_conn([](int sock) {
 				struct sockaddr_in addr;
 				socklen_t len = sizeof(addr);
-				unsigned long args[3];
-				args[0] = sock;
-				args[1] = (unsigned long)&addr;
-				args[2] = (unsigned long)&len;
-				syscall(SYS_socketcall, SYS_ACCEPT, args);
+				socketcall(SYS_ACCEPT, sock, &addr, &len);
 			});
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Accept, {
@@ -726,11 +674,7 @@ const auto TESTS = std::array{
 					auto addr = alloc_struct32<sockaddr_in>();
 					auto len = alloc_struct32<socklen_t>();
 					*len = sizeof(*addr);
-					auto args = alloc_args32(3);
-					args[0] = sock;
-					args[1] = (unsigned long)addr;
-					args[2] = (unsigned long)len;
-					syscall32(SyscallNr32::SOCKETCALL, SYS_ACCEPT, args);
+					socketcall32(SYS_ACCEPT, sock, addr, len);
 				});
 			})
 		},
@@ -742,12 +686,7 @@ const auto TESTS = std::array{
 			accept_conn([](int sock) {
 				struct sockaddr_in addr;
 				socklen_t len = sizeof(addr);
-				unsigned long args[4];
-				args[0] = sock;
-				args[1] = (unsigned long)&addr;
-				args[2] = (unsigned long)&len;
-				args[3] = SOCK_CLOEXEC;
-				syscall(SYS_socketcall, SYS_ACCEPT4, args);
+				socketcall(SYS_ACCEPT4, sock, &addr, &len, SOCK_CLOEXEC);
 			});
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Accept, {
@@ -763,12 +702,7 @@ const auto TESTS = std::array{
 					auto addr = alloc_struct32<sockaddr_in>();
 					auto len = alloc_struct32<socklen_t>();
 					*len = sizeof(*addr);
-					auto args = alloc_args32(4);
-					args[0] = sock;
-					args[1] = (unsigned long)addr;
-					args[2] = (unsigned long)len;
-					args[3] = SOCK_CLOEXEC;
-					syscall32(SyscallNr32::SOCKETCALL, SYS_ACCEPT4, args);
+					socketcall32(SYS_ACCEPT4, sock, addr, len, SOCK_CLOEXEC);
 				});
 			})
 		},
@@ -805,10 +739,7 @@ const auto TESTS = std::array{
 				struct sockaddr_in addr;
 				socklen_t len = sizeof(addr);
 				int conn = accept(sock, (sockaddr*)&addr, &len);
-				unsigned long args[2];
-				args[0] = conn;
-				args[1] = SHUT_WR;
-				syscall(SYS_socketcall, SYS_SHUTDOWN, args);
+				socketcall(SYS_SHUTDOWN, conn, SHUT_WR);
 			});
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Shutdown, {
@@ -824,10 +755,7 @@ const auto TESTS = std::array{
 					socklen_t len = sizeof(addr);
 					int conn = accept(sock, (sockaddr*)&addr, &len);
 			
-					auto args = alloc_args32(2);
-					args[0] = conn;
-					args[1] = SHUT_WR;
-					syscall32(SyscallNr32::SOCKETCALL, SYS_SHUTDOWN, args);
+					socketcall32(SYS_SHUTDOWN, conn, SHUT_WR);
 				});
 			})
 		},
@@ -906,11 +834,7 @@ const auto TESTS = std::array{
 			const auto addrlen = setup_unixaddr(unix);
 			if (bind(sock, (struct sockaddr*)&unix, addrlen) == 0) {
 				socklen_t len = sizeof(unix);
-				unsigned long args[3];
-				args[0] = sock;
-				args[1] = reinterpret_cast<unsigned long>(&unix);
-				args[2] = reinterpret_cast<unsigned long>(&len);
-				syscall(SYS_socketcall, SYS_GETSOCKNAME, args);
+				socketcall(SYS_GETSOCKNAME, sock, &unix, &len);
 			}
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_GetSockName, {
@@ -929,11 +853,7 @@ const auto TESTS = std::array{
 				if (bind(sock, (struct sockaddr*)unix, bind_len) == 0) {
 					auto len = alloc_struct32<socklen_t>();
 					*len = sizeof(struct sockaddr_un);
-					auto args = alloc_args32(3);
-					args[0] = sock;
-					args[1] = reinterpret_cast<unsigned long>(unix);
-					args[2] = reinterpret_cast<unsigned long>(len);
-					syscall32(SyscallNr32::SOCKETCALL, SYS_GETSOCKNAME, args);
+					socketcall32(SYS_GETSOCKNAME, sock, unix, len);
 				}
 			})
 		},
@@ -950,11 +870,7 @@ const auto TESTS = std::array{
 
 			if (connect(sock, (struct sockaddr*)&ip, sizeof(ip)) == 0) {
 				socklen_t len = sizeof(ip);
-				unsigned long args[3];
-				args[0] = sock;
-				args[1] = reinterpret_cast<unsigned long>(&ip);
-				args[2] = reinterpret_cast<unsigned long>(&len);
-				syscall(SYS_socketcall, SYS_GETPEERNAME, args);
+				socketcall(SYS_GETPEERNAME, sock, &ip, &len);
 			}
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_GetPeerName, {
@@ -977,11 +893,7 @@ const auto TESTS = std::array{
 				if (connect(sock, (struct sockaddr*)ip, sizeof(*ip)) == 0) {
 					auto len = alloc_struct32<socklen_t>();
 					*len = sizeof(*ip);
-					auto args = alloc_args32(3);
-					args[0] = sock;
-					args[1] = reinterpret_cast<unsigned long>(ip);
-					args[2] = reinterpret_cast<unsigned long>(len);
-					syscall32(SyscallNr32::SOCKETCALL, SYS_GETPEERNAME, args);
+					socketcall32(SYS_GETPEERNAME, sock, ip, len);
 				}
 			})
 		},
@@ -1054,14 +966,7 @@ const auto TESTS = std::array{
 #ifdef COSMOS_I386
 		do_receive_unix([](int sock) {
 			char in_data[128];
-
-			unsigned long args[4];
-			args[0] = sock;
-			args[1] = reinterpret_cast<unsigned long>(in_data);
-			args[2] = sizeof(in_data);
-			args[3] = MSG_NOSIGNAL;
-
-			syscall(SYS_socketcall, SYS_RECV, args);
+			socketcall(SYS_RECV, sock, in_data, sizeof(in_data), MSG_NOSIGNAL);
 		});
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Recv, {
@@ -1073,13 +978,7 @@ const auto TESTS = std::array{
 				do_receive_unix([](int sock) {
 					auto in_data = alloc32<char*>(128);
 
-					auto args = alloc_args32(4);
-					args[0] = sock;
-					args[1] = reinterpret_cast<unsigned long>(in_data);
-					args[2] = 128;
-					args[3] = MSG_NOSIGNAL;
-
-					syscall32(SyscallNr32::SOCKETCALL, SYS_RECV, args);
+					socketcall32(SYS_RECV, sock, in_data, 128, MSG_NOSIGNAL);
 				});
 			})
 		},
@@ -1094,15 +993,8 @@ const auto TESTS = std::array{
 			unix.sun_family = AF_UNIX;
 			socklen_t addrlen = sizeof(unix);
 
-			unsigned long args[6];
-			args[0] = sock;
-			args[1] = reinterpret_cast<unsigned long>(in_data);
-			args[2] = sizeof(in_data);
-			args[3] = MSG_NOSIGNAL;
-			args[4] = reinterpret_cast<unsigned long>(&unix);
-			args[5] = reinterpret_cast<unsigned long>(&addrlen);
-
-			syscall(SYS_socketcall, SYS_RECVFROM, args);
+			socketcall(SYS_RECVFROM, sock, in_data, sizeof(in_data), MSG_NOSIGNAL,
+					&unix, &addrlen);
 		});
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_RecvFrom, {
@@ -1118,15 +1010,8 @@ const auto TESTS = std::array{
 					auto addrlen = alloc_struct32<socklen_t>();
 					*addrlen = sizeof(*unix);
 
-					auto args = alloc_args32(4);
-					args[0] = sock;
-					args[1] = reinterpret_cast<unsigned long>(in_data);
-					args[2] = 128;
-					args[3] = MSG_NOSIGNAL;
-					args[4] = reinterpret_cast<unsigned long>(unix);
-					args[5] = reinterpret_cast<unsigned long>(addrlen);
-
-					syscall32(SyscallNr32::SOCKETCALL, SYS_RECVFROM, args);
+					socketcall32(SYS_RECVFROM, sock, in_data, 128,
+							MSG_NOSIGNAL, unix, addrlen);
 				});
 			})
 		},
@@ -1136,12 +1021,7 @@ const auto TESTS = std::array{
 	TestSpec{SystemCallNr::SOCKETCALL, []() {
 #ifdef COSMOS_I386
 		do_send_unix([](int send_sock, int) {
-			unsigned long args[4];
-			args[0] = send_sock;
-			args[1] = reinterpret_cast<unsigned long>(SEND_DATA.data());
-			args[2] = SEND_DATA.size();
-			args[3] = MSG_NOSIGNAL;
-			syscall(SYS_socketcall, SYS_SEND, args);
+			socketcall(SYS_SEND, send_sock, SEND_DATA.data(), SEND_DATA.size(), MSG_NOSIGNAL);
 		});
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_Send, {
@@ -1153,12 +1033,8 @@ const auto TESTS = std::array{
 				do_send_unix([](int send_sock, int) {
 					auto send_data = alloc32<char*>(SEND_DATA.size());
 					memcpy(send_data, SEND_DATA.data(), SEND_DATA.size());
-					auto args = alloc_args32(4);
-					args[0] = send_sock;
-					args[1] = reinterpret_cast<unsigned long>(send_data);
-					args[2] = SEND_DATA.size();
-					args[3] = MSG_NOSIGNAL;
-					syscall32(SyscallNr32::SOCKETCALL, SYS_SEND, args);
+					socketcall32(SYS_SEND, send_sock, send_data,
+							SEND_DATA.size(), MSG_NOSIGNAL);
 				});
 			})
 		},
@@ -1172,14 +1048,8 @@ const auto TESTS = std::array{
 			unix.sun_family = AF_UNIX;
 			memcpy(unix.sun_path, UNIX_RECEIVER.data(), UNIX_RECEIVER.size());
 			socklen_t addrlen = 2 + UNIX_RECEIVER.size();
-			unsigned long args[6];
-			args[0] = send_sock;
-			args[1] = reinterpret_cast<unsigned long>(SEND_DATA.data());
-			args[2] = SEND_DATA.size();
-			args[3] = MSG_NOSIGNAL;
-			args[4] = reinterpret_cast<unsigned long>(&unix);
-			args[5] = addrlen;
-			syscall(SYS_socketcall, SYS_SENDTO, args);
+			socketcall(SYS_SENDTO, send_sock, SEND_DATA.data(), SEND_DATA.size(),
+					MSG_NOSIGNAL, &unix, addrlen);
 		});
 #endif
 		}, ENTRY_VERIFY_CB(SocketCall_SendTo, {
@@ -1194,14 +1064,8 @@ const auto TESTS = std::array{
 					memcpy(addr->sun_path, UNIX_RECEIVER.data(), UNIX_RECEIVER.size());
 					auto send_data = alloc32<char*>(SEND_DATA.size());
 					memcpy(send_data, SEND_DATA.data(), SEND_DATA.size());
-					auto args = alloc_args32(6);
-					args[0] = send_sock;
-					args[1] = reinterpret_cast<unsigned long>(send_data);
-					args[2] = SEND_DATA.size();
-					args[3] = MSG_NOSIGNAL;
-					args[4] = reinterpret_cast<unsigned long>(addr);
-					args[5] = 2 + UNIX_RECEIVER.size();
-					syscall32(SyscallNr32::SOCKETCALL, SYS_SENDTO, args);
+					socketcall32(SYS_SENDTO, send_sock, send_data, SEND_DATA.size(),
+							MSG_NOSIGNAL, addr, UNIX_RECEIVER.size() + 2);
 				});
 			})
 		},

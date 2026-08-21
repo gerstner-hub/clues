@@ -20,6 +20,8 @@
 #	include <array>
 #endif
 
+#include "../utils/socketcall.inl"
+
 /*
  * On I386 socketcall() is used by default by glibc, thus use explicit
  * syscall() wrappers for the regular system calls and explicit socketcall()
@@ -31,35 +33,6 @@ constexpr auto UNIXADDR_BASE_SIZE = offsetof(struct sockaddr_un, sun_path);
 int socket(int af, int type, int prot) {
 	return syscall(SYS_socket, af, type, prot);
 }
-
-#ifdef COSMOS_I386
-template <typename T>
-unsigned long to_ulong(T value) {
-    if constexpr (std::is_pointer_v<T>) {
-        return reinterpret_cast<unsigned long>(value);
-    } else {
-        return static_cast<unsigned long>(value);
-    }
-}
-
-template <typename... ARGS>
-requires (sizeof...(ARGS) <= 6)
-std::array<unsigned long, sizeof...(ARGS)> make_array(ARGS... args) {
-    std::array<unsigned long, sizeof...(ARGS)> result{};
-
-    std::size_t i = 0;
-    ((result[i++] = to_ulong(args)), ...);
-
-    return result;
-}
-
-template <typename... ARGS>
-int socketcall(int call, ARGS... args) {
-	const auto arr = make_array(std::forward<ARGS>(args)...);
-
-	return syscall(SYS_socketcall, call, arr.data());
-}
-#endif
 
 template <typename ADDR>
 void bind_and_listen(int fd, const ADDR &addr, std::optional<socklen_t> addrlen = {}) {
