@@ -166,6 +166,46 @@ void verify_unix_msg_header(const cosmos::ReceiveMessageHeader &header, bool &go
 	VERIFY(count == 1);
 }
 
+void check_sendmsg_entry(const clues::SendMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.sockfd.fd() == FIRST_FD);
+	VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CONFIRM);
+	const auto &msg = sc.msg;
+	VERIFY(msg.header() != std::nullopt);
+	VERIFY(msg.ioVector().size() == 1);
+	VERIFY(msg.ioVector()[0].len == 1);
+	VERIFY(msg.ioVector()[0].filled == 1);
+	VERIFY(msg.controlData().size() > 0);
+	verify_unix_msg_header(*msg.header(), good, false);
+}
+
+void check_sendmsg_exit(const clues::SendMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.hasResultValue());
+	VERIFY(sc.written.value() == 1);
+}
+
+void check_recvmsg_entry(const clues::RecvMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.sockfd.fd() == SECOND_FD);
+	VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CLOEXEC);
+	const auto &msg = sc.msg;
+	VERIFY(msg.ioVector().size() == 1);
+	VERIFY(msg.ioVector()[0].len == 1);
+	VERIFY(msg.ioVector()[0].filled == 0);
+	VERIFY(msg.controlData().empty());
+	VERIFY(msg.header() == std::nullopt);
+}
+
+void check_recvmsg_exit(const clues::RecvMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.hasResultValue());
+	VERIFY(sc.read.value() == 1);
+	const auto &msg = sc.msg;
+	VERIFY(msg.header() != std::nullopt);
+	VERIFY(msg.ioVector().size() == 1);
+	VERIFY(msg.ioVector()[0].len == 1);
+	VERIFY(msg.ioVector()[0].filled == 1);
+	VERIFY(msg.ioVector()[0].data[0] == std::byte{77});
+	verify_unix_msg_header(*msg.header(), good, true);
+}
+
 template <bool USE_SOCKETCALL>
 void send_fds(int sock) {
 	struct msghdr msg;
@@ -203,7 +243,9 @@ void send_fds(int sock) {
 		sent = syscall(SYS_sendmsg, sock, &msg, MSG_CONFIRM);
 	}
 
-	if (sent < 0 || static_cast<size_t>(sent) != sizeof(data)) {
+	if (sent < 0) {
+		std::cerr << "failed to sendmsg(): " << strerror(errno) << "\n";
+	} else if (static_cast<size_t>(sent) != sizeof(data)) {
 		std::cerr << "failed to send full message: " << sent << " vs. " << sizeof(data) << "\n";
 		exit(1);
 	}
@@ -250,6 +292,8 @@ void recv_fds(int sock) {
 		}
 	}
 }
+
+#ifdef TEST_I386_EMU
 
 /* variant for 32-bit cross ABI tracing. Differences in data structures and
  * memory management are too big to keep common code around :-/ */
@@ -338,6 +382,8 @@ void recv_fds32(int sock) {
 		exit(1);
 	}
 }
+
+#endif // TEST_I386_EMU
 
 /* performs 4 system calls, sends 8 byte of data, binds to '\0send'  */
 void do_receive_unix(SocketCB cb) {
@@ -1080,24 +1126,9 @@ const auto TESTS = std::array{
 
 			do_send_unix(send_recv_cb);
 		}, ENTRY_VERIFY_CB(RecvMsgSystemCall, {
-			VERIFY(sc.sockfd.fd() == SECOND_FD);
-			VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CLOEXEC);
-			const auto &msg = sc.msg;
-			VERIFY(msg.ioVector().size() == 1);
-			VERIFY(msg.ioVector()[0].len == 1);
-			VERIFY(msg.ioVector()[0].filled == 0);
-			VERIFY(msg.controlData().empty());
-			VERIFY(msg.header() == std::nullopt);
+			check_recvmsg_entry(sc, good);
 		}), EXIT_VERIFY_CB(RecvMsgSystemCall, {
-			VERIFY(sc.hasResultValue());
-			VERIFY(sc.read.value() == 1);
-			const auto &msg = sc.msg;
-			VERIFY(msg.header() != std::nullopt);
-			VERIFY(msg.ioVector().size() == 1);
-			VERIFY(msg.ioVector()[0].len == 1);
-			VERIFY(msg.ioVector()[0].filled == 1);
-			VERIFY(msg.ioVector()[0].data[0] == std::byte{77});
-			verify_unix_msg_header(*msg.header(), good, true);
+			check_recvmsg_exit(sc, good);
 		}), IgnoreCalls::AUTO, {
 			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
 				auto send_recv_cb = [](int send_sock, int recv_sock) {
@@ -1116,18 +1147,9 @@ const auto TESTS = std::array{
 
 			do_send_unix(send_recv_cb);
 		}, ENTRY_VERIFY_CB(SendMsgSystemCall, {
-			VERIFY(sc.sockfd.fd() == FIRST_FD);
-			VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CONFIRM);
-			const auto &msg = sc.msg;
-			VERIFY(msg.header() != std::nullopt);
-			VERIFY(msg.ioVector().size() == 1);
-			VERIFY(msg.ioVector()[0].len == 1);
-			VERIFY(msg.ioVector()[0].filled == 1);
-			VERIFY(msg.controlData().size() > 0);
-			verify_unix_msg_header(*msg.header(), good, false);
+			check_sendmsg_entry(sc, good);
 		}), EXIT_VERIFY_CB(SendMsgSystemCall, {
-			VERIFY(sc.hasResultValue());
-			VERIFY(sc.written.value() == 1);
+			check_sendmsg_exit(sc, good);
 		}), IgnoreCalls::AUTO, {
 			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
 				auto send_recv_cb = [](int send_sock, int recv_sock) {
@@ -1138,7 +1160,61 @@ const auto TESTS = std::array{
 				do_send_unix(send_recv_cb);
 			})
 		}
-	}
+	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+		auto send_recv_cb = [](int send_sock, int recv_sock) {
+			send_fds<false>(send_sock);
+			recv_fds<true>(recv_sock);
+		};
+
+		do_send_unix(send_recv_cb);
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_RecvMsg, {
+			check_recvmsg_entry(sc, good);
+		}), EXIT_VERIFY_CB(SocketCall_RecvMsg, {
+			check_recvmsg_exit(sc, good);
+		// IgnoreCalls::AUTO won't work here, because of multiple
+		// socketcalls happening.
+		}), IgnoreCalls{4}, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
+				auto send_recv_cb = [](int send_sock, int recv_sock) {
+					send_fds<false>(send_sock);
+					recv_fds32<true>(recv_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
+		},
+		"recvmsg()",
+		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+		auto send_recv_cb = [](int send_sock, int) {
+			send_fds<true>(send_sock);
+		};
+
+		do_send_unix(send_recv_cb);
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_SendMsg, {
+			check_sendmsg_entry(sc, good);
+		}), EXIT_VERIFY_CB(SocketCall_SendMsg, {
+			check_sendmsg_exit(sc, good);
+		// IgnoreCalls::AUTO won't work here, because of multiple
+		// socketcalls happening.
+		}), IgnoreCalls{3}, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
+				auto send_recv_cb = [](int send_sock, int) {
+					send_fds32<true>(send_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
+		},
+		"sendmsg()",
+		{clues::ABI::I386}
+	},
 };
 
 } // end anon ns
