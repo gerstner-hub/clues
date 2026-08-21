@@ -898,6 +898,8 @@ public: // functions
 
 	void copyControl(const std::vector<std::byte> &data) {
 		m_control_buffer.resize(data.size());
+		if (m_control_buffer.empty())
+			return;
 		std::memcpy(m_control_buffer.data(), data.data(), data.size());
 		m_header.msg_control =
 			reinterpret_cast<void*>(m_control_buffer.data());
