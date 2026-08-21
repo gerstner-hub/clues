@@ -49,7 +49,9 @@ using clues::SystemCallNr;
 using clues::ForeignPtr;
 
 enum class IgnoreCalls : size_t {
-	NONE = 0
+	NONE = 0,
+	/* don't count system calls but wait for the first occurrence */
+	AUTO = SIZE_MAX
 };
 
 /*
@@ -197,6 +199,7 @@ static MemoryRangeVector tracee_mem_ranges;
  */
 static MemoryRangeVector tracee_32bit_ranges;
 
+[[ maybe_unused ]]
 static bool is_valid_variable_ptr(const clues::SystemCall &sc, const clues::ForeignPtr ptr) {
 	if (tracee_mem_ranges.isVariablePointer(ptr))
 		return true;
@@ -286,12 +289,17 @@ protected:
 			return;
 		} else if (!m_seen_initial_read) {
 			return;
-		} else if (m_current_call != cosmos::to_integral(m_ignore_calls)) {
+		} else if (m_ignore_calls != IgnoreCalls::AUTO &&
+				m_current_call != cosmos::to_integral(m_ignore_calls)) {
 			// we haven't reached the system call under test yet
 			return;
 		}
 
 		if (call.callNr() != m_call_nr) {
+			if (m_ignore_calls == IgnoreCalls::AUTO) {
+				/* we're waiting until we encounter the call under test */
+				return;
+			}
 			const auto sys_name = clues::SYSTEM_CALL_NAMES[cosmos::to_integral(call.callNr())];
 			std::cerr << __FUNCTION__ << ": unexpected system call nr " << cosmos::to_integral(call.callNr()) << " (" << sys_name << ")\n";
 			return;
@@ -316,7 +324,14 @@ protected:
 				m_seen_initial_read = true;
 			}
 			return;
-		} else if (m_current_call++ != cosmos::to_integral(m_ignore_calls)) {
+		}
+
+		auto matching_call = call.callNr() == m_call_nr;
+		if (m_ignore_calls != IgnoreCalls::AUTO) {
+			matching_call &= m_current_call++ == cosmos::to_integral(m_ignore_calls);
+		}
+
+		if (!matching_call) {
 			check32BitMemMap(call);
 			// we haven't reached the system call under test yet
 			return;
@@ -521,7 +536,8 @@ protected:
 };
 
 /// path to the exiter helper
-std::string exiter;
+[[ maybe_unused ]]
+static std::string exiter;
 
 template <typename TEST_ARRAY>
 void SyscallTest<TEST_ARRAY>::runTests() {
