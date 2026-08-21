@@ -1,7 +1,7 @@
 // test
 #include "proc/signal.hxx"
 #include "syscalls/prctl.hxx"
-#include "utils/syscalls.hxx"
+#include "../utils/syscalls.hxx"
 
 // Linux
 #include <elf.h>

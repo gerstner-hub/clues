@@ -1,6 +1,6 @@
 // test
-#include "utils/syscalls.hxx"
-#include "utils/types.hxx"
+#include "../utils/syscalls.hxx"
+#include "../utils/types.hxx"
 
 // Linux
 #include <sched.h>

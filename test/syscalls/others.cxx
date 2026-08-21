@@ -1,5 +1,5 @@
 // test
-#include "utils/syscalls.hxx"
+#include "../utils/syscalls.hxx"
 
 // Linux
 #include <sys/utsname.h>
