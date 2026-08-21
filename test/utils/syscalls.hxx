@@ -27,7 +27,7 @@
 // Test
 #include "TestBase.hxx"
 #include "TraceeCreator.hxx"
-#include "syscall32.hxx"
+#include "syscall32.inl"
 
 using namespace std::string_literals;
 
@@ -47,6 +47,8 @@ using TraceVerifyCB = std::function<void (Tracee &, const SystemCall &, bool &go
 using SyscallInvoker = std::function<void (void)>;
 using clues::SystemCallNr;
 using clues::ForeignPtr;
+
+namespace {
 
 enum class IgnoreCalls : size_t {
 	NONE = 0,
@@ -183,24 +185,24 @@ constexpr off_t LARGE_OFFSET64 = (1ULL << 32) + 2;
  * global test state which can be used to carry over information from one test
  * case to another.
  */
-static std::map<std::string, bool> test_ctx_flags;
+std::map<std::string, bool> test_ctx_flags;
 /*
  * this is updated for each tracee child process to contain its memory areas
  * from /proc/<pid>/maps.
  * it can be used to verify pointers observed during tracing are coming from
  * legit memory areas.
  */
-static MemoryRangeVector tracee_mem_ranges;
+MemoryRangeVector tracee_mem_ranges;
 /*
  * this contains specially mapped 32-bit memory areas for 32-bit cross ABI
  * emulation tracing. These are updating during tracing runtime as soon as
  * mmap() calls with MAP_32BIT are observed during ignored system call
  * sequences. See SyscallTracer::check32BitMemMap().
  */
-static MemoryRangeVector tracee_32bit_ranges;
+MemoryRangeVector tracee_32bit_ranges;
 
 [[ maybe_unused ]]
-static bool is_valid_variable_ptr(const clues::SystemCall &sc, const clues::ForeignPtr ptr) {
+bool is_valid_variable_ptr(const clues::SystemCall &sc, const clues::ForeignPtr ptr) {
 	if (tracee_mem_ranges.isVariablePointer(ptr))
 		return true;
 
@@ -537,7 +539,7 @@ protected:
 
 /// path to the exiter helper
 [[ maybe_unused ]]
-static std::string exiter;
+std::string exiter;
 
 template <typename TEST_ARRAY>
 void SyscallTest<TEST_ARRAY>::runTests() {
@@ -645,3 +647,5 @@ void SyscallTest<TEST_ARRAY>::runTrace(
 	RUN_STEP("system call entry good", tracer.entryGood());
 	RUN_STEP("system call exit good", tracer.exitGood());
 }
+
+} // end anon ns

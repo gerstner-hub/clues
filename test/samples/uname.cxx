@@ -2,7 +2,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#include "utils/syscall32.hxx"
+#include "utils/syscall32.inl"
 
 int main() {
 	struct utsname uts;

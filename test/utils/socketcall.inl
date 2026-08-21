@@ -6,7 +6,7 @@
 #include <cosmos/compiler.hxx>
 
 // test
-#include "syscall32.hxx"
+#include "syscall32.inl"
 
 namespace {
 

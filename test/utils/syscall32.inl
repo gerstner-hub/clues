@@ -23,11 +23,13 @@
  * this header contains helpers to invoke 32-bit system calls on AMD64
  */
 
-[[ maybe_unused ]]
-static bool _32bit_cross_abi = false;
+namespace {
 
 [[ maybe_unused ]]
-static clues::compat_uptr_t to_compat_ptr(void *ptr) {
+bool _32bit_cross_abi = false;
+
+[[ maybe_unused ]]
+clues::compat_uptr_t to_compat_ptr(void *ptr) {
 	return static_cast<clues::compat_uptr_t>(reinterpret_cast<uintptr_t>(ptr));
 }
 
@@ -60,7 +62,7 @@ using namespace std::string_literals;
  * doesn't make sense to invest a lot of work into it at the moment.
  */
 template <class T1=long, class T2=long, class T3=long, class T4=long, class T5=long, class T6=long>
-static int syscall32(const clues::SystemCallNrI386 nr,
+int syscall32(const clues::SystemCallNrI386 nr,
 		T1 t1=0, T2 t2=0, T3 t3=0, T4 t4=0, T5 t5=0, T6 t6=0) {
 
 	auto fits_in32 = [](long x) -> bool {
@@ -114,7 +116,7 @@ static int syscall32(const clues::SystemCallNrI386 nr,
 }
 
 template <typename T>
-static T alloc32(size_t bytes) {
+T alloc32(size_t bytes) {
 	auto ret = mmap(nullptr, bytes, PROT_READ|PROT_WRITE, MAP_32BIT|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
 	if (ret == MAP_FAILED) {
 		throw cosmos::ApiError{"mmap()[32]"};
@@ -124,12 +126,12 @@ static T alloc32(size_t bytes) {
 }
 
 template <typename T>
-static T* alloc_struct32() {
+T* alloc_struct32() {
 	return alloc32<T*>(sizeof(T));
 }
 
 [[ maybe_unused ]]
-static const char* alloc_str32(const char *s) {
+const char* alloc_str32(const char *s) {
 	const auto len = std::strlen(s) + 1;
 	auto ret = alloc32<char*>(len);
 	std::strcpy(ret, s);
@@ -142,7 +144,7 @@ static const char* alloc_str32(const char *s) {
  * `new`-allocated memory otherwise.
  */
 template <typename T>
-static T* alloc_struct_abi() {
+T* alloc_struct_abi() {
 	if (_32bit_cross_abi) {
 		return alloc_struct32<T>();
 	} else {
@@ -151,7 +153,7 @@ static T* alloc_struct_abi() {
 }
 
 template <typename T>
-static T alloc_abi(size_t bytes) {
+T alloc_abi(size_t bytes) {
 	if (_32bit_cross_abi) {
 		return alloc32<T>(bytes);
 	} else {
@@ -173,14 +175,17 @@ using SyscallNr32 = clues::SystemCallNrI386;
 #else
 #	define I386_CROSS_ABI(IGNORE_COUNT, ...)
 template <typename T>
-static T* alloc_struct_abi() {
+T* alloc_struct_abi() {
 	return new T;
 }
 
 template <typename T>
-static T alloc_abi(size_t bytes) {
+T alloc_abi(size_t bytes) {
 	return reinterpret_cast<T>(new char[bytes]);
 }
 
 #define syscall32(...) ENOSYS
-#endif
+#endif // TEST_I386_EMU
+
+} // end anon ns
+

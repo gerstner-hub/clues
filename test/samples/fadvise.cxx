@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#include "utils/syscall32.hxx"
+#include "utils/syscall32.inl"
 
 int main() {
 	int fd = open("/tmp", O_TMPFILE|O_RDWR|O_CLOEXEC, 0644);

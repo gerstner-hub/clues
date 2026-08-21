@@ -3,12 +3,13 @@
 #include <sys/syscall.h>
 #include <signal.h>
 
-#include "utils/syscall32.hxx"
 #include <clues/private/kernel/select.hxx>
 #include <clues/private/kernel/sigset.hxx>
 #include <clues/private/kernel/time.hxx>
 
 #include <utils/types.hxx>
+
+#include "utils/syscall32.inl"
 
 int main() {
 	int fd[2];
