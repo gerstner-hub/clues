@@ -15,10 +15,19 @@
 // clues
 #include <clues/sysnrs/generic.hxx>
 #include <clues/sysnrs/i386.hxx>
+#include <clues/private/kernel/types.hxx>
 
 /*
- * this header contains helpers to invoked 32-bit system calls on AMD64
+ * this header contains helpers to invoke 32-bit system calls on AMD64
  */
+
+[[ maybe_unused ]]
+static bool _32bit_cross_abi = false;
+
+[[ maybe_unused ]]
+static clues::compat_uptr_t to_compat_ptr(void *ptr) {
+	return static_cast<clues::compat_uptr_t>(reinterpret_cast<uintptr_t>(ptr));
+}
 
 #ifdef COSMOS_X86_64
 #	define TEST_I386_EMU
@@ -117,12 +126,37 @@ static T* alloc_struct32() {
 	return alloc32<T*>(sizeof(T));
 }
 
-const char* alloc_str32(const char *s) {
+[[ maybe_unused ]]
+static const char* alloc_str32(const char *s) {
 	const auto len = std::strlen(s) + 1;
 	auto ret = alloc32<char*>(len);
 	std::strcpy(ret, s);
 	return ret;
 }
+
+/*
+ * this allocates in 32-bit lower memory if `_32bit_cross_abi` is set (which
+ * is transparently set for x86_64 <-> i386 cross ABI tracing), normal
+ * `new`-allocated memory otherwise.
+ */
+template <typename T>
+static T* alloc_struct_abi() {
+	if (_32bit_cross_abi) {
+		return alloc_struct32<T>();
+	} else {
+		return new T;
+	}
+}
+
+template <typename T>
+static T alloc_abi(size_t bytes) {
+	if (_32bit_cross_abi) {
+		return alloc32<T>(bytes);
+	} else {
+		return reinterpret_cast<T>(new char[bytes]);
+	}
+}
+
 #endif // COSMOS_X86_64
 
 #ifdef TEST_I386_EMU
@@ -136,4 +170,15 @@ using SyscallNr32 = clues::SystemCallNrI386;
 
 #else
 #	define I386_CROSS_ABI(IGNORE_COUNT, ...)
+template <typename T>
+static T* alloc_struct_abi() {
+	return new T;
+}
+
+template <typename T>
+static T alloc_abi(size_t bytes) {
+	return reinterpret_cast<T>(new char[bytes]);
+}
+
+#define syscall32(...) ENOSYS
 #endif

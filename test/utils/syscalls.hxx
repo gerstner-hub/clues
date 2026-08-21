@@ -608,7 +608,16 @@ void SyscallTest<TEST_ARRAY>::runTrace(
 	));
 	SyscallTracer tracer{nr, enter_verify, exit_verify, ignore_calls};
 
-	TraceeCreator creator{std::move(invoker), tracer};
+	SyscallInvoker invoker_wrapper = [abi, &invoker]() -> void {
+#ifdef COSMOS_X86_64
+		if (abi == clues::ABI::I386) {
+			_32bit_cross_abi = true;
+		}
+#endif
+		invoker();
+	};
+
+	TraceeCreator creator{std::move(invoker_wrapper), tracer};
 	tracer.setCreator(creator);
 	tracer.setABI(abi);
 	try {
