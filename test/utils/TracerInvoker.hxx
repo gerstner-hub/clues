@@ -65,7 +65,7 @@ public:
 		auto state = tracer.wait();
 
 		if (!state.exited()) {
-			throw cosmos::RuntimeError{"abnormal tracer exit"};
+			throw cosmos::RuntimeError{std::format("abnormal tracer exit state: {}", state)};
 		}
 
 		return *state.status;
