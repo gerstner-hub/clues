@@ -3,6 +3,7 @@
 
 // cosmos
 #include <cosmos/compiler.hxx>
+#include <cosmos/net/unix/aux.hxx>
 
 // clues
 #include <clues/items/net.hxx>
@@ -19,6 +20,8 @@ constexpr std::string_view UNIX_PATH{"\0clues-test"sv};
 const std::string_view UNIX_SENDER{"\0send", 5};
 const std::string_view UNIX_RECEIVER{"\0recv", 5};
 constexpr std::string_view SEND_DATA{"testdata"};
+using SocketCB = std::function<void(int)>;
+using SocketPairCB = std::function<void(int, int)>;
 
 void check_socket_entry(const clues::SocketSystemCall &sc, bool &good) {
 	VERIFY(sc.domain.domain() == clues::item::SocketDomain::INET6);
@@ -116,7 +119,8 @@ size_t setup_unixaddr(sockaddr_un &unix) {
 	return sizeof(unix.sun_family) + UNIX_PATH.size();
 }
 
-void do_send_unix(std::function<void(int, int)> cb) {
+/* performs 3 system calls until the `cb` is executed */
+void do_send_unix(SocketPairCB cb) {
 	int socks[2];
 	if (socketpair(AF_UNIX, SOCK_DGRAM, 0, socks) < 0) {
 		return;
@@ -137,8 +141,116 @@ void do_send_unix(std::function<void(int, int)> cb) {
 	cb(socks[0], socks[1]);
 }
 
+void verify_unix_msg_header(const cosmos::ReceiveMessageHeader &header, bool &good, bool is_recv) {
+	size_t count = 0;
+	for (const auto &cmsg: header) {
+		VERIFY(cmsg.level() == cosmos::OptLevel::SOCKET);
+		VERIFY(*cmsg.asUnixMessage() == cosmos::UnixMessage::RIGHTS);
+		cosmos::UnixRightsMessage rights;
+		rights.deserialize(cmsg);
+		VERIFY(rights.numFDs() == 2);
+		cosmos::UnixRightsMessage::FileNumVector fds;
+		rights.takeFDs(fds);
+
+		if (is_recv) {
+			VERIFY(fds[0] == THIRD_FD);
+			VERIFY(fds[1] == cosmos::FileNum{cosmos::to_integral(THIRD_FD) + 1});
+		} else {
+			VERIFY(fds[0] == cosmos::FileNum::STDIN);
+			VERIFY(fds[1] == cosmos::FileNum::STDOUT);
+		}
+		count++;
+	}
+	VERIFY(count == 1);
+}
+
+template <bool USE_SOCKETCALL>
+void send_fds(int sock) {
+	struct msghdr msg;
+	cosmos::zero_object(msg);
+	struct iovec vec;
+	char data = 77;
+	vec.iov_base = &data;
+	vec.iov_len = sizeof(char);
+	int fds[2] = {STDIN_FILENO, STDOUT_FILENO};
+
+	union {
+		char buf[CMSG_SPACE(sizeof(fds))];
+		struct cmsghdr align;
+	} u;
+
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = u.buf;
+	msg.msg_controllen = sizeof(u.buf);
+
+	struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(fds));
+	memcpy(CMSG_DATA(cmsg), fds, sizeof(fds));
+
+	int sent;
+
+	/* this returns only the amount of playoad data in msg_iov */
+	if constexpr (USE_SOCKETCALL) {
+#ifdef COSMOS_I386
+		sent = syscall(SYS_socketcall, SYS_SENDMSG, sock, &msg, 0);
+#endif
+	} else {
+		sent = syscall(SYS_sendmsg, sock, &msg, MSG_CONFIRM);
+	}
+
+	if (sent < 0 || static_cast<size_t>(sent) != sizeof(data)) {
+		std::cerr << "failed to send full message: " << sent << " vs. " << sizeof(data) << "\n";
+		exit(1);
+	}
+}
+
+template <bool USE_SOCKETCALL>
+void recv_fds(int sock) {
+	struct msghdr msg;
+	cosmos::zero_object(msg);
+	struct iovec vec;
+	char data;
+	vec.iov_base = &data;
+	vec.iov_len = sizeof(char);
+	char ancillary[1024];
+
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = ancillary;
+	msg.msg_controllen = sizeof(ancillary);
+
+	int received;
+
+	if constexpr (USE_SOCKETCALL) {
+#ifdef COSMOS_I386
+		received = syscall(SYS_socketcall, SYS_RECVMSG, sock, &msg, MSG_CMSG_CLOEXEC);
+#endif
+	} else {
+		received = syscall(SYS_recvmsg, sock, &msg, MSG_CMSG_CLOEXEC);
+	}
+
+	if (received != sizeof(char)) {
+		std::cerr << "received unexpected byte count: " << received << "\n";
+		exit(1);
+	}
+
+	for (auto cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+		const auto fd_len = cmsg->cmsg_len - CMSG_LEN(0);
+
+		std::vector<int> fds(fd_len / sizeof(int));
+		memcpy(fds.data(), CMSG_DATA(cmsg), fd_len);
+
+		for (auto fd: fds) {
+			close(fd);
+		}
+	}
+}
+
 /* performs 4 system calls, sends 8 byte of data, binds to '\0send'  */
-void do_receive_unix(std::function<void(int)> cb) {
+void do_receive_unix(SocketCB cb) {
 	do_send_unix([cb](int send_sock, int recv_sock) {
 		syscall(SYS_sendto, send_sock, SEND_DATA.data(), SEND_DATA.size(),
 				MSG_NOSIGNAL, nullptr, 0);
@@ -147,7 +259,7 @@ void do_receive_unix(std::function<void(int)> cb) {
 	});
 }
 
-void accept_conn(std::function<void(int)> cb) {
+void accept_conn(SocketCB cb) {
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
 	sockaddr_in ip4;
 	ip4.sin_family = AF_INET;
@@ -1007,6 +1119,67 @@ const auto TESTS = std::array{
 		"sendto()",
 		{clues::ABI::I386}
 	},
+	TestSpec{SystemCallNr::RECVMSG, []() {
+			auto send_recv_cb = [](int send_sock, int recv_sock) {
+				send_fds<false>(send_sock);
+				recv_fds<false>(recv_sock);
+			};
+
+			do_send_unix(send_recv_cb);
+		}, ENTRY_VERIFY_CB(RecvMsgSystemCall, {
+			VERIFY(sc.sockfd.fd() == SECOND_FD);
+			VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CLOEXEC);
+			const auto &msg = sc.msg;
+			VERIFY(msg.ioVector().size() == 1);
+			VERIFY(msg.ioVector()[0].len == 1);
+			VERIFY(msg.ioVector()[0].filled == 0);
+			VERIFY(msg.controlData().empty());
+			VERIFY(msg.header() == std::nullopt);
+		}), EXIT_VERIFY_CB(RecvMsgSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.read.value() == 1);
+			const auto &msg = sc.msg;
+			VERIFY(msg.header() != std::nullopt);
+			VERIFY(msg.ioVector().size() == 1);
+			VERIFY(msg.ioVector()[0].len == 1);
+			VERIFY(msg.ioVector()[0].filled == 1);
+			VERIFY(msg.ioVector()[0].data[0] == std::byte{77});
+			verify_unix_msg_header(*msg.header(), good, true);
+		}), IgnoreCalls{4}, {
+#if 0
+			I386_CROSS_ABI(IgnoreCalls{6}, []() {
+				auto send_recv_cb = [](int send_sock, int recv_sock) {
+					send_fds<false>(send_sock);
+					recv_fds<false, true>(recv_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
+#endif
+		}
+	},
+	TestSpec{SystemCallNr::SENDMSG, []() {
+			auto send_recv_cb = [](int send_sock, int) {
+				send_fds<false>(send_sock);
+			};
+
+			do_send_unix(send_recv_cb);
+		}, ENTRY_VERIFY_CB(SendMsgSystemCall, {
+			VERIFY(sc.sockfd.fd() == FIRST_FD);
+			VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CONFIRM);
+			const auto &msg = sc.msg;
+			VERIFY(msg.header() != std::nullopt);
+			VERIFY(msg.ioVector().size() == 1);
+			VERIFY(msg.ioVector()[0].len == 1);
+			VERIFY(msg.ioVector()[0].filled == 1);
+			VERIFY(msg.controlData().size() > 0);
+			verify_unix_msg_header(*msg.header(), good, false);
+		}), EXIT_VERIFY_CB(SendMsgSystemCall, {
+			VERIFY(sc.hasResultValue());
+			VERIFY(sc.written.value() == 1);
+		}), IgnoreCalls{3}, {
+		}
+	}
 };
 
 } // end anon ns
