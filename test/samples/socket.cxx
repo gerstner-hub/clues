@@ -18,6 +18,10 @@
 
 #ifdef COSMOS_I386
 #	include <array>
+#else
+int socketcall(...) {
+	throw "no socketcall on non-i386";
+}
 #endif
 
 #include "../utils/socketcall.inl"
@@ -87,11 +91,7 @@ void send_recv_msg(int send_sock, int recv_sock, const sockaddr_un &send_addr, c
 	hdr.msg_iov = &vec;
 	hdr.msg_iovlen = 1;
 	if (use_socketcall) {
-#ifdef COSMOS_I386
 		socketcall(SYS_SENDMSG, send_sock, &hdr, MSG_NOSIGNAL);
-#else
-		throw "no socketcall on non-i386";
-#endif
 	} else {
 		(void)syscall(SYS_sendmsg, send_sock, &hdr, MSG_NOSIGNAL);
 	}
@@ -107,9 +107,7 @@ void send_recv_msg(int send_sock, int recv_sock, const sockaddr_un &send_addr, c
 	vec.iov_len = sizeof(inbuf);
 
 	if (use_socketcall) {
-#ifdef COSMOS_I386
 		(void)socketcall(SYS_RECVMSG, recv_sock, &hdr, MSG_NOSIGNAL);
-#endif
 	} else {
 		(void)syscall(SYS_recvmsg, recv_sock, &hdr, MSG_NOSIGNAL);
 	}
@@ -145,6 +143,69 @@ void send_recv_socketcall(int send_sock, int recv_sock, const std::string &tgt_a
 	}
 }
 #endif
+
+void send_recv_multi_msg(int send_sock, int recv_sock, const sockaddr_un &send_addr, const size_t addrlen,
+		bool use_socketcall = false) {
+	int passcred = 1;
+	syscall(SYS_setsockopt, send_sock, SOL_SOCKET, SO_PASSCRED, &passcred, sizeof(passcred));
+	syscall(SYS_setsockopt, recv_sock, SOL_SOCKET, SO_PASSCRED, &passcred, sizeof(passcred));
+
+	constexpr auto NUM_MHDR = 2;
+	struct mmsghdr mhdr[NUM_MHDR];
+	cosmos::zero_object(mhdr);
+	auto &msg1 = mhdr[0].msg_hdr;
+	auto &msg2 = mhdr[1].msg_hdr;
+
+	const char outbuf1[] = "1: test message 1";
+	const char outbuf2[] = "2: test message 2";
+
+	msg1.msg_name = (void*)&send_addr;
+	msg1.msg_namelen = addrlen;
+	struct iovec vec1, vec2;
+	vec1.iov_base = (void*)outbuf1;
+	vec1.iov_len = sizeof(outbuf1) - 1;
+	msg1.msg_iov = &vec1;
+	msg1.msg_iovlen = 1;
+
+	msg2.msg_name = nullptr;
+	msg2.msg_namelen = 0;
+	vec2.iov_base = (void*)outbuf2;
+	vec2.iov_len = sizeof(outbuf2) - 1;
+	msg2.msg_iov = &vec2;
+	msg2.msg_iovlen = 1;
+
+	if (use_socketcall) {
+		socketcall(SYS_SENDMMSG, send_sock, &mhdr, NUM_MHDR, MSG_NOSIGNAL);
+	} else {
+		(void)syscall(SYS_sendmmsg, send_sock, &mhdr, NUM_MHDR, MSG_NOSIGNAL);
+	}
+
+	char inbuf1[1024], inbuf2[1024];
+	sockaddr_un from_addr;
+	char ctrlbuf[1024];
+
+	msg1.msg_name = (void*)&from_addr;
+	msg1.msg_namelen = sizeof(from_addr);
+	msg1.msg_control = (void*)ctrlbuf;
+	msg1.msg_controllen = sizeof(ctrlbuf);
+	vec1.iov_base = (void*)inbuf1;
+	vec1.iov_len = sizeof(inbuf1);
+
+	msg2.msg_control = nullptr;
+	msg2.msg_controllen = 0;
+	vec2.iov_base = (void*)inbuf2;
+	vec2.iov_len = sizeof(inbuf2);
+
+	struct timespec ts;
+	ts.tv_sec = 10;
+	ts.tv_nsec = 512;
+
+	if (use_socketcall) {
+		(void)socketcall(SYS_RECVMMSG, recv_sock, &mhdr, NUM_MHDR, MSG_NOSIGNAL, &ts);
+	} else {
+		(void)syscall(SYS_recvmmsg, recv_sock, &mhdr, NUM_MHDR, MSG_NOSIGNAL, &ts);
+	}
+}
 
 void pass_fds_to(int sock_to) {
 	struct msghdr msg;
@@ -345,6 +406,10 @@ int main() {
 	send_recv_msg(pair[0], pair[1], unix2, addrlen2);
 #ifdef COSMOS_I386
 	send_recv_msg(pair[0], pair[1], unix2, addrlen2, /*use_socketcall=*/true);
+#endif
+	send_recv_multi_msg(pair[0], pair[1], unix2, addrlen2);
+#ifdef COSMOS_I386
+	send_recv_multi_msg(pair[0], pair[1], unix2, addrlen2, /*use_socketcall=*/true);
 #endif
 	close(pair[0]);
 	close(pair[1]);
