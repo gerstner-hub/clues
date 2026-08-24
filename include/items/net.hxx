@@ -785,6 +785,10 @@ protected: // functions
 
 	void resetSubItems(const Tracee &proc);
 
+	void fillSubItems(const Tracee &);
+
+	void updateSubItems(const Tracee &);
+
 protected: // data
 
 	/* let's reuse items as sub-items for this complex structure */
@@ -798,6 +802,71 @@ protected: // data
 	std::optional<struct msghdr> m_in_header;
 	///! Header as observed during system call exit.
 	std::optional<struct msghdr> m_out_header;
+};
+
+/// Extended variant of `struct msghdr` used with RecvMessageHeaderVector for `recvmmsg()`.
+/**
+ * This structure basically carries an additional `unsigned int` to
+ * communicate back the individual amount of received bytes.
+ **/
+class RecvMultiMessageHeader :
+		public RecvMessageHeader {
+
+	// allow to set protected members
+	friend class RecvMessageHeaderVector;
+	// allow to fill sub-items
+	template <typename HDR_ITEM>
+	friend class MessageHeaderVectorBase;
+
+public: // functions
+
+	/// Create a new header based on `hdr` for the input header part.
+	/**
+	 * The given `hdr` will be assigned to the input header part of
+	 * RecvMessageHeader.
+	 **/
+	explicit RecvMultiMessageHeader(const SystemCall *call,
+			const struct msghdr &hdr);
+
+	/// Number of bytes received.
+	/**
+	 * Upon system call exit of recvmmsg() this contains the number of
+	 * bytes received into the msghdr. In other states or when a tracing
+	 * error occurred, std::nullopt is returned.
+	 **/
+	std::optional<unsigned long> bytesReceived() const {
+		if (!m_have_bytes_received)
+			return {};
+
+		return m_bytes_received.value();
+	}
+
+protected: // functions
+
+	using RecvMessageHeader::fillSubItems;
+	using RecvMessageHeader::updateSubItems;
+
+	void setBytesReceived(const unsigned int received, const Tracee &proc) {
+		m_bytes_received.fill(proc, Word{received});
+		m_have_bytes_received = true;
+	}
+
+	/// Apply the output header information as found in `hdr`.
+	/**
+	 * This will also trigger a call to updateSubItems() to reflect the
+	 * changes.
+	 **/
+	void setOutHeader(const struct msghdr &hdr, const Tracee &);
+
+protected: // data
+
+	// contrary to SendMultiMessageHeader we need a fully-fledged
+	// SystemCallItem here, because the RecvMessageHeader base class
+	// expects a reference to one to determine the amount of received
+	// bytes.
+
+	bool m_have_bytes_received = false;
+	UintValue m_bytes_received;
 };
 
 class SendMessageHeader :
@@ -852,6 +921,8 @@ protected: // functions
 
 	void resetSubItems(const Tracee &proc);
 
+	void fillSubItems(const Tracee &);
+
 protected: // data
 
 	/* let's reuse items as sub-items for this complex structure */
@@ -862,6 +933,154 @@ protected: // data
 	SendRecvFlags m_msg_flags;
 
 	std::optional<struct msghdr> m_header;
+};
+
+/// Extended variant of `struct msghdr` used with SendMessageHeaderVector for `sendmmsg()`.
+/**
+ * This structure basically carries an additional `unsigned int` to
+ * communicate back the individual amount of sent bytes.
+ **/
+class SendMultiMessageHeader :
+		public SendMessageHeader {
+
+	// allow to set bytes set
+	friend class SendMessageHeaderVector;
+
+	// allow to fill sub-items
+	template <typename HDR_ITEM>
+	friend class MessageHeaderVectorBase;
+
+public: // functions
+
+	/// Assign the given `hdr` to the SendMessageHeader part of the object.
+	explicit SendMultiMessageHeader(const SystemCall *call,
+			const struct msghdr &hdr);
+
+	/// Number of bytes sent out.
+	/**
+	 * Upon system call exit of sendmmsg() this contains the number of
+	 * bytes actually sent out. In other states or when tracing errors
+	 * occurred then std::nullopt is returned.
+	 **/
+	std::optional<unsigned long> bytesSent() const {
+		return m_bytes_sent;
+	}
+
+protected: // functions
+
+	using SendMessageHeader::fillSubItems;
+
+	void setBytesSent(const unsigned int sent) {
+		m_bytes_sent = sent;
+	}
+
+protected: // data
+
+	std::optional<unsigned int> m_bytes_sent;
+};
+
+/// Base class for vectors of `struct mmsghdr` in `recvmmsg()` and `sendmmsg()`.
+/**
+ * The `struct mmsghdr` is the same for both `recvmmsg()` and `sendmmsg()`,
+ * but we need somewhat different logic due to the different update logic in
+ * the calls. This base class covers the shared logic, while the
+ * specializations take care of the send/recv-specific logic.
+ *
+ * `HDR_ITEM` is either RecvMultiMessageHeader or SendMultiMessageHeader.
+ *
+ * This type holds two vectors: one for the raw `struct mmsghdr` and one
+ * containing the corresponding `HDR_ITEM` instances. This is because we want
+ * to reuse the logic from RecvMessageHeader and SendMessageHeaderVector for
+ * the nearly identical `struct mmsghdr`. This is not ideal for performance,
+ * but these system calls are rather rare and a lot of redundant code for this
+ * would be bad.
+ **/
+template <typename HDR_ITEM>
+class MessageHeaderVectorBase :
+		public PointerValue {
+public: // functions
+
+	/// Create a new MessageHeaderVector based on `num_msgs`.
+	/**
+	 * `num_msgs` must refer to the accompanying system call argument
+	 * which defines the number of `struct mmsghdr` found in the array
+	 * this parameter points to.
+	 **/
+	explicit MessageHeaderVectorBase(const SystemCallItem &num_msgs) :
+			PointerValue{ItemCfg{ItemType::PARAM_IN_OUT,
+				"msgvec", "struct mmsghdr[]"}},
+			m_num_msgs{num_msgs} {
+		/* the `num_msgs` argument generally comes after the `msgvec` */
+		m_flags.set(Flag::DEFER_FILL);
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	/// Fetch the raw `struct mmsghdr` from the tracee and store them in `m_raw_headers`.
+	/**
+	 * This can only be called when a valid value is stored in
+	 * `m_num_msgs`.
+	 *
+	 * The return value indicates whether reading the data from the Tracee
+	 * succeeded, otherwise `m_raw_headers` will be empty.
+	 **/
+	bool fetchRawHeaders(const Tracee &);
+
+	void processValue(const Tracee &) override;
+
+	/// Returns a string description of the `msg_len` parameter.
+	/**
+	 * This needs to be implemented by the specialization of this type,
+	 * because RecvMultiMessageHeader and SendMultiMessageHeader use
+	 * different types for storing this information.
+	 **/
+	virtual std::string getMsgLenStr(const HDR_ITEM &item) const = 0;
+
+protected: // data
+
+	const SystemCallItem &m_num_msgs;
+	std::vector<struct mmsghdr> m_raw_headers;
+	std::vector<HDR_ITEM> m_headers;
+};
+
+class RecvMessageHeaderVector :
+		public MessageHeaderVectorBase<RecvMultiMessageHeader> {
+public: // functions
+
+	explicit RecvMessageHeaderVector(const SystemCallItem &num_msgs) :
+			MessageHeaderVectorBase{num_msgs} {
+	}
+
+	const std::vector<RecvMultiMessageHeader>& headers() const {
+		return m_headers;
+	}
+
+protected: // functions
+
+	void updateData(const Tracee &) override;
+
+	std::string getMsgLenStr(const RecvMultiMessageHeader &item) const override;
+};
+
+class SendMessageHeaderVector :
+		public MessageHeaderVectorBase<SendMultiMessageHeader> {
+public: // functions
+
+	explicit SendMessageHeaderVector(const SystemCallItem &num_msgs) :
+			MessageHeaderVectorBase{num_msgs} {
+	}
+
+	const std::vector<SendMultiMessageHeader>& headers() const {
+		return m_headers;
+	}
+
+protected: // functions
+
+	void updateData(const Tracee &) override;
+
+	std::string getMsgLenStr(const SendMultiMessageHeader &item) const override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

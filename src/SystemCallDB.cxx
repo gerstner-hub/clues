@@ -189,6 +189,8 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::SENDTO:          return new_sys<SendToSystemCall>(nr);
 	case SystemCallNr::RECVMSG:         return new_sys<RecvMsgSystemCall>(nr);
 	case SystemCallNr::SENDMSG:         return new_sys<SendMsgSystemCall>(nr);
+	case SystemCallNr::RECVMMSG:         return new_sys<RecvMMsgSystemCall>(nr);
+	case SystemCallNr::SENDMMSG:         return new_sys<SendMMsgSystemCall>(nr);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

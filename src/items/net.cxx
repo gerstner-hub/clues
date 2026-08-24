@@ -466,11 +466,26 @@ std::string SocketCallArgs::str() const {
 			call.sockfd.str(), call.msg.str(), call.flags.str()
 		);
 		break;
+	} case RECVMMSG: {
+		const auto &call = dynamic_cast<const RecvMMsgSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, msgvec={}, num_msgs={}, flags={}, timeout={}",
+			call.sockfd.str(), call.msgvec.str(), call.num_msgs.str(),
+			call.flags.str(), call.timeout.str()
+		);
+		break;
 	} case SENDMSG: {
 		const auto &call = dynamic_cast<const SendMsgSystemCall&>(*m_call);
 
 		ret += std::format("sockfd={}, msg={}, flags={}",
 			call.sockfd.str(), call.msg.str(), call.flags.str()
+		);
+		break;
+	} case SENDMMSG: {
+		const auto &call = dynamic_cast<const SendMMsgSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, msgvec={}, num_msgs={}, flags={}",
+			call.sockfd.str(), call.msgvec.str(), call.num_msgs.str(), call.flags.str()
 		);
 		break;
 	} default: return "???";
@@ -906,6 +921,16 @@ public: // functions
 	}
 };
 
+void convert_to64(const msghdr32 &hdr32, struct msghdr &hdr64) {
+	hdr64.msg_name = convert_compat_ptr(hdr32.msg_name);
+	hdr64.msg_namelen = hdr32.msg_namelen;
+	hdr64.msg_iov = convert_compat_ptr<iovec*>(hdr32.msg_iov);
+	hdr64.msg_iovlen = hdr32.msg_iovlen;
+	hdr64.msg_control = convert_compat_ptr(hdr32.msg_control);
+	hdr64.msg_controllen = hdr32.msg_controllen;
+	hdr64.msg_flags = hdr32.msg_flags;
+}
+
 } // end anon ns
 
 /*
@@ -921,14 +946,7 @@ bool MessageHeaderBase::fetchMsgHdr32(const Tracee &proc,
 	}
 
 	out.emplace();
-
-	out->msg_name = convert_compat_ptr(hdr32.msg_name);
-	out->msg_namelen = hdr32.msg_namelen;
-	out->msg_iov = convert_compat_ptr<iovec*>(hdr32.msg_iov);
-	out->msg_iovlen = hdr32.msg_iovlen;
-	out->msg_control = convert_compat_ptr(hdr32.msg_control);
-	out->msg_controllen = hdr32.msg_controllen;
-	out->msg_flags = hdr32.msg_flags;
+	convert_to64(hdr32, *out);
 
 	return true;
 }
@@ -1054,6 +1072,33 @@ void RecvMessageHeader::processValue(const Tracee &proc) {
 		return;
 	}
 
+	fillSubItems(proc);
+}
+
+void RecvMessageHeader::updateData(const Tracee &proc) {
+	if (m_call->is32BitEmulationABI()) {
+		fetchMsgHdr32(proc, m_out_header);
+	} else {
+		proc.readStructIntoOptional(asPtr(), m_out_header);
+	}
+
+	if (!m_out_header)
+		return;
+
+	updateSubItems(proc);
+}
+
+void RecvMessageHeader::resetSubItems(const Tracee &proc) {
+	processSubItemValue(m_msg_namelen, Word::ZERO, proc);
+	processSubItemValue(m_msg_name, Word::ZERO, proc);
+	processSubItemValue(m_msg_iovlen, Word::ZERO, proc);
+	processSubItemValue(m_msg_iov, Word::ZERO, proc);
+	processSubItemValue(m_msg_controllen, Word::ZERO, proc);
+	processSubItemValue(m_msg_control, Word::ZERO, proc);
+	processSubItemValue(m_msg_flags, Word::ZERO, proc);
+}
+
+void RecvMessageHeader::fillSubItems(const Tracee &proc) {
 	processSubItemValue(m_msg_namelen,
 			scalar_to_word(m_in_header->msg_namelen), proc);
 	processSubItemValue(m_msg_name,
@@ -1068,16 +1113,7 @@ void RecvMessageHeader::processValue(const Tracee &proc) {
 			ptr_to_word(m_in_header->msg_control), proc);
 }
 
-void RecvMessageHeader::updateData(const Tracee &proc) {
-	if (m_call->is32BitEmulationABI()) {
-		fetchMsgHdr32(proc, m_out_header);
-	} else {
-		proc.readStructIntoOptional(asPtr(), m_out_header);
-	}
-
-	if (!m_out_header)
-		return;
-
+void RecvMessageHeader::updateSubItems(const Tracee &proc) {
 	/*
 	 * since some of these sub-items don't expect updates we need to call
 	 * `processValue()` on them here as well to actually update the data
@@ -1099,16 +1135,6 @@ void RecvMessageHeader::updateData(const Tracee &proc) {
 	m_msg_control.fetchRemainingData(proc);
 }
 
-void RecvMessageHeader::resetSubItems(const Tracee &proc) {
-	processSubItemValue(m_msg_namelen, Word::ZERO, proc);
-	processSubItemValue(m_msg_name, Word::ZERO, proc);
-	processSubItemValue(m_msg_iovlen, Word::ZERO, proc);
-	processSubItemValue(m_msg_iov, Word::ZERO, proc);
-	processSubItemValue(m_msg_controllen, Word::ZERO, proc);
-	processSubItemValue(m_msg_control, Word::ZERO, proc);
-	processSubItemValue(m_msg_flags, Word::ZERO, proc);
-}
-
 void SendMessageHeader::processValue(const Tracee &proc) {
 
 	if (m_call->is32BitEmulationABI()) {
@@ -1122,6 +1148,10 @@ void SendMessageHeader::processValue(const Tracee &proc) {
 		return;
 	}
 
+	fillSubItems(proc);
+}
+
+void SendMessageHeader::fillSubItems(const Tracee &proc) {
 	processSubItemValue(m_msg_flags,
 			scalar_to_word(m_header->msg_flags), proc);
 	processSubItemValue(m_msg_namelen,
@@ -1176,6 +1206,143 @@ std::string SendMessageHeader::str() const {
 
 	ret += "}";
 	return ret;
+}
+
+template <typename HDR_ITEM>
+bool MessageHeaderVectorBase<HDR_ITEM>::fetchRawHeaders(const Tracee &proc) {
+	m_raw_headers.clear();
+
+	if (m_call->is32BitEmulationABI()) {
+		std::vector<struct mmsghdr32> hdrs32;
+		hdrs32.resize(m_num_msgs.valueAs<unsigned int>());
+
+		if (!proc.readStructs(asPtr(), hdrs32)) {
+			return false;
+		}
+
+		for (const auto &hdr32: hdrs32) {
+			auto &hdr = m_raw_headers.emplace_back();
+			convert_to64(hdr32.msg_hdr, hdr.msg_hdr);
+			hdr.msg_len = hdr32.msg_len;
+		}
+	} else {
+		m_raw_headers.resize(m_num_msgs.valueAs<unsigned int>());
+
+		if (!proc.readStructs(asPtr(), m_raw_headers)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+template <typename HDR_ITEM>
+void MessageHeaderVectorBase<HDR_ITEM>::processValue(const Tracee &proc) {
+	m_headers.clear();
+	if (!fetchRawHeaders(proc)) {
+		return;
+	}
+
+	/* avoid reallocation in the loop below to maintain the same sub-item
+	 * addresses during the lifetime of the header items */
+	m_headers.reserve(m_raw_headers.size());
+
+	for (size_t i = 0; i < m_raw_headers.size(); i++) {
+		const auto &raw = m_raw_headers[i];
+		auto &header = m_headers.emplace_back(m_call, raw.msg_hdr);
+
+		header.fillSubItems(proc);
+	}
+}
+
+template <typename HDR_ITEM>
+std::string MessageHeaderVectorBase<HDR_ITEM>::str() const {
+	if (m_headers.empty())
+		return formatBadPointer();
+
+	std::string ret = "[";
+	bool first = true;
+
+	for (const auto &header: m_headers) {
+		if (first) {
+			first = false;
+		} else {
+			ret += ", ";
+		}
+
+		ret += std::format("{{msg_hdr={}, msg_len={}}}",
+			header.str(),
+			getMsgLenStr(header)
+		);
+	}
+
+	return ret + "]";
+}
+
+RecvMultiMessageHeader::RecvMultiMessageHeader(const SystemCall *call,
+		const struct msghdr &hdr) :
+		RecvMessageHeader{m_bytes_received},
+		m_bytes_received{ItemCfg{ItemType::PARAM_OUT, "msg_len"}} {
+	m_call = call;
+	m_in_header.emplace();
+	std::memcpy(&*m_in_header, &hdr, sizeof(hdr));
+}
+
+void RecvMultiMessageHeader::setOutHeader(const struct msghdr &hdr, const Tracee &proc) {
+	m_out_header.emplace();
+	std::memcpy(&(*m_out_header), &hdr, sizeof(hdr));
+	updateSubItems(proc);
+}
+
+void RecvMessageHeaderVector::updateData(const Tracee &proc) {
+	 if (!fetchRawHeaders(proc)) {
+		 /* no output headers available ... */
+		return;
+	 }
+
+	 for (size_t i = 0; i < m_raw_headers.size(); i++) {
+		const auto &raw = m_raw_headers[i];
+		auto &header = m_headers[i];
+		header.setBytesReceived(raw.msg_len, proc);
+		header.setOutHeader(raw.msg_hdr, proc);
+	 }
+}
+
+std::string RecvMessageHeaderVector::getMsgLenStr(const RecvMultiMessageHeader &item) const {
+	if (!item.bytesReceived())
+		return "???";
+
+	return std::to_string(*item.bytesReceived());
+}
+
+SendMultiMessageHeader::SendMultiMessageHeader(const SystemCall *call,
+		const struct msghdr &hdr) {
+	m_call = call;
+	m_header.emplace();
+	std::memcpy(&*m_header, &hdr, sizeof(hdr));
+}
+
+void SendMessageHeaderVector::updateData(const Tracee &proc) {
+	 if (!fetchRawHeaders(proc)) {
+		/*
+		 * if this fails we can still show the input data, but will
+		 * show '?' as `msg_len`.
+		 */
+		return;
+	 }
+
+	 for (size_t i = 0; i < m_raw_headers.size(); i++) {
+		const auto &raw = m_raw_headers[i];
+		auto &header = m_headers[i];
+		header.setBytesSent(raw.msg_len);
+	 }
+}
+
+std::string SendMessageHeaderVector::getMsgLenStr(const SendMultiMessageHeader &item) const {
+	if (!item.bytesSent())
+		return "???";
+
+	return std::to_string(*item.bytesSent());
 }
 
 } // end ns

@@ -23,6 +23,11 @@ struct cmsghdr32 {
 	int cmsg_type;
 };
 
+struct mmsghdr32 {
+	struct msghdr32 msg_hdr;
+	uint32_t msg_len;
+};
+
 } // end extern
 
 } // end ns

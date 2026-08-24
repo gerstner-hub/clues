@@ -6,6 +6,7 @@
 // clues
 #include <clues/items/fs.hxx>
 #include <clues/items/net.hxx>
+#include <clues/items/time.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
 #include <clues/SystemCall.hxx>
@@ -254,6 +255,31 @@ protected: // functions
 	void track(const cosmos::FileNum fd, const Tracee &proc);
 };
 
+struct RecvMMsgSystemCall :
+		public SystemCall {
+
+	explicit RecvMMsgSystemCall(
+			const SystemCallNr nr = SystemCallNr::RECVMMSG) :
+			SystemCall{nr},
+			num_received{ItemCfg{ItemType::RETVAL,
+				"num_received",
+				"number of struct mmsghdr which received data"}},
+			msgvec{num_msgs},
+			num_msgs{ItemCfg{.label = "num_msgs", .desc = "amount of struct mmsghdr"}},
+			timeout{ItemCfg{.label = "timeout"}} {
+		setParameters(sockfd, msgvec, num_msgs, flags, timeout);
+		setReturnItem(num_received);
+	}
+
+	item::SizeValue num_received;
+
+	item::SocketFD sockfd;
+	item::RecvMessageHeaderVector msgvec;
+	item::UintValue num_msgs;
+	item::SendRecvFlags flags;
+	item::TimeSpecInOutParameter timeout;
+};
+
 /// Plain send() system call.
 /**
  * There actually doesn't exist a dedicated SEND system call number on the
@@ -314,6 +340,27 @@ struct SendMsgSystemCall :
 
 	item::SocketFD sockfd;
 	item::SendMessageHeader msg;
+	item::SendRecvFlags flags;
+};
+
+struct SendMMsgSystemCall :
+		public SystemCall {
+
+	explicit SendMMsgSystemCall(
+			const SystemCallNr nr = SystemCallNr::SENDMMSG) :
+			SystemCall{nr},
+			num_updated{ItemCfg{ItemType::RETVAL, "num_updated", "number of struct mmsghdr updated"}},
+			msgvec{num_msgs},
+			num_msgs{ItemCfg{.label = "num_msgs", .desc = "amount of struct mmsghdr"}} {
+		setParameters(sockfd, msgvec, num_msgs, flags);
+		setReturnItem(num_updated);
+	}
+
+	item::SizeValue num_updated;
+
+	item::SocketFD sockfd;
+	item::SendMessageHeaderVector msgvec;
+	item::UintValue num_msgs;
 	item::SendRecvFlags flags;
 };
 
@@ -444,6 +491,20 @@ protected: // functions
 	void transferValues(const Tracee&) override;
 };
 
+class SocketCall_RecvMsg :
+		public SocketCallBase<RecvMsgSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
+class SocketCall_RecvMMsg :
+		public SocketCallBase<RecvMMsgSystemCall> {
+protected: // functions
+
+	void transferValues(const Tracee&) override;
+};
+
 class SocketCall_Send :
 		public SocketCallBase<SendSystemCall> {
 protected: // functions
@@ -458,15 +519,15 @@ protected: // functions
 	void transferValues(const Tracee&) override;
 };
 
-class SocketCall_RecvMsg :
-		public SocketCallBase<RecvMsgSystemCall> {
+class SocketCall_SendMsg :
+		public SocketCallBase<SendMsgSystemCall> {
 protected: // functions
 
 	void transferValues(const Tracee&) override;
 };
 
-class SocketCall_SendMsg :
-		public SocketCallBase<SendMsgSystemCall> {
+class SocketCall_SendMMsg :
+		public SocketCallBase<SendMMsgSystemCall> {
 protected: // functions
 
 	void transferValues(const Tracee&) override;
