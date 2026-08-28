@@ -1,6 +1,7 @@
 // test
 #include "../utils/syscalls.hxx"
 #include "../utils/socketcall.inl"
+#include "../utils/types.hxx"
 
 // cosmos
 #include <cosmos/compiler.hxx>
@@ -24,6 +25,8 @@ const std::string_view UNIX_RECEIVER{"\0recv", 5};
 constexpr std::string_view SEND_DATA{"testdata"};
 using SocketCB = std::function<void(int)>;
 using SocketPairCB = std::function<void(int, int)>;
+constexpr auto NUM_MULTI_MSGS = 2;
+constexpr auto RECV_BUF_LEN = 1024;
 
 void check_socket_entry(const clues::SocketSystemCall &sc, bool &good) {
 	VERIFY(sc.domain.domain() == clues::item::SocketDomain::INET6);
@@ -206,6 +209,47 @@ void check_recvmsg_exit(const clues::RecvMsgSystemCall &sc, bool &good) {
 	verify_unix_msg_header(*msg.header(), good, true);
 }
 
+void check_recv_multi_entry(const clues::RecvMMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.sockfd.fd() == SECOND_FD);
+	VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CLOEXEC);
+	VERIFY(sc.num_msgs.value() == 2);
+
+	const auto &ts = *sc.timeout.spec();
+	VERIFY(ts.tv_sec == 47);
+	VERIFY(ts.tv_nsec == 64);
+
+	const auto &headers = sc.msgvec.headers();
+	VERIFY(headers.size() == 2);
+
+	const auto &msg1 = headers[0];
+	VERIFY(!msg1.bytesReceived());
+	const auto &msg2 = headers[1];
+	VERIFY(!msg2.bytesReceived());
+}
+
+void check_recv_multi_exit(const clues::RecvMMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.hasResultValue());
+	VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CLOEXEC);
+	VERIFY(sc.num_msgs.value() == 2);
+
+	const auto &ts = *sc.timeout.remaining();
+	VERIFY(ts.tv_sec <= 47);
+
+	const auto &headers = sc.msgvec.headers();
+	VERIFY(headers.size() == 2);
+
+	const auto &msg1 = headers[0];
+	VERIFY(*msg1.bytesReceived() == 3);
+	const auto &vec1 = msg1.ioVector();
+	VERIFY(vec1.size() == 1);
+	VERIFY(vec1[0].data == std::vector<std::byte>{{std::byte{99}, std::byte{88}, std::byte{77}}});
+	const auto &msg2 = headers[1];
+	VERIFY(*msg2.bytesReceived() == 4);
+	const auto &vec2 = msg2.ioVector();
+	VERIFY(vec2.size() == 1);
+	VERIFY(vec2[0].data == std::vector<std::byte>{{std::byte{11}, std::byte{22}, std::byte{33}, std::byte{44}}});
+}
+
 template <bool USE_SOCKETCALL>
 void send_fds(int sock) {
 	struct msghdr msg;
@@ -259,7 +303,7 @@ void recv_fds(int sock) {
 	char data;
 	vec.iov_base = &data;
 	vec.iov_len = sizeof(char);
-	char ancillary[1024];
+	char ancillary[RECV_BUF_LEN];
 
 	msg.msg_iov = &vec;
 	msg.msg_iovlen = 1;
@@ -294,6 +338,97 @@ void recv_fds(int sock) {
 }
 
 #ifdef TEST_I386_EMU
+
+template <bool USE_SOCKETCALL>
+void send_multi32(int sock) {
+	auto mhdr = alloc_abi<clues::mmsghdr32*>(sizeof(clues::mmsghdr32) * NUM_MULTI_MSGS);
+	cosmos::zero_object(*mhdr);
+	auto vec1 = alloc_struct_abi<clues::iovec32>();
+	auto vec2 = alloc_struct_abi<clues::iovec32>();
+
+	constexpr auto DATA1_LEN = 3;
+	char *data1 = alloc_abi<char*>(DATA1_LEN);
+	data1[0] = 99;
+	data1[1] = 88;
+	data1[2] = 77;
+	vec1->iov_base = to_compat_ptr(data1);
+	vec1->iov_len = DATA1_LEN;
+
+	constexpr auto DATA2_LEN = 4;
+	char *data2 = alloc_abi<char*>(DATA2_LEN);
+	data2[0] = 11;
+	data2[1] = 22;
+	data2[2] = 33;
+	data2[3] = 44;
+	vec2->iov_base = to_compat_ptr(data2);
+	vec2->iov_len = DATA2_LEN;
+
+	mhdr[0].msg_hdr.msg_iov = to_compat_ptr(vec1);
+	mhdr[0].msg_hdr.msg_iovlen = 1;
+
+	mhdr[1].msg_hdr.msg_iov = to_compat_ptr(vec2);
+	mhdr[1].msg_hdr.msg_iovlen = 1;
+
+	int sent;
+
+	/* this returns only the amount of playoad data in msg_iov */
+	if constexpr (USE_SOCKETCALL) {
+#ifdef COSMOS_I386
+		sent = socketcall32(SYS_SENDMMSG, sock, mhdr, NUM_MULTI_MSGS, MSG_CONFIRM);
+#endif
+	} else {
+		sent = syscall32(SyscallNr32::SENDMMSG, sock, mhdr, NUM_MULTI_MSGS, MSG_CONFIRM);
+	}
+
+	if (sent < 0) {
+		std::cerr << "failed to sendmmsg32(): " << strerror(errno) << "\n";
+	} else if (static_cast<size_t>(sent) != NUM_MULTI_MSGS) {
+		std::cerr << "failed to send full message: " << sent << " vs. " << sizeof(data1) + sizeof(data2) << "\n";
+		exit(1);
+	}
+
+}
+
+template <bool USE_SOCKETCALL>
+void recv_multi32(int sock) {
+	auto mhdr = alloc_abi<clues::mmsghdr32*>(sizeof(clues::mmsghdr32) * NUM_MULTI_MSGS);
+	cosmos::zero_object(*mhdr);
+
+	auto vec1 = alloc_struct_abi<clues::iovec32>();
+	auto vec2 = alloc_struct_abi<clues::iovec32>();
+
+	char *data1 = alloc_abi<char*>(RECV_BUF_LEN);
+	char *data2 = alloc_abi<char*>(RECV_BUF_LEN);
+
+	vec1->iov_base = to_compat_ptr(data1);
+	vec1->iov_len = RECV_BUF_LEN;
+	vec2->iov_base = to_compat_ptr(data2);
+	vec2->iov_len = RECV_BUF_LEN;
+
+	mhdr[0].msg_hdr.msg_iov = to_compat_ptr(vec1);
+	mhdr[0].msg_hdr.msg_iovlen = 1;
+	mhdr[1].msg_hdr.msg_iov = to_compat_ptr(vec2);
+	mhdr[1].msg_hdr.msg_iovlen = 1;
+
+	int received;
+	auto ts = alloc_struct_abi<clues::timespec32>();
+	ts->tv_sec = 47;
+	ts->tv_nsec = 64;
+
+	if constexpr (USE_SOCKETCALL) {
+		received = socketcall32(SYS_RECVMMSG, sock, mhdr, NUM_MULTI_MSGS, MSG_CMSG_CLOEXEC, ts);
+	} else {
+		received = syscall32(SyscallNr32::RECVMMSG, sock, mhdr, NUM_MULTI_MSGS, MSG_CMSG_CLOEXEC, ts);
+	}
+
+	if (received < 0) {
+		std::cerr << "recvmmsg32() failed: " << strerror(errno) << "\n";
+	} else if (received != NUM_MULTI_MSGS) {
+		std::cerr << "received unexpected byte count: " << received << "\n";
+		exit(1);
+	}
+
+}
 
 /* variant for 32-bit cross ABI tracing. Differences in data structures and
  * memory management are too big to keep common code around :-/ */
@@ -361,13 +496,12 @@ void recv_fds32(int sock) {
 	*data = 77;
 	vec->iov_base = to_compat_ptr(data);
 	vec->iov_len = sizeof(char);
-	constexpr auto CONTROLBUF_LEN = 1024;
-	auto control = alloc_abi<char*>(CONTROLBUF_LEN);
+	auto control = alloc_abi<char*>(RECV_BUF_LEN);
 
 	msg->msg_iov = to_compat_ptr(vec);
 	msg->msg_iovlen = 1;
 	msg->msg_control = to_compat_ptr(control);
-	msg->msg_controllen = CONTROLBUF_LEN;
+	msg->msg_controllen = RECV_BUF_LEN;
 
 	int received;
 
@@ -384,6 +518,86 @@ void recv_fds32(int sock) {
 }
 
 #endif // TEST_I386_EMU
+
+template <bool USE_SOCKETCALL>
+void send_multi(int sock) {
+	struct mmsghdr mhdr[NUM_MULTI_MSGS];
+	cosmos::zero_object(mhdr);
+	struct iovec vec1, vec2;
+
+	char data1[] = {99, 88, 77};
+	vec1.iov_base = data1;
+	vec1.iov_len = sizeof(data1);
+
+	char data2[] = {11, 22, 33, 44};
+	vec2.iov_base = data2;
+	vec2.iov_len = sizeof(data2);
+
+	mhdr[0].msg_hdr.msg_iov = &vec1;
+	mhdr[0].msg_hdr.msg_iovlen = 1;
+
+	mhdr[1].msg_hdr.msg_iov = &vec2;
+	mhdr[1].msg_hdr.msg_iovlen = 1;
+
+	int sent;
+
+	/* this returns only the amount of playoad data in msg_iov */
+	if constexpr (USE_SOCKETCALL) {
+#ifdef COSMOS_I386
+		sent = socketcall(SYS_SENDMMSG, sock, &mhdr, NUM_MULTI_MSGS, MSG_CONFIRM);
+#endif
+	} else {
+		sent = syscall(SYS_sendmmsg, sock, &mhdr, NUM_MULTI_MSGS, MSG_CONFIRM);
+	}
+
+	if (sent < 0) {
+		std::cerr << "failed to sendmmsg(): " << strerror(errno) << "\n";
+	} else if (static_cast<size_t>(sent) != NUM_MULTI_MSGS) {
+		std::cerr << "failed to send full message: " << sent << " vs. " << sizeof(data1) + sizeof(data2) << "\n";
+		exit(1);
+	}
+}
+
+template <bool USE_SOCKETCALL>
+void recv_multi(int sock) {
+	struct mmsghdr mhdr[NUM_MULTI_MSGS];
+	cosmos::zero_object(mhdr);
+
+	struct iovec vec1, vec2;
+
+	char data1[128];
+	char data2[128];
+
+	vec1.iov_base = data1;
+	vec1.iov_len = sizeof(data1);
+	vec2.iov_base = data2;
+	vec2.iov_len = sizeof(data2);
+
+	mhdr[0].msg_hdr.msg_iov = &vec1;
+	mhdr[0].msg_hdr.msg_iovlen = 1;
+	mhdr[1].msg_hdr.msg_iov = &vec2;
+	mhdr[1].msg_hdr.msg_iovlen = 1;
+
+	int received;
+	canon_timespec ts;
+	ts.tv_sec = 47;
+	ts.tv_nsec = 64;
+
+	if constexpr (USE_SOCKETCALL) {
+#ifdef COSMOS_I386
+		received = socketcall(SYS_RECVMMSG, sock, &mhdr, NUM_MULTI_MSGS, MSG_CMSG_CLOEXEC, &ts);
+#endif
+	} else {
+		received = syscall(SYS_recvmmsg, sock, &mhdr, NUM_MULTI_MSGS, MSG_CMSG_CLOEXEC, &ts);
+	}
+
+	if (received < 0) {
+		std::cerr << "recvmmsg() failed: " << strerror(errno) << "\n";
+	} else if (received != NUM_MULTI_MSGS) {
+		std::cerr << "received unexpected byte count: " << received << "\n";
+		exit(1);
+	}
+}
 
 /* performs 4 system calls, sends 8 byte of data, binds to '\0send'  */
 void do_receive_unix(SocketCB cb) {
@@ -1213,6 +1427,56 @@ const auto TESTS = std::array{
 			})
 		},
 		"sendmsg()",
+		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::RECVMMSG, []() {
+			auto send_recv_cb = [](int send_sock, int recv_sock) {
+				send_multi<false>(send_sock);
+				recv_multi<false>(recv_sock);
+			};
+
+			do_send_unix(send_recv_cb);
+		}, ENTRY_VERIFY_CB(RecvMMsgSystemCall, {
+			check_recv_multi_entry(sc, good);
+		}), EXIT_VERIFY_CB(RecvMMsgSystemCall, {
+			check_recv_multi_exit(sc, good);
+		}), IgnoreCalls::AUTO, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
+				auto send_recv_cb = [](int send_sock, int recv_sock) {
+					send_multi32<false>(send_sock);
+					recv_multi32<false>(recv_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
+		}
+	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+		auto send_recv_cb = [](int send_sock, int recv_sock) {
+			send_multi<false>(send_sock);
+			recv_multi<true>(recv_sock);
+		};
+
+		do_send_unix(send_recv_cb);
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_RecvMMsg, {
+			check_recv_multi_entry(sc, good);
+		}), EXIT_VERIFY_CB(SocketCall_RecvMMsg, {
+			check_recv_multi_exit(sc, good);
+		// IgnoreCalls::AUTO won't work here, because of multiple
+		// socketcalls happening.
+		}), IgnoreCalls{4}, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
+				auto send_recv_cb = [](int send_sock, int recv_sock) {
+					send_multi32<false>(send_sock);
+					recv_multi32<true>(recv_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
+		},
+		"recvmmsg()",
 		{clues::ABI::I386}
 	},
 };
