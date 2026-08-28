@@ -732,12 +732,15 @@ std::string RecvMessageHeader::str() const {
 	const auto in_len = std::to_string(m_in_header->msg_namelen);
 	const auto out_len = m_msg_namelen.str();
 
-	ret += std::format("msg_name={}, msg_namelen={}, msg_iov={}, msg_iovlen={}, msg_control={}, msg_controllen={} → {}, msg_flags={}",
+	const auto ctl_in_len = std::to_string(m_in_header->msg_controllen);
+	const auto ctl_out_len = std::to_string(m_out_header->msg_controllen);
+
+	ret += std::format("msg_name={}, msg_namelen={}, msg_iov={}, msg_iovlen={}, msg_control={}, msg_controllen={}, msg_flags={}",
 		m_msg_name.str(),
 		m_in_header->msg_namelen ? std::format("{} → {}", in_len, out_len) : in_len,
 		m_msg_iov.str(), m_msg_iovlen.str(),
 		controlStr(header()),
-		m_in_header->msg_controllen, m_msg_controllen.str(),
+		m_in_header->msg_controllen ? std::format("{} → {}", ctl_in_len, ctl_out_len) : ctl_in_len, m_msg_controllen.str(),
 		m_msg_flags.str()
 	);
 
