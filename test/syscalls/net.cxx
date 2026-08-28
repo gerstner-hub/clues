@@ -209,17 +209,52 @@ void check_recvmsg_exit(const clues::RecvMsgSystemCall &sc, bool &good) {
 	verify_unix_msg_header(*msg.header(), good, true);
 }
 
+void check_send_multi_entry(const clues::SendMMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.sockfd.fd() == FIRST_FD);
+	VERIFY(sc.num_msgs.value() == NUM_MULTI_MSGS);
+	VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CONFIRM);
+	const auto &headers = sc.msgvec.headers();
+	VERIFY(headers.size() == 2);
+	bool first = true;
+	for (const auto &hdr: headers) {
+		VERIFY(!hdr.bytesSent());
+
+		const auto &iovec = hdr.ioVector();
+			VERIFY(iovec.size() == 1);
+
+		if (first) {
+			VERIFY(iovec[0].data == std::vector<std::byte>{{std::byte{99}, std::byte{88}, std::byte{77}}});
+		} else {
+			VERIFY(iovec[0].data == std::vector<std::byte>{{std::byte{11}, std::byte{22}, std::byte{33}, std::byte{44}}});
+		}
+
+		first = false;
+	}
+}
+
+void check_send_multi_exit(const clues::SendMMsgSystemCall &sc, bool &good) {
+	VERIFY(sc.hasResultValue());
+	VERIFY(sc.num_updated.value() == 2);
+
+	const auto &headers = sc.msgvec.headers();
+	bool first = true;
+	for (const auto &hdr: headers) {
+		VERIFY(*hdr.bytesSent() == (first ? 3 : 4));
+		first = false;
+	}
+}
+
 void check_recv_multi_entry(const clues::RecvMMsgSystemCall &sc, bool &good) {
 	VERIFY(sc.sockfd.fd() == SECOND_FD);
 	VERIFY(sc.flags.flags() == clues::item::SendRecvFlags::MessageFlag::CLOEXEC);
-	VERIFY(sc.num_msgs.value() == 2);
+	VERIFY(sc.num_msgs.value() == NUM_MULTI_MSGS);
 
 	const auto &ts = *sc.timeout.spec();
 	VERIFY(ts.tv_sec == 47);
 	VERIFY(ts.tv_nsec == 64);
 
 	const auto &headers = sc.msgvec.headers();
-	VERIFY(headers.size() == 2);
+	VERIFY(headers.size() == NUM_MULTI_MSGS);
 
 	const auto &msg1 = headers[0];
 	VERIFY(!msg1.bytesReceived());
@@ -373,9 +408,7 @@ void send_multi32(int sock) {
 
 	/* this returns only the amount of playoad data in msg_iov */
 	if constexpr (USE_SOCKETCALL) {
-#ifdef COSMOS_I386
 		sent = socketcall32(SYS_SENDMMSG, sock, mhdr, NUM_MULTI_MSGS, MSG_CONFIRM);
-#endif
 	} else {
 		sent = syscall32(SyscallNr32::SENDMMSG, sock, mhdr, NUM_MULTI_MSGS, MSG_CONFIRM);
 	}
@@ -1477,6 +1510,52 @@ const auto TESTS = std::array{
 			})
 		},
 		"recvmmsg()",
+		{clues::ABI::I386}
+	},
+	TestSpec{SystemCallNr::SENDMMSG, []() {
+			auto send_recv_cb = [](int send_sock, int) {
+				send_multi<false>(send_sock);
+			};
+
+			do_send_unix(send_recv_cb);
+		}, ENTRY_VERIFY_CB(SendMMsgSystemCall, {
+			check_send_multi_entry(sc, good);
+		}), EXIT_VERIFY_CB(SendMMsgSystemCall, {
+			check_send_multi_exit(sc, good);
+		}), IgnoreCalls::AUTO, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
+				auto send_recv_cb = [](int send_sock, int) {
+					send_multi32<false>(send_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
+		}
+	},
+	TestSpec{SystemCallNr::SOCKETCALL, []() {
+#ifdef COSMOS_I386
+		auto send_recv_cb = [](int send_sock, int) {
+			send_multi<true>(send_sock);
+		};
+
+		do_send_unix(send_recv_cb);
+#endif
+		}, ENTRY_VERIFY_CB(SocketCall_SendMMsg, {
+			check_send_multi_entry(sc, good);
+		}), EXIT_VERIFY_CB(SocketCall_SendMMsg, {
+			check_send_multi_exit(sc, good);
+		// IgnoreCalls::AUTO won't work here, because of multiple
+		// socketcalls happening.
+		}), IgnoreCalls{3}, {
+			I386_CROSS_ABI(IgnoreCalls::AUTO, []() {
+				auto send_recv_cb = [](int send_sock, int) {
+					send_multi32<true>(send_sock);
+				};
+
+				do_send_unix(send_recv_cb);
+			})
+		},
+		"sendmmsg()",
 		{clues::ABI::I386}
 	},
 };
