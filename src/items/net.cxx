@@ -763,13 +763,13 @@ using ReceiveMessageHeader = cosmos::ReceiveMessageHeader;
 using ControlMessage = ReceiveMessageHeader::ControlMessage;
 
 static std::string format_ctrl_type(const ControlMessage &msg) {
-	if (const auto unix_msg = msg.asUnixMessage(); unix_msg) {
+	if (const auto unix_msg = cosmos::as_unix_message(msg); unix_msg) {
 		switch (cosmos::to_integral(*unix_msg)) {
 			CASE_ENUM_TO_STR(SCM_RIGHTS);
 			CASE_ENUM_TO_STR(SCM_CREDENTIALS);
 			default: return "SCM_???";
 		}
-	} else if (const auto ip4_msg = msg.asIP4Message(); ip4_msg) {
+	} else if (const auto ip4_msg = cosmos::as_ip4_message(msg); ip4_msg) {
 		switch (cosmos::to_integral(*ip4_msg)) {
 			CASE_ENUM_TO_STR(IP_RECVERR);
 			CASE_ENUM_TO_STR(IP_PKTINFO);
@@ -778,7 +778,7 @@ static std::string format_ctrl_type(const ControlMessage &msg) {
 			CASE_ENUM_TO_STR(IP_TTL);
 			default: return "IP_???";
 		}
-	} else if (const auto ip6_msg = msg.asIP6Message(); ip6_msg) {
+	} else if (const auto ip6_msg = cosmos::as_ip6_message(msg); ip6_msg) {
 		switch (cosmos::to_integral(*ip6_msg)) {
 			CASE_ENUM_TO_STR(IPV6_RECVERR);
 			CASE_ENUM_TO_STR(IPV6_PKTINFO);
@@ -863,14 +863,14 @@ static std::string format_ctrl_data(const ControlMessage &msg) {
 
 	// TODO: implement remaining aux message types in libcosmos and here
 
-	if (const auto unix_msg = msg.asUnixMessage(); unix_msg) {
+	if (const auto unix_msg = cosmos::as_unix_message(msg); unix_msg) {
 		using enum cosmos::UnixMessage;
 		switch (*unix_msg) {
 			case RIGHTS: return format_unix_rights(msg);
 			case CREDENTIALS: return format_unix_creds(msg);
 			default: break;
 		}
-	} else if (const auto ip4_msg = msg.asIP4Message(); ip4_msg) {
+	} else if (const auto ip4_msg = cosmos::as_ip4_message(msg); ip4_msg) {
 		using enum cosmos::IP4Message;
 		switch (*ip4_msg) {
 			case RECVERR: return format_inet_recverr<
@@ -880,7 +880,7 @@ static std::string format_ctrl_data(const ControlMessage &msg) {
 			case TOS: break;
 			case TTL: break;
 		}
-	} else if (const auto ip6_msg = msg.asIP6Message(); ip6_msg) {
+	} else if (const auto ip6_msg = cosmos::as_ip6_message(msg); ip6_msg) {
 		using enum cosmos::IP6Message;
 		switch (*ip6_msg) {
 			case RECVERR: return format_inet_recverr<

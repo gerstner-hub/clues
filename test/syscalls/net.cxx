@@ -150,7 +150,7 @@ void verify_unix_msg_header(const cosmos::ReceiveMessageHeader &header, bool &go
 	size_t count = 0;
 	for (const auto &cmsg: header) {
 		VERIFY(cmsg.level() == cosmos::OptLevel::SOCKET);
-		VERIFY(*cmsg.asUnixMessage() == cosmos::UnixMessage::RIGHTS);
+		VERIFY(*cosmos::as_unix_message(cmsg) == cosmos::UnixMessage::RIGHTS);
 		cosmos::UnixRightsMessage rights;
 		rights.deserialize(cmsg);
 		VERIFY(rights.numFDs() == 2);

@@ -264,7 +264,7 @@ void RecvMsgSystemCall::updateFDTracking(const Tracee &proc) {
 	const auto header_opt = msg.header();
 
 	for (const auto &ctrl: *header_opt) {
-		if (const auto type = ctrl.asUnixMessage(); !type)
+		if (const auto type = cosmos::as_unix_message(ctrl); !type)
 			continue;
 		else if (type != cosmos::UnixMessage::RIGHTS)
 			continue;
