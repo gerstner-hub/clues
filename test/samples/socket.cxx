@@ -392,7 +392,7 @@ int main() {
 	sock1 = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
 	close(sock1);
 
-	sock1 = socket(AF_PACKET, SOCK_RAW, ETH_P_DIAG);
+	sock1 = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_DIAG));
 	close(sock1);
 
 	syscall(SYS_socketpair, AF_UNIX, SOCK_STREAM, 0, pair);
@@ -442,4 +442,48 @@ int main() {
 	close(sock1);
 	close(sock2);
 #endif
+
+	sock1 = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_USERSOCK);
+	sock2 = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_USERSOCK);
+
+	struct sockaddr_nl nladdr;
+	cosmos::zero_object(nladdr);
+	nladdr.nl_family = AF_NETLINK;
+
+	bind_and_listen(sock1, nladdr, sizeof(nladdr));
+	addrlen = sizeof(nladdr);
+	syscall(SYS_getsockname, sock1, (sockaddr*)&nladdr, &addrlen);
+	const auto sock1_port = nladdr.nl_pid;
+	nladdr.nl_pid = 0;
+	bind_and_listen(sock2, nladdr, sizeof(nladdr));
+	syscall(SYS_getsockname, sock2, (sockaddr*)&nladdr, &addrlen);
+
+
+	constexpr size_t NL_PAYLOAD_LEN = 10;
+	struct nlmsghdr nlhdr;
+	cosmos::zero_object(nlhdr);
+	nlhdr.nlmsg_len = sizeof(nlhdr) + NL_PAYLOAD_LEN;
+	nlhdr.nlmsg_type = NLMSG_NOOP;
+	nlhdr.nlmsg_flags = NLM_F_REQUEST;
+	nlhdr.nlmsg_seq = 0x1234;
+	nlhdr.nlmsg_pid = sock1_port;
+
+	std::vector<std::byte> buffer;
+	buffer.resize(sizeof(nlhdr) + NL_PAYLOAD_LEN);
+	std::memcpy(buffer.data(), &nlhdr, sizeof(nlhdr));
+	constexpr const char NL_PAYLOAD_STR[NL_PAYLOAD_LEN] = "nltestpay";
+	std::memcpy(buffer.data() + sizeof(nlhdr), NL_PAYLOAD_STR, NL_PAYLOAD_LEN);
+	addrlen = sizeof(nladdr);
+
+	syscall(SYS_sendto, sock1, buffer.data(), buffer.size(), MSG_NOSIGNAL, &nladdr, addrlen);
+	syscall(SYS_recvfrom, sock2, buffer.data(), buffer.size(), MSG_DONTROUTE, &nladdr, &addrlen);
+
+	close(sock1);
+	close(sock2);
+
+	/* need CAP_NET_ADMIN, but for tracing the creation we can still use
+	 * this */
+	sock1 = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_REALTEK));
+	if (sock1 >= 0)
+		close(sock1);
 }

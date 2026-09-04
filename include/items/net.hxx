@@ -13,7 +13,9 @@
 
 // cosmos
 #include <cosmos/net/inet/IPAddress.hxx>
+#include <cosmos/net/LinkLayerAddress.hxx>
 #include <cosmos/net/message_header.hxx>
+#include <cosmos/net/netlink/NetlinkAddress.hxx>
 #include <cosmos/net/Socket.hxx>
 #include <cosmos/net/unix/UnixAddress.hxx>
 
@@ -544,7 +546,9 @@ public: // types
 	using AddressVariant = std::variant<
 	      cosmos::IP4Address,
 	      cosmos::IP6Address,
-	      cosmos::UnixAddress>;
+	      cosmos::UnixAddress,
+	      cosmos::NetlinkAddress,
+	      cosmos::LinkLayerAddress>;
 
 public: // functions
 

@@ -2,8 +2,9 @@
 #include <algorithm>
 
 // cosmos
-#include <cosmos/net/unix/aux.hxx>
+#include <cosmos/formatting.hxx>
 #include <cosmos/net/inet/aux.hxx>
+#include <cosmos/net/unix/aux.hxx>
 #include <cosmos/utils.hxx>
 
 // clues
@@ -99,7 +100,8 @@ void SocketProtocol::processValue(const Tracee&) {
 			break;
 		case Domain::PACKET:
 			if (m_raw != 0) {
-				m_prot = EthProtocol{m_raw};
+				const auto host_prot = cosmos::net::swap_byte_order(static_cast<uint16_t>(m_raw));;
+				m_prot = EthProtocol{static_cast<int>(host_prot)};
 			}
 			break;
 		case Domain::NETLINK:
@@ -548,6 +550,149 @@ void format_addr(std::string &out, const cosmos::UnixAddress &addr) {
 	);
 };
 
+void format_addr(std::string &out, const cosmos::NetlinkAddress &addr) {
+	const auto raw = reinterpret_cast<const sockaddr_nl*>(addr.raw());
+
+	out += std::format(", nl_pad={}, nl_pid={}, nl_groups={}",
+		raw->nl_pad, cosmos::to_integral(addr.port()), addr.groupMask().to_ulong()
+	);
+}
+
+const char* label(const cosmos::EthernetProtocol prot) {
+	switch (to_integral(prot)) {
+		case 0: return "0"; /* NONE in packet sockets */
+		CASE_ENUM_TO_STR(ETH_P_ALL);
+		CASE_ENUM_TO_STR(ETH_P_LOOP);
+		CASE_ENUM_TO_STR(ETH_P_PUP);
+		CASE_ENUM_TO_STR(ETH_P_PUPAT);
+		CASE_ENUM_TO_STR(ETH_P_TSN);
+		CASE_ENUM_TO_STR(ETH_P_ERSPAN2);
+		CASE_ENUM_TO_STR(ETH_P_IP);
+		CASE_ENUM_TO_STR(ETH_P_X25);
+		CASE_ENUM_TO_STR(ETH_P_ARP);
+		CASE_ENUM_TO_STR(ETH_P_BPQ);
+		CASE_ENUM_TO_STR(ETH_P_IEEEPUP);
+		CASE_ENUM_TO_STR(ETH_P_IEEEPUPAT);
+		CASE_ENUM_TO_STR(ETH_P_BATMAN);
+		CASE_ENUM_TO_STR(ETH_P_DEC);
+		CASE_ENUM_TO_STR(ETH_P_DNA_DL);
+		CASE_ENUM_TO_STR(ETH_P_DNA_RC);
+		CASE_ENUM_TO_STR(ETH_P_DNA_RT);
+		CASE_ENUM_TO_STR(ETH_P_LAT);
+		CASE_ENUM_TO_STR(ETH_P_DIAG);
+		CASE_ENUM_TO_STR(ETH_P_CUST);
+		CASE_ENUM_TO_STR(ETH_P_SCA);
+		CASE_ENUM_TO_STR(ETH_P_TEB);
+		CASE_ENUM_TO_STR(ETH_P_RARP);
+		CASE_ENUM_TO_STR(ETH_P_ATALK);
+		CASE_ENUM_TO_STR(ETH_P_AARP);
+		CASE_ENUM_TO_STR(ETH_P_8021Q);
+		CASE_ENUM_TO_STR(ETH_P_ERSPAN);
+		CASE_ENUM_TO_STR(ETH_P_IPX);
+		CASE_ENUM_TO_STR(ETH_P_IPV6);
+		CASE_ENUM_TO_STR(ETH_P_PAUSE);
+		CASE_ENUM_TO_STR(ETH_P_SLOW);
+		CASE_ENUM_TO_STR(ETH_P_WCCP);
+		CASE_ENUM_TO_STR(ETH_P_MPLS_UC);
+		CASE_ENUM_TO_STR(ETH_P_MPLS_MC);
+		CASE_ENUM_TO_STR(ETH_P_ATMMPOA);
+		CASE_ENUM_TO_STR(ETH_P_PPP_DISC);
+		CASE_ENUM_TO_STR(ETH_P_PPP_SES);
+		CASE_ENUM_TO_STR(ETH_P_LINK_CTL);
+		CASE_ENUM_TO_STR(ETH_P_ATMFATE);
+		CASE_ENUM_TO_STR(ETH_P_PAE);
+#ifdef ETH_P_PROFINET
+		CASE_ENUM_TO_STR(ETH_P_PROFINET);
+#endif
+#ifdef ETH_P_REALTEK
+		CASE_ENUM_TO_STR(ETH_P_REALTEK);
+#endif
+		CASE_ENUM_TO_STR(ETH_P_AOE);
+#ifdef ETH_P_ETHERCAT
+		CASE_ENUM_TO_STR(ETH_P_ETHERCAT);
+#endif
+		CASE_ENUM_TO_STR(ETH_P_8021AD);
+		CASE_ENUM_TO_STR(ETH_P_802_EX1);
+		CASE_ENUM_TO_STR(ETH_P_PREAUTH);
+		CASE_ENUM_TO_STR(ETH_P_TIPC);
+		CASE_ENUM_TO_STR(ETH_P_LLDP);
+		CASE_ENUM_TO_STR(ETH_P_MRP);
+		CASE_ENUM_TO_STR(ETH_P_MACSEC);
+		CASE_ENUM_TO_STR(ETH_P_8021AH);
+		CASE_ENUM_TO_STR(ETH_P_MVRP);
+		CASE_ENUM_TO_STR(ETH_P_1588);
+		CASE_ENUM_TO_STR(ETH_P_NCSI);
+		CASE_ENUM_TO_STR(ETH_P_PRP);
+		CASE_ENUM_TO_STR(ETH_P_CFM);
+		CASE_ENUM_TO_STR(ETH_P_FCOE);
+		CASE_ENUM_TO_STR(ETH_P_IBOE);
+		CASE_ENUM_TO_STR(ETH_P_TDLS);
+		CASE_ENUM_TO_STR(ETH_P_FIP);
+		CASE_ENUM_TO_STR(ETH_P_80221);
+		CASE_ENUM_TO_STR(ETH_P_HSR);
+		CASE_ENUM_TO_STR(ETH_P_NSH);
+		CASE_ENUM_TO_STR(ETH_P_LOOPBACK);
+		CASE_ENUM_TO_STR(ETH_P_QINQ1);
+		CASE_ENUM_TO_STR(ETH_P_QINQ2);
+		CASE_ENUM_TO_STR(ETH_P_QINQ3);
+		CASE_ENUM_TO_STR(ETH_P_EDSA);
+		CASE_ENUM_TO_STR(ETH_P_DSA_8021Q);
+#ifdef ETH_PDSA_A5PSW
+		CASE_ENUM_TO_STR(ETH_P_DSA_A5PSW);
+#endif
+		CASE_ENUM_TO_STR(ETH_P_IFE);
+		CASE_ENUM_TO_STR(ETH_P_AF_IUCV);
+		default: return "ETH_P_???";
+	}
+}
+
+const char* label(const cosmos::ARPType type) {
+	switch (cosmos::to_integral(type)) {
+		CASE_ENUM_TO_STR(ARPHRD_NETROM);
+		CASE_ENUM_TO_STR(ARPHRD_ETHER);
+		CASE_ENUM_TO_STR(ARPHRD_EETHER);
+		CASE_ENUM_TO_STR(ARPHRD_AX25);
+		CASE_ENUM_TO_STR(ARPHRD_PRONET);
+		CASE_ENUM_TO_STR(ARPHRD_CHAOS);
+		CASE_ENUM_TO_STR(ARPHRD_IEEE802);
+		CASE_ENUM_TO_STR(ARPHRD_ARCNET);
+		CASE_ENUM_TO_STR(ARPHRD_APPLETLK);
+		CASE_ENUM_TO_STR(ARPHRD_DLCI);
+		CASE_ENUM_TO_STR(ARPHRD_ATM);
+		CASE_ENUM_TO_STR(ARPHRD_METRICOM);
+		CASE_ENUM_TO_STR(ARPHRD_IEEE1394);
+		CASE_ENUM_TO_STR(ARPHRD_EUI64);
+		CASE_ENUM_TO_STR(ARPHRD_INFINIBAND);
+		default: return "ARPHRD_???";
+	}
+}
+
+const char* label(const cosmos::PacketType type) {
+	switch (cosmos::to_integral(type)) {
+		CASE_ENUM_TO_STR(PACKET_HOST);
+                CASE_ENUM_TO_STR(PACKET_BROADCAST);
+                CASE_ENUM_TO_STR(PACKET_MULTICAST);
+                CASE_ENUM_TO_STR(PACKET_OTHERHOST);
+                CASE_ENUM_TO_STR(PACKET_OUTGOING);
+		default: return "PACKET_???";
+	}
+}
+
+void format_addr(std::string &out, const cosmos::LinkLayerAddress &addr) {
+	const auto raw = reinterpret_cast<const sockaddr_ll*>(addr.raw());
+	using enum cosmos::HexDumpFlag;
+	const auto ha_str = cosmos::hexdump(
+			std::span<const std::byte>(reinterpret_cast<const std::byte*>(raw->sll_addr),
+				raw->sll_halen),
+			{UPPER_CASE, COLON_SEP});
+
+	out += std::format(", sll_protocol={} ({}), sll_ifindex={}, sll_hatype={}, sll_pktype={}, sll_halen={}, sll_addr={}",
+		label(addr.protocol()), std::format("{:0x}", cosmos::to_integral(addr.protocol())),
+		cosmos::to_integral(addr.ifindex()),
+		label(addr.arpType()), label(addr.packetType()), raw->sll_halen, ha_str
+	);
+}
+
 } // end anon ns
 
 std::string SocketAddress::str() const {
@@ -643,6 +788,8 @@ std::optional<SocketAddress::AddressVariant> SocketAddress::addr() const {
 		default: return {};
 		case INET: return cosmos::IP4Address{reinterpret_cast<const sockaddr_in&>(*m_addr)};
 		case INET6: return cosmos::IP6Address{reinterpret_cast<const sockaddr_in6&>(*m_addr)};
+		case PACKET: return cosmos::LinkLayerAddress{reinterpret_cast<const sockaddr_ll&>(*m_addr)};
+		case NETLINK: return cosmos::NetlinkAddress{reinterpret_cast<const sockaddr_nl&>(*m_addr)};
 		case UNIX: return cosmos::UnixAddress{
 				   reinterpret_cast<const sockaddr_un&>(*m_addr),
 				   addrLen() >= 0 ?
