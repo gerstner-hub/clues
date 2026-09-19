@@ -314,23 +314,34 @@ static constexpr std::array<size_t, NUM_SOCKETCALLS> NUM_SOCKETCALL_ARGS{
 	0, 3, 3, 3, 2, 3, 3, 3, 4, 4, 4, 6, 6, 2, 5, 5, 3, 3, 4, 5, 4
 };
 
-void SocketCallArgs::processValue(const Tracee &proc) {
-	const auto callnum = cosmos::to_integral(m_type.call());
+std::vector<unsigned long> SocketCallArgs::fetchArgs(const Tracee &proc,
+		const ABI abi,
+		const SocketCallType::Call call,
+		const ForeignPtr arg_ptr) {
+	const auto callnum = cosmos::to_integral(call);
 	const auto num_args = NUM_SOCKETCALL_ARGS[callnum];
 
-	try {
-		if (m_call->is32BitEmulationABI()) {
-			/* the tracee uses smaller `unsigned long` than us */
-			std::vector<uint32_t> args(num_args);
-			proc.readStructs(asPtr(), args);
+	std::vector<unsigned long> ret;
 
-			for (const auto arg: args) {
-				m_args.push_back(arg);
-			}
-		} else {
-			m_args.resize(num_args);
-			proc.readStructs(asPtr(), m_args);
+	if (is_32bit_emulation_abi(abi)) {
+		/* the tracee uses smaller `unsigned long` than us */
+		std::vector<uint32_t> args(num_args);
+		proc.readStructs(arg_ptr, args);
+
+		for (const auto arg: args) {
+			ret.push_back(arg);
 		}
+	} else {
+		ret.resize(num_args);
+		proc.readStructs(arg_ptr, ret);
+	}
+
+	return ret;
+}
+
+void SocketCallArgs::processValue(const Tracee &proc) {
+	try {
+		m_args = fetchArgs(proc, m_call->abi(), m_type.call(), asPtr());
 	} catch(...) {
 		m_args.clear();
 		throw;

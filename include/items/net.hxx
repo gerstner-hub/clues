@@ -489,6 +489,11 @@ public: // functions
 		return m_args;
 	}
 
+	static std::vector<unsigned long> fetchArgs(const Tracee &,
+			const ABI abi,
+			const SocketCallType::Call call,
+			const ForeignPtr arg_ptr);
+
 protected: // functions
 
 	void processValue(const Tracee&) override;
