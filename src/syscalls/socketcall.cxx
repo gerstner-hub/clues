@@ -210,13 +210,38 @@ SystemCallPtr create_socket_call_get_socket_opt_syscall(const int optname) {
 	return nullptr;
 }
 
-SystemCallPtr create_socket_call_getsockopt_syscall(const Tracee &tracee, const SystemCallInfo &info) {
-	const auto call_args = item::SocketCallArgs::fetchArgs(tracee,
-			info.abi(),
-			item::SocketCallType::Call::GETSOCKOPT,
-			ForeignPtr{info.entryInfo().value().args()[1]});
+SystemCallPtr create_socket_call_set_socket_opt_syscall(const int optname) {
+	using enum item::SockOptName::SocketOption;
+
+	switch (item::SockOptName::SocketOption{optname}) {
+	case ACCEPTCONN:
+	case DONTROUTE:
+		return std::make_shared<SocketCall_SetBoolSockOpt>();
+	default: break;
+	}
+
+	return nullptr;
+}
+
+std::pair<OptLevel, int> fetch_opt_level_and_name(const Tracee &tracee,
+		const SystemCallInfo &info,
+		const item::SocketCallType::Call sub_call) {
+
+	const auto call_args = item::SocketCallArgs::fetchArgs(
+			tracee, info.abi(), sub_call,
+			(ForeignPtr)info.entryInfo().value().args()[1]);
 	const auto optlevel = OptLevel{(int)call_args[1]};
 	const int optname = call_args[2];
+
+	return std::make_pair(optlevel, optname);
+
+}
+
+SystemCallPtr create_socket_call_getsockopt_syscall(const Tracee &tracee, const SystemCallInfo &info) {
+	const auto [optlevel, optname] = fetch_opt_level_and_name(
+			tracee,
+			info,
+			item::SocketCallType::Call::GETSOCKOPT);
 
 	switch (optlevel) {
 		case OptLevel::SOCKET: {
@@ -228,7 +253,25 @@ SystemCallPtr create_socket_call_getsockopt_syscall(const Tracee &tracee, const 
 	}
 
 	LOG_WARN("unknown socketcall(GETSOCKOPT, ...) level/optname encountered. falling back to generic type.");
-	return std::make_shared<SocketCall_UnknownSockOpt>();
+	return std::make_shared<SocketCall_GetUnknownSockOpt>();
+}
+
+SystemCallPtr create_socket_call_setsockopt_syscall(const Tracee &tracee, const SystemCallInfo &info) {
+	const auto [optlevel, optname] = fetch_opt_level_and_name(
+			tracee,
+			info,
+			item::SocketCallType::Call::GETSOCKOPT);
+
+	switch (optlevel) {
+		case OptLevel::SOCKET: {
+			if (auto sc = create_socket_call_set_socket_opt_syscall(optname); sc) {
+				return sc;
+			}
+		}
+		default: break;
+	}
+	LOG_WARN("unknown socketcall(SETSOCKOPT, ...) level/optname encountered. falling back to generic type.");
+	return std::make_shared<SocketCall_SetUnknownSockOpt>();
 }
 
 } // end anon ns
@@ -258,12 +301,13 @@ SystemCallPtr create_socket_call_syscall(const Tracee &tracee, const SystemCallI
 	case RECVMMSG:   return std::make_shared<SocketCall_RecvMMsg>();
 	case SENDMMSG:   return std::make_shared<SocketCall_SendMMsg>();
 	case GETSOCKOPT: return create_socket_call_getsockopt_syscall(tracee, info);
+	case SETSOCKOPT: return create_socket_call_setsockopt_syscall(tracee, info);
 	default: throw cosmos::RuntimeError{"unsupported socketcall() sub-call"};
 	}
 }
 
 template <typename BASE>
-void SocketCallGetSockOptBase<BASE>::transferValues(const Tracee &proc) {
+void SocketCallSockOptBase<BASE>::transferValues(const Tracee &proc) {
 	const auto &vec = this->args.args();
 	this->sockfd.fill(proc, Word{vec[0]});
 	this->level.fill(proc, Word{vec[1]});
@@ -278,7 +322,9 @@ void SocketCallGetSockOptBase<BASE>::transferValues(const Tracee &proc) {
  * explicit template instantiations
  */
 
-template class SocketCallGetSockOptBase<GetBoolSockOptSystemCall>;
-template class SocketCallGetSockOptBase<GetUnknownSockOptSystemCall>;
+template class SocketCallSockOptBase<GetBoolSockOptSystemCall>;
+template class SocketCallSockOptBase<GetUnknownSockOptSystemCall>;
+template class SocketCallSockOptBase<SetBoolSockOptSystemCall>;
+template class SocketCallSockOptBase<SetUnknownSockOptSystemCall>;
 
 } // end ns

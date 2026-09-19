@@ -81,8 +81,74 @@ struct GetUnknownSockOptSystemCall :
 	}
 };
 
+struct SetSockOptSystemCall :
+		public SystemCall {
+
+	explicit SetSockOptSystemCall(
+			SystemCallItem *optval,
+			const SystemCallNr nr = SystemCallNr::SETSOCKOPT) :
+			SystemCall{nr},
+			name{level},
+			optvalp{optval},
+			optlen{ItemCfg{.label = "optlen", .desc = "size of optval in bytes"}} {
+		setReturnItem(res);
+	}
+
+	item::SocketFD sockfd;
+	item::SockOptLevel level;
+	item::SockOptName name;
+	// pointer to the specialized type's optval item.
+	SystemCallItem *optvalp = nullptr;
+	// for getsockopt() this is passed by value, not as a pointer.
+	item::IntValue optlen;
+
+	item::SuccessResult res;
+
+protected: // functions
+
+	/// Register the call's parameters.
+	/**
+	 * This *must* be called by specializations after the full system call
+	 * class hierarchy including the concerete `optval` has been
+	 * constructed.
+	 **/
+	void addPars() {
+		/*
+		 * we need to do this outside the constructor, since `optvalp`
+		 * refers to a member in a more specialized type, so we cannot
+		 * modify it until it's been properly constructed.
+		 */
+		addParameters(sockfd, level, name, *optvalp, optlen);
+	}
+};
+
+struct SetBoolSockOptSystemCall :
+		public SetSockOptSystemCall {
+
+	item::SetSockOptVal<int> optval;
+
+	explicit SetBoolSockOptSystemCall(const SystemCallNr nr = SystemCallNr::SETSOCKOPT) :
+			SetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{.desc = "int (boolean)"}} {
+		addPars();
+	}
+};
+
+struct SetUnknownSockOptSystemCall :
+		public SetSockOptSystemCall {
+
+	item::GenericPointerValue optval;
+
+	explicit SetUnknownSockOptSystemCall(const SystemCallNr nr = SystemCallNr::SETSOCKOPT) :
+			SetSockOptSystemCall{&optval, nr},
+			optval{ItemCfg{.label = "optval", .desc = "unknown option data"}} {
+		addPars();
+	}
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 SystemCallPtr create_getsockopt_syscall(const Tracee &, const SystemCallInfo &info);
+SystemCallPtr create_setsockopt_syscall(const Tracee &, const SystemCallInfo &info);
 
 } // end ns

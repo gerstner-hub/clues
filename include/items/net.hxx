@@ -1125,6 +1125,22 @@ protected: // data
 	const item::PointerToScalar<int> &m_optlen;
 };
 
+/// Specialized pointer to `optval` in setsockopt().
+template <typename T>
+class SetSockOptVal :
+		public item::PointerToScalar<T> {
+public: // functions
+
+	explicit SetSockOptVal(const item::IntValue &optlen, const ItemCfg cfg = {}) :
+			clues::item::PointerToScalar<T>{cfg.applyDefaults(ItemCfg{.label = "optval"})},
+			m_optlen{optlen} {
+	}
+
+protected: // data
+
+	const item::IntValue &m_optlen;
+};
+
 /// Socket option level selection.
 class SockOptLevel :
 		public ValueInParameter {

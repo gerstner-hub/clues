@@ -192,6 +192,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const Tracee &tracee, const System
 	case SystemCallNr::RECVMMSG:        return new_sys<RecvMMsgSystemCall>(nr);
 	case SystemCallNr::SENDMMSG:        return new_sys<SendMMsgSystemCall>(nr);
 	case SystemCallNr::GETSOCKOPT:      return new_multi_sys(create_getsockopt_syscall, tracee, info);
+	case SystemCallNr::SETSOCKOPT:      return new_multi_sys(create_setsockopt_syscall, tracee, info);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,

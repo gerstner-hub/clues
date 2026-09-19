@@ -510,6 +510,14 @@ std::string SocketCallArgs::str() const {
 			call.optvalp->str(), call.optlen.str()
 		);
 		break;
+	} case SETSOCKOPT: {
+		const auto &call = dynamic_cast<const SetSockOptSystemCall&>(*m_call);
+
+		ret += std::format("sockfd={}, level={}, optname={}, optval={}, optlen={}",
+			call.sockfd.str(), call.level.str(), call.name.str(),
+			call.optvalp->str(), call.optlen.str()
+		);
+		break;
 	} default: return "???";
 	} // end switch
 

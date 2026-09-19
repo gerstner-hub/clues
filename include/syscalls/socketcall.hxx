@@ -187,9 +187,12 @@ protected: // functions
  * getsockopt()/setsockopt() we need to deal with additional complexities.
  * This base type implements the value transfer logic for arbitrary more
  * specialized GetSockOptSystemCall types.
+ *
+ * This is currently shared for both getsockopt() and setsockopt() as there
+ * are no conflicts between the two on this level.
  **/
 template <typename BASE>
-class SocketCallGetSockOptBase :
+class SocketCallSockOptBase :
 		public SocketCallBase<BASE> {
 protected: // functions
 
@@ -197,11 +200,19 @@ protected: // functions
 };
 
 class SocketCall_GetBoolSockOpt :
-		public SocketCallGetSockOptBase<GetBoolSockOptSystemCall> {
+		public SocketCallSockOptBase<GetBoolSockOptSystemCall> {
 };
 
-class SocketCall_UnknownSockOpt :
-		public SocketCallGetSockOptBase<GetUnknownSockOptSystemCall> {
+class SocketCall_GetUnknownSockOpt :
+		public SocketCallSockOptBase<GetUnknownSockOptSystemCall> {
+};
+
+class SocketCall_SetBoolSockOpt :
+		public SocketCallSockOptBase<SetBoolSockOptSystemCall> {
+};
+
+class SocketCall_SetUnknownSockOpt :
+		public SocketCallSockOptBase<SetUnknownSockOptSystemCall> {
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

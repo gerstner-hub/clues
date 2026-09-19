@@ -8,10 +8,8 @@ void sol_socket() {
 	socklen_t len = sizeof(i);
 	getsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, &len);
 	i = 1;
-#if 0
 	setsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, sizeof(i));
-#endif
-	/* test error */
+	/* test incomplete option read */
 	i = 4711;
 	len = 0;
 	getsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, &len);
