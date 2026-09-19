@@ -1,5 +1,8 @@
 #pragma once
 
+// C++
+#include <optional>
+
 // clues
 #include <clues/dso_export.h>
 #include <clues/items/net.hxx>
@@ -22,8 +25,8 @@ struct GetSockOptSystemCall :
 
 	explicit GetSockOptSystemCall(
 			SystemCallItem *optval,
-			const SystemCallNr nr = SystemCallNr::GETSOCKOPT) :
-			SystemCall{nr},
+			const std::optional<SystemCallNr> nr = {}) :
+			SystemCall{nr ? *nr : SystemCallNr::GETSOCKOPT},
 			name{level},
 			optvalp{optval},
 			optlen{ItemCfg{.label = "optlen", .desc = "out pointer to option length"}} {
@@ -62,7 +65,8 @@ struct GetBoolSockOptSystemCall :
 
 	item::GetSockOptVal<int> optval;
 
-	explicit GetBoolSockOptSystemCall(const SystemCallNr nr = SystemCallNr::GETSOCKOPT) :
+	explicit GetBoolSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
 			GetSockOptSystemCall{&optval, nr},
 			optval{optlen, ItemCfg{.desc = "int* (boolean)"}} {
 		addPars();
@@ -74,7 +78,8 @@ struct GetUnknownSockOptSystemCall :
 
 	item::GenericPointerValue optval;
 
-	explicit GetUnknownSockOptSystemCall(const SystemCallNr nr = SystemCallNr::GETSOCKOPT) :
+	explicit GetUnknownSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
 			GetSockOptSystemCall{&optval, nr},
 			optval{ItemCfg{.label = "optval", .desc = "unknown option data"}} {
 		addPars();
@@ -86,8 +91,8 @@ struct SetSockOptSystemCall :
 
 	explicit SetSockOptSystemCall(
 			SystemCallItem *optval,
-			const SystemCallNr nr = SystemCallNr::SETSOCKOPT) :
-			SystemCall{nr},
+			const std::optional<SystemCallNr> nr = {}) :
+			SystemCall{nr ? *nr : SystemCallNr::SETSOCKOPT},
 			name{level},
 			optvalp{optval},
 			optlen{ItemCfg{.label = "optlen", .desc = "size of optval in bytes"}} {
@@ -127,7 +132,8 @@ struct SetBoolSockOptSystemCall :
 
 	item::SetSockOptVal<int> optval;
 
-	explicit SetBoolSockOptSystemCall(const SystemCallNr nr = SystemCallNr::SETSOCKOPT) :
+	explicit SetBoolSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
 			SetSockOptSystemCall{&optval, nr},
 			optval{optlen, ItemCfg{.desc = "int (boolean)"}} {
 		addPars();
@@ -139,7 +145,8 @@ struct SetUnknownSockOptSystemCall :
 
 	item::GenericPointerValue optval;
 
-	explicit SetUnknownSockOptSystemCall(const SystemCallNr nr = SystemCallNr::SETSOCKOPT) :
+	explicit SetUnknownSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
 			SetSockOptSystemCall{&optval, nr},
 			optval{ItemCfg{.label = "optval", .desc = "unknown option data"}} {
 		addPars();
