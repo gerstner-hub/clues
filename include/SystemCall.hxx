@@ -131,7 +131,7 @@ public: // functions
 	}
 
 	bool is32BitEmulationABI() const {
-		return get_default_abi() == ABI::X86_64 && abi() == ABI::I386;
+		return is_32bit_emulation_abi(abi());
 	}
 
 	/// Returns the name of the given system call or "<unknown>" if unknown.

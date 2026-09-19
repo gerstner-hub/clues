@@ -70,6 +70,11 @@ constexpr ABI get_default_abi() {
 	return ABI::UNKNOWN;
 }
 
+/// Returns whether in the current program context `abi` is a 32-bit emulation ABI.
+inline bool is_32bit_emulation_abi(const ABI abi) {
+	return get_default_abi() == ABI::X86_64 && abi == ABI::I386;
+}
+
 #ifdef COSMOS_X86_64
 constexpr inline size_t SUPPORTED_ABIS = 3;
 #elif defined(COSMOS_I386)
