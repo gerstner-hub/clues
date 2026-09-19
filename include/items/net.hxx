@@ -26,7 +26,7 @@
 
 namespace clues::item {
 
-CLUES_DEFAULT_VISIBILITY_ON
+CLUES_DEFAULT_VISIBILITY_ON;
 
 struct SocketFD :
 		public FileDescriptor {
@@ -497,7 +497,7 @@ protected: // functions
 		/*
 		 * This is sometimes an IN/OUT type parameter, but we cover
 		 * that indirectly via the update of the base class items that
-		 * are not registerd as actual parameters of the system call.
+		 * are not registered as actual parameters of the system call.
 		 * This update is done in SocketCallBase::postSystemCall().
 		 *
 		 * This stills needs to be marked as PARAM_IN_OUT to maintain
