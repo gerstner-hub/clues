@@ -27,7 +27,7 @@ std::pair<SystemCallPtr, bool> new_multi_sys(SystemCallFactory factory, Args&&..
 			    false);
 }
 
-std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
+std::pair<SystemCallPtr, bool> create_syscall(const Tracee &tracee, const SystemCallInfo &info) {
 	const auto nr = info.sysNr();
 
 	switch (nr) {
@@ -119,7 +119,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::LSEEK:           return new_sys<LSeekSystemCall>();
 	case SystemCallNr::LLSEEK:          return new_sys<LLSeekSystemCall>();
 	case SystemCallNr::RSEQ:            return new_sys<RSeqSystemCall>();
-	case SystemCallNr::PRCTL:           return new_multi_sys(create_prctl_syscall, info);
+	case SystemCallNr::PRCTL:           return new_multi_sys(create_prctl_syscall, tracee, info);
 	case SystemCallNr::FADVISE64:       /* fallthrough */
 	case SystemCallNr::FADVISE64_64:    return new_sys<FAdviseSystemCall>(nr);
 	case SystemCallNr::UMASK:           return new_sys<UmaskSystemCall>();
@@ -175,7 +175,7 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::CHDIR:           return new_sys<ChDirSystemCall>();
 	case SystemCallNr::FCHDIR:          return new_sys<FChDirSystemCall>();
 	case SystemCallNr::SOCKET:          return new_sys<SocketSystemCall>();
-	case SystemCallNr::SOCKETCALL:      return new_multi_sys(create_socket_call_syscall, info);
+	case SystemCallNr::SOCKETCALL:      return new_multi_sys(create_socket_call_syscall, tracee, info);
 	case SystemCallNr::SOCKETPAIR:      return new_sys<SocketPairSystemCall>();
 	case SystemCallNr::BIND:            return new_sys<BindSystemCall>();
 	case SystemCallNr::CONNECT:         return new_sys<ConnectSystemCall>();
@@ -189,8 +189,9 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 	case SystemCallNr::SENDTO:          return new_sys<SendToSystemCall>(nr);
 	case SystemCallNr::RECVMSG:         return new_sys<RecvMsgSystemCall>(nr);
 	case SystemCallNr::SENDMSG:         return new_sys<SendMsgSystemCall>(nr);
-	case SystemCallNr::RECVMMSG:         return new_sys<RecvMMsgSystemCall>(nr);
-	case SystemCallNr::SENDMMSG:         return new_sys<SendMMsgSystemCall>(nr);
+	case SystemCallNr::RECVMMSG:        return new_sys<RecvMMsgSystemCall>(nr);
+	case SystemCallNr::SENDMMSG:        return new_sys<SendMMsgSystemCall>(nr);
+	case SystemCallNr::GETSOCKOPT:      return new_multi_sys(create_getsockopt_syscall, tracee, info);
 	default: {
 		if (nr == SystemCallNr::UNKNOWN) {
 			/* either a new system call we don't know about yet,
@@ -205,13 +206,13 @@ std::pair<SystemCallPtr, bool> create_syscall(const SystemCallInfo &info) {
 
 } // end anon ns
 
-SystemCallPtr SystemCallDB::get(const SystemCallInfo &info) {
+SystemCallPtr SystemCallDB::get(const Tracee &tracee, const SystemCallInfo &info) {
 	const auto nr = info.sysNr();
 
 	if (auto it = m_map.find(nr); it != m_map.end()) {
 		return it->second;
 	} else {
-		auto [syscall, do_cache] = create_syscall(info);
+		auto [syscall, do_cache] = create_syscall(tracee, info);
 
 		if (do_cache) {
 			auto res = m_map.insert(std::make_pair(nr, syscall));

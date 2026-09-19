@@ -139,7 +139,7 @@ void PrCtlSystemCall::clearOptRetVals() {
 	int_res.reset();
 }
 
-SystemCallPtr create_prctl_syscall(const SystemCallInfo &info) {
+SystemCallPtr create_prctl_syscall(const Tracee &, const SystemCallInfo &info) {
 
 	using enum item::ProcessOp::Operation;
 	using namespace clues::prctl;

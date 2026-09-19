@@ -467,7 +467,7 @@ bool Tracee::tryRecoverRestartedSystemCall() {
 		/* sanity check, no valid system call number */
 		return false;
 
-	m_current_syscall = m_syscall_db.get(*orig_syscall);
+	m_current_syscall = m_syscall_db.get(*this, *orig_syscall);
 
 	return true;
 }
@@ -475,7 +475,7 @@ bool Tracee::tryRecoverRestartedSystemCall() {
 void Tracee::handleSystemCallEntry() {
 	EventConsumer::StatusFlags flags;
 
-	m_current_syscall = m_syscall_db.get(*m_syscall_info);
+	m_current_syscall = m_syscall_db.get(*this, *m_syscall_info);
 
 	if (const auto last_abi = m_current_syscall->abi();
 			last_abi != ABI::UNKNOWN &&

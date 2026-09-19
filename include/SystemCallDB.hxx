@@ -12,7 +12,7 @@ namespace clues {
 class SystemCallInfo;
 
 using SystemCallPtr = std::shared_ptr<SystemCall>;
-using SystemCallFactory = SystemCallPtr (*)(const SystemCallInfo&);
+using SystemCallFactory = SystemCallPtr (*)(const Tracee&, const SystemCallInfo&);
 
 /// Stores information about each system call number in form of SystemCall objects.
 /**
@@ -39,10 +39,10 @@ public: // functions
 		return *this;
 	}
 
-	SystemCallPtr get(const SystemCallInfo &info);
+	SystemCallPtr get(const Tracee &tracee, const SystemCallInfo &info);
 
-	const SystemCallPtr get(const SystemCallInfo &info) const {
-		return const_cast<SystemCallDB&>(*this).get(info);
+	const SystemCallPtr get(const Tracee &tracee, const SystemCallInfo &info) const {
+		return const_cast<SystemCallDB&>(*this).get(tracee, info);
 	}
 
 protected: // data

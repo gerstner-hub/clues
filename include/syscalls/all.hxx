@@ -13,5 +13,7 @@
 #include <clues/syscalls/prctl.hxx>
 #include <clues/syscalls/process.hxx>
 #include <clues/syscalls/signals.hxx>
+#include <clues/syscalls/socketcall.hxx>
+#include <clues/syscalls/sockopt.hxx>
 #include <clues/syscalls/thread.hxx>
 #include <clues/syscalls/time.hxx>
