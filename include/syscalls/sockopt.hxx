@@ -6,6 +6,7 @@
 // clues
 #include <clues/dso_export.h>
 #include <clues/items/net.hxx>
+#include <clues/items/strings.hxx>
 #include <clues/syscalls/net.hxx>
 #include <clues/SystemCallDB.hxx>
 
@@ -181,6 +182,42 @@ struct SetIntSockOptSystemCall :
 			const std::optional<SystemCallNr> nr = {}) :
 			SetSockOptSystemCall{&optval, nr},
 			optval{optlen, ItemCfg{.desc = "int*"}} {
+		addPars();
+	}
+};
+
+/// getsockopt() system call returning a `char*` string option.
+/**
+ * These types of getsockopt() calls return arbitrary string data.
+ **/
+struct GetStringSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::StringBuffer optval;
+
+	explicit GetStringSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{ItemType::PARAM_OUT,
+				"optval", "char*"}} {
+		addPars();
+	}
+};
+
+/// setsockopt() system call setting a `char*` string option.
+/**
+ * \see GetStringSockOptSystemCall
+ **/
+struct SetStringSockOptSystemCall :
+		public SetSockOptSystemCall {
+
+	item::StringBuffer optval;
+
+	explicit SetStringSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			SetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{ItemType::PARAM_OUT,
+				"optval", "const char*"}} {
 		addPars();
 	}
 };

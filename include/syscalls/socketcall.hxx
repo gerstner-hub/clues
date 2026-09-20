@@ -215,6 +215,14 @@ class SocketCall_SetIntSockOpt :
 		public SocketCallSockOptBase<SetIntSockOptSystemCall> {
 };
 
+class SocketCall_GetStringSockOpt :
+		public SocketCallSockOptBase<GetStringSockOptSystemCall> {
+};
+
+class SocketCall_SetStringSockOpt :
+		public SocketCallSockOptBase<SetStringSockOptSystemCall> {
+};
+
 class SocketCall_GetUnknownSockOpt :
 		public SocketCallSockOptBase<GetUnknownSockOptSystemCall> {
 };

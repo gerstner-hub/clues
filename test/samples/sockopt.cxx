@@ -1,6 +1,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <net/if.h>
 #include <unistd.h>
+#include <string>
 
 void sol_socket() {
 	int s = socket(AF_INET, SOCK_STREAM, 0);
@@ -31,6 +33,14 @@ void sol_socket() {
 	setsockopt(s, SOL_SOCKET, SO_PRIORITY, &i, sizeof(i));
 	len = sizeof(i);
 	getsockopt(s, SOL_SOCKET, SO_PRIORITY, &i, &len);
+
+	std::string stropt;
+	stropt = "lo";
+	setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, stropt.c_str(), stropt.size());
+
+	stropt.resize(IFNAMSIZ);
+	len = stropt.size();
+	getsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, stropt.data(), &len);
 
 	close(s);
 }

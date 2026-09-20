@@ -60,6 +60,17 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 					std::make_shared<SocketCall_SetIntSockOpt>() :
 					std::make_shared<SetIntSockOptSystemCall>();
 			}
+		case BINDTODEVICE:
+		case PEERSEC:
+			if (type == SockOptType::GET) {
+				return is_socket_call ?
+					std::make_shared<SocketCall_GetStringSockOpt>() :
+					std::make_shared<GetStringSockOptSystemCall>();
+			} else {
+				return is_socket_call ?
+					std::make_shared<SocketCall_SetStringSockOpt>() :
+					std::make_shared<SetStringSockOptSystemCall>();
+			}
 		/* these take no option argument at all, use unknown option
 		 * type for them */
 		case DETACH_BPF:

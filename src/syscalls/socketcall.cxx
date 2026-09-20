@@ -305,11 +305,15 @@ template class SocketCallBase<GetBoolSockOptSystemCall>;
 template class SocketCallBase<SetBoolSockOptSystemCall>;
 template class SocketCallBase<GetIntSockOptSystemCall>;
 template class SocketCallBase<SetIntSockOptSystemCall>;
+template class SocketCallBase<GetStringSockOptSystemCall>;
+template class SocketCallBase<SetStringSockOptSystemCall>;
 template class SocketCallSockOptBase<GetBoolSockOptSystemCall>;
-template class SocketCallSockOptBase<GetIntSockOptSystemCall>;
-template class SocketCallSockOptBase<GetUnknownSockOptSystemCall>;
 template class SocketCallSockOptBase<SetBoolSockOptSystemCall>;
+template class SocketCallSockOptBase<GetIntSockOptSystemCall>;
 template class SocketCallSockOptBase<SetIntSockOptSystemCall>;
+template class SocketCallSockOptBase<GetStringSockOptSystemCall>;
+template class SocketCallSockOptBase<SetStringSockOptSystemCall>;
+template class SocketCallSockOptBase<GetUnknownSockOptSystemCall>;
 template class SocketCallSockOptBase<SetUnknownSockOptSystemCall>;
 
 } // end ns
