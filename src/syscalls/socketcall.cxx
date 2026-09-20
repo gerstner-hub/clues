@@ -220,7 +220,8 @@ SystemCallPtr create_socket_call_getsockopt_syscall(const Tracee &tracee, const 
 
 	switch (optlevel) {
 		case OptLevel::SOCKET: {
-			if (auto sc = create_get_socket_opt_syscall(optname,
+			if (auto sc = create_socket_opt_syscall(optname,
+						SockOptType::GET,
 						IsSocketCall{true}); sc) {
 				return sc;
 			}
@@ -240,7 +241,8 @@ SystemCallPtr create_socket_call_setsockopt_syscall(const Tracee &tracee, const 
 
 	switch (optlevel) {
 		case OptLevel::SOCKET: {
-			if (auto sc = create_set_socket_opt_syscall(optname,
+			if (auto sc = create_socket_opt_syscall(optname,
+						SockOptType::SET,
 						IsSocketCall{true}); sc) {
 				return sc;
 			}

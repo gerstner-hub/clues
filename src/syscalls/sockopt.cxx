@@ -10,7 +10,8 @@ namespace clues {
 
 using OptLevel = item::SockOptLevel::Level;
 
-SystemCallPtr create_get_socket_opt_syscall(const int optname,
+SystemCallPtr create_socket_opt_syscall(const int optname,
+		const SockOptType type,
 		const IsSocketCall is_socket_call) {
 	using enum item::SockOptName::SocketOption;
 
@@ -29,9 +30,15 @@ SystemCallPtr create_get_socket_opt_syscall(const int optname,
 		case REUSEPORT:
 		case RXQ_OVFL:
 		case SELECT_ERR_QUEUE:
-			return is_socket_call ?
-				std::make_shared<SocketCall_GetBoolSockOpt>() :
-				std::make_shared<GetBoolSockOptSystemCall>();
+			if (type == SockOptType::GET) {
+				return is_socket_call ?
+					std::make_shared<SocketCall_GetBoolSockOpt>() :
+					std::make_shared<GetBoolSockOptSystemCall>();
+			} else {
+				return is_socket_call ?
+					std::make_shared<SocketCall_SetBoolSockOpt>() :
+					std::make_shared<SetBoolSockOptSystemCall>();
+			}
 		case BUSY_POLL:
 		case INCOMING_CPU:
 		case INCOMING_NAPI_ID:
@@ -44,70 +51,27 @@ SystemCallPtr create_get_socket_opt_syscall(const int optname,
 		case SNDBUF:
 		case SNDBUFFORCE:
 		case SNDLOWAT:
-			return is_socket_call ?
-				std::make_shared<SocketCall_GetIntSockOpt>() :
-				std::make_shared<GetIntSockOptSystemCall>();
+			if (type == SockOptType::GET) {
+				return is_socket_call ?
+					std::make_shared<SocketCall_GetIntSockOpt>() :
+					std::make_shared<GetIntSockOptSystemCall>();
+			} else {
+				return is_socket_call ?
+					std::make_shared<SocketCall_SetIntSockOpt>() :
+					std::make_shared<SetIntSockOptSystemCall>();
+			}
 		/* these take no option argument at all, use unknown option
 		 * type for them */
 		case DETACH_BPF:
-			return is_socket_call ?
-				std::make_shared<SocketCall_GetUnknownSockOpt>() :
-				std::make_shared<GetUnknownSockOptSystemCall>();
-		default: break;
-	}
-
-	return nullptr;
-}
-
-SystemCallPtr create_set_socket_opt_syscall(const int optname,
-		const IsSocketCall is_socket_call) {
-	using enum item::SockOptName::SocketOption;
-
-	/*
-	 * Note that we are also listing option names here which semantically
-	 * don't allow modification. Since applications might wrongly attempt
-	 * to do so it is still helpful to be able to trace these cases.
-	 */
-
-	switch (item::SockOptName::SocketOption{optname}) {
-		case ACCEPTCONN:
-		case BROADCAST:
-		case BSDCOMPAT:
-		case DEBUG:
-		case DONTROUTE:
-		case KEEPALIVE:
-		case LOCK_FILTER:
-		case OOBINLINE:
-		case PASSCRED:
-		case PASSSEC:
-		case REUSEADDR:
-		case REUSEPORT:
-		case RXQ_OVFL:
-		case SELECT_ERR_QUEUE:
-			return is_socket_call ?
-				std::make_shared<SocketCall_SetBoolSockOpt>() :
-				std::make_shared<SetBoolSockOptSystemCall>();
-		case BUSY_POLL:
-		case INCOMING_CPU:
-		case INCOMING_NAPI_ID:
-		case MARK:
-		case PEEK_OFF:
-		case PRIORITY:
-		case RCVBUF:
-		case RCVBUFFORCE:
-		case RCVLOWAT:
-		case SNDBUF:
-		case SNDBUFFORCE:
-		case SNDLOWAT:
-			return is_socket_call ?
-				std::make_shared<SocketCall_SetIntSockOpt>() :
-				std::make_shared<SetIntSockOptSystemCall>();
-		/* these take no option argument at all, use unknown option
-		 * type for them */
-		case DETACH_BPF:
-			return is_socket_call ?
-				std::make_shared<SocketCall_SetUnknownSockOpt>() :
-				std::make_shared<SetUnknownSockOptSystemCall>();
+			if (type == SockOptType::GET) {
+				return is_socket_call ?
+					std::make_shared<SocketCall_GetUnknownSockOpt>() :
+					std::make_shared<GetUnknownSockOptSystemCall>();
+			} else {
+				return is_socket_call ?
+					std::make_shared<SocketCall_SetUnknownSockOpt>() :
+					std::make_shared<SetUnknownSockOptSystemCall>();
+			}
 		default: break;
 	}
 
@@ -121,7 +85,7 @@ SystemCallPtr create_getsockopt_syscall(const Tracee &,
 
 	switch (optlevel) {
 		case OptLevel::SOCKET: {
-			if (auto sc = create_get_socket_opt_syscall(optname); sc) {
+			if (auto sc = create_socket_opt_syscall(optname, SockOptType::GET); sc) {
 				return sc;
 			}
 		}
@@ -139,7 +103,7 @@ SystemCallPtr create_setsockopt_syscall(const Tracee &,
 
 	switch (optlevel) {
 		case OptLevel::SOCKET: {
-			if (auto sc = create_set_socket_opt_syscall(optname); sc) {
+			if (auto sc = create_socket_opt_syscall(optname, SockOptType::SET); sc) {
 				return sc;
 			}
 		}
