@@ -203,20 +203,20 @@ class SocketCall_GetBoolSockOpt :
 		public SocketCallSockOptBase<GetBoolSockOptSystemCall> {
 };
 
-class SocketCall_GetIntSockOpt :
-		public SocketCallSockOptBase<GetIntSockOptSystemCall> {
-};
-
-class SocketCall_GetUnknownSockOpt :
-		public SocketCallSockOptBase<GetUnknownSockOptSystemCall> {
-};
-
 class SocketCall_SetBoolSockOpt :
 		public SocketCallSockOptBase<SetBoolSockOptSystemCall> {
 };
 
+class SocketCall_GetIntSockOpt :
+		public SocketCallSockOptBase<GetIntSockOptSystemCall> {
+};
+
 class SocketCall_SetIntSockOpt :
 		public SocketCallSockOptBase<SetIntSockOptSystemCall> {
+};
+
+class SocketCall_GetUnknownSockOpt :
+		public SocketCallSockOptBase<GetUnknownSockOptSystemCall> {
 };
 
 class SocketCall_SetUnknownSockOpt :

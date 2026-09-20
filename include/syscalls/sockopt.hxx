@@ -60,65 +60,6 @@ protected: // functions
 	}
 };
 
-/// getsockopt() system call returning a boolean option.
-/**
- * For simplicity we're a GetSockOptVal<int> here, since technically the type
- * of the pointed-to variable still is an int. Semantically the kernel usually
- * accepts any value > 0 to be interpreted as `true`.
- *
- * On libclues level it is helpful to explicitly model boolean options which
- * can be clearly evaluated contrary to arbitrary integer options.
- **/
-struct GetBoolSockOptSystemCall :
-		public GetSockOptSystemCall {
-
-	item::GetSockOptVal<int> optval;
-
-	explicit GetBoolSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.desc = "int* (boolean)"}} {
-		addPars();
-	}
-};
-
-/// getsockopt() system call returning an `int` option.
-/**
- * These types of getsockopt() calls return arbitrary integer values. This is
- * the default type used for socket options if not documented otherwise.
- **/
-struct GetIntSockOptSystemCall :
-		public GetSockOptSystemCall {
-
-	item::GetSockOptVal<int> optval;
-
-	explicit GetIntSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.desc = "int*"}} {
-		addPars();
-	}
-};
-
-/// Fallback type for getsockopt() system calls unknown to libclues.
-/**
- * libclues uses this type in case invalid or not yet supported getsockopt()
- * level / name combinations appear. The `optval` is simply modeled as a
- * GenericPointerValue, whoose target will not be interpreted further.
- **/
-struct GetUnknownSockOptSystemCall :
-		public GetSockOptSystemCall {
-
-	item::GenericPointerValue optval;
-
-	explicit GetUnknownSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{ItemCfg{.label = "optval", .desc = "unknown option data"}} {
-		addPars();
-	}
-};
-
 /// Base class for setsockopt() system call variants.
 /**
  * This is very similar to GetSockOptSystemCall, but instead of a value-result
@@ -168,6 +109,29 @@ protected: // functions
 	}
 };
 
+
+/// getsockopt() system call returning a boolean option.
+/**
+ * For simplicity we're a GetSockOptVal<int> here, since technically the type
+ * of the pointed-to variable still is an int. Semantically the kernel usually
+ * accepts any value > 0 to be interpreted as `true`.
+ *
+ * On libclues level it is helpful to explicitly model boolean options which
+ * can be clearly evaluated contrary to arbitrary integer options.
+ **/
+struct GetBoolSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::GetSockOptVal<int> optval;
+
+	explicit GetBoolSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{.desc = "int* (boolean)"}} {
+		addPars();
+	}
+};
+
 /// setsockopt() system call modifying a boolean option.
 /**
  * \see GetBoolSockOptSystemCall
@@ -185,6 +149,25 @@ struct SetBoolSockOptSystemCall :
 	}
 };
 
+
+/// getsockopt() system call returning an `int` option.
+/**
+ * These types of getsockopt() calls return arbitrary integer values. This is
+ * the default type used for socket options if not documented otherwise.
+ **/
+struct GetIntSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::GetSockOptVal<int> optval;
+
+	explicit GetIntSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{.desc = "int*"}} {
+		addPars();
+	}
+};
+
 /// setsockopt() system call modifying an integer option.
 /**
  * \see GetIntSockOptSystemCall
@@ -198,6 +181,25 @@ struct SetIntSockOptSystemCall :
 			const std::optional<SystemCallNr> nr = {}) :
 			SetSockOptSystemCall{&optval, nr},
 			optval{optlen, ItemCfg{.desc = "int*"}} {
+		addPars();
+	}
+};
+
+/// Fallback type for getsockopt() system calls unknown to libclues.
+/**
+ * libclues uses this type in case invalid or not yet supported getsockopt()
+ * level / name combinations appear. The `optval` is simply modeled as a
+ * GenericPointerValue, whoose target will not be interpreted further.
+ **/
+struct GetUnknownSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::GenericPointerValue optval;
+
+	explicit GetUnknownSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{ItemCfg{.label = "optval", .desc = "unknown option data"}} {
 		addPars();
 	}
 };
