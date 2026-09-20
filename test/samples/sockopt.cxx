@@ -14,7 +14,18 @@ void sol_socket() {
 	len = 0;
 	getsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, &len);
 
+	len = sizeof(i);
+
 	getsockopt(s, SOL_SOCKET, SO_BROADCAST, &i, &len);
+
+	i = 1;
+
+	setsockopt(s, SOL_SOCKET, SO_BROADCAST, &i, sizeof(i));
+
+	/* test bad option name */
+	getsockopt(s, SOL_SOCKET, 2348734873, &i, &len);
+	/* test bad option level */
+	getsockopt(s, 349834, 0, &i, &len);
 
 	close(s);
 }

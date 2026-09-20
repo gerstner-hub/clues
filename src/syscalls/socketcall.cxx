@@ -4,6 +4,7 @@
 // clues
 #include <clues/items/net.hxx>
 #include <clues/logger.hxx>
+#include <clues/private/sockopt.hxx>
 #include <clues/syscalls/socketcall.hxx>
 #include <clues/Tracee.hxx>
 
@@ -197,32 +198,6 @@ using OptLevel = item::SockOptLevel::Level;
 
 namespace {
 
-SystemCallPtr create_socket_call_get_socket_opt_syscall(const int optname) {
-	using enum item::SockOptName::SocketOption;
-
-	switch (item::SockOptName::SocketOption{optname}) {
-	case ACCEPTCONN:
-	case DONTROUTE:
-		return std::make_shared<SocketCall_GetBoolSockOpt>();
-	default: break;
-	}
-
-	return nullptr;
-}
-
-SystemCallPtr create_socket_call_set_socket_opt_syscall(const int optname) {
-	using enum item::SockOptName::SocketOption;
-
-	switch (item::SockOptName::SocketOption{optname}) {
-	case ACCEPTCONN:
-	case DONTROUTE:
-		return std::make_shared<SocketCall_SetBoolSockOpt>();
-	default: break;
-	}
-
-	return nullptr;
-}
-
 std::pair<OptLevel, int> fetch_opt_level_and_name(const Tracee &tracee,
 		const SystemCallInfo &info,
 		const item::SocketCallType::Call sub_call) {
@@ -245,7 +220,8 @@ SystemCallPtr create_socket_call_getsockopt_syscall(const Tracee &tracee, const 
 
 	switch (optlevel) {
 		case OptLevel::SOCKET: {
-			if (auto sc = create_socket_call_get_socket_opt_syscall(optname); sc) {
+			if (auto sc = create_get_socket_opt_syscall(optname,
+						IsSocketCall{true}); sc) {
 				return sc;
 			}
 		}
@@ -264,7 +240,8 @@ SystemCallPtr create_socket_call_setsockopt_syscall(const Tracee &tracee, const 
 
 	switch (optlevel) {
 		case OptLevel::SOCKET: {
-			if (auto sc = create_socket_call_set_socket_opt_syscall(optname); sc) {
+			if (auto sc = create_set_socket_opt_syscall(optname,
+						IsSocketCall{true}); sc) {
 				return sc;
 			}
 		}
@@ -322,6 +299,8 @@ void SocketCallSockOptBase<BASE>::transferValues(const Tracee &proc) {
  * explicit template instantiations
  */
 
+template class SocketCallBase<GetBoolSockOptSystemCall>;
+template class SocketCallBase<SetBoolSockOptSystemCall>;
 template class SocketCallSockOptBase<GetBoolSockOptSystemCall>;
 template class SocketCallSockOptBase<GetUnknownSockOptSystemCall>;
 template class SocketCallSockOptBase<SetBoolSockOptSystemCall>;

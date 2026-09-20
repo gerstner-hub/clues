@@ -1,6 +1,8 @@
 // clues
 #include <clues/dso_export.h>
 #include <clues/logger.hxx>
+#include <clues/private/sockopt.hxx>
+#include <clues/syscalls/socketcall.hxx>
 #include <clues/syscalls/sockopt.hxx>
 #include <clues/Tracee.hxx>
 
@@ -8,35 +10,49 @@ namespace clues {
 
 using OptLevel = item::SockOptLevel::Level;
 
-namespace {
-
-SystemCallPtr create_get_socket_opt_syscall(const int optname) {
+SystemCallPtr create_get_socket_opt_syscall(const int optname,
+		const IsSocketCall is_socket_call) {
 	using enum item::SockOptName::SocketOption;
 
 	switch (item::SockOptName::SocketOption{optname}) {
 	case ACCEPTCONN:
 	case DONTROUTE:
-		return std::make_shared<GetBoolSockOptSystemCall>();
+	case BROADCAST:
+	case BSDCOMPAT:
+	case DEBUG:
+	case KEEPALIVE:
+	case LOCK_FILTER:
+	case OOBINLINE:
+		return is_socket_call ?
+			std::make_shared<SocketCall_GetBoolSockOpt>() :
+			std::make_shared<GetBoolSockOptSystemCall>();
 	default: break;
 	}
 
 	return nullptr;
 }
 
-SystemCallPtr create_set_socket_opt_syscall(const int optname) {
+SystemCallPtr create_set_socket_opt_syscall(const int optname,
+		const IsSocketCall is_socket_call) {
 	using enum item::SockOptName::SocketOption;
 
 	switch (item::SockOptName::SocketOption{optname}) {
 	case ACCEPTCONN:
 	case DONTROUTE:
-		return std::make_shared<SetBoolSockOptSystemCall>();
+	case BROADCAST:
+	case BSDCOMPAT:
+	case DEBUG:
+	case KEEPALIVE:
+	case LOCK_FILTER:
+	case OOBINLINE:
+		return is_socket_call ?
+			std::make_shared<SocketCall_SetBoolSockOpt>() :
+			std::make_shared<SetBoolSockOptSystemCall>();
 	default: break;
 	}
 
 	return nullptr;
 }
-
-} // end anon ns
 
 SystemCallPtr create_getsockopt_syscall(const Tracee &,
 		const SystemCallInfo &info) {
