@@ -15,18 +15,24 @@ SystemCallPtr create_get_socket_opt_syscall(const int optname,
 	using enum item::SockOptName::SocketOption;
 
 	switch (item::SockOptName::SocketOption{optname}) {
-	case ACCEPTCONN:
-	case DONTROUTE:
-	case BROADCAST:
-	case BSDCOMPAT:
-	case DEBUG:
-	case KEEPALIVE:
-	case LOCK_FILTER:
-	case OOBINLINE:
-		return is_socket_call ?
-			std::make_shared<SocketCall_GetBoolSockOpt>() :
-			std::make_shared<GetBoolSockOptSystemCall>();
-	default: break;
+		case ACCEPTCONN:
+		case BROADCAST:
+		case BSDCOMPAT:
+		case DEBUG:
+		case DONTROUTE:
+		case KEEPALIVE:
+		case LOCK_FILTER:
+		case OOBINLINE:
+		case PASSCRED:
+		case PASSSEC:
+		case REUSEADDR:
+		case REUSEPORT:
+		case RXQ_OVFL:
+		case SELECT_ERR_QUEUE:
+			return is_socket_call ?
+				std::make_shared<SocketCall_GetBoolSockOpt>() :
+				std::make_shared<GetBoolSockOptSystemCall>();
+		default: break;
 	}
 
 	return nullptr;
@@ -37,18 +43,24 @@ SystemCallPtr create_set_socket_opt_syscall(const int optname,
 	using enum item::SockOptName::SocketOption;
 
 	switch (item::SockOptName::SocketOption{optname}) {
-	case ACCEPTCONN:
-	case DONTROUTE:
-	case BROADCAST:
-	case BSDCOMPAT:
-	case DEBUG:
-	case KEEPALIVE:
-	case LOCK_FILTER:
-	case OOBINLINE:
-		return is_socket_call ?
-			std::make_shared<SocketCall_SetBoolSockOpt>() :
-			std::make_shared<SetBoolSockOptSystemCall>();
-	default: break;
+		case ACCEPTCONN:
+		case BROADCAST:
+		case BSDCOMPAT:
+		case DEBUG:
+		case DONTROUTE:
+		case KEEPALIVE:
+		case LOCK_FILTER:
+		case OOBINLINE:
+		case PASSCRED:
+		case PASSSEC:
+		case REUSEADDR:
+		case REUSEPORT:
+		case RXQ_OVFL:
+		case SELECT_ERR_QUEUE:
+			return is_socket_call ?
+				std::make_shared<SocketCall_SetBoolSockOpt>() :
+				std::make_shared<SetBoolSockOptSystemCall>();
+		default: break;
 	}
 
 	return nullptr;
