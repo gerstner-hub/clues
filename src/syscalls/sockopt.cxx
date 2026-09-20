@@ -32,6 +32,27 @@ SystemCallPtr create_get_socket_opt_syscall(const int optname,
 			return is_socket_call ?
 				std::make_shared<SocketCall_GetBoolSockOpt>() :
 				std::make_shared<GetBoolSockOptSystemCall>();
+		case BUSY_POLL:
+		case INCOMING_CPU:
+		case INCOMING_NAPI_ID:
+		case MARK:
+		case PEEK_OFF:
+		case PRIORITY:
+		case RCVBUF:
+		case RCVBUFFORCE:
+		case RCVLOWAT:
+		case SNDBUF:
+		case SNDBUFFORCE:
+		case SNDLOWAT:
+			return is_socket_call ?
+				std::make_shared<SocketCall_GetIntSockOpt>() :
+				std::make_shared<GetIntSockOptSystemCall>();
+		/* these take no option argument at all, use unknown option
+		 * type for them */
+		case DETACH_BPF:
+			return is_socket_call ?
+				std::make_shared<SocketCall_GetUnknownSockOpt>() :
+				std::make_shared<GetUnknownSockOptSystemCall>();
 		default: break;
 	}
 
@@ -41,6 +62,12 @@ SystemCallPtr create_get_socket_opt_syscall(const int optname,
 SystemCallPtr create_set_socket_opt_syscall(const int optname,
 		const IsSocketCall is_socket_call) {
 	using enum item::SockOptName::SocketOption;
+
+	/*
+	 * Note that we are also listing option names here which semantically
+	 * don't allow modification. Since applications might wrongly attempt
+	 * to do so it is still helpful to be able to trace these cases.
+	 */
 
 	switch (item::SockOptName::SocketOption{optname}) {
 		case ACCEPTCONN:
@@ -60,6 +87,27 @@ SystemCallPtr create_set_socket_opt_syscall(const int optname,
 			return is_socket_call ?
 				std::make_shared<SocketCall_SetBoolSockOpt>() :
 				std::make_shared<SetBoolSockOptSystemCall>();
+		case BUSY_POLL:
+		case INCOMING_CPU:
+		case INCOMING_NAPI_ID:
+		case MARK:
+		case PEEK_OFF:
+		case PRIORITY:
+		case RCVBUF:
+		case RCVBUFFORCE:
+		case RCVLOWAT:
+		case SNDBUF:
+		case SNDBUFFORCE:
+		case SNDLOWAT:
+			return is_socket_call ?
+				std::make_shared<SocketCall_SetIntSockOpt>() :
+				std::make_shared<SetIntSockOptSystemCall>();
+		/* these take no option argument at all, use unknown option
+		 * type for them */
+		case DETACH_BPF:
+			return is_socket_call ?
+				std::make_shared<SocketCall_SetUnknownSockOpt>() :
+				std::make_shared<SetUnknownSockOptSystemCall>();
 		default: break;
 	}
 

@@ -301,9 +301,13 @@ void SocketCallSockOptBase<BASE>::transferValues(const Tracee &proc) {
 
 template class SocketCallBase<GetBoolSockOptSystemCall>;
 template class SocketCallBase<SetBoolSockOptSystemCall>;
+template class SocketCallBase<GetIntSockOptSystemCall>;
+template class SocketCallBase<SetIntSockOptSystemCall>;
 template class SocketCallSockOptBase<GetBoolSockOptSystemCall>;
+template class SocketCallSockOptBase<GetIntSockOptSystemCall>;
 template class SocketCallSockOptBase<GetUnknownSockOptSystemCall>;
 template class SocketCallSockOptBase<SetBoolSockOptSystemCall>;
+template class SocketCallSockOptBase<SetIntSockOptSystemCall>;
 template class SocketCallSockOptBase<SetUnknownSockOptSystemCall>;
 
 } // end ns

@@ -60,6 +60,15 @@ protected: // functions
 	}
 };
 
+/// getsockopt() system call returning a boolean option.
+/**
+ * For simplicity we're a GetSockOptVal<int> here, since technically the type
+ * of the pointed-to variable still is an int. Semantically the kernel usually
+ * accepts any value > 0 to be interpreted as `true`.
+ *
+ * On libclues level it is helpful to explicitly model boolean options which
+ * can be clearly evaluated contrary to arbitrary integer options.
+ **/
 struct GetBoolSockOptSystemCall :
 		public GetSockOptSystemCall {
 
@@ -73,6 +82,30 @@ struct GetBoolSockOptSystemCall :
 	}
 };
 
+/// getsockopt() system call returning an `int` option.
+/**
+ * These types of getsockopt() calls return arbitrary integer values. This is
+ * the default type used for socket options if not documented otherwise.
+ **/
+struct GetIntSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::GetSockOptVal<int> optval;
+
+	explicit GetIntSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{.desc = "int*"}} {
+		addPars();
+	}
+};
+
+/// Fallback type for getsockopt() system calls unknown to libclues.
+/**
+ * libclues uses this type in case invalid or not yet supported getsockopt()
+ * level / name combinations appear. The `optval` is simply modeled as a
+ * GenericPointerValue, whoose target will not be interpreted further.
+ **/
 struct GetUnknownSockOptSystemCall :
 		public GetSockOptSystemCall {
 
@@ -86,6 +119,14 @@ struct GetUnknownSockOptSystemCall :
 	}
 };
 
+/// Base class for setsockopt() system call variants.
+/**
+ * This is very similar to GetSockOptSystemCall, but instead of a value-result
+ * pointer for `optlen`, a pass-by-value integer is used. similary `optval` is
+ * input data only and will not be written to by the kernel.
+ *
+ * \see GetSockOptSystemCall
+ **/
 struct SetSockOptSystemCall :
 		public SystemCall {
 
@@ -127,6 +168,10 @@ protected: // functions
 	}
 };
 
+/// setsockopt() system call modifying a boolean option.
+/**
+ * \see GetBoolSockOptSystemCall
+ **/
 struct SetBoolSockOptSystemCall :
 		public SetSockOptSystemCall {
 
@@ -135,11 +180,32 @@ struct SetBoolSockOptSystemCall :
 	explicit SetBoolSockOptSystemCall(
 			const std::optional<SystemCallNr> nr = {}) :
 			SetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.desc = "int (boolean)"}} {
+			optval{optlen, ItemCfg{.desc = "int* (boolean)"}} {
 		addPars();
 	}
 };
 
+/// setsockopt() system call modifying an integer option.
+/**
+ * \see GetIntSockOptSystemCall
+ **/
+struct SetIntSockOptSystemCall :
+		public SetSockOptSystemCall {
+
+	item::SetSockOptVal<int> optval;
+
+	explicit SetIntSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			SetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{.desc = "int*"}} {
+		addPars();
+	}
+};
+
+/// Fallback type for setsockopt() system calls unknown to libclues.
+/**
+ * \see GetUnknownSockOptSystemCall
+ **/
 struct SetUnknownSockOptSystemCall :
 		public SetSockOptSystemCall {
 
