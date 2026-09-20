@@ -155,7 +155,4 @@ struct SetUnknownSockOptSystemCall :
 
 CLUES_DEFAULT_VISIBILITY_OFF;
 
-SystemCallPtr create_getsockopt_syscall(const Tracee &, const SystemCallInfo &info);
-SystemCallPtr create_setsockopt_syscall(const Tracee &, const SystemCallInfo &info);
-
 } // end ns

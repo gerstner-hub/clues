@@ -4,7 +4,7 @@
 // clues
 #include <clues/items/net.hxx>
 #include <clues/logger.hxx>
-#include <clues/private/sockopt.hxx>
+#include <clues/private/syscall_factories.hxx>
 #include <clues/syscalls/socketcall.hxx>
 #include <clues/Tracee.hxx>
 

@@ -960,7 +960,4 @@ CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns prctl
 
-/// Factory function to create a concrete PrCtlSystemCall() instance.
-SystemCallPtr create_prctl_syscall(const Tracee&, const SystemCallInfo &info);
-
 } // end ns

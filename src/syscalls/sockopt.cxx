@@ -1,7 +1,7 @@
 // clues
 #include <clues/dso_export.h>
 #include <clues/logger.hxx>
-#include <clues/private/sockopt.hxx>
+#include <clues/private/syscall_factories.hxx>
 #include <clues/syscalls/socketcall.hxx>
 #include <clues/syscalls/sockopt.hxx>
 #include <clues/Tracee.hxx>

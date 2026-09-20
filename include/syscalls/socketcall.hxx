@@ -217,6 +217,4 @@ class SocketCall_SetUnknownSockOpt :
 
 CLUES_DEFAULT_VISIBILITY_OFF;
 
-SystemCallPtr create_socket_call_syscall(const Tracee &tracee, const SystemCallInfo &info);
-
 } // end ns

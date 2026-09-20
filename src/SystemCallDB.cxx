@@ -2,6 +2,7 @@
 #include <utility>
 
 // clues
+#include <clues/private/syscall_factories.hxx>
 #include <clues/syscalls/all.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/SystemCallDB.hxx>
