@@ -6,6 +6,7 @@
 // clues
 #include <clues/dso_export.h>
 #include <clues/items/net.hxx>
+#include <clues/items/sockopt.hxx>
 #include <clues/items/strings.hxx>
 #include <clues/syscalls/net.hxx>
 #include <clues/SystemCallDB.hxx>

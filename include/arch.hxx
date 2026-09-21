@@ -10,10 +10,11 @@
 
 namespace clues {
 
-/*
+/**
+ * @file
  * this header contains preprocessor defines to help with conditional
  * compilation of system calls only present certain architectures.
- */
+ **/
 
 #ifdef COSMOS_X86
 #	define CLUES_HAVE_ARCH_PRCTL

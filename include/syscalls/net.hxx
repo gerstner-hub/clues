@@ -2,6 +2,7 @@
 
 // clues
 #include <clues/items/fs.hxx>
+#include <clues/items/msghdr.hxx>
 #include <clues/items/net.hxx>
 #include <clues/items/time.hxx>
 #include <clues/sysnrs/generic.hxx>
