@@ -231,6 +231,14 @@ class SocketCall_SetUnknownSockOpt :
 		public SocketCallSockOptBase<SetUnknownSockOptSystemCall> {
 };
 
+class SocketCall_AttachFilterSockOpt :
+		public SocketCallSockOptBase<AttachFilterSockOptSystemCall> {
+};
+
+class SocketCall_GetFilterSockOpt :
+		public SocketCallSockOptBase<GetFilterSockOptSystemCall> {
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

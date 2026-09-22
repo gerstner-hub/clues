@@ -58,11 +58,11 @@ protected: // data
  * This is currently only used with the prctl::SetSecCompSystemCall.
  **/
 class CLUES_API FilterProg :
-		public PointerInValue {
+		public PointerValue {
 public: // functions
 
-	explicit FilterProg() :
-			PointerInValue{make_item_cfg("filter", "bpf filter program struct")} {
+	explicit FilterProg(const ItemType type = ItemType::PARAM_IN) :
+			PointerValue{ItemCfg{type, "filter", "bpf filter program struct"}} {
 	}
 
 	std::string str() const override;
@@ -94,6 +94,8 @@ public: // functions
 protected: // functions
 
 	void processValue(const Tracee&) override;
+
+	void fetchFilters(const Tracee&);
 
 protected: // data
 

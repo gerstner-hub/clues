@@ -9,8 +9,13 @@
 
 // clues
 #include <clues/items/items.hxx>
+#include <clues/items/seccomp.hxx>
 
-namespace clues::item {
+namespace clues {
+
+enum class SockOptType;
+
+namespace item {
 
 /**
  * @file
@@ -139,6 +144,7 @@ public: // types
 		ACCEPTCONN            = SO_ACCEPTCONN,            ///< read-only boolean option whether the socket is in listening state.
 		ATTACH_FILTER         = SO_ATTACH_FILTER,         ///< set a classic BPF filter program passed in `struct fprog` argument.
 		ATTACH_BPF            = SO_ATTACH_BPF,            ///< set an extended BPF filter program passed in a `bpf()` file descriptor argument.
+		GET_FILTER            = SO_GET_FILTER,            ///< returns the currently installed filter program into an array of `struct sock_fprog*`. `optlen` is determines the amount of array entries on in/output.
 		ATTACH_REUSEPORT_CBPF = SO_ATTACH_REUSEPORT_CBPF, ///< similar to ATTACH_FILTER, assigns program to control packet distribution in SO_REUSEPORT scenarios.
 		ATTACH_REUSEPORT_EBPF = SO_ATTACH_REUSEPORT_EBPF, ///< similar to ATTACH_BPF for SO_REUSEPORT scenarios.
 		BINDTODEVICE          = SO_BINDTODEVICE,          ///< receive only packets from the given network interface; string option.
@@ -194,12 +200,13 @@ public: // types
 
 public: // functions
 
-	explicit SockOptName(const SockOptLevel &level_arg) :
+	explicit SockOptName(const SockOptLevel &level_arg, const SockOptType opt_type) :
 			ValueInParameter{
 				ItemCfg{.label = "optname",
 				.desc = "socket option name selection"}},
 			m_level_arg{level_arg},
-			m_opt_variant{std::monostate{}}	{
+			m_opt_variant{std::monostate{}},
+			m_opt_type{opt_type} {
 	}
 
 	OptVariant option() const {
@@ -217,8 +224,63 @@ protected: // data
 	const SockOptLevel &m_level_arg;
 
 	OptVariant m_opt_variant;
+	const SockOptType m_opt_type;
+};
+
+/// Type for `struct sock_fprog` as used with SO_ATTACH_FILTER.
+/**
+ * This specialization of FilterProg checks that the `optlen` is sufficient to
+ * process a `struct sock_fprog`.
+ **/
+class AttachFilterSockOpt :
+		public FilterProg {
+public: // functions
+
+	explicit AttachFilterSockOpt(const IntValue &optlen) :
+				FilterProg{ItemType::PARAM_IN},
+				m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+protected: // data
+
+	const IntValue &m_optlen;
+};
+
+/// Type for `struct sock_filter` as used with SO_GET_FILTER.
+/**
+ * `SO_GET_FILTER` is actually only the GET variant for `SO_ATTACH_FILTER`.
+ * It's semantics are quite unfortunate: `optval` refers to an array of
+ * `struct sock_filter`, not to a `struct sock_fprog`.
+ *
+ * To hide this additional complexity we're synthesizing a `struct fprog` here
+ * for users of libclues based on the `FilterProg` base class.
+ **/
+class GetFilterSocktOpt :
+		public FilterProg {
+public: // functions
+
+	explicit GetFilterSocktOpt(const PointerToScalar<int> &optlen) :
+				FilterProg{ItemType::PARAM_OUT},
+				m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &) override;
+
+	void updateData(const Tracee &) override;
+
+protected: // data
+
+	const PointerToScalar<int> &m_optlen;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
 
-} // end ns
+}} // end ns * 2

@@ -15,6 +15,18 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 		const IsSocketCall is_socket_call) {
 	using enum item::SockOptName::SocketOption;
 
+	auto create_unknown_sc = [type, is_socket_call]() -> SystemCallPtr {
+		if (type == SockOptType::GET) {
+			return is_socket_call ?
+				std::make_shared<SocketCall_GetUnknownSockOpt>() :
+				std::make_shared<GetUnknownSockOptSystemCall>();
+		} else {
+			return is_socket_call ?
+				std::make_shared<SocketCall_SetUnknownSockOpt>() :
+				std::make_shared<SetUnknownSockOptSystemCall>();
+		}
+	};
+
 	switch (item::SockOptName::SocketOption{optname}) {
 		case ACCEPTCONN:
 		case BROADCAST:
@@ -71,18 +83,23 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 					std::make_shared<SocketCall_SetStringSockOpt>() :
 					std::make_shared<SetStringSockOptSystemCall>();
 			}
-		/* these take no option argument at all, use unknown option
-		 * type for them */
-		case DETACH_BPF:
+		case ATTACH_FILTER:
 			if (type == SockOptType::GET) {
+				/* for getsockopt() the option is called
+				 * SO_GET_FILTER, but it's the same literal
+				 * constant. We need two different types here
+				 * due to differing ABI semantics */
 				return is_socket_call ?
-					std::make_shared<SocketCall_GetUnknownSockOpt>() :
-					std::make_shared<GetUnknownSockOptSystemCall>();
+					std::make_shared<SocketCall_GetFilterSockOpt>() :
+					std::make_shared<GetFilterSockOptSystemCall>();
 			} else {
 				return is_socket_call ?
-					std::make_shared<SocketCall_SetUnknownSockOpt>() :
-					std::make_shared<SetUnknownSockOptSystemCall>();
+					std::make_shared<SocketCall_AttachFilterSockOpt>() :
+					std::make_shared<AttachFilterSockOptSystemCall>();
 			}
+		/* these take no option argument at all, use unknown option
+		 * type for them */
+		case DETACH_BPF: return create_unknown_sc();
 		default: break;
 	}
 

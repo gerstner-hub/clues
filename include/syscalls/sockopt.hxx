@@ -15,6 +15,11 @@ namespace clues {
 
 CLUES_DEFAULT_VISIBILITY_ON;
 
+enum class SockOptType {
+	GET,
+	SET
+};
+
 /// Base class for getsockopt() system call variants.
 /**
  * getsockopt() is an ioctl-style system call, thus we need many more
@@ -29,9 +34,12 @@ struct GetSockOptSystemCall :
 			SystemCallItem *optval,
 			const std::optional<SystemCallNr> nr = {}) :
 			SystemCall{nr ? *nr : SystemCallNr::GETSOCKOPT},
-			name{level},
+			name{level, SockOptType::GET},
 			optvalp{optval},
-			optlen{ItemCfg{.label = "optlen", .desc = "out pointer to option length"}} {
+			optlen{ItemCfg{
+				ItemType::PARAM_IN_OUT,
+				"optlen",
+				"in-out pointer for option length"}} {
 		setReturnItem(res);
 	}
 
@@ -77,7 +85,7 @@ struct SetSockOptSystemCall :
 			SystemCallItem *optval,
 			const std::optional<SystemCallNr> nr = {}) :
 			SystemCall{nr ? *nr : SystemCallNr::SETSOCKOPT},
-			name{level},
+			name{level, SockOptType::SET},
 			optvalp{optval},
 			optlen{ItemCfg{.label = "optlen", .desc = "size of optval in bytes"}} {
 		setReturnItem(res);
@@ -255,6 +263,42 @@ struct SetUnknownSockOptSystemCall :
 			const std::optional<SystemCallNr> nr = {}) :
 			SetSockOptSystemCall{&optval, nr},
 			optval{ItemCfg{.label = "optval", .desc = "unknown option data"}} {
+		addPars();
+	}
+};
+
+/// Installs a BPF program on a socket.
+/**
+ * This type carries a specialized item::FilterProg item which ensures that
+ * the `optlen` of the setsockopt() is sufficient to process a `struct
+ * sock_fprog`.
+ **/
+struct AttachFilterSockOptSystemCall :
+		public SetSockOptSystemCall {
+
+	item::AttachFilterSockOpt optval;
+
+	explicit AttachFilterSockOptSystemCall(
+			const std::optional<SystemCallNr> nr  = {}) :
+			SetSockOptSystemCall{&optval, nr},
+			optval{optlen} {
+		addPars();
+	}
+};
+
+/// Returns a previously installed BPF program.
+/**
+ * This is the GET counterpart to AttachFilterSockOptSystemCall.
+ **/
+struct GetFilterSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::GetFilterSocktOpt optval;
+
+	explicit GetFilterSockOptSystemCall(
+			const std::optional<SystemCallNr> nr  = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{optlen} {
 		addPars();
 	}
 };

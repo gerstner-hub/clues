@@ -1,6 +1,10 @@
+// C++
+#include <algorithm>
+
 // clues
 #include <clues/items/sockopt.hxx>
 #include <clues/macros.h>
+#include <clues/syscalls/sockopt.hxx>
 #include <clues/Tracee.hxx>
 
 namespace clues::item {
@@ -25,34 +29,39 @@ std::string SockOptLevel::str() const {
 
 namespace {
 
-std::string opt_name_str(const SockOptName::IP6Option opt) {
+std::string opt_name_str(const SockOptName::IP6Option opt, const SockOptType) {
 	switch (cosmos::to_integral(opt)) {
 		default: return "IPV6_???";
 	}
 }
 
-std::string opt_name_str(const SockOptName::IPOption opt) {
+std::string opt_name_str(const SockOptName::IPOption opt, const SockOptType) {
 	switch (cosmos::to_integral(opt)) {
 		default: return "IP_???";
 	}
 }
 
-std::string opt_name_str(const SockOptName::NetlinkOption opt) {
+std::string opt_name_str(const SockOptName::NetlinkOption opt, const SockOptType) {
 	switch (cosmos::to_integral(opt)) {
 		default: return "NL_???";
 	}
 }
 
-std::string opt_name_str(const SockOptName::PacketOption opt) {
+std::string opt_name_str(const SockOptName::PacketOption opt, const SockOptType) {
 	switch (cosmos::to_integral(opt)) {
 		default: return "PACKET_???";
 	}
 }
 
-std::string opt_name_str(const SockOptName::SocketOption opt) {
+std::string opt_name_str(const SockOptName::SocketOption opt,
+		const SockOptType opt_type) {
 	switch (cosmos::to_integral(opt)) {
+		case SO_ATTACH_FILTER: {
+			return opt_type == SockOptType::GET ?
+				"SO_GET_FILTER" :
+				"SO_ATTACH_FILTER";
+		}
 		CASE_ENUM_TO_STR(SO_ACCEPTCONN);
-		CASE_ENUM_TO_STR(SO_ATTACH_FILTER);
 		CASE_ENUM_TO_STR(SO_ATTACH_BPF);
 		CASE_ENUM_TO_STR(SO_ATTACH_REUSEPORT_CBPF);
 		CASE_ENUM_TO_STR(SO_ATTACH_REUSEPORT_EBPF);
@@ -98,26 +107,26 @@ std::string opt_name_str(const SockOptName::SocketOption opt) {
 	}
 }
 
-std::string opt_name_str(const SockOptName::TCPOption opt) {
+std::string opt_name_str(const SockOptName::TCPOption opt, const SockOptType) {
 	switch (cosmos::to_integral(opt)) {
 		default: return "TCP_???";
 	}
 }
 
-std::string opt_name_str(const SockOptName::UDPOption opt) {
+std::string opt_name_str(const SockOptName::UDPOption opt, const SockOptType) {
 	switch (cosmos::to_integral(opt)) {
 		default: return "UDP_???";
 	}
 }
 
-std::string opt_name_str(const std::monostate) {
+std::string opt_name_str(const std::monostate, const SockOptType) {
 	return "<none>";
 }
 
 } // end anon ns
 
 std::string SockOptName::str() const {
-	return std::visit([](const auto opt) { return opt_name_str(opt); }, m_opt_variant);
+	return std::visit([this](const auto opt) { return opt_name_str(opt, m_opt_type); }, m_opt_variant);
 }
 
 void SockOptName::processValue(const Tracee &) {
@@ -127,6 +136,51 @@ void SockOptName::processValue(const Tracee &) {
 	switch (m_level_arg.level()) {
 		case SOCKET: m_opt_variant = SocketOption{val}; break;
 		default: m_opt_variant = std::monostate{}; break;
+	}
+}
+
+void AttachFilterSockOpt::processValue(const Tracee &proc) {
+	m_prog.reset();
+	m_filters.clear();
+
+	if (m_optlen.value() < int(sizeof(struct sock_fprog))) {
+		return;
+	}
+
+	return FilterProg::processValue(proc);
+}
+
+void GetFilterSocktOpt::processValue(const Tracee &) {
+	m_filters.clear();
+
+	/*
+	 * synthesize the `struct sock_fprog`.
+	 */
+	m_prog.emplace();
+	/*
+	 * this contains the amount of `struct sock_filter` available for
+	 * output. we'll update it on system call return with the actually
+	 * present data.
+	 */
+	m_prog->len = *m_optlen.value();
+	m_prog->filter = valueAs<struct sock_filter*>();
+}
+
+void GetFilterSocktOpt::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue()) {
+		m_prog->len = 0;
+	} else if (const auto len = m_optlen.value();
+			!len || *len <= 0 || *len > UINT16_MAX) {
+		m_prog->len = 0;
+	} else {
+		/* only consider the data that is actually there */
+		m_prog->len = std::min(
+				m_prog->len,
+				static_cast<unsigned short>(*len));
+
+		/* now fetch the `struct filter_prog` into the synthesized
+		 * `struct sock_fprog` */
+		fetchFilters(proc);
 	}
 }
 

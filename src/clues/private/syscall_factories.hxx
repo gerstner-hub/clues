@@ -14,11 +14,6 @@ CLUES_DEFAULT_VISIBILITY_ON;
 
 using IsSocketCall = cosmos::NamedBool<struct is_socket_call_t, false>;
 
-enum class SockOptType {
-	GET,
-	SET
-};
-
 SystemCallPtr create_socket_opt_syscall(const int optname, const SockOptType type, const IsSocketCall is_socket_call = IsSocketCall{false});
 
 /// Factory function to create a concrete PrCtlSystemCall() instance.

@@ -79,6 +79,11 @@ void FilterProg::processValue(const Tracee &proc) {
 		m_prog->filter = reinterpret_cast<struct sock_filter*>(prog32.filter);
 	}
 
+	fetchFilters(proc);
+}
+
+void FilterProg::fetchFilters(const Tracee &proc) {
+
 	/*
 	 * this could become quite large, should we limit the amount of data
 	 * using the generic buffer size limit?

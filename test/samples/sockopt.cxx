@@ -3,9 +3,11 @@
 #include <net/if.h>
 #include <unistd.h>
 #include <string>
+#include <linux/filter.h>
 
 void sol_socket() {
-	int s = socket(AF_INET, SOCK_STREAM, 0);
+	int s = socket(AF_INET, SOCK_DGRAM, 0);
+
 	int i = 0;
 	socklen_t len = sizeof(i);
 	getsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, &len);
@@ -41,6 +43,21 @@ void sol_socket() {
 	stropt.resize(IFNAMSIZ);
 	len = stropt.size();
 	getsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, stropt.data(), &len);
+
+	struct sock_fprog fprog;
+	fprog.len = 1;
+	struct sock_filter filter;
+	filter = BPF_STMT(BPF_RET | BPF_K, 0);
+	fprog.filter = &filter;
+
+	/*
+	 * note that attaching a filter is not allowed on TCP (SOCK_DGRAM)
+	 * sockets without CAP_NET_ADMIN.
+	 */
+	setsockopt(s, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof(fprog));
+	fprog.len = 1;
+	len = 1; // number of socket filter entries available for output
+	getsockopt(s, SOL_SOCKET, SO_GET_FILTER, &filter, &len);
 
 	close(s);
 }
