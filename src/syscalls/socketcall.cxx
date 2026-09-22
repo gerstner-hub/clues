@@ -167,33 +167,6 @@ void SocketCall_SendMMsg::transferValues(const Tracee &proc) {
 	flags.fill(proc, Word{vec[3]});
 }
 
-template <typename BASE>
-SocketCallBase<BASE>::SocketCallBase() :
-		BASE{SystemCallNr::SOCKETCALL},
-		args{call} {
-	for (auto par: this->m_pars) {
-		if (par->needsUpdate() && !par->deferFill()) {
-			m_update_args.push_back(par);
-		}
-	}
-
-	for (auto par: this->m_pars) {
-		if (par->needsUpdate() && par->deferFill()) {
-			m_update_args.push_back(par);
-		}
-	}
-
-	BASE::setParameters(call, args);
-}
-
-
-template <typename BASE>
-void SocketCallBase<BASE>::postSystemCall(const Tracee &proc) {
-	for (auto arg: m_update_args) {
-		arg->updateData(proc);
-	}
-}
-
 using OptLevel = item::SockOptLevel::Level;
 
 namespace {
@@ -284,40 +257,5 @@ SystemCallPtr create_socket_call_syscall(const Tracee &tracee, const SystemCallI
 	default: throw cosmos::RuntimeError{"unsupported socketcall() sub-call"};
 	}
 }
-
-template <typename BASE>
-void SocketCallSockOptBase<BASE>::transferValues(const Tracee &proc) {
-	const auto &vec = this->args.args();
-	this->sockfd.fill(proc, Word{vec[0]});
-	this->level.fill(proc, Word{vec[1]});
-	this->name.fill(proc, Word{vec[2]});
-	this->optlen.fill(proc, Word{vec[4]});
-
-	/* respect DEFER_FILL */
-	this->optval.fill(proc, Word{vec[3]});
-}
-
-/*
- * explicit template instantiations
- */
-
-template class SocketCallBase<GetBoolSockOptSystemCall>;
-template class SocketCallBase<SetBoolSockOptSystemCall>;
-template class SocketCallBase<GetIntSockOptSystemCall>;
-template class SocketCallBase<SetIntSockOptSystemCall>;
-template class SocketCallBase<GetStringSockOptSystemCall>;
-template class SocketCallBase<SetStringSockOptSystemCall>;
-template class SocketCallBase<AttachFilterSockOptSystemCall>;
-template class SocketCallBase<GetFilterSockOptSystemCall>;
-template class SocketCallSockOptBase<GetBoolSockOptSystemCall>;
-template class SocketCallSockOptBase<SetBoolSockOptSystemCall>;
-template class SocketCallSockOptBase<GetIntSockOptSystemCall>;
-template class SocketCallSockOptBase<SetIntSockOptSystemCall>;
-template class SocketCallSockOptBase<GetStringSockOptSystemCall>;
-template class SocketCallSockOptBase<SetStringSockOptSystemCall>;
-template class SocketCallSockOptBase<GetUnknownSockOptSystemCall>;
-template class SocketCallSockOptBase<SetUnknownSockOptSystemCall>;
-template class SocketCallSockOptBase<AttachFilterSockOptSystemCall>;
-template class SocketCallSockOptBase<GetFilterSockOptSystemCall>;
 
 } // end ns

@@ -31,7 +31,23 @@ class SocketCallBase :
 		public BASE {
 protected:
 
-	explicit SocketCallBase();
+	explicit SocketCallBase() :
+			BASE{SystemCallNr::SOCKETCALL},
+			args{call} {
+		for (auto par: this->m_pars) {
+			if (par->needsUpdate() && !par->deferFill()) {
+				m_update_args.push_back(par);
+			}
+		}
+
+		for (auto par: this->m_pars) {
+			if (par->needsUpdate() && par->deferFill()) {
+				m_update_args.push_back(par);
+			}
+		}
+
+		BASE::setParameters(call, args);
+	}
 
 	bool check2ndPass(const Tracee &proc) override {
 		if (args.valid()) {
@@ -41,7 +57,11 @@ protected:
 		return false;
 	}
 
-	void postSystemCall(const Tracee &) override;
+	void postSystemCall(const Tracee &proc) override {
+		for (auto arg: m_update_args) {
+			arg->updateData(proc);
+		}
+	}
 
 	/// Transfer values from `args` into BASE class items.
 	/**
@@ -196,7 +216,16 @@ class SocketCallSockOptBase :
 		public SocketCallBase<BASE> {
 protected: // functions
 
-	void transferValues(const Tracee &proc) override;
+	void transferValues(const Tracee &proc) override {
+		const auto &vec = this->args.args();
+		this->sockfd.fill(proc, Word{vec[0]});
+		this->level.fill(proc, Word{vec[1]});
+		this->name.fill(proc, Word{vec[2]});
+		this->optlen.fill(proc, Word{vec[4]});
+
+		/* respect DEFER_FILL */
+		this->optval.fill(proc, Word{vec[3]});
+	}
 };
 
 class SocketCall_GetBoolSockOpt :
