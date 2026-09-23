@@ -106,7 +106,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	void updateData(const Tracee &) override;
 
@@ -244,7 +244,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	void resetSubItems(const Tracee &proc);
 
@@ -355,7 +355,7 @@ protected: // functions
 	 **/
 	bool fetchRawHeaders(const Tracee &);
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	/// Returns a string description of the `msg_len` parameter.
 	/**

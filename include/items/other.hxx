@@ -34,7 +34,7 @@ public:
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -80,7 +80,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		/* we only look at the struct during system call exit time,
 		 * when we will also know the size of the struct and see any
 		 * updates the kernel made */
@@ -126,7 +126,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -179,9 +179,9 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override {
+	void processData(const Tracee &proc) override {
 		m_uname.reset();
-		PointerOutValue::processValue(proc);
+		PointerOutValue::processData(proc);
 	}
 
 	void updateData(const Tracee &) override;

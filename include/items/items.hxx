@@ -30,7 +30,7 @@ public:
  * These are typically PARAM_IN types denoting IDs, enums, flags etc. that are
  * passed to a system call.
  *
- * The processValue() and updateValue() functions are implemented as no-ops,
+ * The processData() and updateData() functions are implemented as no-ops,
  * because no additional data needs to be fetched from the tracee for this
  * kind of parameter.
  **/
@@ -66,7 +66,7 @@ public: // functions
 /// A value that consists of a pointer to some data area.
 /**
  * Unlike ValueParameter, PointerValue is a pointer to some userspace
- * data structure. Thus the processValue() and updateData() functions need to
+ * data structure. Thus the processData() and updateData() functions need to
  * perform more complex operations on the tracee to gather the data as
  * appropriate.
  **/
@@ -89,7 +89,7 @@ protected:
 
 /// Specialization of a PointerValue for out-parameters.
 /**
- * This specialization has a no-op implementation of the processValue() member
+ * This specialization has a no-op implementation of the processData() member
  * function that serves no purpose for out parameters. Also the value type is
  * predetermined to PARAM_OUT.
  **/
@@ -132,7 +132,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {}
+	void processData(const Tracee &) override {}
 	void updateData(const Tracee &) override {}
 };
 
@@ -202,7 +202,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 	void updateData(const Tracee &) override;
 
 	void fillBuffer(const Tracee &);
@@ -246,7 +246,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &tracee) override {
+	void processData(const Tracee &tracee) override {
 		m_ptr = valueAs<ForeignPtr>();
 
 		if (isIn() || isInOut()) {
@@ -298,8 +298,8 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override {
-		PointerToScalar<INT>::processValue(proc);
+	void processData(const Tracee &proc) override {
+		PointerToScalar<INT>::processData(proc);
 		m_in_val = this->m_val;
 	}
 
@@ -333,7 +333,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_value = valueAs<INT>();
 	}
 
@@ -370,7 +370,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_value = valueAs<bool>();
 	}
 

@@ -39,7 +39,7 @@ void StringBuffer::updateData(const Tracee &proc) {
 	}
 }
 
-void StringArrayData::processValue(const Tracee &proc) {
+void StringArrayData::processData(const Tracee &proc) {
 	if (m_call->is32BitEmulationABI()) {
 		/* in this case we have to be careful, the Tracee uses 4-byte
 		 * pointers, while we are using 8-byte pointers */

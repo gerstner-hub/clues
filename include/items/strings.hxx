@@ -26,7 +26,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override {
+	void processData(const Tracee &proc) override {
 		if (!this->isOut()) {
 			fetch(proc);
 		} else {
@@ -94,7 +94,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 	template <typename PTR>
 	void fetchPointers(const Tracee &proc);

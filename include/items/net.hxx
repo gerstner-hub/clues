@@ -76,7 +76,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	void updateData(const Tracee &) override;
 
@@ -137,7 +137,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_domain = Domain{valueAs<int>()};
 	}
 
@@ -195,7 +195,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -392,7 +392,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 	std::string label(const std::monostate) const;
 
@@ -448,7 +448,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_call = Call{valueAs<int>()};
 	}
 
@@ -494,7 +494,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 	void updateData(const Tracee&) override {
 		/*
@@ -532,7 +532,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 	void updateData(const Tracee&) override;
 
@@ -583,7 +583,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	int addrLen() const;
 
@@ -619,7 +619,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_flags = Flags{valueAs<int>()};
 	}
 
@@ -653,7 +653,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_dir = Direction{valueAs<int>()};
 	}
 
@@ -692,7 +692,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_flags = MessageFlags{valueAs<int>()};
 	}
 

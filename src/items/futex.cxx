@@ -51,7 +51,7 @@ std::string FutexOperation::str() const {
 	return BITFLAGS_STR();
 }
 
-void FutexOperation::processValue(const Tracee &) {
+void FutexOperation::processData(const Tracee &) {
 	m_cmd = Command{valueAs<int>() & FUTEX_CMD_MASK};
 	m_flags = Flags{valueAs<int>() xor cosmos::to_integral(m_cmd)};
 }
@@ -83,7 +83,7 @@ std::string get_label(const FutexWakeOperation::Comparator cmp) {
 
 }
 
-void FutexWakeOperation::processValue(const Tracee &) {
+void FutexWakeOperation::processData(const Tracee &) {
 	const auto raw = valueAs<uint32_t>();
 	/*
 	 * the integer is structured like this:

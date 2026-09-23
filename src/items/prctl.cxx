@@ -48,7 +48,7 @@ std::string AmbientCapOp::str() const {
 	}
 }
 
-void AmbientCapOp::processValue(const Tracee&) {
+void AmbientCapOp::processData(const Tracee&) {
 	m_op = Operation{valueAs<long>()};
 }
 
@@ -60,7 +60,7 @@ std::string MachineCheckOp::str() const {
 	}
 }
 
-void MachineCheckOp::processValue(const Tracee&) {
+void MachineCheckOp::processData(const Tracee&) {
 	m_op = Operation{valueAs<long>()};
 }
 
@@ -72,7 +72,7 @@ std::string MachineCheckPolicy::str() const {
 	}
 }
 
-void MachineCheckPolicy::processValue(const Tracee&) {
+void MachineCheckPolicy::processData(const Tracee&) {
 	m_policy = Policy{valueAs<long>()};
 }
 
@@ -97,11 +97,11 @@ std::string MemoryMapOp::str() const {
 	}
 }
 
-void MemoryMapOp::processValue(const Tracee&) {
+void MemoryMapOp::processData(const Tracee&) {
 	m_op = Operation{valueAs<long>()};
 }
 
-void MemoryMapStruct::processValue(const Tracee &proc) {
+void MemoryMapStruct::processData(const Tracee &proc) {
 	/*
 	 * zero-initialize the struct and only read at max the size of the
 	 * struct or the size specified by the tracee into it. unused fields
@@ -220,7 +220,7 @@ std::string_view ProcessOp::label(const Operation op) const {
 	}
 }
 
-void ProcessOp::processValue(const Tracee &) {
+void ProcessOp::processData(const Tracee &) {
 	m_op = Operation{valueAs<int>()};
 }
 
@@ -231,7 +231,7 @@ std::string VirtualMemoryAttr::str() const {
 	}
 }
 
-void VirtualMemoryAttr::processValue(const Tracee&) {
+void VirtualMemoryAttr::processData(const Tracee&) {
 	m_attr = Attr{valueAs<long>()};
 }
 
@@ -243,7 +243,7 @@ std::string SpeculationCtrlMisfeature::str() const {
 	}
 }
 
-void SpeculationCtrlMisfeature::processValue(const Tracee&) {
+void SpeculationCtrlMisfeature::processData(const Tracee&) {
 	m_misfeature = Misfeature{valueAs<long>()};
 }
 
@@ -259,7 +259,7 @@ std::string SpeculationCtrlSetting::str() const {
 	return BITFLAGS_STR();
 }
 
-void SpeculationCtrlSetting::processValue(const Tracee&) {
+void SpeculationCtrlSetting::processData(const Tracee&) {
 	m_settings = Settings{valueAs<long>()};
 }
 
@@ -271,7 +271,7 @@ std::string SyscallUserDispatchMode::str() const {
 	}
 }
 
-void SyscallUserDispatchMode::processValue(const Tracee&) {
+void SyscallUserDispatchMode::processData(const Tracee&) {
 	m_mode = Mode{valueAs<long>()};
 }
 
@@ -283,7 +283,7 @@ std::string TaggedAddressControl::str() const {
 	}
 }
 
-void TaggedAddressControl::processValue(const Tracee&) {
+void TaggedAddressControl::processData(const Tracee&) {
 	m_mode = Mode{valueAs<long>()};
 }
 
@@ -297,7 +297,7 @@ std::string THPDisableState::str() const {
 	}
 }
 
-void THPDisableState::processValue(const Tracee&) {
+void THPDisableState::processData(const Tracee&) {
 	m_config = Config{valueAs<int>()};
 }
 
@@ -309,7 +309,7 @@ std::string THPDisableFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void THPDisableFlags::processValue(const Tracee&) {
+void THPDisableFlags::processData(const Tracee&) {
 	m_flags = Flags{valueAs<long>()};
 }
 
@@ -322,7 +322,7 @@ std::string TimingMode::str() const {
 	}
 }
 
-void TimingMode::processValue(const Tracee&) {
+void TimingMode::processData(const Tracee&) {
 	m_mode = Mode{valueAs<int>()};
 }
 
@@ -339,7 +339,7 @@ std::string TSCAccess::to_str(const Access acc) {
 	}
 }
 
-void TSCAccess::processValue(const Tracee&) {
+void TSCAccess::processData(const Tracee&) {
 	m_access = Access{valueAs<int>()};
 }
 
@@ -366,12 +366,12 @@ std::string MemDenyWriteExecProtectionMask::str() const {
 	return BITFLAGS_STR();
 }
 
-void MemDenyWriteExecProtectionMask::processValue(const Tracee&) {
+void MemDenyWriteExecProtectionMask::processData(const Tracee&) {
 	m_mask = Mask{valueAs<int>()};
 }
 
-void AuxVectorBuffer::processValue(const Tracee &proc) {
-	BufferPointer::processValue(proc);
+void AuxVectorBuffer::processData(const Tracee &proc) {
+	BufferPointer::processData(proc);
 	m_auxv.reset();
 }
 

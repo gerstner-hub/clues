@@ -33,7 +33,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 	void updateData(const Tracee &proc) override;
 
@@ -71,7 +71,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 	void updateData(const Tracee &proc) override;
 
@@ -119,7 +119,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 	void updateData(const Tracee &proc) override;
 
@@ -156,7 +156,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 	void updateData(const Tracee &proc) override;
 
@@ -178,7 +178,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_type = valueAs<cosmos::ClockType>();
 	}
 
@@ -211,7 +211,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_flags = Flags{valueAs<int>()};
 	}
 

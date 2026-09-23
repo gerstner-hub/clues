@@ -60,11 +60,11 @@ std::string PipeFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void PipeFlags::processValue(const Tracee &) {
+void PipeFlags::processData(const Tracee &) {
 	m_flags = Flags{valueAs<int>()};
 }
 
-void IOVectorBase::processValue(const Tracee &tracee) {
+void IOVectorBase::processData(const Tracee &tracee) {
 	m_buffers.resize(m_vector_count_par.valueAs<size_t>());
 
 	auto obtain_specs = [this, &tracee](auto &specs) {
@@ -157,8 +157,8 @@ void ReadVector::updateData(const Tracee &tracee) {
 	}
 }
 
-void WriteVector::processValue(const Tracee &tracee) {
-	IOVectorBase::processValue(tracee);
+void WriteVector::processData(const Tracee &tracee) {
+	IOVectorBase::processData(tracee);
 
 	/* we can fill the buffer data right away */
 	for (auto &buffer: m_buffers) {
@@ -182,11 +182,11 @@ std::string ReadWriteFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void ReadWriteFlags::processValue(const Tracee &) {
+void ReadWriteFlags::processData(const Tracee &) {
 	m_flags = Flags{valueAs<int>()};
 }
 
-void CombinedOffsetValue::processValue(const Tracee &) {
+void CombinedOffsetValue::processData(const Tracee &) {
 	off_t upper = valueAs<off_t>() << 32;
 	off_t lower = m_lower_bits.valueAs<off_t>();
 
@@ -197,7 +197,7 @@ std::string CombinedOffsetValue::str() const {
 	return std::to_string(m_offset);
 }
 
-void Whence::processValue(const Tracee &) {
+void Whence::processData(const Tracee &) {
 	m_type = valueAs<SeekType>();
 }
 
@@ -222,7 +222,7 @@ std::string EventFDFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void EventFDFlags::processValue(const Tracee &) {
+void EventFDFlags::processData(const Tracee &) {
 	m_flags = valueAs<Flags>();
 }
 
@@ -234,7 +234,7 @@ std::string EPollCreateFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void EPollCreateFlags::processValue(const Tracee &) {
+void EPollCreateFlags::processData(const Tracee &) {
 	m_flags = valueAs<Flags>();
 }
 
@@ -270,7 +270,7 @@ std::string FDSet::Array::str(const int max_fd) const {
 	return ret + "]";
 }
 
-void FDSet::processValue(const Tracee &proc) {
+void FDSet::processData(const Tracee &proc) {
 	m_ev_set.reset();
 
 	if (isZero()) {
@@ -312,7 +312,7 @@ std::string FDSet::str() const {
 	return ret;
 }
 
-void OldSelectArgs::processValue(const Tracee &proc) {
+void OldSelectArgs::processData(const Tracee &proc) {
 	struct select_arg_struct args;
 
 	if (!proc.readStruct(asPtr(), args)) {
@@ -348,14 +348,14 @@ std::string EPollOperation::str() const {
 	}
 }
 
-void EPollOperation::processValue(const Tracee &) {
+void EPollOperation::processData(const Tracee &) {
 	m_op = valueAs<Operation>();
 }
 
 /* make sure the derived type doesn't add any data */
 static_assert(sizeof(EPollEvent) == sizeof(epoll_event), "struct epoll_event size mismatch");
 
-void EPollEventSettings::processValue(const Tracee &proc) {
+void EPollEventSettings::processData(const Tracee &proc) {
 	proc.readStructIntoOptional(asPtr(), m_ev);
 }
 
@@ -422,7 +422,7 @@ std::string EPollEventReport::str() const {
 
 static_assert(sizeof(PollFDs::PollFD) == sizeof(struct pollfd), "struct pollfd size mismatch");
 
-void PollFDs::processValue(const Tracee &proc) {
+void PollFDs::processData(const Tracee &proc) {
 	m_fds.resize(m_num_fds.valueAs<nfds_t>());
 
 	if (!proc.readStructs(ptr(), m_fds)) {

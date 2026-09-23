@@ -65,7 +65,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 protected: // data
 
@@ -96,7 +96,7 @@ public:
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -134,7 +134,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -157,7 +157,7 @@ public:
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -184,7 +184,7 @@ public:
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_mode = cosmos::FileMode{valueAs<cosmos::ModeT>()};
 	}
 
@@ -214,7 +214,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_stat.reset();
 	}
 
@@ -263,7 +263,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_entries.clear();
 		m_buffer.reset();
 	}
@@ -309,7 +309,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 protected: // data
 
@@ -332,7 +332,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_stat.reset();
 	}
 
@@ -377,7 +377,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 protected: // data
 

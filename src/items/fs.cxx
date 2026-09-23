@@ -37,7 +37,7 @@ std::string FileDescriptor::str() const {
 	return ret;
 }
 
-void FileDescriptor::processValue(const Tracee &proc) {
+void FileDescriptor::processData(const Tracee &proc) {
 	m_fd = valueAs<cosmos::FileNum>();
 
 	if (proc.engine().formatFlags()[Engine::FormatFlag::FD_INFO]) {
@@ -104,7 +104,7 @@ std::string OpenFlagsValue::str() const {
 #endif
 }
 
-void OpenFlagsValue::processValue(const Tracee &) {
+void OpenFlagsValue::processData(const Tracee &) {
 	const auto raw = valueAs<int>();
 	// the access mode consists of the lower two bits
 	m_mode = cosmos::OpenMode{raw & 0x3};
@@ -131,11 +131,11 @@ std::string AtFlagsValue::str() const {
 	return BITFLAGS_STR();
 }
 
-void AtFlagsValue::processValue(const Tracee&) {
+void AtFlagsValue::processData(const Tracee&) {
 	m_flags = AtFlags{valueAs<int>()};
 }
 
-void AccessModeParameter::processValue(const Tracee&) {
+void AccessModeParameter::processData(const Tracee&) {
 	m_checks = cosmos::fs::AccessChecks(valueAs<int>());
 }
 
@@ -464,7 +464,7 @@ void DirEntries::parseEntries64(const size_t bytes) {
 	}
 }
 
-void AccessAdvice::processValue(const Tracee &) {
+void AccessAdvice::processData(const Tracee &) {
 	m_advice = cosmos::FileDescriptor::AccessAdvice{valueAs<int>()};
 }
 
@@ -712,7 +712,7 @@ std::string DupFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void DupFlags::processValue(const Tracee &) {
+void DupFlags::processData(const Tracee &) {
 	m_flags = valueAs<cosmos::OpenFlags>();
 }
 

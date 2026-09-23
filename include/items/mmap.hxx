@@ -25,7 +25,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_prot = cosmos::mem::AccessFlags{valueAs<int>()};
 	}
 
@@ -55,7 +55,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		/*
 		 * the lower three bits comprise the map type (a value, not a
 		 * bit mask), the rest is a bit mask.
@@ -114,7 +114,7 @@ public:
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 	std::string str() const override;
 

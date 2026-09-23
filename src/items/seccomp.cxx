@@ -17,7 +17,7 @@ std::string SecCompMode::str() const {
 	}
 }
 
-void SecCompMode::processValue(const Tracee&) {
+void SecCompMode::processData(const Tracee&) {
 	m_mode = valueAs<Mode>();
 }
 
@@ -62,7 +62,7 @@ std::string FilterProg::str() const {
 	return std::format("{{len={}, filter={}}}", m_prog->len, filters);
 }
 
-void FilterProg::processValue(const Tracee &proc) {
+void FilterProg::processData(const Tracee &proc) {
 	m_filters.clear();
 
 	if (!m_call->is32BitEmulationABI()) {

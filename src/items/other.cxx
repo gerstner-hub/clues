@@ -26,11 +26,11 @@ std::string GetRandomFlagsValue::str() const {
 	return BITFLAGS_STR();
 }
 
-void GetRandomFlagsValue::processValue(const Tracee&) {
+void GetRandomFlagsValue::processData(const Tracee&) {
 	m_flags = cosmos::GetRandomFlags{valueAs<int>()};
 }
 
-void RSeqFlagsValue::processValue(const Tracee&) {
+void RSeqFlagsValue::processData(const Tracee&) {
 	m_flags = Flags{valueAs<int>()};
 }
 

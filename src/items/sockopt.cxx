@@ -9,7 +9,7 @@
 
 namespace clues::item {
 
-void SockOptLevel::processValue(const Tracee &) {
+void SockOptLevel::processData(const Tracee &) {
 	m_level = Level{valueAs<int>()};
 }
 
@@ -129,7 +129,7 @@ std::string SockOptName::str() const {
 	return std::visit([this](const auto opt) { return opt_name_str(opt, m_opt_type); }, m_opt_variant);
 }
 
-void SockOptName::processValue(const Tracee &) {
+void SockOptName::processData(const Tracee &) {
 	const auto val = valueAs<int>();
 	using enum SockOptLevel::Level;
 
@@ -139,7 +139,7 @@ void SockOptName::processValue(const Tracee &) {
 	}
 }
 
-void AttachFilterSockOpt::processValue(const Tracee &proc) {
+void AttachFilterSockOpt::processData(const Tracee &proc) {
 	m_prog.reset();
 	m_filters.clear();
 
@@ -147,10 +147,10 @@ void AttachFilterSockOpt::processValue(const Tracee &proc) {
 		return;
 	}
 
-	return FilterProg::processValue(proc);
+	return FilterProg::processData(proc);
 }
 
-void GetFilterSocktOpt::processValue(const Tracee &) {
+void GetFilterSocktOpt::processData(const Tracee &) {
 	m_filters.clear();
 
 	/*

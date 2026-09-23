@@ -120,7 +120,7 @@ void fetch_sigaction(const ForeignPtr ptr, const Tracee &proc, std::optional<cos
 
 } // end anon ns
 
-void SigActionParameter::processValue(const Tracee &proc) {
+void SigActionParameter::processData(const Tracee &proc) {
 
 	if (isOut() && proc.isEnterStop()) {
 		m_sigaction.reset();
@@ -157,7 +157,7 @@ bool SigSetParameter::usesArgPack() const {
 	});
 }
 
-void SigSetParameter::processValue(const Tracee &proc) {
+void SigSetParameter::processData(const Tracee &proc) {
 	if (proc.isEnterStop() && isOut()) {
 		return;
 	}
@@ -330,7 +330,7 @@ void SigInfo::updateData(const Tracee &proc) {
 	}
 }
 
-void SignalFDFlags::processValue(const Tracee &) {
+void SignalFDFlags::processData(const Tracee &) {
 	m_flags = valueAs<Flags>();
 }
 

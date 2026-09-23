@@ -23,11 +23,11 @@ std::string FileDescFlagsValue::str() const {
 	return BITFLAGS_STR();
 }
 
-void FileDescFlagsValue::processValue(const Tracee &) {
+void FileDescFlagsValue::processData(const Tracee &) {
 	m_flags = cosmos::FileDescriptor::DescFlags{valueAs<int>()};
 }
 
-void FcntlOperation::processValue(const Tracee &) {
+void FcntlOperation::processData(const Tracee &) {
 	m_op = valueAs<Oper>();
 }
 
@@ -141,7 +141,7 @@ struct flock64 {
 
 } // end ns kernel
 
-void FLockParameter::processValue(const Tracee &proc) {
+void FLockParameter::processData(const Tracee &proc) {
 	/* all flock related operations provide input, so unconditionally
 	 * process it */
 
@@ -275,7 +275,7 @@ void FLockParameter::updateData(const Tracee &proc) {
 		return;
 	}
 
-	processValue(proc);
+	processData(proc);
 }
 
 template <typename INT>
@@ -311,7 +311,7 @@ std::string FLockParameter::str() const {
 	);
 }
 
-void FileDescOwner::processValue(const Tracee &) {
+void FileDescOwner::processData(const Tracee &) {
 	const auto pid_or_pgid = valueAs<int>();
 
 	if (pid_or_pgid >= 0) {
@@ -351,11 +351,11 @@ std::string ExtFileDescOwner::str() const {
 	return std::format("{{type={}, id={}}}", type_str(m_owner->type()), m_owner->raw()->pid);
 }
 
-void ExtFileDescOwner::processValue(const Tracee &proc) {
+void ExtFileDescOwner::processData(const Tracee &proc) {
 	proc.readRawStructIntoOptional(asPtr(), m_owner);
 }
 
-void LeaseType::processValue(const Tracee &) {
+void LeaseType::processData(const Tracee &) {
 	m_lease = cosmos::FileDescriptor::LeaseType{valueAs<int>()};
 }
 
@@ -363,7 +363,7 @@ std::string LeaseType::str() const {
 	return std::string{lock_type_to_str(cosmos::to_integral(m_lease))};
 }
 
-void DNotifySettings::processValue(const Tracee &) {
+void DNotifySettings::processData(const Tracee &) {
 	m_settings = Settings{valueAs<int>()};
 }
 
@@ -381,7 +381,7 @@ std::string DNotifySettings::str() const {
 	return BITFLAGS_STR();
 }
 
-void FileSealSettings::processValue(const Tracee &) {
+void FileSealSettings::processData(const Tracee &) {
 	m_flags = cosmos::FileDescriptor::SealFlags{valueAs<unsigned int>()};
 }
 
@@ -397,7 +397,7 @@ std::string FileSealSettings::str() const {
 	return BITFLAGS_STR();
 }
 
-void ReadWriteHint::processValue(const Tracee &proc) {
+void ReadWriteHint::processData(const Tracee &proc) {
 	/*
 	 * this is used for both input and output parameter variants
 	 */

@@ -62,7 +62,7 @@ protected: // functions
 		m_write_end = cosmos::FileNum::INVALID;
 	}
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		reset();
 	}
 
@@ -104,7 +104,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -163,7 +163,7 @@ public: // functions
 		/*
 		 * `vector_count` comes after the `struct iovec*` in readv()
 		 * and writev(), thus we need to defer the initial
-		 * processValue().
+		 * processData().
 		 */
 		m_flags.set(Flag::DEFER_FILL);
 	}
@@ -186,7 +186,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override = 0;
+	void processData(const Tracee &) override = 0;
 
 	/// Fetches the buffer payload for the given buffer spec.
 	void fetchBuffer(const Tracee &tracee, Buffer &buffer,
@@ -219,8 +219,8 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &tracee) override {
-		IOVectorBase::processValue(tracee);
+	void processData(const Tracee &tracee) override {
+		IOVectorBase::processData(tracee);
 
 	}
 
@@ -248,7 +248,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &tracee) override;
+	void processData(const Tracee &tracee) override;
 };
 
 /// An I/O offset value spread over two system call registers.
@@ -275,7 +275,7 @@ protected: // functions
  * can take place the usual way. If this does not fit the system call
  * signature then `Ordering::LOW_THEN_HIGH` needs to be passed during
  * construction time, in which case the DEFER_FILL flag will be set for this
- * item, to make the low order bits available the time processValue() is
+ * item, to make the low order bits available the time processData() is
  * called.
  **/
 class CombinedOffsetValue :
@@ -325,7 +325,7 @@ public: // data
 
 protected: // functions
 
-	void processValue(const Tracee &tracee) override;
+	void processData(const Tracee &tracee) override;
 
 protected: // data
 
@@ -357,7 +357,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -387,7 +387,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -415,7 +415,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -447,7 +447,7 @@ public: // functions
 
 protected: // data
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -539,7 +539,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 	void updateData(const Tracee &proc) override;
 
@@ -590,7 +590,7 @@ public:
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 	/*
 	 * update is handled via SelectSystemCall::postSystemCall()
@@ -636,7 +636,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -702,7 +702,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -725,7 +725,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_events.clear();
 	}
 
@@ -791,7 +791,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	void updateData(const Tracee &) override;
 

@@ -31,7 +31,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -92,7 +92,7 @@ public: // functions
 
 	std::string str() const override;
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 	void updateData(const Tracee &proc) override;
 

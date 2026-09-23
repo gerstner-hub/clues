@@ -59,7 +59,7 @@ std::string Capability::str() const {
 	}
 }
 
-void Capability::processValue(const Tracee&) {
+void Capability::processData(const Tracee&) {
 	m_cap = cosmos::Capability{valueAs<long>()};
 }
 
@@ -78,7 +78,7 @@ std::string SecureBits::str() const {
 	return BITFLAGS_STR();
 }
 
-void SecureBits::processValue(const Tracee&) {
+void SecureBits::processData(const Tracee&) {
 	m_mask = cosmos::SecureBits{valueAs<unsigned long>()};
 }
 

@@ -98,7 +98,7 @@ std::string PointerToScalarInOut<INT>::str() const {
 	);
 }
 
-void BufferPointer::processValue(const Tracee &tracee) {
+void BufferPointer::processData(const Tracee &tracee) {
 	if (isOut() || isZero()) {
 		// this is an out buffer only, will be filled in updateData()
 		// or this is an optional buffer which is specified as NULL.

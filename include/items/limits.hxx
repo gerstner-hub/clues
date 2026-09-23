@@ -31,7 +31,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -57,7 +57,7 @@ protected: // functions
 
 	void updateData(const Tracee &proc) override;
 
-	void processValue(const Tracee &proc) override {
+	void processData(const Tracee &proc) override {
 		if (isOut()) {
 			m_limit.reset();
 		} else {

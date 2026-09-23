@@ -41,7 +41,7 @@ public:
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_op = valueAs<Op>();
 	}
 
@@ -66,7 +66,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_nr = valueAs<cosmos::SignalNr>();
 	}
 
@@ -94,7 +94,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 protected: // data
 
@@ -121,7 +121,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &proc) override;
+	void processData(const Tracee &proc) override;
 
 	bool usesArgPack() const;
 
@@ -161,7 +161,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_info.reset();
 	}
 
@@ -194,7 +194,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 protected: // data
 

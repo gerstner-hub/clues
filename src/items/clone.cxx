@@ -56,7 +56,7 @@ std::string CloneFlagsValue::str() const {
 	return clone_flags_str(m_flags, exit_signal);
 }
 
-void CloneFlagsValue::processValue(const Tracee &) {
+void CloneFlagsValue::processData(const Tracee &) {
 	if (m_call->callNr() == SystemCallNr::CLONE) {
 		// child exit signal is piggy-backed in the low byte of flags
 		// although clone(2) shows an `int` here, this is a 64-bit flags typetype
@@ -79,7 +79,7 @@ void CloneArgs::resetArgs() {
 	m_args.reset();
 }
 
-void CloneArgs::processValue(const Tracee &proc) {
+void CloneArgs::processData(const Tracee &proc) {
 
 	resetArgs();
 

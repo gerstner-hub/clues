@@ -70,7 +70,7 @@ std::string MapFlagsParameter::str() const {
 	return BITFLAGS_STR();
 }
 
-void OldMmapArgs::processValue(const Tracee &proc) {
+void OldMmapArgs::processData(const Tracee &proc) {
 	struct mmap_arg_struct args;
 
 	if (!proc.readStruct(asPtr(), args)) {

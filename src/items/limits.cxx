@@ -34,7 +34,7 @@ std::string ResourceType::str() const {
 	}
 }
 
-void ResourceType::processValue(const Tracee &) {
+void ResourceType::processData(const Tracee &) {
 	m_limit = cosmos::LimitType{valueAs<int>()};
 }
 

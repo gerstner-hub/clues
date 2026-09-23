@@ -44,7 +44,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_pid = valueAs<cosmos::ProcessID>();
 	}
 
@@ -75,7 +75,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_pgid = valueAs<cosmos::ProcessGroupID>();
 	}
 
@@ -106,7 +106,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_sid = valueAs<cosmos::SessionID>();
 	}
 
@@ -130,7 +130,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_tid = valueAs<cosmos::ThreadID>();
 	}
 
@@ -153,7 +153,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_status = valueAs<cosmos::ExitStatus>();
 	}
 
@@ -178,7 +178,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override {
+	void processData(const Tracee&) override {
 		m_options = cosmos::WaitFlags{valueAs<int>()};
 	}
 
@@ -218,7 +218,7 @@ protected: // types
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_rusage.reset();
 	}
 
@@ -246,9 +246,9 @@ protected: // functions
 
 	std::string format(const int val) const override;
 
-	void processValue(const Tracee &tracee) override {
+	void processData(const Tracee &tracee) override {
 		m_status.reset();
-		PointerToScalar<int>::processValue(tracee);
+		PointerToScalar<int>::processData(tracee);
 	}
 
 	void updateData(const Tracee &tracee) override;
@@ -286,7 +286,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -314,7 +314,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee&) override;
+	void processData(const Tracee&) override;
 
 protected: // data
 
@@ -345,7 +345,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_flags = valueAs<Flags>();
 	}
 
@@ -376,7 +376,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_flags = valueAs<Flags>();
 	}
 

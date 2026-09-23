@@ -22,7 +22,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_uid = valueAs<cosmos::UserID>();
 	}
 
@@ -45,7 +45,7 @@ public: // functions
 
 protected: // functions
 
-	void processValue(const Tracee &) override {
+	void processData(const Tracee &) override {
 		m_gid = valueAs<cosmos::GroupID>();
 	}
 

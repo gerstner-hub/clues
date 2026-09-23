@@ -352,7 +352,7 @@ std::optional<ReceiveMessageHeader> RecvMessageHeader::header() const {
 	return Header{*m_out_header, convertControlHeader32()};
 }
 
-void RecvMessageHeader::processValue(const Tracee &proc) {
+void RecvMessageHeader::processData(const Tracee &proc) {
 	m_out_header.reset();
 
 	if (m_call->is32BitEmulationABI()) {
@@ -410,7 +410,7 @@ void RecvMessageHeader::fillSubItems(const Tracee &proc) {
 void RecvMessageHeader::updateSubItems(const Tracee &proc) {
 	/*
 	 * since some of these sub-items don't expect updates we need to call
-	 * `processValue()` on them here as well to actually update the data
+	 * `processData()` on them here as well to actually update the data
 	 */
 	processSubItemValue(m_msg_namelen,
 			scalar_to_word(m_out_header->msg_namelen), proc);
@@ -429,7 +429,7 @@ void RecvMessageHeader::updateSubItems(const Tracee &proc) {
 	m_msg_control.fetchRemainingData(proc);
 }
 
-void SendMessageHeader::processValue(const Tracee &proc) {
+void SendMessageHeader::processData(const Tracee &proc) {
 
 	if (m_call->is32BitEmulationABI()) {
 		fetchMsgHdr32(proc, m_header);
@@ -531,7 +531,7 @@ bool MessageHeaderVectorBase<HDR_ITEM>::fetchRawHeaders(const Tracee &proc) {
 }
 
 template <typename HDR_ITEM>
-void MessageHeaderVectorBase<HDR_ITEM>::processValue(const Tracee &proc) {
+void MessageHeaderVectorBase<HDR_ITEM>::processData(const Tracee &proc) {
 	m_headers.clear();
 	if (!fetchRawHeaders(proc)) {
 		return;

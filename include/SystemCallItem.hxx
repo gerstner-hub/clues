@@ -87,7 +87,7 @@ public: // types
 		 * of a system call.
 		 *
 		 * The basic value of the register will still be fetched
-		 * during system call entry but processValue() and
+		 * during system call entry but processData() and
 		 * updateData() will not be called.
 		 **/
 		UNUSED     = 1 << 1
@@ -204,28 +204,28 @@ protected: // functions
 	 * system call, and for ItemType::RETVAL upon exit from a system call.
 	 *
 	 * For parameters of ItemType::PARAM_OUT this callback can be used to
-	 * reset any stored data to be filled in later when updateData() is
+	 * reset any stored data to be filled in later when `updateData()` is
 	 * called.
 	 **/
-	virtual void processValue(const Tracee &) {}
+	virtual void processData(const Tracee &) {}
 
-	/// Called upon exit of the system call to update possible out parameters.
+	/// Called upon exit of the system call to update out parameters.
 	/**
 	 * This function is called for parameters of ItemType::PARAM_OUT and
-	 * ItemType::PARAM_IN_OUT upon system call exit to update the data
-	 * from the values returned from the system call.
+	 * ItemType::PARAM_IN_OUT upon system call exit to update the object
+	 * with Tracee data stored by the system call.
 	 *
-	 * The default implementation calls `processValue()` to allow to share
-	 * the same data processing code for input and output for item types
-	 * that support both.
+	 * The default implementation calls `processData()` to allow to share
+	 * the same code for input and output for item types that support
+	 * both.
 	 *
 	 * This function is called regardless of system call success or error,
-	 * so it can happen that there is no valid data returned by the kernel
-	 * or pointers in userspace are broken. Implementations should take
-	 * this into consideration when operating on the data.
+	 * thus it can happen that there is no valid data returned by the
+	 * kernel (pointers in userspace could be broken). Implementations
+	 * need to take this into consideration when operating on Tracee data.
 	 **/
 	virtual void updateData(const Tracee &t) {
-		processValue(t);
+		processData(t);
 	}
 
 	/// Forward the given `word` towards the given `sub_item`.
@@ -236,7 +236,7 @@ protected: // functions
 	 * from more complex data structures, like it is the case with `struct
 	 * msghdr` in `recvmsg()` and `sendmsg()`, for example.
 	 *
-	 * This operation basically calls `sub_item.processValue(word, proc)`.
+	 * This operation basically calls `sub_item.processData(word, proc)`.
 	 **/
 	void processSubItemValue(SystemCallItem &sub_item, const Word word, const Tracee &proc);
 

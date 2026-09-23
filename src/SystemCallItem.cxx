@@ -11,7 +11,7 @@ void SystemCallItem::fill(const Tracee &proc, const Word word) {
 	m_val = word;
 
 	if (!isUnused()) {
-		processValue(proc);
+		processData(proc);
 	}
 }
 

@@ -87,7 +87,7 @@ std::string WaitID::str() const {
 	}
 }
 
-void WaitID::processValue(const Tracee &) {
+void WaitID::processData(const Tracee &) {
 	m_type = valueAs<Type>();
 }
 
@@ -101,7 +101,7 @@ std::string PIDFDOpenFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void PIDFDOpenFlags::processValue(const Tracee &) {
+void PIDFDOpenFlags::processData(const Tracee &) {
 	m_flags = valueAs<Flags>();
 }
 

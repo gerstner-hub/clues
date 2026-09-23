@@ -48,7 +48,7 @@ std::string_view SocketDomain::label(const Domain domain) {
 	}
 }
 
-void SocketType::processValue(const Tracee &) {
+void SocketType::processData(const Tracee &) {
 	/* this is only found in the kernel's linux/net.h */
 	constexpr int SOCK_TYPE_MASK  = 0xf;
 
@@ -81,7 +81,7 @@ std::string SocketType::str() const {
 	return BITFLAGS_STR();
 }
 
-void SocketProtocol::processValue(const Tracee&) {
+void SocketProtocol::processData(const Tracee&) {
 	m_raw = valueAs<int>();
 	m_prot = std::monostate{};
 
@@ -335,7 +335,7 @@ std::vector<unsigned long> SocketCallArgs::fetchArgs(const Tracee &proc,
 	return ret;
 }
 
-void SocketCallArgs::processValue(const Tracee &proc) {
+void SocketCallArgs::processData(const Tracee &proc) {
 	try {
 		m_args = fetchArgs(proc, m_call->abi(), m_type.call(), asPtr());
 	} catch(...) {
@@ -519,7 +519,7 @@ std::string SocketCallArgs::str() const {
 	return ret + "}";
 }
 
-void SocketPair::processValue(const Tracee &) {
+void SocketPair::processData(const Tracee &) {
 	m_valid = false;
 	m_pair.fill(cosmos::FileNum::INVALID);
 }
@@ -768,7 +768,7 @@ int SocketAddress::addrLen() const {
 		return *m_lenp->value();
 }
 
-void SocketAddress::processValue(const Tracee &proc) {
+void SocketAddress::processData(const Tracee &proc) {
 
 	if ((this->isOut() && proc.isEnterStop()) ||
 			isZero() ||
@@ -830,11 +830,11 @@ std::string AcceptFlags::str() const {
 	return BITFLAGS_STR();
 }
 
-void AddressLengthPointer::processValue(const Tracee &proc) {
+void AddressLengthPointer::processData(const Tracee &proc) {
 	m_available.reset();
 	m_filled.reset();
 
-	PointerToScalar<int>::processValue(proc);
+	PointerToScalar<int>::processData(proc);
 
 	m_available = value();
 }

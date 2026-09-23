@@ -18,7 +18,7 @@ namespace clues::item {
 static_assert(sizeof(struct timespec) == 16, "unexpected struct timespec size");
 static_assert(sizeof(struct timeval) == 16, "unexpected struct timespec size");
 
-void TimeSpecParameter::processValue(const Tracee &proc) {
+void TimeSpecParameter::processData(const Tracee &proc) {
 	if (this->isOut())
 		m_timespec.reset();
 	else
@@ -73,9 +73,9 @@ std::string TimeSpecParameter::str() const {
 	return format::timespec(*m_timespec);
 }
 
-void TimeSpecInOutParameter::processValue(const Tracee &proc) {
+void TimeSpecInOutParameter::processData(const Tracee &proc) {
 	m_remaining.reset();
-	TimeSpecParameter::processValue(proc);
+	TimeSpecParameter::processData(proc);
 }
 
 void TimeSpecInOutParameter::updateData(const Tracee &proc) {
@@ -126,7 +126,7 @@ void RemainingTimeSpec::updateData(const Tracee &proc) {
 	TimeSpecParameter::updateData(proc);
 }
 
-void TimeValParameter::processValue(const Tracee &proc) {
+void TimeValParameter::processData(const Tracee &proc) {
 	if (this->isOut())
 		m_timeval.reset();
 	else
@@ -178,9 +178,9 @@ std::string TimeValParameter::str() const {
 	return format::timeval(*m_timeval);
 }
 
-void TimeValInOutParameter::processValue(const Tracee &proc) {
+void TimeValInOutParameter::processData(const Tracee &proc) {
 	m_remaining.reset();
-	TimeValParameter::processValue(proc);
+	TimeValParameter::processData(proc);
 }
 
 void TimeValInOutParameter::updateData(const Tracee &proc) {

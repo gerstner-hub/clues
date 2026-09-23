@@ -51,7 +51,7 @@ public: // functions
 
 	std::string str() const override;
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	auto command() const {
 		return m_cmd;
@@ -116,7 +116,7 @@ public: // functions
 
 	std::string str() const override;
 
-	void processValue(const Tracee &) override;
+	void processData(const Tracee &) override;
 
 	auto operation() const {
 		return m_op;
