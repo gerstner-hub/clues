@@ -244,7 +244,7 @@ public: // functions
 
 protected: // functions
 
-	std::string scalarToString() const override;
+	std::string format(const int val) const override;
 
 	void processValue(const Tracee &tracee) override {
 		m_status.reset();

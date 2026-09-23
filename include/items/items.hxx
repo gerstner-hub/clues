@@ -214,7 +214,7 @@ protected: // data
 	std::vector<std::byte> m_data;
 };
 
-/// A pointer to an integral data type which will be filled in by the kernel.
+/// A pointer to an integral data type used by/filled in by the kernel.
 /**
  * The type can also be an enum type, but the size of the underlying type must
  * match the system call's pointed-to type.
@@ -264,13 +264,49 @@ protected: // functions
 
 	void fetchValue(const Tracee &tracee);
 
-	virtual std::string scalarToString() const;
+	virtual std::string format(const INT value) const;
 
 protected: // data
 
 	ForeignPtr m_ptr = ForeignPtr{};
 	std::optional<INT> m_val;
 	Base m_base = Base::DEC;
+};
+
+/// Pointer to an integral data type with value-result semantics.
+/**
+ * This is a specialization of PointerToScalar for ItemType::PARAM_IN_OUT. It
+ * stores the input value separately and provides information about the value
+ * change in its `str()` function.
+ **/
+template <typename INT>
+class PointerToScalarInOut :
+		public PointerToScalar<INT> {
+
+public: // functions
+
+	explicit PointerToScalarInOut(const ItemCfg &cfg = {}) :
+			PointerToScalar<INT>{cfg.applyDefaults(
+				ItemCfg{ItemType::PARAM_IN_OUT})} {
+	}
+
+	std::string str() const override;
+
+	std::optional<INT> inputValue() const {
+		return m_in_val;
+	}
+
+protected: // functions
+
+	void processValue(const Tracee &proc) override {
+		PointerToScalar<INT>::processValue(proc);
+		m_in_val = this->m_val;
+	}
+
+
+protected: // data
+
+	std::optional<INT> m_in_val;
 };
 
 /// A simple scalar in/out/return value parameter.

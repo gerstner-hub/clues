@@ -66,31 +66,36 @@ void PointerToScalar<INT>::fetchValue(const Tracee &tracee) {
 
 template <typename INT>
 std::string PointerToScalar<INT>::str() const {
-	if (m_ptr == ForeignPtr::NO_POINTER) {
-		return "NULL";
-	}
-
-	return format::pointer(m_ptr, m_val ? scalarToString() : "???"s);
+	return format::pointer(m_ptr, m_val ? format(*m_val) : "???"s);
 }
 
 template <typename INT>
-std::string PointerToScalar<INT>::scalarToString() const {
+std::string PointerToScalar<INT>::format(const INT value) const {
 	if constexpr (std::is_enum_v<INT>) {
 		if constexpr (format::has_enum_formatter<INT>) {
-			return format::enumeration(*m_val);
+			return format::enumeration(value);
 		} else {
-			return format_number(cosmos::to_integral(*m_val),
+			return format_number(cosmos::to_integral(value),
 					m_base);
 		}
 	}
 	if constexpr (!std::is_enum_v<INT>) {
 		if constexpr (std::is_pointer_v<INT>) {
-			return format::pointer(ForeignPtr{(uintptr_t)(*m_val)});
+			return format::pointer(ForeignPtr{(uintptr_t)(value)});
 		}
 		if constexpr (!std::is_pointer_v<INT>) {
-			return format_number(*m_val, m_base);
+			return format_number(value, m_base);
 		}
 	}
+}
+
+template <typename INT>
+std::string PointerToScalarInOut<INT>::str() const {
+	return std::format("{}: [{}] → [{}]",
+		format::pointer(this->m_ptr),
+		this->m_in_val ? this->format(*this->m_in_val) : "???"s,
+		this->m_val ? this->format(*this->m_val) : "???"s
+	);
 }
 
 void BufferPointer::processValue(const Tracee &tracee) {
@@ -203,6 +208,7 @@ template class CLUES_API PointerToScalar<cosmos::SignalNr>;
 template class CLUES_API PointerToScalar<void*>;
 template class CLUES_API PointerToScalar<ForeignPtr>;
 template class CLUES_API PointerToScalar<off_t>;
+template class CLUES_API PointerToScalarInOut<int>;
 template class CLUES_API IntValueT<int>;
 template class CLUES_API IntValueT<uint32_t>;
 template class CLUES_API IntValueT<unsigned long>;

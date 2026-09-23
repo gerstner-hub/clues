@@ -714,7 +714,7 @@ public: // functions
 
 protected: // functions
 
-	std::string scalarToString() const override;
+	std::string format(const int val) const override;
 
 	void updateData(const Tracee &tracee) override;
 

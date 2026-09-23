@@ -343,8 +343,8 @@ void TSCAccess::processValue(const Tracee&) {
 	m_access = Access{valueAs<int>()};
 }
 
-std::string TSCAccessPtr::scalarToString() const {
-	return TSCAccess::to_str(m_access);
+std::string TSCAccessPtr::format(const int val) const {
+	return TSCAccess::to_str(Access{val});
 }
 
 void TSCAccessPtr::updateData(const Tracee &tracee) {

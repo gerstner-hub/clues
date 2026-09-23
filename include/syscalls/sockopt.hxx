@@ -37,9 +37,8 @@ struct GetSockOptSystemCall :
 			name{level, SockOptType::GET},
 			optvalp{optval},
 			optlen{ItemCfg{
-				ItemType::PARAM_IN_OUT,
-				"optlen",
-				"in-out pointer for option length"}} {
+				.label = "optlen",
+				.desc = "in-out pointer for option length"}} {
 		setReturnItem(res);
 	}
 
@@ -48,7 +47,7 @@ struct GetSockOptSystemCall :
 	item::SockOptName name;
 	// pointer to the specialized type's optval item.
 	SystemCallItem *optvalp = nullptr;
-	item::PointerToScalar<int> optlen;
+	item::PointerToScalarInOut<int> optlen;
 
 	item::SuccessResult res;
 

@@ -58,21 +58,19 @@ void WaitStatus::updateData(const Tracee &tracee) {
 	}
 }
 
-std::string WaitStatus::scalarToString() const {
-	if (!m_status) {
-		return "???";
-	}
+std::string WaitStatus::format(const int val) const {
+	const auto status = cosmos::WaitStatus{val};
 
-	if (m_status->exited()) {
+	if (status.exited()) {
 		return std::format("WIFEXITED && WEXITSTATUS == {}",
-				cosmos::to_integral(*m_status->status()));
-	} else if (m_status->signaled()) {
+				cosmos::to_integral(*status.status()));
+	} else if (status.signaled()) {
 		std::string ret{"WIFSIGNALED &&"};
-		if (m_status->dumped()) {
+		if (status.dumped()) {
 			ret += " WCOREDUMP &&";
 		}
 		ret += std::format(" WTERMSIG == {}",
-				format::signal(m_status->termSig()->raw()));
+				format::signal(status.termSig()->raw()));
 		return ret;
 	} else {
 		return "?!?";
