@@ -91,6 +91,12 @@ std::string PointerToScalar<INT>::format(const INT value) const {
 
 template <typename INT>
 std::string PointerToScalarInOut<INT>::str() const {
+	if (this->m_in_val == this->m_val) {
+		/* only print the more complex output if the values actually
+		 * differ */
+		return PointerToScalar<INT>::str();
+	}
+
 	return std::format("{}: [{}] → [{}]",
 		format::pointer(this->m_ptr),
 		this->m_in_val ? this->format(*this->m_in_val) : "???"s,
