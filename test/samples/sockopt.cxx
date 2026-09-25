@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -5,36 +7,50 @@
 #include <string>
 #include <linux/filter.h>
 
+namespace {
+
+int set_int_opt(int sock, const int level, const int name, const int val) {
+	return ::setsockopt(sock, level, name, &val, sizeof(val));
+}
+
+int set_sock_int_opt(int sock, const int name, const int val) {
+	return set_int_opt(sock, SOL_SOCKET, name, val);
+}
+
+std::pair<int, int> get_int_opt(int sock, const int level, const int name) {
+	int val;
+	socklen_t len = sizeof(val);
+	auto ret = ::getsockopt(sock, level, name, &val, &len);
+
+	return std::make_pair(ret, val);
+}
+
+std::pair<int, int> get_sock_int_opt(int sock, const int name) {
+	return get_int_opt(sock, SOL_SOCKET, name);
+}
+
 void sol_socket() {
 	int s = socket(AF_INET, SOCK_DGRAM, 0);
 
-	int i = 0;
-	socklen_t len = sizeof(i);
-	getsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, &len);
-	i = 1;
-	setsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, sizeof(i));
+	get_sock_int_opt(s, SO_DONTROUTE);
+	set_sock_int_opt(s, SO_DONTROUTE, 1);
+
 	/* test incomplete option read */
-	i = 4711;
-	len = 0;
+	int i = 4711;
+	socklen_t len = 0;
 	getsockopt(s, SOL_SOCKET, SO_DONTROUTE, &i, &len);
 
-	len = sizeof(i);
+	get_sock_int_opt(s, SO_BROADCAST);
 
-	getsockopt(s, SOL_SOCKET, SO_BROADCAST, &i, &len);
-
-	i = 1;
-
-	setsockopt(s, SOL_SOCKET, SO_BROADCAST, &i, sizeof(i));
+	set_sock_int_opt(s, SO_BROADCAST, 1);
 
 	/* test bad option name */
-	getsockopt(s, SOL_SOCKET, 348734873, &i, &len);
+	get_sock_int_opt(s, 348734873);
 	/* test bad option level */
-	getsockopt(s, 349834, 0, &i, &len);
+	get_sock_int_opt(s, 349834);
 
-	i = 20;
-	setsockopt(s, SOL_SOCKET, SO_PRIORITY, &i, sizeof(i));
-	len = sizeof(i);
-	getsockopt(s, SOL_SOCKET, SO_PRIORITY, &i, &len);
+	set_sock_int_opt(s,  SO_PRIORITY, 20);
+	get_sock_int_opt(s, SO_PRIORITY);
 
 	std::string stropt;
 	stropt = "lo";
@@ -59,18 +75,16 @@ void sol_socket() {
 	len = 1; // number of socket filter entries available for output
 	getsockopt(s, SOL_SOCKET, SO_GET_FILTER, &filter, &len);
 
-	len = sizeof(i);
-	getsockopt(s, SOL_SOCKET, SO_DOMAIN, &i, &len);
-	i = AF_INET6;
-	setsockopt(s, SOL_SOCKET, SO_DOMAIN, &i, sizeof(i));
+	get_sock_int_opt(s, SO_DOMAIN);
+	set_sock_int_opt(s,  SO_DOMAIN, AF_INET6);
 
-	len = sizeof(i);
-	getsockopt(s, SOL_SOCKET, SO_ERROR, &i, &len);
-	i = EAGAIN;
-	setsockopt(s, SOL_SOCKET, SO_ERROR, &i, sizeof(i));
+	get_sock_int_opt(s, SO_ERROR);
+	set_sock_int_opt(s, SO_ERROR, EAGAIN);
 
 	close(s);
 }
+
+} // end ns
 
 int main() {
 	sol_socket();
