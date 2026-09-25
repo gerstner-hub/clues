@@ -10,6 +10,7 @@
 #include <cosmos/io/ILogger.hxx>
 
 // clues
+#include <clues/format_enum.hxx>
 #include <clues/format.hxx>
 #include <clues/items/items.hxx>
 #include <clues/logger.hxx>

@@ -16,9 +16,9 @@
 
 namespace clues {
 
-/*
- * some general types used across Clues
- */
+/**
+ * @file some general types used across libclues
+ **/
 
 /// A strong boolean type denoting whether to automatically attach to newly created child processes.
 using FollowChildren = cosmos::NamedBool<struct follow_children_t, true>;

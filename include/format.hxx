@@ -17,10 +17,6 @@
 
 struct timespec;
 
-namespace cosmos {
-	class SigInfo;
-}
-
 namespace clues {
 	enum class ForeignPtr : uintptr_t;
 }
@@ -128,25 +124,6 @@ std::string_view fd_type(const FDInfo &info);
 
 /// formats the given FDInfo object in a user friendly way.
 std::string fd_info(const FDInfo &info);
-
-/*
- * the following are helpers for template programming to obtain a label for
- * enum types.
- */
-
-inline std::string enumeration(const cosmos::SignalNr nr) {
-	return format::signal(nr);
-}
-
-inline std::string enumeration(const ForeignPtr ptr) {
-	return format::pointer(ptr);
-}
-
-template<typename T>
-/// Tells us whether format::enumeration() exists for type T.
-constexpr bool has_enum_formatter = requires(T t) {
-	enumeration(t);
-};
 
 CLUES_DEFAULT_VISIBILITY_OFF;
 
