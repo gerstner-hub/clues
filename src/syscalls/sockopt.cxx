@@ -97,6 +97,15 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 					std::make_shared<SocketCall_AttachFilterSockOpt>() :
 					std::make_shared<AttachFilterSockOptSystemCall>();
 			}
+		case DOMAIN:
+			if (type == SockOptType::GET) {
+				return is_socket_call ?
+					std::make_shared<SocketCall_GetDomainSockOpt>() :
+					std::make_shared<GetDomainSockOptSystemCall>();
+			} else {
+				// makes no sense to call SET on this
+				return create_unknown_sc();
+			}
 		/* these take no option argument at all, use unknown option
 		 * type for them */
 		case DETACH_BPF: return create_unknown_sc();

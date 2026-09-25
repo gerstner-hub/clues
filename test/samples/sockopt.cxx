@@ -59,6 +59,11 @@ void sol_socket() {
 	len = 1; // number of socket filter entries available for output
 	getsockopt(s, SOL_SOCKET, SO_GET_FILTER, &filter, &len);
 
+	len = sizeof(i);
+	getsockopt(s, SOL_SOCKET, SO_DOMAIN, &i, &len);
+	i = AF_INET6;
+	setsockopt(s, SOL_SOCKET, SO_DOMAIN, &i, sizeof(i));
+
 	close(s);
 }
 

@@ -302,6 +302,20 @@ struct GetFilterSockOptSystemCall :
 	}
 };
 
+/// Gets the `domain` of the socket as specified in the `socket()` system call.
+struct GetDomainSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::GetSockOptVal<item::SocketDomain::Domain> optval;
+
+	explicit GetDomainSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{.label = "domain", .desc = "int*"}} {
+		addPars();
+	}
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns
