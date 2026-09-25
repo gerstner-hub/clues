@@ -228,52 +228,36 @@ protected: // functions
 	}
 };
 
-class SocketCall_GetBoolSockOpt :
-		public SocketCallSockOptBase<GetBoolSockOptSystemCall> {
-};
+/*
+ * for concrete implementations of GetSockOptSystemCall and
+ * SetSockOptSystemCall the pattern is always the same, use macros to reduce
+ * the amount of code needed here.
+ */
 
-class SocketCall_SetBoolSockOpt :
-		public SocketCallSockOptBase<SetBoolSockOptSystemCall> {
-};
+#define DEF_SOCKETCALL_SET_SOCK_OPT(kind) class SocketCall_Set##kind : \
+		public SocketCallSockOptBase<Set##kind##SystemCall> { \
+}
+#define DEF_SOCKETCALL_GET_SOCK_OPT(kind) class SocketCall_Get##kind : \
+		public SocketCallSockOptBase<Get##kind##SystemCall> { \
+}
+#define DEF_SOCKETCALL_SOCK_OPT(kind) \
+	DEF_SOCKETCALL_SET_SOCK_OPT(kind); \
+	DEF_SOCKETCALL_GET_SOCK_OPT(kind)
 
-class SocketCall_GetIntSockOpt :
-		public SocketCallSockOptBase<GetIntSockOptSystemCall> {
-};
+DEF_SOCKETCALL_SOCK_OPT(BoolSockOpt);
+DEF_SOCKETCALL_SOCK_OPT(IntSockOpt);
+DEF_SOCKETCALL_SOCK_OPT(StringSockOpt);
+DEF_SOCKETCALL_SOCK_OPT(UnknownSockOpt);
+DEF_SOCKETCALL_GET_SOCK_OPT(FilterSockOpt);
+DEF_SOCKETCALL_GET_SOCK_OPT(DomainSockOpt);
+DEF_SOCKETCALL_GET_SOCK_OPT(ErrorSockOpt);
 
-class SocketCall_SetIntSockOpt :
-		public SocketCallSockOptBase<SetIntSockOptSystemCall> {
-};
-
-class SocketCall_GetStringSockOpt :
-		public SocketCallSockOptBase<GetStringSockOptSystemCall> {
-};
-
-class SocketCall_SetStringSockOpt :
-		public SocketCallSockOptBase<SetStringSockOptSystemCall> {
-};
-
-class SocketCall_GetUnknownSockOpt :
-		public SocketCallSockOptBase<GetUnknownSockOptSystemCall> {
-};
-
-class SocketCall_SetUnknownSockOpt :
-		public SocketCallSockOptBase<SetUnknownSockOptSystemCall> {
-};
+#undef DEF_SOCKETCALL_GET_SOCK_OPT
+#undef DEF_SOCKETCALL_SET_SOCK_OPT
+#undef DEF_SOCKETCALL_SOCK_OPT
 
 class SocketCall_AttachFilterSockOpt :
 		public SocketCallSockOptBase<AttachFilterSockOptSystemCall> {
-};
-
-class SocketCall_GetFilterSockOpt :
-		public SocketCallSockOptBase<GetFilterSockOptSystemCall> {
-};
-
-class SocketCall_GetDomainSockOpt :
-		public SocketCallSockOptBase<GetDomainSockOptSystemCall> {
-};
-
-class SocketCall_GetErrorSockOpt :
-		public SocketCallSockOptBase<GetErrorSockOptSystemCall> {
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
