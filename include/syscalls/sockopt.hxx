@@ -121,117 +121,130 @@ protected: // functions
 	}
 };
 
+#define DEF_GET_SOCK_OPT_TYPE_FULL(_name, _item, _cfg) \
+	struct _name##SockOptSystemCall : \
+		public GetSockOptSystemCall { \
+	\
+	_item optval; \
+	\
+	explicit _name##SockOptSystemCall( \
+			const std::optional<SystemCallNr> nr = {}) : \
+			GetSockOptSystemCall{&optval, nr}, \
+			optval{optlen, _cfg} { \
+		addPars(); \
+	} \
+}
 
-/// getsockopt() system call returning a boolean option.
+#define DEF_GET_SOCK_OPT_TYPE(_name, _item, _cfg) \
+	DEF_GET_SOCK_OPT_TYPE_FULL(Get##_name, _item, _cfg)
+
+#define DEF_SET_SOCK_OPT_TYPE_FULL(_name, _item, _cfg) \
+	struct _name##SockOptSystemCall : \
+		public SetSockOptSystemCall { \
+	\
+	_item optval; \
+	\
+	explicit _name##SockOptSystemCall( \
+			const std::optional<SystemCallNr> nr = {}) : \
+			SetSockOptSystemCall{&optval, nr}, \
+			optval{optlen, _cfg} { \
+		addPars(); \
+	} \
+}
+
+#define DEF_SET_SOCK_OPT_TYPE(_name, _item, _cfg) \
+	DEF_SET_SOCK_OPT_TYPE_FULL(Set##_name, _item, _cfg)
+
+/// GetBoolSockOptSystemCall returning a boolean option.
 /**
- * For simplicity we're a GetSockOptVal<int> here, since technically the type
- * of the pointed-to variable still is an int. Semantically the kernel usually
- * accepts any value > 0 to be interpreted as `true`.
+ * For simplicity we're using a GetSockOptVal<int> here, since technically the
+ * type of the pointed-to variable still is an `int`. Semantically the kernel
+ * usually accepts any value > 0 to be interpreted as `true`.
  *
  * On libclues level it is helpful to explicitly model boolean options which
  * can be clearly evaluated contrary to arbitrary integer options.
  **/
-struct GetBoolSockOptSystemCall :
-		public GetSockOptSystemCall {
+DEF_GET_SOCK_OPT_TYPE(Bool,
+		item::GetSockOptVal<int>,
+		ItemCfg{.desc = "int* (boolean)"});
 
-	item::GetSockOptVal<int> optval;
 
-	explicit GetBoolSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.desc = "int* (boolean)"}} {
-		addPars();
-	}
-};
-
-/// setsockopt() system call modifying a boolean option.
+/// SetBoolSockOptSystemCall modifying a boolean option.
 /**
  * \see GetBoolSockOptSystemCall
  **/
-struct SetBoolSockOptSystemCall :
-		public SetSockOptSystemCall {
+DEF_SET_SOCK_OPT_TYPE(Bool,
+		item::SetSockOptVal<int>,
+		ItemCfg{.desc = "int* (boolean)"});
 
-	item::SetSockOptVal<int> optval;
-
-	explicit SetBoolSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			SetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.desc = "int* (boolean)"}} {
-		addPars();
-	}
-};
-
-
-/// getsockopt() system call returning an `int` option.
+/// GetIntSockOptSystemCall returning an `int` option.
 /**
  * These types of getsockopt() calls return arbitrary integer values. This is
  * the default type used for socket options if not documented otherwise.
  **/
-struct GetIntSockOptSystemCall :
-		public GetSockOptSystemCall {
+DEF_GET_SOCK_OPT_TYPE(Int,
+		item::GetSockOptVal<int>,
+		ItemCfg{.desc = "int*"});
 
-	item::GetSockOptVal<int> optval;
-
-	explicit GetIntSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.desc = "int*"}} {
-		addPars();
-	}
-};
-
-/// setsockopt() system call modifying an integer option.
+/// SetIntSockOptSystemCall modifying an integer option.
 /**
  * \see GetIntSockOptSystemCall
  **/
-struct SetIntSockOptSystemCall :
-		public SetSockOptSystemCall {
+DEF_SET_SOCK_OPT_TYPE(Int,
+		item::SetSockOptVal<int>,
+		ItemCfg{.desc = "int*"});
 
-	item::SetSockOptVal<int> optval;
-
-	explicit SetIntSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			SetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.desc = "int*"}} {
-		addPars();
-	}
-};
-
-/// getsockopt() system call returning a `char*` string option.
+/// GetStringSockOptSystemCall returning a `char*` string option.
 /**
  * These types of getsockopt() calls return arbitrary string data.
  **/
-struct GetStringSockOptSystemCall :
-		public GetSockOptSystemCall {
+DEF_GET_SOCK_OPT_TYPE(String,
+		item::StringBuffer,
+		ItemCfg(ItemType::PARAM_OUT, "optval", "char*"));
 
-	item::StringBuffer optval;
-
-	explicit GetStringSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{ItemType::PARAM_OUT,
-				"optval", "char*"}} {
-		addPars();
-	}
-};
-
-/// setsockopt() system call setting a `char*` string option.
+/// SetStringSockOptSystemCall setting a `char*` string option.
 /**
  * \see GetStringSockOptSystemCall
  **/
-struct SetStringSockOptSystemCall :
-		public SetSockOptSystemCall {
+DEF_SET_SOCK_OPT_TYPE(String,
+		item::StringBuffer,
+		ItemCfg(ItemType::PARAM_OUT, "optval", "const char*"));
 
-	item::StringBuffer optval;
+/// AttachFilterSockOptSystemCall installs a BPF program on a socket.
+/**
+ * This type carries a specialized item::FilterProg item which ensures that
+ * the `optlen` of the setsockopt() is sufficient to process a `struct
+ * sock_fprog`.
+ **/
+DEF_SET_SOCK_OPT_TYPE_FULL(AttachFilter, item::AttachFilterSockOpt,);
 
-	explicit SetStringSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			SetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{ItemType::PARAM_OUT,
-				"optval", "const char*"}} {
-		addPars();
-	}
-};
+/// GetFilterSockOptSystemCall ~eturns a previously installed BPF program.
+/**
+ * This is the GET counterpart to AttachFilterSockOptSystemCall.
+ **/
+DEF_GET_SOCK_OPT_TYPE(Filter, item::GetFilterSocktOpt,);
+
+/// GetDomainSockOptSystemCall gets the `domain` of the socket.
+/**
+ * This is the value specified in the `socket()` system call during socket
+ * creation.
+ **/
+DEF_GET_SOCK_OPT_TYPE(Domain,
+		item::GetSockOptVal<item::SocketDomain::Domain>,
+		ItemCfg({}, "domain", "int*"));
+
+/// GetErrorSockOptSystemCall returns any pending socket error as an errno.
+/**
+ * If no error is pending then Errno::SUCCESS is returned by the kernel.
+ **/
+DEF_GET_SOCK_OPT_TYPE(Error,
+		item::GetSockOptVal<cosmos::Errno>,
+		ItemCfg({}, "errno", "int*"));
+
+#undef DEF_GET_SOCK_OPT_TYPE
+#undef DEF_GET_SOCK_OPT_TYPE_FULL
+#undef DEF_SET_SOCK_OPT_TYPE
+#undef DEF_SET_SOCK_OPT_TYPE_FULL
 
 /// Fallback type for getsockopt() system calls unknown to libclues.
 /**
@@ -265,74 +278,6 @@ struct SetUnknownSockOptSystemCall :
 			const std::optional<SystemCallNr> nr = {}) :
 			SetSockOptSystemCall{&optval, nr},
 			optval{ItemCfg{.label = "optval", .desc = "unknown option data"}} {
-		addPars();
-	}
-};
-
-/// Installs a BPF program on a socket.
-/**
- * This type carries a specialized item::FilterProg item which ensures that
- * the `optlen` of the setsockopt() is sufficient to process a `struct
- * sock_fprog`.
- **/
-struct AttachFilterSockOptSystemCall :
-		public SetSockOptSystemCall {
-
-	item::AttachFilterSockOpt optval;
-
-	explicit AttachFilterSockOptSystemCall(
-			const std::optional<SystemCallNr> nr  = {}) :
-			SetSockOptSystemCall{&optval, nr},
-			optval{optlen} {
-		addPars();
-	}
-};
-
-/// Returns a previously installed BPF program.
-/**
- * This is the GET counterpart to AttachFilterSockOptSystemCall.
- **/
-struct GetFilterSockOptSystemCall :
-		public GetSockOptSystemCall {
-
-	item::GetFilterSocktOpt optval;
-
-	explicit GetFilterSockOptSystemCall(
-			const std::optional<SystemCallNr> nr  = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen} {
-		addPars();
-	}
-};
-
-/// Gets the `domain` of the socket as specified in the `socket()` system call.
-struct GetDomainSockOptSystemCall :
-		public GetSockOptSystemCall {
-
-	item::GetSockOptVal<item::SocketDomain::Domain> optval;
-
-	explicit GetDomainSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{
-				.label = "domain",
-				.desc = "int*"}} {
-		addPars();
-	}
-};
-
-/// Gets any pending socket error as an errno.
-struct GetErrorSockOptSystemCall :
-		public GetSockOptSystemCall {
-
-	item::GetSockOptVal<cosmos::Errno> optval;
-
-	explicit GetErrorSockOptSystemCall(
-			const std::optional<SystemCallNr> nr = {}) :
-			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{
-				.label = "errno",
-				.desc = "int*"}} {
 		addPars();
 	}
 };
