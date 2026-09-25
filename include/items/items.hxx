@@ -220,7 +220,7 @@ protected: // data
  * match the system call's pointed-to type.
  **/
 template <typename INT>
-class PointerToScalar :
+class CLUES_API PointerToScalar :
 		public PointerValue {
 public: // functions
 
@@ -311,7 +311,7 @@ protected: // data
 
 /// A simple scalar in/out/return value parameter.
 template <typename INT>
-class IntValueT :
+class CLUES_API IntValueT :
 		public ValueParameter {
 public: // functions
 

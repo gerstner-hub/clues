@@ -202,23 +202,24 @@ UnusedItem unused = UnusedItem{};
  * explicit template instantiations
  */
 
-template class CLUES_API PointerToScalar<unsigned long>;
+template class PointerToScalar<unsigned long>;
 #ifdef COSMOS_I386
-template class CLUES_API PointerToScalar<long>;
+template class PointerToScalar<long>;
 #endif
-template class CLUES_API PointerToScalar<unsigned int>;
-template class CLUES_API PointerToScalar<int>;
-template class CLUES_API PointerToScalar<cosmos::ProcessID>;
-template class CLUES_API PointerToScalar<cosmos::FileNum>;
-template class CLUES_API PointerToScalar<cosmos::SignalNr>;
-template class CLUES_API PointerToScalar<void*>;
-template class CLUES_API PointerToScalar<ForeignPtr>;
-template class CLUES_API PointerToScalar<off_t>;
-template class CLUES_API PointerToScalarInOut<int>;
-template class CLUES_API IntValueT<int>;
-template class CLUES_API IntValueT<uint32_t>;
-template class CLUES_API IntValueT<unsigned long>;
-template class CLUES_API IntValueT<off_t>;
-template class CLUES_API IntValueT<int8_t>;
+template class PointerToScalar<unsigned int>;
+template class PointerToScalar<int>;
+template class PointerToScalar<cosmos::ProcessID>;
+template class PointerToScalar<cosmos::FileNum>;
+template class PointerToScalar<cosmos::SignalNr>;
+template class PointerToScalar<void*>;
+template class PointerToScalar<ForeignPtr>;
+template class PointerToScalar<off_t>;
+template class PointerToScalarInOut<int>;
+template class PointerToScalarInOut<item::SocketDomain::Domain>;
+template class IntValueT<int>;
+template class IntValueT<uint32_t>;
+template class IntValueT<unsigned long>;
+template class IntValueT<off_t>;
+template class IntValueT<int8_t>;
 
 } // end ns
