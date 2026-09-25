@@ -106,6 +106,15 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 				// makes no sense to call SET on this
 				return create_unknown_sc();
 			}
+		case ERROR:
+			if (type == SockOptType::GET) {
+				return is_socket_call ?
+					std::make_shared<SocketCall_GetErrorSockOpt>() :
+					std::make_shared<GetErrorSockOptSystemCall>();
+			} else {
+				// not alloewd to SET the errno
+				return create_unknown_sc();
+			}
 		/* these take no option argument at all, use unknown option
 		 * type for them */
 		case DETACH_BPF: return create_unknown_sc();

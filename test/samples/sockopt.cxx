@@ -64,6 +64,11 @@ void sol_socket() {
 	i = AF_INET6;
 	setsockopt(s, SOL_SOCKET, SO_DOMAIN, &i, sizeof(i));
 
+	len = sizeof(i);
+	getsockopt(s, SOL_SOCKET, SO_ERROR, &i, &len);
+	i = EAGAIN;
+	setsockopt(s, SOL_SOCKET, SO_ERROR, &i, sizeof(i));
+
 	close(s);
 }
 

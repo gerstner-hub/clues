@@ -3,6 +3,9 @@
 // C++
 #include <optional>
 
+// cosmos
+#include <cosmos/error/errno.hxx>
+
 // clues
 #include <clues/dso_export.h>
 #include <clues/items/net.hxx>
@@ -311,7 +314,25 @@ struct GetDomainSockOptSystemCall :
 	explicit GetDomainSockOptSystemCall(
 			const std::optional<SystemCallNr> nr = {}) :
 			GetSockOptSystemCall{&optval, nr},
-			optval{optlen, ItemCfg{.label = "domain", .desc = "int*"}} {
+			optval{optlen, ItemCfg{
+				.label = "domain",
+				.desc = "int*"}} {
+		addPars();
+	}
+};
+
+/// Gets any pending socket error as an errno.
+struct GetErrorSockOptSystemCall :
+		public GetSockOptSystemCall {
+
+	item::GetSockOptVal<cosmos::Errno> optval;
+
+	explicit GetErrorSockOptSystemCall(
+			const std::optional<SystemCallNr> nr = {}) :
+			GetSockOptSystemCall{&optval, nr},
+			optval{optlen, ItemCfg{
+				.label = "errno",
+				.desc = "int*"}} {
 		addPars();
 	}
 };

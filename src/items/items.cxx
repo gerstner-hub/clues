@@ -209,8 +209,9 @@ template class PointerToScalar<long>;
 #endif
 template class PointerToScalar<unsigned int>;
 template class PointerToScalar<int>;
-template class PointerToScalar<cosmos::ProcessID>;
+template class PointerToScalar<cosmos::Errno>;
 template class PointerToScalar<cosmos::FileNum>;
+template class PointerToScalar<cosmos::ProcessID>;
 template class PointerToScalar<cosmos::SignalNr>;
 template class PointerToScalar<item::SocketDomain::Domain>;
 template class PointerToScalar<void*>;

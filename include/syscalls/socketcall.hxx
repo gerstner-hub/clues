@@ -272,6 +272,10 @@ class SocketCall_GetDomainSockOpt :
 		public SocketCallSockOptBase<GetDomainSockOptSystemCall> {
 };
 
+class SocketCall_GetErrorSockOpt :
+		public SocketCallSockOptBase<GetErrorSockOptSystemCall> {
+};
+
 CLUES_DEFAULT_VISIBILITY_OFF;
 
 } // end ns

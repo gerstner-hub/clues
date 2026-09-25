@@ -1,8 +1,12 @@
 #pragma once
 
+// cosmos
+#include <cosmos/error/errno.hxx>
+
 // clues
 #include <clues/format.hxx>
 #include <clues/items/net.hxx>
+#include <clues/utils.hxx>
 
 /**
  * @file enum-specific format helpers. These helpers should only we included
@@ -27,6 +31,10 @@ inline std::string enumeration(const ForeignPtr ptr) {
 
 inline std::string enumeration(const item::SocketDomain::Domain domain) {
 	return std::string{item::SocketDomain::label(domain)};
+}
+
+inline std::string enumeration(const cosmos::Errno err) {
+	return get_errno_label(err);
 }
 
 /// Tells us whether format::enumeration() exists for type T.
