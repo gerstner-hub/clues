@@ -215,4 +215,29 @@ void SetLingerSockOpt::processData(const Tracee &proc) {
 	fetch(proc, m_optlen.value());
 }
 
+void GetPeerCredSockOpt::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue()) {
+		return;
+	} else if (const auto len = *m_optlen.value();
+			len < 0 || (size_t)len < sizeof(struct ucred)) {
+		return;
+	}
+
+	proc.readRawStructIntoOptional(asPtr(), m_creds);
+}
+
+std::string GetPeerCredSockOpt::str() const {
+	if (!m_creds) {
+		return PointerOutValue::str();
+	}
+
+	const auto &creds = *m_creds;
+
+	return std::format("{{pid={}, uid={}, gid={}}}",
+		cosmos::to_integral(creds.processID()),
+		cosmos::to_integral(creds.userID()),
+		cosmos::to_integral(creds.groupID())
+	);
+}
+
 } // end ns

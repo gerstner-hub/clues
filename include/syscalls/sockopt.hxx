@@ -242,12 +242,13 @@ DEF_GET_SOCK_OPT_TYPE(Error,
 		ItemCfg({}, "errno", "int*"));
 
 /// GetLingerSockOptSystemCall returns the currently set `struct linger`.
-DEF_GET_SOCK_OPT_TYPE(Linger,
-		item::GetLingerSockOpt, );
+DEF_GET_SOCK_OPT_TYPE(Linger, item::GetLingerSockOpt, );
 
 /// SetLingerSockOptSystemCall sets a new `struct linger`.
-DEF_SET_SOCK_OPT_TYPE(Linger,
-		item::SetLingerSockOpt, );
+DEF_SET_SOCK_OPT_TYPE(Linger, item::SetLingerSockOpt, );
+
+/// GetPeerCredSockOptSystemCall retrieves the peer's `struct ucred`.
+DEF_GET_SOCK_OPT_TYPE(PeerCred, item::GetPeerCredSockOpt, );
 
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL

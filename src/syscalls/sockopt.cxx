@@ -95,6 +95,10 @@ SystemCallPtr create_socket_opt_syscall(
 			return create_call.operator()<
 				SocketCall_GetStringSockOpt, GetStringSockOptSystemCall,
 				SocketCall_SetStringSockOpt, SetStringSockOptSystemCall>();
+		case PEERCRED:
+			/* only GET is meaningfully supported here */
+			return create_call.operator()<
+				SocketCall_GetPeerCredSockOpt, GetPeerCredSockOptSystemCall>();
 		case ATTACH_FILTER:
 			/* for getsockopt() the option is called
 			 * SO_GET_FILTER, but it's the same literal

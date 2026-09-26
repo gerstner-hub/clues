@@ -110,7 +110,16 @@ void sol_socket() {
 	set_sock_opt(s, SO_LINGER, lng);
 	get_sock_opt(s, SO_LINGER, lng);
 
+	int unix_socks[2];
+	socketpair(AF_UNIX, SOCK_STREAM, 0, unix_socks);
+
+	struct ucred creds;
+	get_sock_opt(unix_socks[0], SO_PEERCRED, creds);
+	set_sock_opt(unix_socks[1], SO_PEERCRED, creds);
+
 	close(s);
+	close(unix_socks[0]);
+	close(unix_socks[1]);
 }
 
 } // end ns

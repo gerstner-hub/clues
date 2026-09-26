@@ -10,6 +10,7 @@
 
 // cosmos
 #include <cosmos/net/SocketOptions.hxx>
+#include <cosmos/net/unix/aux.hxx>
 
 // clues
 #include <clues/items/items.hxx>
@@ -350,6 +351,33 @@ protected: // functions
 protected: // data
 
 	const item::IntValue &m_optlen;
+};
+
+class GetPeerCredSockOpt :
+		public PointerOutValue {
+public: // functions
+
+	explicit GetPeerCredSockOpt(const item::PointerToScalar<int> &optlen) :
+			PointerOutValue{ItemCfg{
+				.label = "creds",
+				.desc = "struct ucred*"}},
+			m_optlen{optlen} {
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processData(const Tracee &) override {
+		m_creds.reset();
+	}
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	const item::PointerToScalar<int> &m_optlen;
+	std::optional<cosmos::UnixCredentials> m_creds;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
