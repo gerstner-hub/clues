@@ -111,6 +111,17 @@ public: // functions
 			m_label{*cfg.label},
 			m_desc{cfg.desc.value_or("")} {
 	}
+	
+	/*
+	 * move-only semantics
+	 *
+	 * this avoids accidental copies instead of using references/pointers
+	 * which can lead to hard to find bugs.
+	 * */
+
+	SystemCallItem(SystemCallItem &&other) = default;
+	SystemCallItem(const SystemCallItem&) = delete;
+	SystemCallItem& operator=(const SystemCallItem&) = delete;
 
 	virtual ~SystemCallItem() {}
 

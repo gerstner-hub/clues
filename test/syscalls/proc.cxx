@@ -66,14 +66,14 @@ const auto TESTS = std::array{
 			}
 			VERIFY(*(sc.flags.exitSignal()) == cosmos::SignalNr::CHILD);
 			VERIFY(sc.stack.ptr() == ForeignPtr::NO_POINTER);
-			const auto parent_tid = *sc.parent_tid;
+			const auto& parent_tid = *sc.parent_tid;
 			/* when tracing cross-ABI then there are no stack
 			 * addresses used in the invoker code */
 			VERIFY(((uintptr_t)parent_tid.pointer() & STACK_ADDR) == STACK_ADDR ||
 					!clues::is_default_abi(sc.abi()));
 		}), EXIT_VERIFY_CB(CloneSystemCall, {
 			VERIFY(!sc.hasErrorCode());
-			const auto parent_tid = *sc.parent_tid;
+			const auto& parent_tid = *sc.parent_tid;
 			VERIFY(sc.new_pid.pid() == parent_tid.value());
 		}), IgnoreCalls{0}, {
 			I386_CROSS_ABI(IgnoreCalls{1}, [](){
