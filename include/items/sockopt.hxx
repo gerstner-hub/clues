@@ -1,11 +1,15 @@
 #pragma once
 
 // C++
+#include <optional>
 #include <variant>
 
 // Linux
 #include <netinet/in.h>
 #include <sys/socket.h>
+
+// cosmos
+#include <cosmos/net/SocketOptions.hxx>
 
 // clues
 #include <clues/items/items.hxx>
@@ -279,6 +283,73 @@ protected: // functions
 protected: // data
 
 	const PointerToScalar<int> &m_optlen;
+};
+
+class LingerSockOptBase :
+		public PointerValue {
+public: // functions
+
+	const std::optional<cosmos::SocketOptions::Linger>& linger() const {
+		return m_linger;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	explicit LingerSockOptBase(const ItemCfg &cfg) :
+			PointerValue{cfg.applyDefaults(ItemCfg{
+					.label = "linger",
+					.desc = "struct linger*"})} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+	void fetch(const Tracee &proc, const int len);
+
+protected: // data
+
+	std::optional<cosmos::SocketOptions::Linger> m_linger;
+};
+
+class GetLingerSockOpt :
+		public LingerSockOptBase {
+public: // functions
+
+	explicit GetLingerSockOpt(const item::PointerToScalar<int> &optlen) :
+			LingerSockOptBase{ItemCfg{ItemType::PARAM_OUT}},
+			m_optlen{optlen} {
+	}
+
+protected: // functions
+
+	void processData(const Tracee &) override {
+		m_linger.reset();
+	}
+
+	void updateData(const Tracee &proc) override;
+
+
+protected: // data
+
+	const item::PointerToScalar<int> &m_optlen;
+};
+
+class SetLingerSockOpt :
+		public LingerSockOptBase {
+public: // functions
+
+	explicit SetLingerSockOpt(const item::IntValue &optlen) :
+			LingerSockOptBase{ItemCfg{ItemType::PARAM_IN}},
+			m_optlen{optlen} {
+	}
+
+protected: // functions
+
+	void processData(const Tracee &proc) override;
+
+protected: // data
+
+	const item::IntValue &m_optlen;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

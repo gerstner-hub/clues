@@ -17,6 +17,28 @@ int set_sock_int_opt(int sock, const int name, const int val) {
 	return set_int_opt(sock, SOL_SOCKET, name, val);
 }
 
+template <typename T>
+int set_opt(int sock, const int level, const int name, const T &val) {
+	return ::setsockopt(sock, level, name, &val, sizeof(val));
+}
+
+template <typename T>
+int set_sock_opt(int sock, const int name, const T &val) {
+	return set_opt(sock, SOL_SOCKET, name, val);
+}
+
+template <typename T>
+std::pair<int, int> get_opt(int sock, const int level, const int name, T &val) {
+	socklen_t len = sizeof(val);
+	auto ret = ::getsockopt(sock, level, name, &val, &len);
+	return std::make_pair(ret, len);
+}
+
+template <typename T>
+std::pair<int, int> get_sock_opt(int sock, const int name, T &val) {
+	return get_opt(sock, SOL_SOCKET, name, val);
+}
+
 std::pair<int, int> get_int_opt(int sock, const int level, const int name) {
 	int val;
 	socklen_t len = sizeof(val);
@@ -80,6 +102,13 @@ void sol_socket() {
 
 	get_sock_int_opt(s, SO_ERROR);
 	set_sock_int_opt(s, SO_ERROR, EAGAIN);
+
+	struct linger lng;
+	lng.l_onoff = 1;
+	lng.l_linger = 12;
+
+	set_sock_opt(s, SO_LINGER, lng);
+	get_sock_opt(s, SO_LINGER, lng);
 
 	close(s);
 }

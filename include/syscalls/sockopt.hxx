@@ -241,6 +241,14 @@ DEF_GET_SOCK_OPT_TYPE(Error,
 		item::GetSockOptVal<cosmos::Errno>,
 		ItemCfg({}, "errno", "int*"));
 
+/// GetLingerSockOptSystemCall returns the currently set `struct linger`.
+DEF_GET_SOCK_OPT_TYPE(Linger,
+		item::GetLingerSockOpt, );
+
+/// SetLingerSockOptSystemCall sets a new `struct linger`.
+DEF_SET_SOCK_OPT_TYPE(Linger,
+		item::SetLingerSockOpt, );
+
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL
 #undef DEF_SET_SOCK_OPT_TYPE

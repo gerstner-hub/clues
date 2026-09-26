@@ -115,6 +115,16 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 				// not alloewd to SET the errno
 				return create_unknown_sc();
 			}
+		case LINGER:
+			if (type == SockOptType::GET) {
+				return is_socket_call ?
+					std::make_shared<SocketCall_GetLingerSockOpt>() :
+					std::make_shared<GetLingerSockOptSystemCall>();
+			} else {
+				return is_socket_call ?
+					std::make_shared<SocketCall_SetLingerSockOpt>() :
+					std::make_shared<SetLingerSockOptSystemCall>();
+			}
 		/* these take no option argument at all, use unknown option
 		 * type for them */
 		case DETACH_BPF: return create_unknown_sc();

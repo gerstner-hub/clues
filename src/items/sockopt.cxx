@@ -184,4 +184,35 @@ void GetFilterSocktOpt::updateData(const Tracee &proc) {
 	}
 }
 
+std::string LingerSockOptBase::str() const {
+	if (!m_linger) {
+		return PointerValue::str();
+	}
+
+	const auto linger = m_linger->raw();
+
+	return std::format("{{l_onoff={}, l_linger={}}}",
+			linger->l_onoff, linger->l_linger);
+}
+
+void LingerSockOptBase::fetch(const Tracee &proc, const int optlen) {
+	m_linger.reset();
+
+	if (optlen < 0 || (size_t)optlen < sizeof(struct linger)) {
+		return;
+	}
+
+	proc.readRawStructIntoOptional(asPtr(), m_linger);
+}
+
+void GetLingerSockOpt::updateData(const Tracee &proc) {
+	if (m_call->hasResultValue()) {
+		fetch(proc, *m_optlen.value());
+	}
+}
+
+void SetLingerSockOpt::processData(const Tracee &proc) {
+	fetch(proc, m_optlen.value());
+}
+
 } // end ns
