@@ -22,6 +22,9 @@ enum class SockOptType;
 
 namespace item {
 
+using GetSockOptLen = PointerToScalar<int>;
+using SetSockOptLen = IntValue;
+
 /**
  * @file
  * This header contains getsockopt() and setsockopt() related types. There are
@@ -32,13 +35,13 @@ namespace item {
 
 CLUES_DEFAULT_VISIBILITY_ON;
 
-/// Specialized pointer to `optval` in getsockopt().
+/// Specialized pointer to scalar `optval`s used in getsockopt().
 template <typename T>
 class GetSockOptVal :
 		public item::PointerToScalar<T> {
 public: // functions
 
-	explicit GetSockOptVal(const item::PointerToScalar<int> &optlen, const ItemCfg cfg = {}) :
+	explicit GetSockOptVal(const GetSockOptLen &optlen, const ItemCfg cfg = {}) :
 			clues::item::PointerToScalar<T>{cfg.applyDefaults(ItemCfg{.label = "optval"})},
 			m_optlen{optlen} {
 		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
@@ -62,23 +65,23 @@ protected: // functions
 
 protected: // data
 
-	const item::PointerToScalar<int> &m_optlen;
+	const GetSockOptLen &m_optlen;
 };
 
-/// Specialized pointer to `optval` in setsockopt().
+/// Specialized pointer to scalar `optval`s used in setsockopt().
 template <typename T>
 class SetSockOptVal :
 		public item::PointerToScalar<T> {
 public: // functions
 
-	explicit SetSockOptVal(const item::IntValue &optlen, const ItemCfg cfg = {}) :
+	explicit SetSockOptVal(const SetSockOptLen &optlen, const ItemCfg cfg = {}) :
 			clues::item::PointerToScalar<T>{cfg.applyDefaults(ItemCfg{.label = "optval"})},
 			m_optlen{optlen} {
 	}
 
 protected: // data
 
-	const item::IntValue &m_optlen;
+	const SetSockOptLen &m_optlen;
 };
 
 /// Socket option level selection.
@@ -241,7 +244,7 @@ class AttachFilterSockOpt :
 		public FilterProg {
 public: // functions
 
-	explicit AttachFilterSockOpt(const IntValue &optlen) :
+	explicit AttachFilterSockOpt(const SetSockOptLen &optlen) :
 				FilterProg{ItemType::PARAM_IN},
 				m_optlen{optlen} {
 		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
@@ -253,7 +256,7 @@ protected: // functions
 
 protected: // data
 
-	const IntValue &m_optlen;
+	const SetSockOptLen &m_optlen;
 };
 
 /// Type for `struct sock_filter` as used with SO_GET_FILTER.
@@ -269,7 +272,7 @@ class GetFilterSocktOpt :
 		public FilterProg {
 public: // functions
 
-	explicit GetFilterSocktOpt(const PointerToScalar<int> &optlen) :
+	explicit GetFilterSocktOpt(const GetSockOptLen &optlen) :
 				FilterProg{ItemType::PARAM_OUT},
 				m_optlen{optlen} {
 		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
@@ -283,7 +286,7 @@ protected: // functions
 
 protected: // data
 
-	const PointerToScalar<int> &m_optlen;
+	const GetSockOptLen &m_optlen;
 };
 
 class LingerSockOptBase :
@@ -316,7 +319,7 @@ class GetLingerSockOpt :
 		public LingerSockOptBase {
 public: // functions
 
-	explicit GetLingerSockOpt(const item::PointerToScalar<int> &optlen) :
+	explicit GetLingerSockOpt(const GetSockOptLen &optlen) :
 			LingerSockOptBase{ItemCfg{ItemType::PARAM_OUT}},
 			m_optlen{optlen} {
 	}
@@ -332,14 +335,14 @@ protected: // functions
 
 protected: // data
 
-	const item::PointerToScalar<int> &m_optlen;
+	const GetSockOptLen &m_optlen;
 };
 
 class SetLingerSockOpt :
 		public LingerSockOptBase {
 public: // functions
 
-	explicit SetLingerSockOpt(const item::IntValue &optlen) :
+	explicit SetLingerSockOpt(const SetSockOptLen &optlen) :
 			LingerSockOptBase{ItemCfg{ItemType::PARAM_IN}},
 			m_optlen{optlen} {
 	}
@@ -350,14 +353,14 @@ protected: // functions
 
 protected: // data
 
-	const item::IntValue &m_optlen;
+	const SetSockOptLen &m_optlen;
 };
 
 class GetPeerCredSockOpt :
 		public PointerOutValue {
 public: // functions
 
-	explicit GetPeerCredSockOpt(const item::PointerToScalar<int> &optlen) :
+	explicit GetPeerCredSockOpt(const GetSockOptLen &optlen) :
 			PointerOutValue{ItemCfg{
 				.label = "creds",
 				.desc = "struct ucred*"}},
@@ -376,7 +379,7 @@ protected: // functions
 
 protected: // data
 
-	const item::PointerToScalar<int> &m_optlen;
+	const GetSockOptLen &m_optlen;
 	std::optional<cosmos::UnixCredentials> m_creds;
 };
 
