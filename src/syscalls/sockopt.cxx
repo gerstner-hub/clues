@@ -10,12 +10,12 @@ namespace clues {
 
 using OptLevel = item::SockOptLevel::Level;
 
-SystemCallPtr create_socket_opt_syscall(const int optname,
+SystemCallPtr create_socket_opt_syscall(
+		const int optname,
 		const SockOptType type,
 		const IsSocketCall is_socket_call) {
-	using enum item::SockOptName::SocketOption;
 
-	auto create_unknown_sc = [type, is_socket_call]() -> SystemCallPtr {
+	auto create_unknown_call = [type, is_socket_call]() -> SystemCallPtr {
 		if (type == SockOptType::GET) {
 			return is_socket_call ?
 				std::make_shared<SocketCall_GetUnknownSockOpt>() :
@@ -26,6 +26,38 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 				std::make_shared<SetUnknownSockOptSystemCall>();
 		}
 	};
+
+	auto create_call = [type, is_socket_call, create_unknown_call]<
+			class SOCKETCALL_GET_SC,
+			class GET_SC,
+			class SOCKETCALL_SET_SC=void,
+			class SET_SC=void>() -> SystemCallPtr {
+		if (type == SockOptType::GET) {
+			constexpr bool is_void = std::is_void_v<SOCKETCALL_GET_SC>;
+			if constexpr (is_void) {
+				return create_unknown_call();
+			}
+
+			if constexpr (!is_void) {
+				return is_socket_call ?
+					std::make_shared<SOCKETCALL_GET_SC>() :
+					std::make_shared<GET_SC>();
+			}
+		} else {
+			constexpr bool is_void = std::is_void_v<SOCKETCALL_SET_SC>;
+			if (is_void) {
+				return create_unknown_call();
+			}
+
+			if constexpr (!is_void) {
+				return is_socket_call ?
+					std::make_shared<SOCKETCALL_SET_SC>() :
+					std::make_shared<SET_SC>();
+			}
+		}
+	};
+
+	using enum item::SockOptName::SocketOption;
 
 	switch (item::SockOptName::SocketOption{optname}) {
 		case ACCEPTCONN:
@@ -42,15 +74,7 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 		case REUSEPORT:
 		case RXQ_OVFL:
 		case SELECT_ERR_QUEUE:
-			if (type == SockOptType::GET) {
-				return is_socket_call ?
-					std::make_shared<SocketCall_GetBoolSockOpt>() :
-					std::make_shared<GetBoolSockOptSystemCall>();
-			} else {
-				return is_socket_call ?
-					std::make_shared<SocketCall_SetBoolSockOpt>() :
-					std::make_shared<SetBoolSockOptSystemCall>();
-			}
+			return create_call.operator()<SocketCall_GetBoolSockOpt, GetBoolSockOptSystemCall, SocketCall_SetBoolSockOpt, SetBoolSockOptSystemCall>();
 		case BUSY_POLL:
 		case INCOMING_CPU:
 		case INCOMING_NAPI_ID:
@@ -63,71 +87,37 @@ SystemCallPtr create_socket_opt_syscall(const int optname,
 		case SNDBUF:
 		case SNDBUFFORCE:
 		case SNDLOWAT:
-			if (type == SockOptType::GET) {
-				return is_socket_call ?
-					std::make_shared<SocketCall_GetIntSockOpt>() :
-					std::make_shared<GetIntSockOptSystemCall>();
-			} else {
-				return is_socket_call ?
-					std::make_shared<SocketCall_SetIntSockOpt>() :
-					std::make_shared<SetIntSockOptSystemCall>();
-			}
+			return create_call.operator()<
+				SocketCall_GetIntSockOpt, GetIntSockOptSystemCall,
+				SocketCall_SetIntSockOpt, SetIntSockOptSystemCall>();
 		case BINDTODEVICE:
 		case PEERSEC:
-			if (type == SockOptType::GET) {
-				return is_socket_call ?
-					std::make_shared<SocketCall_GetStringSockOpt>() :
-					std::make_shared<GetStringSockOptSystemCall>();
-			} else {
-				return is_socket_call ?
-					std::make_shared<SocketCall_SetStringSockOpt>() :
-					std::make_shared<SetStringSockOptSystemCall>();
-			}
+			return create_call.operator()<
+				SocketCall_GetStringSockOpt, GetStringSockOptSystemCall,
+				SocketCall_SetStringSockOpt, SetStringSockOptSystemCall>();
 		case ATTACH_FILTER:
-			if (type == SockOptType::GET) {
-				/* for getsockopt() the option is called
-				 * SO_GET_FILTER, but it's the same literal
-				 * constant. We need two different types here
-				 * due to differing ABI semantics */
-				return is_socket_call ?
-					std::make_shared<SocketCall_GetFilterSockOpt>() :
-					std::make_shared<GetFilterSockOptSystemCall>();
-			} else {
-				return is_socket_call ?
-					std::make_shared<SocketCall_AttachFilterSockOpt>() :
-					std::make_shared<AttachFilterSockOptSystemCall>();
-			}
+			/* for getsockopt() the option is called
+			 * SO_GET_FILTER, but it's the same literal
+			 * constant. We need two different types here
+			 * due to differing ABI semantics */
+			return create_call.operator()<
+				SocketCall_GetFilterSockOpt, GetFilterSockOptSystemCall,
+				SocketCall_AttachFilterSockOpt, AttachFilterSockOptSystemCall>();
 		case DOMAIN:
-			if (type == SockOptType::GET) {
-				return is_socket_call ?
-					std::make_shared<SocketCall_GetDomainSockOpt>() :
-					std::make_shared<GetDomainSockOptSystemCall>();
-			} else {
-				// makes no sense to call SET on this
-				return create_unknown_sc();
-			}
+			/* makes no sense to call SET on this */
+			return create_call.operator()<
+				SocketCall_GetDomainSockOpt, GetDomainSockOptSystemCall>();
 		case ERROR:
-			if (type == SockOptType::GET) {
-				return is_socket_call ?
-					std::make_shared<SocketCall_GetErrorSockOpt>() :
-					std::make_shared<GetErrorSockOptSystemCall>();
-			} else {
-				// not alloewd to SET the errno
-				return create_unknown_sc();
-			}
+			/* it is not allowed to SET the errno */
+			return create_call.operator()<
+				SocketCall_GetErrorSockOpt, GetErrorSockOptSystemCall>();
 		case LINGER:
-			if (type == SockOptType::GET) {
-				return is_socket_call ?
-					std::make_shared<SocketCall_GetLingerSockOpt>() :
-					std::make_shared<GetLingerSockOptSystemCall>();
-			} else {
-				return is_socket_call ?
-					std::make_shared<SocketCall_SetLingerSockOpt>() :
-					std::make_shared<SetLingerSockOptSystemCall>();
-			}
+			return create_call.operator()<
+				SocketCall_GetLingerSockOpt, GetLingerSockOptSystemCall,
+				SocketCall_SetLingerSockOpt, SetLingerSockOptSystemCall>();
 		/* these take no option argument at all, use unknown option
 		 * type for them */
-		case DETACH_BPF: return create_unknown_sc();
+		case DETACH_BPF: return create_unknown_call();
 		default: break;
 	}
 
