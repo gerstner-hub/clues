@@ -1092,6 +1092,27 @@ void Tracee::dropFD(const cosmos::FileNum fd) const {
 	}
 }
 
+void Tracee::openPidFD() const {
+	if (m_pidfd.open())
+		return;
+
+	m_pidfd = cosmos::ProcessFile{
+		m_ptrace.pid(),
+		cosmos::ProcessFile::THREAD};
+}
+
+void Tracee::snatchFD(const cosmos::FileNum fd,
+		std::function<void (const cosmos::FileDescriptor)> cb) const {
+	openPidFD();
+	auto new_fd = m_pidfd.dupFD(fd);
+
+	try {
+		cb(new_fd);
+	} catch (...) {
+		new_fd.close();
+	}
+}
+
 // explicit template instantiations
 #if !defined(COSMOS_I386) && !defined(COSMOS_X32)
 template void Tracee::readVector<std::vector<uintptr_t>>(const ForeignPtr,

@@ -2,6 +2,7 @@
 
 // C++
 #include <array>
+#include <functional>
 #include <iosfwd>
 #include <type_traits>
 
@@ -12,6 +13,7 @@
 #include <cosmos/BitMask.hxx>
 #include <cosmos/error/ApiError.hxx>
 #include <cosmos/proc/process.hxx>
+#include <cosmos/proc/ProcessFile.hxx>
 #include <cosmos/proc/ptrace.hxx>
 #include <cosmos/proc/signal.hxx>
 #include <cosmos/proc/Tracee.hxx>
@@ -375,6 +377,20 @@ public: // functions
 		return m_current_syscall;
 	}
 
+	/// Temporarily snatch a file descriptor from the Tracee.
+	/**
+	 * This call obtains `fd` from the Tracee, which refers to a file
+	 * descriptor in the Tracee. This is done via a PID file descriptor
+	 * referring to the Tracee.
+	 *
+	 * Once the file descriptor has been obtained `cb` is called with
+	 * the duplicated file descriptor to perform the necessary operations
+	 * on it. Upon return from this function the file descriptor will be
+	 * closed again.
+	 **/
+	void snatchFD(const cosmos::FileNum fd,
+			std::function<void (const cosmos::FileDescriptor)> cb) const;
+
 protected: // constants
 
 	/// Array of signals that cause tracee stop.
@@ -524,6 +540,9 @@ protected: // functions
 
 	bool tryRecoverRestartedSystemCall();
 
+	/// Make sure `m_pidfd` is open and referring to the current Tracee.
+	void openPidFD() const;
+
 protected: // data
 
 	/// The engine that manages this tracee.
@@ -566,6 +585,23 @@ protected: // data
 	ProcessDataPtr m_process_data;
 	/// Number of bytes system calls will fetch for variable-length data buffers.
 	size_t m_max_buffer_prefetch = 128;
+	/// Optional pidfd which is lazily assigned when needed.
+	/**
+	 * It is not possible to make this a member of `m_process_data` to
+	 * share the file descriptor for a whole process:
+	 *
+	 * - individual threads can unshare the file descriptor table.
+	 * - when the thread the pidfd refers to exists, then the pidfd is no
+	 *   longer usable.
+	 *
+	 * Thus we need to open a dedicated pidfd for each Tracee that needs
+	 * it. Once it is created it stays open for the rest of the lifetime
+	 * of the Tracee.
+	 *
+	 * The pidfd is used to obtain file descriptors from the Tracee in
+	 * some scenarios.
+	 **/
+	mutable cosmos::ProcessFile m_pidfd;
 };
 
 } // end ns
