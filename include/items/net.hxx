@@ -396,6 +396,9 @@ public: // functions
 
 	std::string_view label(const EthProtocol prot) const;
 
+	static ProtocolVariant create_variant(
+			const SocketDomain::Domain domain, const int prot);
+
 protected: // functions
 
 	void processData(const Tracee&) override;

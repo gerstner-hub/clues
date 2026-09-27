@@ -81,30 +81,36 @@ std::string SocketType::str() const {
 	return BITFLAGS_STR();
 }
 
-void SocketProtocol::processData(const Tracee&) {
-	m_raw = valueAs<int>();
-	m_prot = std::monostate{};
-
+SocketProtocol::ProtocolVariant SocketProtocol::create_variant(
+		const SocketDomain::Domain domain, const int prot) {
 	using Domain = SocketDomain::Domain;
+	ProtocolVariant ret = std::monostate{};
 
-	switch (m_domain.domain()) {
+	switch (domain) {
 		case Domain::INET: [[ fallthrough ]];
 		case Domain::INET6:
-			if (m_raw != 0) {
-				m_prot = IPProtocol{m_raw};
+			if (prot != 0) {
+				ret = IPProtocol{prot};
 			}
 			break;
 		case Domain::PACKET:
-			if (m_raw != 0) {
-				const auto host_prot = cosmos::net::swap_byte_order(static_cast<uint16_t>(m_raw));;
-				m_prot = EthProtocol{static_cast<int>(host_prot)};
+			if (prot != 0) {
+				const auto host_prot = cosmos::net::swap_byte_order(static_cast<uint16_t>(prot));;
+				ret = EthProtocol{static_cast<int>(host_prot)};
 			}
 			break;
 		case Domain::NETLINK:
-			m_prot = NetlinkProtocol{m_raw};
+			ret = NetlinkProtocol{prot};
 			break;
 		default: break;
 	}
+
+	return ret;
+}
+
+void SocketProtocol::processData(const Tracee&) {
+	m_raw = valueAs<int>();
+	m_prot = create_variant(m_domain.domain(), m_raw);
 }
 
 std::string_view SocketProtocol::label(const NetlinkProtocol prot) const {
