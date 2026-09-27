@@ -12,6 +12,30 @@ namespace clues {
 
 namespace {
 
+void add_socket_info(const Tracee &proc, FDInfo &info) {
+	std::optional<item::SocketDomainEnum> domain;
+	std::optional<item::SocketTypeEnum> type;
+	/*
+	 * there is no simple /proc information about this, so the most direct
+	 * approach is to obtain the actual FD from the Tracee and to call
+	 * getsockopt on it.
+	 */
+	proc.snatchFD(info.fd, [&domain, &type](const cosmos::FileDescriptor fd) {
+		socklen_t len = sizeof(int);
+		int out;
+		if (::getsockopt(cosmos::to_integral(fd.raw()), SOL_SOCKET, SO_DOMAIN, &out, &len) == 0) {
+			domain = item::SocketDomainEnum{out};
+		}
+		len = sizeof(int);
+		if (::getsockopt(cosmos::to_integral(fd.raw()), SOL_SOCKET, SO_TYPE, &out, &len) == 0) {
+			type = item::SocketTypeEnum{out};
+		}
+	});
+
+	info.sock_domain = domain;
+	info.sock_type = type;
+}
+
 FDInfo make_socket_info(const cosmos::FileNum fd,
 		const item::SocketType::Flags flags,
 		const std::optional<item::SocketDomain::Domain> domain = {},
@@ -61,12 +85,19 @@ void AcceptSystemCall::updateFDTracking(const Tracee &proc) {
 		const auto type = fd_info.sock_type;
 		auto info = make_socket_info(new_fd.fd(),
 				flags.flags(), domain, type);
+		if (!info.sock_domain || !info.sock_type) {
+			/*
+			 * we have no info about the type of the socket we
+			 * accepted on, so try to obtain the info from the
+			 * Tracee directly.
+			 * TODO: also add the info to `fd_info`.
+			 */
+			add_socket_info(proc, info);
+		}
 		trackFD(proc, std::move(info));
 	} else {
-		/*
-		 * we have no info about the type of the socket we accepted on
-		 */
 		auto info = make_socket_info(new_fd.fd(), flags.flags());
+		add_socket_info(proc, info);
 		trackFD(proc, std::move(info));
 	}
 }
