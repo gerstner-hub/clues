@@ -67,6 +67,11 @@ enum class ABI {
 	AARCH64
 };
 
+namespace item {
+	enum class SocketTypeEnum : int;
+	enum class SocketDomainEnum : int;
+}
+
 /// Contextual information about a file descriptor in a Tracee.
 /**
  * \todo For a fully-fledged implementation we will likely need specialized
@@ -129,6 +134,8 @@ public: // data
 	 **/
 	std::optional<cosmos::OpenFlags> flags;
 	std::optional<cosmos::Inode> inode; ///< inode of the file, only filled by utils::get_fd_infos().
+	std::optional<item::SocketDomainEnum> sock_domain;
+	std::optional<item::SocketTypeEnum> sock_type;
 };
 
 /// A mapping of file descriptor numbers to their file system paths or other human readable description of the descriptor.

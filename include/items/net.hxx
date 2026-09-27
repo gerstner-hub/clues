@@ -86,39 +86,40 @@ protected: // data
 	std::optional<int> m_filled;
 };
 
+enum class SocketDomainEnum : int {
+	UNSPEC    = AF_UNSPEC,
+	ALG       = AF_ALG,
+	APPLETALK = AF_APPLETALK,
+	AX25      = AF_AX25,
+	BLUETOOTH = AF_BLUETOOTH,
+	CAN       = AF_CAN,
+	DECnet    = AF_DECnet,
+	IB        = AF_IB,
+	INET6     = AF_INET6,
+	INET      = AF_INET,
+	IPX       = AF_IPX,
+	KCM       = AF_KCM,
+	KEY       = AF_KEY,
+	LLC       = AF_LLC,
+	LOCAL     = AF_LOCAL,
+	MPLS      = AF_MPLS,
+	NETLINK   = AF_NETLINK,
+	PACKET    = AF_PACKET,
+	PPPOX     = AF_PPPOX,
+	RDS       = AF_RDS,
+	TIPC      = AF_TIPC,
+	UNIX      = AF_UNIX,
+	VSOCK     = AF_VSOCK,
+	X25       = AF_X25,
+	XDP       = AF_XDP,
+};
+
 /// The basic socket domain of a newly created socket.
 class SocketDomain :
 		public ValueInParameter {
 public: // types
 
-	enum class Domain : int {
-		UNSPEC    = AF_UNSPEC,
-		ALG       = AF_ALG,
-		APPLETALK = AF_APPLETALK,
-		AX25      = AF_AX25,
-		BLUETOOTH = AF_BLUETOOTH,
-		CAN       = AF_CAN,
-		DECnet    = AF_DECnet,
-		IB        = AF_IB,
-		INET6     = AF_INET6,
-		INET      = AF_INET,
-		IPX       = AF_IPX,
-		KCM       = AF_KCM,
-		KEY       = AF_KEY,
-		LLC       = AF_LLC,
-		LOCAL     = AF_LOCAL,
-		MPLS      = AF_MPLS,
-		NETLINK   = AF_NETLINK,
-		PACKET    = AF_PACKET,
-		PPPOX     = AF_PPPOX,
-		RDS       = AF_RDS,
-		TIPC      = AF_TIPC,
-		UNIX      = AF_UNIX,
-		VSOCK     = AF_VSOCK,
-		X25       = AF_X25,
-		XDP       = AF_XDP,
-	};
-
+	using Domain = SocketDomainEnum;
 	using enum Domain;
 
 public: // functions
@@ -146,6 +147,16 @@ protected: // data
 	Domain m_domain{};
 };
 
+enum class SocketTypeEnum : int {
+	DGRAM     = SOCK_DGRAM,
+	PACKET    = SOCK_PACKET,
+	RAW       = SOCK_RAW,
+	RDM       = SOCK_RDM,
+	SEQPACKET = SOCK_SEQPACKET,
+	STREAM    = SOCK_STREAM,
+	DCCP      = SOCK_DCCP,
+};
+
 /// The type of a socket in the context of a given SocketDomain for a newly created socket.
 /**
  * Similar to the `flags` in open(), this type consists of a type value and
@@ -156,16 +167,7 @@ class SocketType :
 		public ValueInParameter {
 public: // types
 
-	enum class Type : int {
-		DGRAM     = SOCK_DGRAM,
-		PACKET    = SOCK_PACKET,
-		RAW       = SOCK_RAW,
-		RDM       = SOCK_RDM,
-		SEQPACKET = SOCK_SEQPACKET,
-		STREAM    = SOCK_STREAM,
-		DCCP      = SOCK_DCCP,
-	};
-
+	using Type = SocketTypeEnum;
 	using enum Type;
 
 	enum class Flag : int {

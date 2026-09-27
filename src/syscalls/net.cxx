@@ -13,7 +13,9 @@ namespace clues {
 namespace {
 
 FDInfo make_socket_info(const cosmos::FileNum fd,
-		const item::SocketType::Flags flags) {
+		const item::SocketType::Flags flags,
+		const std::optional<item::SocketDomain::Domain> domain = {},
+		const std::optional<item::SocketType::Type> type = {}) {
 	FDInfo info{FDInfo::Type::SOCKET, fd};
 	info.flags.emplace();
 	using enum item::SocketType::Flag;
@@ -24,26 +26,49 @@ FDInfo make_socket_info(const cosmos::FileNum fd,
 		info.flags->set(cosmos::OpenFlag::CLOEXEC);
 	}
 
+	info.sock_domain = domain;
+	info.sock_type = type;
+
 	return info;
 }
 
 } // end anon ns
 
 void SocketSystemCall::updateFDTracking(const Tracee &proc) {
-	auto info = make_socket_info(new_fd.fd(), type.flags());
+	auto info = make_socket_info(new_fd.fd(),
+			type.flags(),
+			domain.domain(),
+			type.type());
 	trackFD(proc, std::move(info));
 }
 
 void SocketPairSystemCall::updateFDTracking(const Tracee &proc) {
 	for (auto fd: pair.pair()) {
-		auto info = make_socket_info(fd, type.flags());
+		auto info = make_socket_info(fd,
+			type.flags(),
+			domain.domain(),
+			type.type());
 		trackFD(proc, std::move(info));
 	}
 }
 
 void AcceptSystemCall::updateFDTracking(const Tracee &proc) {
-	auto info = make_socket_info(new_fd.fd(), flags.flags());
-	trackFD(proc, std::move(info));
+	const auto &info_map = proc.fdInfoMap();
+
+	if (auto it = info_map.find(sockfd.fd()); it != info_map.end()) {
+		const auto &fd_info = it->second;
+		const auto domain = fd_info.sock_domain;
+		const auto type = fd_info.sock_type;
+		auto info = make_socket_info(new_fd.fd(),
+				flags.flags(), domain, type);
+		trackFD(proc, std::move(info));
+	} else {
+		/*
+		 * we have no info about the type of the socket we accepted on
+		 */
+		auto info = make_socket_info(new_fd.fd(), flags.flags());
+		trackFD(proc, std::move(info));
+	}
 }
 
 void RecvMsgSystemCall::updateFDTracking(const Tracee &proc) {
