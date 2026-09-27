@@ -57,7 +57,7 @@ void SocketType::processData(const Tracee &) {
 	m_flags = Flags{raw & ~SOCK_TYPE_MASK};
 }
 
-static std::string_view type_label(const SocketType::Type type) {
+std::string_view SocketType::label(const SocketType::Type type) {
 	switch (cosmos::to_integral(type)) {
 		default: return "SOCK_???";
 		CASE_ENUM_TO_STR(SOCK_DGRAM);
@@ -72,7 +72,7 @@ static std::string_view type_label(const SocketType::Type type) {
 
 std::string SocketType::str() const {
 	BITFLAGS_FORMAT_START_COMBINED(m_flags, valueAs<int>());
-	BITFLAGS_STREAM() << type_label(m_type);
+	BITFLAGS_STREAM() << label(m_type);
 
 	BITFLAGS_STREAM() << '|';
 	BITFLAGS_ADD(SOCK_NONBLOCK);

@@ -233,6 +233,15 @@ DEF_GET_SOCK_OPT_TYPE(Domain,
 		item::GetSockOptVal<item::SocketDomain::Domain>,
 		ItemCfg({}, "domain", "int*"));
 
+/// GetTypeSockOptSystemCall gets the `type` of the socket.
+/**
+ * This is the value specified in the `socket()` system call during socket
+ * creation.
+ **/
+DEF_GET_SOCK_OPT_TYPE(Type,
+		item::GetSockOptVal<item::SocketType::Type>,
+		ItemCfg({}, "type", "int*"));
+
 /// GetErrorSockOptSystemCall returns any pending socket error as an errno.
 /**
  * If no error is pending then Errno::SUCCESS is returned by the kernel.

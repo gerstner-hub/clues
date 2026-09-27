@@ -189,9 +189,15 @@ public: // functions
 		return m_type;
 	}
 
+	/// Additional socket creation flags encoded into the type.
+	/**
+	 * These flags are only available in the SocketSystemCall context.
+	 **/
 	Flags flags() const {
 		return m_flags;
 	}
+
+	static std::string_view label(const Type type);
 
 protected: // functions
 

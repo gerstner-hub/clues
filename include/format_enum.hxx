@@ -33,6 +33,10 @@ inline std::string enumeration(const item::SocketDomain::Domain domain) {
 	return std::string{item::SocketDomain::label(domain)};
 }
 
+inline std::string enumeration(const item::SocketType::Type type) {
+	return std::string{item::SocketType::label(type)};
+}
+
 inline std::string enumeration(const cosmos::Errno err) {
 	return get_errno_label(err);
 }

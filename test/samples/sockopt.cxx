@@ -100,6 +100,9 @@ void sol_socket() {
 	get_sock_int_opt(s, SO_DOMAIN);
 	set_sock_int_opt(s,  SO_DOMAIN, AF_INET6);
 
+	get_sock_int_opt(s, SO_TYPE);
+	set_sock_int_opt(s, SO_TYPE, SOCK_STREAM);
+
 	get_sock_int_opt(s, SO_ERROR);
 	set_sock_int_opt(s, SO_ERROR, EAGAIN);
 

@@ -111,6 +111,10 @@ SystemCallPtr create_socket_opt_syscall(
 			/* makes no sense to call SET on this */
 			return create_call.operator()<
 				SocketCall_GetDomainSockOpt, GetDomainSockOptSystemCall>();
+		case TYPE:
+			/* makes no sense to call SET on this */
+			return create_call.operator()<
+				SocketCall_GetTypeSockOpt, GetTypeSockOptSystemCall>();
 		case ERROR:
 			/* it is not allowed to SET the errno */
 			return create_call.operator()<
