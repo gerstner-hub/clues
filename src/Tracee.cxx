@@ -1084,6 +1084,17 @@ void Tracee::trackFD(FDInfo &&info) const {
 	LOG_DEBUG_PID("new file descriptor tracking for fd " << cosmos::to_integral(fd));
 }
 
+void Tracee::updateFD(FDInfo &&info) const {
+	auto &map = m_process_data->fd_info_map;
+	auto it = map.find(info.fd);
+	if (it == map.end()) {
+		LOG_ERROR_PID("file descriptor to update not found in map " << cosmos::to_integral(info.fd));
+		return;
+	}
+
+	it->second = std::move(info);
+}
+
 void Tracee::dropFD(const cosmos::FileNum fd) const {
 	if (m_process_data->fd_info_map.erase(fd) != 0) {
 		LOG_DEBUG_PID("removed fd " << cosmos::to_integral(fd) << " from registered mappings");

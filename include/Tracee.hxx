@@ -393,6 +393,9 @@ public: // functions
 	 **/
 	void snatchFD(const cosmos::FileNum fd, SnatchFDCallback cb) const;
 
+	/// Update information about an already tracked file descriptor.
+	void updateFD(FDInfo &&info) const;
+
 protected: // constants
 
 	/// Array of signals that cause tracee stop.
