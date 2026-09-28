@@ -42,6 +42,10 @@ void SystemCallItem::updateSubItemData(SystemCallItem &sub_item,
 	sub_item.updateData(proc);
 }
 
+bool SystemCallItem::callSuccessful() const {
+	return m_call->hasResultValue();
+}
+
 } // end ns
 
 std::ostream& operator<<(std::ostream &o, const clues::SystemCallItem &value) {

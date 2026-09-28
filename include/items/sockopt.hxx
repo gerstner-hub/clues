@@ -56,7 +56,7 @@ protected: // functions
 		 * of option value space is encountered, so verify we actually
 		 * have data to interpret.
 		 */
-		if (!this->m_call->hasResultValue() || m_optlen.value() < sizeof(T)) {
+		if (!this->callSuccessful() || m_optlen.value() < sizeof(T)) {
 			this->m_val.reset();
 			return;
 		}

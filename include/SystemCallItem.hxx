@@ -264,6 +264,12 @@ protected: // functions
 	/// Returns whether the current system call context uses 32-bit time_t.
 	bool usesTime32() const;
 
+	/// Returns whether the current system call was successful.
+	/**
+	 * This evaluation is only useful in `updateData()` context.
+	 **/
+	bool callSuccessful() const;
+
 protected: // data
 
 	/// The system call context this item part of.
