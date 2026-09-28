@@ -12,6 +12,11 @@ namespace clues {
 
 namespace {
 
+/*
+ * Actively fetch socket domain and type information from the Tracee and store
+ * it in `info. This is only a fallback if we didn't observe the type of
+ * socket previously already.
+ */
 void add_socket_info(const Tracee &proc, FDInfo &info) {
 	std::optional<item::SocketDomainEnum> domain;
 	std::optional<item::SocketTypeEnum> type;
@@ -23,11 +28,13 @@ void add_socket_info(const Tracee &proc, FDInfo &info) {
 	proc.snatchFD(info.fd, [&domain, &type](const cosmos::FileDescriptor fd) {
 		socklen_t len = sizeof(int);
 		int out;
-		if (::getsockopt(cosmos::to_integral(fd.raw()), SOL_SOCKET, SO_DOMAIN, &out, &len) == 0) {
+		if (::getsockopt(cosmos::to_integral(fd.raw()),
+					SOL_SOCKET, SO_DOMAIN, &out, &len) == 0) {
 			domain = item::SocketDomainEnum{out};
 		}
 		len = sizeof(int);
-		if (::getsockopt(cosmos::to_integral(fd.raw()), SOL_SOCKET, SO_TYPE, &out, &len) == 0) {
+		if (::getsockopt(cosmos::to_integral(fd.raw()),
+					SOL_SOCKET, SO_TYPE, &out, &len) == 0) {
 			type = item::SocketTypeEnum{out};
 		}
 	});
@@ -80,25 +87,33 @@ void AcceptSystemCall::updateFDTracking(const Tracee &proc) {
 	const auto &info_map = proc.fdInfoMap();
 
 	if (auto it = info_map.find(sockfd.fd()); it != info_map.end()) {
-		const auto &fd_info = it->second;
-		const auto domain = fd_info.sock_domain;
-		const auto type = fd_info.sock_type;
-		auto info = make_socket_info(new_fd.fd(),
-				flags.flags(), domain, type);
-		if (!info.sock_domain || !info.sock_type) {
+		auto fd_info = it->second;
+		auto new_info = make_socket_info(
+				new_fd.fd(),
+				flags.flags(),
+				fd_info.sock_domain,
+				fd_info.sock_type);
+
+		if (!new_info.sock_domain || !new_info.sock_type) {
 			/*
-			 * we have no info about the type of the socket we
-			 * accepted on, so try to obtain the info from the
+			 * we have no info about the domain/type of the socket
+			 * we accepted on, so try to obtain the info from the
 			 * Tracee directly.
-			 * TODO: also add the info to `fd_info`.
 			 */
-			add_socket_info(proc, info);
+			add_socket_info(proc, new_info);
+			fd_info.sock_domain = new_info.sock_domain;
+			fd_info.sock_type = new_info.sock_type;
+			proc.updateFD(std::move(fd_info));
 		}
-		trackFD(proc, std::move(info));
+		trackFD(proc, std::move(new_info));
 	} else {
-		auto info = make_socket_info(new_fd.fd(), flags.flags());
-		add_socket_info(proc, info);
-		trackFD(proc, std::move(info));
+		/*
+		 * this shouldn't actually happen
+		 */
+		LOG_WARN("missing FDInfo for accept() socket?");
+		auto new_info = make_socket_info(new_fd.fd(), flags.flags());
+		add_socket_info(proc, new_info);
+		trackFD(proc, std::move(new_info));
 	}
 }
 
