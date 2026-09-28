@@ -392,11 +392,11 @@ public: // functions
 		return m_raw;
 	}
 
-	std::string_view label(const NetlinkProtocol prot) const;
+	static std::string_view label(const NetlinkProtocol prot);
 
-	std::string_view label(const IPProtocol prot) const;
+	static std::string_view label(const IPProtocol prot);
 
-	std::string_view label(const EthProtocol prot) const;
+	static std::string_view label(const EthProtocol prot);
 
 	static ProtocolVariant create_variant(
 			const SocketDomain::Domain domain, const int prot);

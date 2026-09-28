@@ -113,7 +113,7 @@ void SocketProtocol::processData(const Tracee&) {
 	m_prot = create_variant(m_domain.domain(), m_raw);
 }
 
-std::string_view SocketProtocol::label(const NetlinkProtocol prot) const {
+std::string_view SocketProtocol::label(const NetlinkProtocol prot) {
 	switch (cosmos::to_integral(prot)) {
 		CASE_ENUM_TO_STR(NETLINK_ROUTE);
 		CASE_ENUM_TO_STR(NETLINK_UNUSED);
@@ -141,7 +141,7 @@ std::string_view SocketProtocol::label(const NetlinkProtocol prot) const {
 	}
 }
 
-std::string_view SocketProtocol::label(const IPProtocol prot) const {
+std::string_view SocketProtocol::label(const IPProtocol prot) {
 	switch (cosmos::to_integral(prot)) {
 		CASE_ENUM_TO_STR(IPPROTO_IP);
 		CASE_ENUM_TO_STR(IPPROTO_ICMP);
@@ -178,7 +178,7 @@ std::string_view SocketProtocol::label(const IPProtocol prot) const {
 	}
 }
 
-std::string_view SocketProtocol::label(const EthProtocol prot) const {
+std::string_view SocketProtocol::label(const EthProtocol prot) {
 	switch (cosmos::to_integral(prot)) {
 		CASE_ENUM_TO_STR(ETH_P_LOOP);
 		CASE_ENUM_TO_STR(ETH_P_PUP);
