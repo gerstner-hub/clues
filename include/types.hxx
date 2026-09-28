@@ -119,6 +119,12 @@ public: // functions
 		return type != Type::INVALID;
 	}
 
+	void ensureFlags() {
+		if (!flags) {
+			flags.emplace();
+		}
+	}
+
 public: // data
 
 	Type type = Type::INVALID;

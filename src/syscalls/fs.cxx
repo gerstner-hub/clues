@@ -176,19 +176,51 @@ bool FcntlSystemCall::check2ndPass(const Tracee &) {
 
 void FcntlSystemCall::updateFDTracking(const Tracee &proc) {
 	using enum item::FcntlOperation::Oper;
+	auto &info_map = proc.fdInfoMap();
+
+	auto good_it = [&info_map, &proc, this](auto it) -> bool {
+		if (it != info_map.end()) {
+			return true;
+		}
+
+		LOG_WARN("[" << cosmos::to_integral(proc.pid()) << "]"
+				<< "Couldn't find dup source FD "
+				<< cosmos::to_integral(fd.fd())
+				<< " for tracking");
+		return false;
+	};
 
 	if (cosmos::in_list(operation.operation(), {DUPFD, DUPFD_CLOEXEC})) {
-		auto &info_map = proc.fdInfoMap();
-		if (auto it = info_map.find(fd.fd()); it != info_map.end()) {
-			auto info = it->second;
-			info.fd = ret_dupfd->fd();
-			trackFD(proc, std::move(info));
-		} else {
-			LOG_WARN("[" << cosmos::to_integral(proc.pid()) << "]"
-					<< "Couldn't find dup source FD "
-					<< cosmos::to_integral(fd.fd())
-					<< " for tracking");
+		auto it = info_map.find(fd.fd());
+		if (!good_it(it))
+			return;
+
+		const auto is_cloexec =
+			operation.operation() == DUPFD_CLOEXEC;
+		auto info = it->second;
+		info.fd = ret_dupfd->fd();
+		if (is_cloexec) {
+			info.ensureFlags();
+			info.flags->set(cosmos::OpenFlag::CLOEXEC);
+		} else if (info.flags) {
+			info.flags->reset(cosmos::OpenFlag::CLOEXEC);
 		}
+		trackFD(proc, std::move(info));
+	} else if (operation.operation() == SETFD) {
+		/* update the CLOEXEC flag */
+		const auto cloexec_set = fd_flags_arg->flags()[
+			cosmos::FileDescriptor::DescFlag::CLOEXEC];
+		auto it = info_map.find(fd.fd());
+		if (!good_it(it))
+			return;
+
+		auto info = it->second;
+		info.ensureFlags();
+		if (cloexec_set)
+			info.flags->set(cosmos::OpenFlag::CLOEXEC);
+		else
+			info.flags->reset(cosmos::OpenFlag::CLOEXEC);
+		proc.updateFD(std::move(info));
 	}
 }
 
