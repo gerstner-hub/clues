@@ -1101,8 +1101,7 @@ void Tracee::openPidFD() const {
 		cosmos::ProcessFile::THREAD};
 }
 
-void Tracee::snatchFD(const cosmos::FileNum fd,
-		std::function<void (const cosmos::FileDescriptor)> cb) const {
+void Tracee::snatchFD(const cosmos::FileNum fd, SnatchFDCallback cb) const {
 	openPidFD();
 	auto new_fd = m_pidfd.dupFD(fd);
 

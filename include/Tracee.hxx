@@ -75,6 +75,9 @@ public: // types
 
 	using Flags = cosmos::BitMask<Flag>;
 
+	using SnatchFDCallback =
+		std::function<void (const cosmos::FileDescriptor)>;
+
 public: // functions
 
 	virtual ~Tracee();
@@ -388,8 +391,7 @@ public: // functions
 	 * on it. Upon return from this function the file descriptor will be
 	 * closed again.
 	 **/
-	void snatchFD(const cosmos::FileNum fd,
-			std::function<void (const cosmos::FileDescriptor)> cb) const;
+	void snatchFD(const cosmos::FileNum fd, SnatchFDCallback cb) const;
 
 protected: // constants
 
