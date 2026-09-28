@@ -189,7 +189,7 @@ struct CLUES_API RSeqSystemCall :
 
 	/// `struct rseq` of `rseq_len` bytes size.
 	item::RSeqParameter rseq;
-	/// The length of `rseq`, at least 32 bytes.
+	/// The amount of data in `rseq` that is actually used, at least 32 bytes.
 	item::Uint32Value rseq_len;
 	/// Flags currently used for registering/unregistering struct rseq.
 	item::RSeqFlagsValue flags;

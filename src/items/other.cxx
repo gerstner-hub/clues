@@ -49,7 +49,7 @@ void RSeqParameter::updateData(const Tracee &tracee) {
 		return;
 
 	/*
-	 * struct rseq also has a 32-bit alignment requirement, thus keeping
+	 * struct rseq also has a 32-byte alignment requirement, thus keeping
 	 * around a std::vector<char> won't suffice (UBAN sanitizer complains
 	 * about it). Since it's also a dynamically sized structure a regular
 	 * unique_ptr also won't do: we need custom allocators and deleters
@@ -77,7 +77,13 @@ void RSeqParameter::clear() {
 }
 
 std::string RSeqParameter::str() const {
-	if (!m_data || m_size < sizeof(struct rseq)) {
+	/*
+	 * when the reading of the data structure from the Tracee succeeded
+	 * then we don't need to worry about validity of `m_data`, even if
+	 * `sizeof(struct rseq) > m_size`. There is additionall padding in
+	 * there which remains unused.
+	 */
+	if (!m_data) {
 		return "<invalid>";
 	}
 
