@@ -52,7 +52,7 @@ std::pair<int, int> get_sock_int_opt(int sock, const int name) {
 }
 
 void sol_socket() {
-	int s = socket(AF_INET, SOCK_DGRAM, 0);
+	int s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	get_sock_int_opt(s, SO_DONTROUTE);
 	set_sock_int_opt(s, SO_DONTROUTE, 1);
@@ -119,6 +119,9 @@ void sol_socket() {
 	struct ucred creds;
 	get_sock_opt(unix_socks[0], SO_PEERCRED, creds);
 	set_sock_opt(unix_socks[1], SO_PEERCRED, creds);
+
+	get_sock_int_opt(s, SO_PROTOCOL);
+	set_sock_int_opt(s, SO_PROTOCOL, IPPROTO_IP);
 
 	close(s);
 	close(unix_socks[0]);

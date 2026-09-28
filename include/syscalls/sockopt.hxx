@@ -250,6 +250,10 @@ DEF_GET_SOCK_OPT_TYPE(Error,
 		item::GetSockOptVal<cosmos::Errno>,
 		ItemCfg({}, "errno", "int*"));
 
+/// GetProtocolSockOptSystemCall returns the protocol value as specified in `socket()`.
+DEF_GET_SOCK_OPT_TYPE(Protocol,
+		item::ProtocolSockOpt, );
+
 /// GetLingerSockOptSystemCall returns the currently set `struct linger`.
 DEF_GET_SOCK_OPT_TYPE(Linger, item::GetLingerSockOpt, );
 

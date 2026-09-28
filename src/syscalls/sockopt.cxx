@@ -107,22 +107,24 @@ SystemCallPtr create_socket_opt_syscall(
 			return create_call.operator()<
 				SocketCall_GetFilterSockOpt, GetFilterSockOptSystemCall,
 				SocketCall_AttachFilterSockOpt, AttachFilterSockOptSystemCall>();
-		case DOMAIN:
-			/* makes no sense to call SET on this */
-			return create_call.operator()<
-				SocketCall_GetDomainSockOpt, GetDomainSockOptSystemCall>();
-		case TYPE:
-			/* makes no sense to call SET on this */
-			return create_call.operator()<
-				SocketCall_GetTypeSockOpt, GetTypeSockOptSystemCall>();
-		case ERROR:
-			/* it is not allowed to SET the errno */
-			return create_call.operator()<
-				SocketCall_GetErrorSockOpt, GetErrorSockOptSystemCall>();
 		case LINGER:
 			return create_call.operator()<
 				SocketCall_GetLingerSockOpt, GetLingerSockOptSystemCall,
 				SocketCall_SetLingerSockOpt, SetLingerSockOptSystemCall>();
+		/* makes no sense to call SET on the following */
+		case DOMAIN:
+			return create_call.operator()<
+				SocketCall_GetDomainSockOpt, GetDomainSockOptSystemCall>();
+		case TYPE:
+			return create_call.operator()<
+				SocketCall_GetTypeSockOpt, GetTypeSockOptSystemCall>();
+		case PROTOCOL:
+			return create_call.operator()<
+				SocketCall_GetProtocolSockOpt, GetProtocolSockOptSystemCall>();
+		case ERROR:
+			/* it is not allowed to SET the errno */
+			return create_call.operator()<
+				SocketCall_GetErrorSockOpt, GetErrorSockOptSystemCall>();
 		/* these take no option argument at all, use unknown option
 		 * type for them */
 		case DETACH_BPF: return create_unknown_call();

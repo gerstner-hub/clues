@@ -14,6 +14,7 @@
 
 // clues
 #include <clues/items/items.hxx>
+#include <clues/items/net.hxx>
 #include <clues/items/seccomp.hxx>
 
 namespace clues {
@@ -381,6 +382,41 @@ protected: // data
 
 	const GetSockOptLen &m_optlen;
 	std::optional<cosmos::UnixCredentials> m_creds;
+};
+
+/// Contains the socket protocol for SOL_SOCKET/SO_PROTOCOL.
+/**
+ * This type provides the same ProtocolVariant as the SocketProtocol item
+ * does. Only currently supported socket families are covered. For more exotic
+ * situations you need to inspect the raw integer value returned from
+ * the `value()` base class function.
+ **/
+class ProtocolSockOpt :
+		public GetSockOptVal<int> {
+public: // types
+
+	using ProtocolVariant = clues::item::SocketProtocol::ProtocolVariant;
+
+public: // functions
+
+	explicit ProtocolSockOpt(const GetSockOptLen &optlen) :
+		GetSockOptVal<int>{optlen},
+		m_prot{std::monostate{}} {
+	}
+
+	std::string str() const override;
+
+	ProtocolVariant prot() const {
+		return m_prot;
+	}
+
+protected: // functions
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	ProtocolVariant m_prot;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

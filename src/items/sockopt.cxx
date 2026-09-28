@@ -6,6 +6,7 @@
 #include <clues/macros.h>
 #include <clues/syscalls/sockopt.hxx>
 #include <clues/Tracee.hxx>
+#include <clues/logger.hxx>
 
 namespace clues::item {
 
@@ -238,6 +239,46 @@ std::string GetPeerCredSockOpt::str() const {
 		cosmos::to_integral(creds.userID()),
 		cosmos::to_integral(creds.groupID())
 	);
+}
+
+void ProtocolSockOpt::updateData(const Tracee &proc) {
+	GetSockOptVal<int>::updateData(proc);
+
+	if (!value()) {
+		return;
+	}
+
+	const auto &sockopt_sc = dynamic_cast<const GetSockOptSystemCall&>(*m_call);
+	const auto fd_map = proc.fdInfoMap();
+	auto it = fd_map.find(sockopt_sc.sockfd.fd());
+	if (it == fd_map.end()) {
+		LOG_WARN(std::format(
+			"couldn't find sockfd {} to deduce protocol",
+			cosmos::to_integral(sockopt_sc.sockfd.fd())));
+		return;
+	} else if (!it->second.sock_domain) {
+		/* shouldn't ever happen */
+		LOG_WARN(std::format(
+			"couldn't find socket domain for fd {} to deduce protocol",
+			cosmos::to_integral(sockopt_sc.sockfd.fd())));
+		return;
+	}
+
+	const auto domain = *it->second.sock_domain;
+
+	m_prot = SocketProtocol::create_variant(domain, *value());
+}
+
+std::string ProtocolSockOpt::str() const {
+	auto prot_visitor = [this](auto prot) -> std::string {
+		if constexpr (!std::is_same_v<decltype(prot), std::monostate>) {
+			return std::string{SocketProtocol::label(prot)};
+		}
+
+		return std::format("unknown ({})", *value());
+	};
+
+	return std::visit(prot_visitor, m_prot);
 }
 
 } // end ns
