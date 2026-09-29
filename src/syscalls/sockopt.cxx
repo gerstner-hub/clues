@@ -74,6 +74,8 @@ SystemCallPtr create_socket_opt_syscall(
 		case REUSEPORT:
 		case RXQ_OVFL:
 		case SELECT_ERR_QUEUE:
+		case TIMESTAMP:
+		case TIMESTAMPNS:
 			return create_call.operator()<SocketCall_GetBoolSockOpt, GetBoolSockOptSystemCall, SocketCall_SetBoolSockOpt, SetBoolSockOptSystemCall>();
 		case BUSY_POLL:
 		case INCOMING_CPU:
