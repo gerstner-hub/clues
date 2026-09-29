@@ -97,6 +97,9 @@ void sol_socket() {
 	len = 1; // number of socket filter entries available for output
 	getsockopt(s, SOL_SOCKET, SO_GET_FILTER, &filter, &len);
 
+	set_sock_int_opt(s, SO_ATTACH_BPF, 10);
+	get_sock_int_opt(s, SO_ATTACH_BPF);
+
 	get_sock_int_opt(s, SO_DOMAIN);
 	set_sock_int_opt(s,  SO_DOMAIN, AF_INET6);
 
