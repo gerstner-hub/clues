@@ -129,6 +129,11 @@ SystemCallPtr create_socket_opt_syscall(
 			return create_call.operator()<
 				SocketCall_GetTimeValSockOpt, GetTimeValSockOptSystemCall,
 				SocketCall_SetTimeValSockOpt, SetTimeValSockOptSystemCall>();
+		case RCVTIMEO_NEW:
+		case SNDTIMEO_NEW:
+			return create_call.operator()<
+				SocketCall_GetTimeSpecSockOpt, GetTimeSpecSockOptSystemCall,
+				SocketCall_SetTimeSpecSockOpt, SetTimeSpecSockOptSystemCall>();
 		/* makes no sense to call SET on the following */
 		case DOMAIN:
 			return create_call.operator()<

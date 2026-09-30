@@ -141,6 +141,13 @@ void sol_socket() {
 	len = sizeof(tv);
 	getsockopt(s, SOL_SOCKET, SO_RCVTIMEO_OLD, &tv, &len);
 
+	struct timespec ts;
+	ts.tv_sec = 10;
+	ts.tv_nsec = 10000;
+	setsockopt(s, SOL_SOCKET, SO_RCVTIMEO_NEW, &ts, sizeof(ts));
+	len = sizeof(ts);
+	getsockopt(s, SOL_SOCKET, SO_RCVTIMEO_NEW, &ts, &len);
+
 	close(s);
 	close(unix_socks[0]);
 	close(unix_socks[1]);

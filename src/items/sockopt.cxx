@@ -304,4 +304,25 @@ void GetTimeValSockOpt::updateData(const Tracee &proc) {
 	TimeValParameter::updateData(proc);
 }
 
+void SetTimeSpecSockOpt::processData(const Tracee &proc) {
+	if (const auto len = m_optlen.value(); len < 0 ||
+			(size_t)len < traceeStructSize()) {
+		m_timespec.reset();
+		return;
+	}
+
+	TimeSpecParameter::processData(proc);
+}
+
+void GetTimeSpecSockOpt::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue()) {
+		return;
+	} else if (const auto len = *m_optlen.value(); len < 0 ||
+			(size_t)len < traceeStructSize()) {
+		return;
+	}
+
+	TimeSpecParameter::updateData(proc);
+}
+
 } // end ns

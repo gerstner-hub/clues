@@ -73,6 +73,14 @@ std::string TimeSpecParameter::str() const {
 	return format::timespec(*m_timespec);
 }
 
+size_t TimeSpecParameter::traceeStructSize() const {
+	if (needTime32Conversion()) {
+		return sizeof(struct timespec32);
+	} else {
+		return sizeof(struct timespec);
+	}
+}
+
 void TimeSpecInOutParameter::processData(const Tracee &proc) {
 	m_remaining.reset();
 	TimeSpecParameter::processData(proc);

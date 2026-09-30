@@ -425,6 +425,7 @@ protected: // data
 	ProtocolVariant m_prot;
 };
 
+/// Specialiation of TimeValParameter which takes `optlen` into account.
 class SetTimeValSockOpt :
 		public item::TimeValParameter {
 public: // functions
@@ -447,6 +448,7 @@ protected: // data
 	const SetSockOptLen &m_optlen;
 };
 
+/// Specialiation of TimeValParameter which takes `optlen` into account.
 class GetTimeValSockOpt :
 		public item::TimeValParameter {
 public: // functions
@@ -456,6 +458,52 @@ public: // functions
 				ItemType::PARAM_OUT,
 				"optval",
 				"struct timeval*"}},
+			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+protected: // functions
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	const GetSockOptLen &m_optlen;
+};
+
+/// Specialiation of TimeSpecParameter which takes `optlen` into account.
+class SetTimeSpecSockOpt :
+		public item::TimeSpecParameter {
+public: // functions
+
+	explicit SetTimeSpecSockOpt(const SetSockOptLen &optlen) :
+			item::TimeSpecParameter{ItemCfg{
+				ItemType::PARAM_IN,
+				"optval",
+				"struct timespec*"}},
+			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+protected: // functions
+
+	void processData(const Tracee &proc) override;
+
+protected: // data
+
+	const SetSockOptLen &m_optlen;
+};
+
+/// Specialiation of TimeSpecParameter which takes `optlen` into account.
+class GetTimeSpecSockOpt :
+		public item::TimeSpecParameter {
+public: // functions
+
+	explicit GetTimeSpecSockOpt(const GetSockOptLen &optlen) :
+			item::TimeSpecParameter{ItemCfg{
+				ItemType::PARAM_OUT,
+				"optval",
+				"struct timespec*"}},
 			m_optlen{optlen} {
 		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
 	}
