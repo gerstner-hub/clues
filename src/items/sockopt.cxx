@@ -140,7 +140,7 @@ void SockOptName::processData(const Tracee &) {
 	}
 }
 
-void AttachFilterSockOpt::processData(const Tracee &proc) {
+void ClassicBPFSockOpt::processData(const Tracee &proc) {
 	m_prog.reset();
 	m_filters.clear();
 

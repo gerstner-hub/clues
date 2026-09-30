@@ -256,14 +256,11 @@ DEF_SOCKETCALL_GET_SOCK_OPT(ProtocolSockOpt);
 DEF_SOCKETCALL_GET_SOCK_OPT(ErrorSockOpt);
 DEF_SOCKETCALL_GET_SOCK_OPT(PeerCredSockOpt);
 DEF_SOCKETCALL_SET_SOCK_OPT(AttachBpfSockOpt);
+DEF_SOCKETCALL_SET_SOCK_OPT(ClassicBPFSockOpt);
 
 #undef DEF_SOCKETCALL_GET_SOCK_OPT
 #undef DEF_SOCKETCALL_SET_SOCK_OPT
 #undef DEF_SOCKETCALL_SOCK_OPT
-
-class SocketCall_AttachFilterSockOpt :
-		public SocketCallSockOptBase<AttachFilterSockOptSystemCall> {
-};
 
 CLUES_DEFAULT_VISIBILITY_OFF;
 

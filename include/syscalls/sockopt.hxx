@@ -210,13 +210,16 @@ DEF_SET_SOCK_OPT_TYPE(String,
 		item::StringBuffer,
 		ItemCfg(ItemType::PARAM_OUT, "optval", "const char*"));
 
-/// AttachFilterSockOptSystemCall installs a BPF program on a socket.
+/// SetClassicBPFSockOptSystemCall installs a BPF program on a socket.
 /**
- * This type carries a specialized item::FilterProg item which ensures that
- * the `optlen` of the setsockopt() is sufficient to process a `struct
+ * This type carries a specialized item::ClassicBPFSockOpt item which ensures
+ * that the `optlen` of the setsockopt() is sufficient to process a `struct
  * sock_fprog`.
+ *
+ * This type is used with SocketOption::ATTACH_FILTER and
+ * SocketOption::ATTACH_REUSEPORT_CBPF.
  **/
-DEF_SET_SOCK_OPT_TYPE_FULL(AttachFilter, item::AttachFilterSockOpt,);
+DEF_SET_SOCK_OPT_TYPE(ClassicBPF, item::ClassicBPFSockOpt,);
 
 /// GetFilterSockOptSystemCall ~eturns a previously installed BPF program.
 /**

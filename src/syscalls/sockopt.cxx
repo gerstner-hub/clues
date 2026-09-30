@@ -108,7 +108,7 @@ SystemCallPtr create_socket_opt_syscall(
 			 * due to differing ABI semantics */
 			return create_call.operator()<
 				SocketCall_GetFilterSockOpt, GetFilterSockOptSystemCall,
-				SocketCall_AttachFilterSockOpt, AttachFilterSockOptSystemCall>();
+				SocketCall_SetClassicBPFSockOpt, SetClassicBPFSockOptSystemCall>();
 		case ATTACH_BPF:
 			/* no SET for this one, regular GET_FILTER can be used to retrieve it */
 			return create_call.operator()<

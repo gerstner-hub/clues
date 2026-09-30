@@ -236,16 +236,19 @@ protected: // data
 	const SockOptType m_opt_type;
 };
 
-/// Type for `struct sock_fprog` as used with SO_ATTACH_FILTER.
+/// Type for `struct sock_fprog` as used with SO_ATTACH_FILTER and others.
 /**
  * This specialization of FilterProg checks that the `optlen` is sufficient to
- * process a `struct sock_fprog`.
+ * process a `struct sock_fprog`. It is used with:
+ *
+ * - SO_ATTACH_FILTER
+ * - SO_ATTACH_REUSEPORT_CBPF
  **/
-class AttachFilterSockOpt :
+class ClassicBPFSockOpt :
 		public FilterProg {
 public: // functions
 
-	explicit AttachFilterSockOpt(const SetSockOptLen &optlen) :
+	explicit ClassicBPFSockOpt(const SetSockOptLen &optlen) :
 				FilterProg{ItemType::PARAM_IN},
 				m_optlen{optlen} {
 		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
