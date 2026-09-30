@@ -428,7 +428,7 @@ protected: // data
 	ProtocolVariant m_prot;
 };
 
-/// Specialiation of TimeValParameter which takes `optlen` into account.
+/// Specialization of TimeValParameter which takes `optlen` into account.
 class SetTimeValSockOpt :
 		public item::TimeValParameter {
 public: // functions
@@ -451,7 +451,7 @@ protected: // data
 	const SetSockOptLen &m_optlen;
 };
 
-/// Specialiation of TimeValParameter which takes `optlen` into account.
+/// Specialization of TimeValParameter which takes `optlen` into account.
 class GetTimeValSockOpt :
 		public item::TimeValParameter {
 public: // functions
@@ -474,7 +474,7 @@ protected: // data
 	const GetSockOptLen &m_optlen;
 };
 
-/// Specialiation of TimeSpecParameter which takes `optlen` into account.
+/// Specialization of TimeSpecParameter which takes `optlen` into account.
 class SetTimeSpecSockOpt :
 		public item::TimeSpecParameter {
 public: // functions
@@ -497,7 +497,7 @@ protected: // data
 	const SetSockOptLen &m_optlen;
 };
 
-/// Specialiation of TimeSpecParameter which takes `optlen` into account.
+/// Specialization of TimeSpecParameter which takes `optlen` into account.
 class GetTimeSpecSockOpt :
 		public item::TimeSpecParameter {
 public: // functions

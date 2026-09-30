@@ -297,7 +297,7 @@ DEF_SET_SOCK_OPT_TYPE(TimeSpec, item::SetTimeSpecSockOpt, );
 /**
  * libclues uses this type in case invalid or not yet supported getsockopt()
  * level / name combinations appear. The `optval` is simply modeled as a
- * GenericPointerValue, whoose target will not be interpreted further.
+ * GenericPointerValue, whose target will not be interpreted further.
  **/
 struct GetUnknownSockOptSystemCall :
 		public GetSockOptSystemCall {

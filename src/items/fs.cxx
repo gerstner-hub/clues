@@ -1,6 +1,3 @@
-// C++
-#include <sstream>
-
 // cosmos
 #include <cosmos/compiler.hxx>
 #include <cosmos/error/RuntimeError.hxx>
