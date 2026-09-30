@@ -126,6 +126,15 @@ void sol_socket() {
 	get_sock_int_opt(s, SO_PROTOCOL);
 	set_sock_int_opt(s, SO_PROTOCOL, IPPROTO_IP);
 
+	set_sock_int_opt(s, SO_REUSEPORT, 1);
+	setsockopt(s, SOL_SOCKET, SO_ATTACH_REUSEPORT_CBPF, &fprog, sizeof(fprog));
+	len = sizeof(fprog);
+	getsockopt(s, SOL_SOCKET, SO_ATTACH_REUSEPORT_CBPF, &fprog, &len);
+
+	set_sock_int_opt(s, SO_ATTACH_REUSEPORT_EBPF, 10);
+	get_sock_int_opt(s, SO_ATTACH_REUSEPORT_EBPF);
+
+
 	close(s);
 	close(unix_socks[0]);
 	close(unix_socks[1]);
