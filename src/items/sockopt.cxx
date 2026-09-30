@@ -92,8 +92,10 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_RCVBUFFORCE);
 		CASE_ENUM_TO_STR(SO_RCVLOWAT);
 		CASE_ENUM_TO_STR(SO_SNDLOWAT);
-		CASE_ENUM_TO_STR(SO_RCVTIMEO);
-		CASE_ENUM_TO_STR(SO_SNDTIMEO);
+		CASE_ENUM_TO_STR(SO_RCVTIMEO_OLD);
+		CASE_ENUM_TO_STR(SO_SNDTIMEO_OLD);
+		CASE_ENUM_TO_STR(SO_RCVTIMEO_NEW);
+		CASE_ENUM_TO_STR(SO_SNDTIMEO_NEW);
 		CASE_ENUM_TO_STR(SO_REUSEADDR);
 		CASE_ENUM_TO_STR(SO_REUSEPORT);
 		CASE_ENUM_TO_STR(SO_RXQ_OVFL);
@@ -279,6 +281,27 @@ std::string ProtocolSockOpt::str() const {
 	};
 
 	return std::visit(prot_visitor, m_prot);
+}
+
+void SetTimeValSockOpt::processData(const Tracee &proc) {
+	if (const auto len = m_optlen.value(); len < 0 ||
+			(size_t)len < traceeStructSize()) {
+		m_timeval.reset();
+		return;
+	}
+
+	TimeValParameter::processData(proc);
+}
+
+void GetTimeValSockOpt::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue()) {
+		return;
+	} else if (const auto len = *m_optlen.value(); len < 0 ||
+			(size_t)len < traceeStructSize()) {
+		return;
+	}
+
+	TimeValParameter::updateData(proc);
 }
 
 } // end ns

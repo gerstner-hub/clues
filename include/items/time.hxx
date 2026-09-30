@@ -128,6 +128,14 @@ protected: // functions
 	/// Checks whether the current ABI context requires conversion of 32 bit to 64 bit.
 	bool needTime32Conversion() const;
 
+	/// This returns the necessary amount of bytes for `struct timeval` in the Tracee.
+	/**
+	 * This function respects 32<->64 bit cross tracing contexts. It
+	 * returns the expected size of `struct timeval` in the tracee. This
+	 * can be helpful information for derived types.
+	 **/
+	size_t traceeStructSize() const;
+
 protected: // data
 
 	std::optional<struct timeval> m_timeval;

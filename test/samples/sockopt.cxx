@@ -134,6 +134,12 @@ void sol_socket() {
 	set_sock_int_opt(s, SO_ATTACH_REUSEPORT_EBPF, 10);
 	get_sock_int_opt(s, SO_ATTACH_REUSEPORT_EBPF);
 
+	struct timeval tv;
+	tv.tv_sec = 100;
+	tv.tv_usec = 1000;
+	setsockopt(s, SOL_SOCKET, SO_RCVTIMEO_OLD, &tv, sizeof(tv));
+	len = sizeof(tv);
+	getsockopt(s, SOL_SOCKET, SO_RCVTIMEO_OLD, &tv, &len);
 
 	close(s);
 	close(unix_socks[0]);

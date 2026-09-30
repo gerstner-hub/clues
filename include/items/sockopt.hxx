@@ -16,6 +16,7 @@
 #include <clues/items/items.hxx>
 #include <clues/items/net.hxx>
 #include <clues/items/seccomp.hxx>
+#include <clues/items/time.hxx>
 
 namespace clues {
 
@@ -182,8 +183,10 @@ public: // types
 		RCVBUFFORCE           = SO_RCVBUFFORCE,           ///< forced RCVBUF setting with `CAP_NET_ADMIN`.
 		RCVLOWAT              = SO_RCVLOWAT,              ///< get/set minimum number of bytes in receive buffer before passing data to userspace. Integer option.
 		SNDLOWAT              = SO_SNDLOWAT,              ///< get minimum number of bytes in send buffer before passing on to the protocol layer. Cannot be changed on Linux. Integer option.
-		RCVTIMEO              = SO_RCVTIMEO,              ///< get/set receive timeout in `struct timeval` argument.
-		SNDTIMEO              = SO_SNDTIMEO,              ///< get/set send timeout in `struct timeval` argument.
+		RCVTIMEO_OLD          = SO_RCVTIMEO_OLD,          ///< get/set receive timeout in `struct timeval` argument.
+		SNDTIMEO_OLD          = SO_SNDTIMEO_OLD,          ///< get/set send timeout in `struct timeval` argument.
+		RCVTIMEO_NEW          = SO_RCVTIMEO_NEW,          ///< get/set receive timeout in `struct timespec` argument.
+		SNDTIMEO_NEW          = SO_SNDTIMEO_NEW,          ///< get/set send timeout in `struct timespec` argument.
 		REUSEADDR             = SO_REUSEADDR,             ///< get/set reuse address boolean option.
 		REUSEPORT             = SO_REUSEPORT,             ///< get/set reuse port boolean option.
 		RXQ_OVFL              = SO_RXQ_OVFL,              ///< get/set boolean option whether to supply a 32-bit value ancillary message indicating the number of dropped packets.
@@ -420,6 +423,50 @@ protected: // functions
 protected: // data
 
 	ProtocolVariant m_prot;
+};
+
+class SetTimeValSockOpt :
+		public item::TimeValParameter {
+public: // functions
+
+	explicit SetTimeValSockOpt(const SetSockOptLen &optlen) :
+			item::TimeValParameter{ItemCfg{
+				ItemType::PARAM_IN,
+				"optval",
+				"struct timeval*"}},
+			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+protected: // functions
+
+	void processData(const Tracee &proc) override;
+
+protected: // data
+
+	const SetSockOptLen &m_optlen;
+};
+
+class GetTimeValSockOpt :
+		public item::TimeValParameter {
+public: // functions
+
+	explicit GetTimeValSockOpt(const GetSockOptLen &optlen) :
+			item::TimeValParameter{ItemCfg{
+				ItemType::PARAM_OUT,
+				"optval",
+				"struct timeval*"}},
+			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+protected: // functions
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	const GetSockOptLen &m_optlen;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

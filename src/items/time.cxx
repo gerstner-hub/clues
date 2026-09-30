@@ -170,6 +170,14 @@ void TimeValParameter::fetch(const Tracee &proc,
 	}
 }
 
+size_t TimeValParameter::traceeStructSize() const {
+	if (needTime32Conversion()) {
+		return sizeof(struct timeval32);
+	} else {
+		return sizeof(struct timeval);
+	}
+}
+
 std::string TimeValParameter::str() const {
 	if (!m_timeval) {
 		return formatBadPointer();

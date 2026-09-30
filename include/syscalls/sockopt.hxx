@@ -276,6 +276,12 @@ DEF_GET_SOCK_OPT_TYPE(PeerCred, item::GetPeerCredSockOpt, );
 DEF_SET_SOCK_OPT_TYPE(FileDesc, item::SetSockOptVal<cosmos::FileNum>,
 		ItemCfg({}, "fd", "int*"));
 
+/// GetTimeValSockOptSystemCall receives a `struct timeval`.
+DEF_GET_SOCK_OPT_TYPE(TimeVal, item::GetTimeValSockOpt, );
+
+/// SetTimeValSockOptSystemCall supplies a `struct timeval`.
+DEF_SET_SOCK_OPT_TYPE(TimeVal, item::SetTimeValSockOpt, );
+
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL
 #undef DEF_SET_SOCK_OPT_TYPE
