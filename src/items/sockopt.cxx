@@ -80,6 +80,7 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_LINGER);
 		CASE_ENUM_TO_STR(SO_LOCK_FILTER);
 		CASE_ENUM_TO_STR(SO_MARK);
+		CASE_ENUM_TO_STR(SO_NO_CHECK);
 		CASE_ENUM_TO_STR(SO_OOBINLINE);
 		CASE_ENUM_TO_STR(SO_PASSCRED);
 		CASE_ENUM_TO_STR(SO_PASSSEC);
@@ -106,6 +107,8 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_TIMESTAMPNS);
 		CASE_ENUM_TO_STR(SO_TYPE);
 		CASE_ENUM_TO_STR(SO_BUSY_POLL);
+		CASE_ENUM_TO_STR(SO_PREFER_BUSY_POLL);
+		CASE_ENUM_TO_STR(SO_BUSY_POLL_BUDGET);
 		default: return "SO_???";
 	}
 }

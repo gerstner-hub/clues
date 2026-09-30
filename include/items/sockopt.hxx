@@ -171,6 +171,7 @@ public: // types
 		LINGER                = SO_LINGER,                ///< get/set the current linger option; uses `struct linger`.
 		LOCK_FILTER           = SO_LOCK_FILTER,           ///< lock any currently installed BPF programs on the socket with no way of turning the lock off again. This still takes a boolean.
 		MARK                  = SO_MARK,                  ///< get/set the mark used for each packet sent through the socket. Takes a `uint32_t`.
+		NO_CHECK              = SO_NO_CHECK,              ///< don't calculate checksum for outgoing UDP packets, boolean option.
 		OOBINLINE             = SO_OOBINLINE,             ///< receive out-of-band data directly in the receive data stream. Boolean get/set option.
 		PASSCRED              = SO_PASSCRED,              ///< (AF_UNIX) get/set boolean whether to receive SCM_CREDENTIALS control messages.
 		PASSSEC               = SO_PASSSEC,               ///< (AF_UNIX) get/set boolean whether to receive SCM_SECURITY control messages.
@@ -196,7 +197,9 @@ public: // types
 		TIMESTAMP             = SO_TIMESTAMP,             ///< get/set reception of `SCM_TIMESTAMP` control messages. Boolean option.
 		TIMESTAMPNS           = SO_TIMESTAMPNS,           ///< get/set reception of `SCM_TIMESTAMPNS` control messages. Boolean option.
 		TYPE                  = SO_TYPE,                  ///< get the socket type. Integer value.
-		BUSY_POLL             = SO_BUSY_POLL              ///< get/set a poll duration in microseconds for `recv()` calls on the socket. Integer option.
+		BUSY_POLL             = SO_BUSY_POLL,             ///< get/set a poll duration in microseconds for `recv()` calls on the socket. Integer option.
+		PREFER_BUSY_POLL      = SO_PREFER_BUSY_POLL,      ///< declare that the application will regularly busy poll the socket, allowing the kernel to disable interrupts. Boolean option.
+		BUSY_POLL_BUDGET      = SO_BUSY_POLL_BUDGET,      ///< controls the maximum number of packets a single busy poll is allowed to process. Integer option.
 	};
 
 	enum class TCPOption : int {

@@ -76,6 +76,8 @@ SystemCallPtr create_socket_opt_syscall(
 		case SELECT_ERR_QUEUE:
 		case TIMESTAMP:
 		case TIMESTAMPNS:
+		case NO_CHECK:
+		case PREFER_BUSY_POLL:
 			return create_call.operator()<SocketCall_GetBoolSockOpt, GetBoolSockOptSystemCall, SocketCall_SetBoolSockOpt, SetBoolSockOptSystemCall>();
 		case BUSY_POLL:
 		case INCOMING_CPU:
@@ -89,6 +91,7 @@ SystemCallPtr create_socket_opt_syscall(
 		case SNDBUF:
 		case SNDBUFFORCE:
 		case SNDLOWAT:
+		case BUSY_POLL_BUDGET:
 			return create_call.operator()<
 				SocketCall_GetIntSockOpt, GetIntSockOptSystemCall,
 				SocketCall_SetIntSockOpt, SetIntSockOptSystemCall>();
