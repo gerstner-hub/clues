@@ -266,8 +266,14 @@ DEF_SET_SOCK_OPT_TYPE(Linger, item::SetLingerSockOpt, );
 /// GetPeerCredSockOptSystemCall retrieves the peer's `struct ucred`.
 DEF_GET_SOCK_OPT_TYPE(PeerCred, item::GetPeerCredSockOpt, );
 
-/// SetAttachBpfSockOptSystemCall applies a BPF filter via a bpf() file descriptor.
-DEF_SET_SOCK_OPT_TYPE(AttachBpf, item::SetSockOptVal<cosmos::FileNum>,
+/// SetFileDescSockOptSystemCall passes a file descriptor as socket option.
+/**
+ * This type is used with:
+ *
+ * - SocketOption::ATTACH_BPF
+ * - SocketOption::ATTACH_REUSEPORT_EBPF (both pass a `bpf()` file desc)
+ **/
+DEF_SET_SOCK_OPT_TYPE(FileDesc, item::SetSockOptVal<cosmos::FileNum>,
 		ItemCfg({}, "fd", "int*"));
 
 #undef DEF_GET_SOCK_OPT_TYPE

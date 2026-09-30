@@ -113,7 +113,7 @@ SystemCallPtr create_socket_opt_syscall(
 			/* no SET for this one, regular GET_FILTER can be used to retrieve it */
 			return create_call.operator()<
 				void, void,
-				SocketCall_SetAttachBpfSockOpt, SetAttachBpfSockOptSystemCall>();
+				SocketCall_SetFileDescSockOpt, SetFileDescSockOptSystemCall>();
 		case LINGER:
 			return create_call.operator()<
 				SocketCall_GetLingerSockOpt, GetLingerSockOptSystemCall,
