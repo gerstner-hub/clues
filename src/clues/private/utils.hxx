@@ -3,6 +3,7 @@
 // C++
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 // cosmos
 #include <cosmos/formatting.hxx>
@@ -16,8 +17,8 @@ inline std::string strip_back(std::string &&s, const char ch = '|') {
 }
 
 /// helper for constructing a string of bit flags
-#define BITFLAGS_FORMAT_START(bitmask) std::stringstream _bf_ss; auto _flags = bitmask.raw(); \
-		_bf_ss << cosmos::HexNum<decltype(bitmask)::EnumBaseType>{_flags, 0} << " ("
+#define BITFLAGS_FORMAT_START(bitmask) std::stringstream _bf_ss; auto _flags = (bitmask).raw(); \
+		_bf_ss << cosmos::HexNum<typename std::decay_t<decltype(bitmask)>::EnumBaseType>{_flags, 0} << " ("
 /// this is used for cases where the original value contains an additional fixed part which is stripped from the bitmask
 /**
  * For example in openat() the flags argument contains a fixed part like
