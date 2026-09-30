@@ -200,6 +200,7 @@ public: // types
 		BUSY_POLL             = SO_BUSY_POLL,             ///< get/set a poll duration in microseconds for `recv()` calls on the socket. Integer option.
 		PREFER_BUSY_POLL      = SO_PREFER_BUSY_POLL,      ///< declare that the application will regularly busy poll the socket, allowing the kernel to disable interrupts. Boolean option.
 		BUSY_POLL_BUDGET      = SO_BUSY_POLL_BUDGET,      ///< controls the maximum number of packets a single busy poll is allowed to process. Integer option.
+		BUF_LOCK              = SO_BUF_LOCK,              ///< get/set an integer bitmask controlling whether the kernel may automatically change socket buffer sizes.
 	};
 
 	enum class TCPOption : int {
@@ -518,6 +519,63 @@ protected: // functions
 protected: // data
 
 	const GetSockOptLen &m_optlen;
+};
+
+template <class BASE, class OPT_LEN>
+class BufLockSockOptT :
+		public BASE {
+public: // types
+
+	enum class LockType : int {
+		SNDBUF = SOCK_SNDBUF_LOCK,
+		RCVBUF = SOCK_RCVBUF_LOCK
+	};
+
+	using LockMask = cosmos::BitMask<LockType>;
+
+public: // functions
+
+	std::optional<LockMask> mask() const {
+		return m_mask;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	BufLockSockOptT(const OPT_LEN &optlen, const ItemType type) :
+			BASE{optlen, ItemCfg{type, "optval", "int bitmask"}} {
+	}
+
+protected: // data
+
+	std::optional<LockMask> m_mask;
+};
+
+class GetBufLockSockOpt :
+		public BufLockSockOptT<GetSockOptVal<int>, GetSockOptLen> {
+public: // functions
+
+	GetBufLockSockOpt(const GetSockOptLen &optlen) :
+			BufLockSockOptT{optlen, ItemType::PARAM_OUT} {
+	}
+
+protected: // functions
+
+	void updateData(const Tracee &proc) override;
+};
+
+class SetBufLockSockOpt :
+		public BufLockSockOptT<SetSockOptVal<int>, SetSockOptLen> {
+public: // functions
+
+	SetBufLockSockOpt(const SetSockOptLen &optlen) :
+			BufLockSockOptT{optlen, ItemType::PARAM_IN} {
+	}
+
+protected: // functions
+
+	void processData(const Tracee &proc) override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

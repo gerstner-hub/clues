@@ -3,10 +3,11 @@
 
 // clues
 #include <clues/items/sockopt.hxx>
+#include <clues/logger.hxx>
 #include <clues/macros.h>
 #include <clues/syscalls/sockopt.hxx>
 #include <clues/Tracee.hxx>
-#include <clues/logger.hxx>
+#include <clues/private/utils.hxx>
 
 namespace clues::item {
 
@@ -109,6 +110,7 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_BUSY_POLL);
 		CASE_ENUM_TO_STR(SO_PREFER_BUSY_POLL);
 		CASE_ENUM_TO_STR(SO_BUSY_POLL_BUDGET);
+		CASE_ENUM_TO_STR(SO_BUF_LOCK);
 		default: return "SO_???";
 	}
 }
@@ -326,6 +328,40 @@ void GetTimeSpecSockOpt::updateData(const Tracee &proc) {
 	}
 
 	TimeSpecParameter::updateData(proc);
+}
+
+template <class BASE, class OPT_LEN>
+std::string BufLockSockOptT<BASE, OPT_LEN>::str() const {
+	if (!m_mask) {
+		return BASE::str();
+	}
+
+	BITFLAGS_FORMAT_START(*m_mask);
+
+	BITFLAGS_ADD(SOCK_SNDBUF_LOCK);
+	BITFLAGS_ADD(SOCK_RCVBUF_LOCK);
+
+	return BITFLAGS_STR();
+}
+
+void GetBufLockSockOpt::updateData(const Tracee &proc) {
+	GetSockOptVal::updateData(proc);
+
+	if (this->value()) {
+		m_mask.emplace(LockMask{*this->value()});
+	} else {
+		m_mask.reset();
+	}
+}
+
+void SetBufLockSockOpt::processData(const Tracee &proc) {
+	SetSockOptVal::processData(proc);
+
+	if (this->value()) {
+		m_mask.emplace(LockMask{*this->value()});
+	} else {
+		m_mask.reset();
+	}
 }
 
 } // end ns

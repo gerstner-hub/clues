@@ -288,6 +288,12 @@ DEF_GET_SOCK_OPT_TYPE(TimeSpec, item::GetTimeSpecSockOpt, );
 /// SetTimeSpecSockOptSystemCall supplies a `struct timespec`.
 DEF_SET_SOCK_OPT_TYPE(TimeSpec, item::SetTimeSpecSockOpt, );
 
+/// GetBufLockSockOptSystemCall retrieves a LockMask bitmask.
+DEF_GET_SOCK_OPT_TYPE(BufLock, item::GetBufLockSockOpt, );
+
+/// SetBufLockSockOptSystemCall sets a LockMask bitmask.
+DEF_SET_SOCK_OPT_TYPE(BufLock, item::SetBufLockSockOpt, );
+
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL
 #undef DEF_SET_SOCK_OPT_TYPE

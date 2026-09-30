@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string>
 #include <linux/filter.h>
+#include <linux/socket.h>
 
 namespace {
 
@@ -147,6 +148,9 @@ void sol_socket() {
 	setsockopt(s, SOL_SOCKET, SO_RCVTIMEO_NEW, &ts, sizeof(ts));
 	len = sizeof(ts);
 	getsockopt(s, SOL_SOCKET, SO_RCVTIMEO_NEW, &ts, &len);
+
+	set_sock_int_opt(s, SO_BUF_LOCK, SOCK_RCVBUF_LOCK);
+	get_sock_int_opt(s, SO_BUF_LOCK);
 
 	close(s);
 	close(unix_socks[0]);

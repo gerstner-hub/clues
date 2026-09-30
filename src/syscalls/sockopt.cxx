@@ -123,6 +123,10 @@ SystemCallPtr create_socket_opt_syscall(
 			return create_call.operator()<
 				void, void,
 				SocketCall_SetFileDescSockOpt, SetFileDescSockOptSystemCall>();
+		case BUF_LOCK:
+			return create_call.operator()<
+				SocketCall_GetBufLockSockOpt, GetBufLockSockOptSystemCall,
+				SocketCall_SetBufLockSockOpt, SetBufLockSockOptSystemCall>();
 		case LINGER:
 			return create_call.operator()<
 				SocketCall_GetLingerSockOpt, GetLingerSockOptSystemCall,
