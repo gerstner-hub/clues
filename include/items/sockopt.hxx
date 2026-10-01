@@ -171,10 +171,12 @@ public: // types
 		LINGER                = SO_LINGER,                ///< get/set the current linger option; uses `struct linger`.
 		LOCK_FILTER           = SO_LOCK_FILTER,           ///< lock any currently installed BPF programs on the socket with no way of turning the lock off again. This still takes a boolean.
 		MARK                  = SO_MARK,                  ///< get/set the mark used for each packet sent through the socket. Takes a `uint32_t`.
+		RCVMARK               = SO_RCVMARK,               ///< get/set boolean option controlling reception of SO_MARK ancillary messages.
 		NO_CHECK              = SO_NO_CHECK,              ///< don't calculate checksum for outgoing UDP packets, boolean option.
 		OOBINLINE             = SO_OOBINLINE,             ///< receive out-of-band data directly in the receive data stream. Boolean get/set option.
 		PASSCRED              = SO_PASSCRED,              ///< (AF_UNIX) get/set boolean whether to receive SCM_CREDENTIALS control messages.
 		PASSSEC               = SO_PASSSEC,               ///< (AF_UNIX) get/set boolean whether to receive SCM_SECURITY control messages.
+		PASSPIDFD             = SO_PASSPIDFD,             ///< (AF_UNIX) get/set boolean whether to receive SCM_PIDFD control messages.
 		PEEK_OFF              = SO_PEEK_OFF,              ///< (AF_UNIX) get/set offset to be maintained in the context of MSG_PEEK `recv()` calls. `int` value.
 		PEERCRED              = SO_PEERCRED,              ///< (AF_UNIX) get the `struct ucred` of the peer used during `connect()` or `socketpair()` time.
 		PEERSEC               = SO_PEERSEC,               ///< (AF_UNIX) get a string describing the security context of the peer. Content depends on the LSM in effect.
@@ -188,6 +190,7 @@ public: // types
 		SNDTIMEO_OLD          = SO_SNDTIMEO_OLD,          ///< get/set send timeout in `struct timeval` argument.
 		RCVTIMEO_NEW          = SO_RCVTIMEO_NEW,          ///< get/set receive timeout in `struct timespec` argument.
 		SNDTIMEO_NEW          = SO_SNDTIMEO_NEW,          ///< get/set send timeout in `struct timespec` argument.
+		RESERVE_MEM           = SO_RESERVE_MEM,           ///< get/set memory to reserve in kernel for socket. int argument in bytes.
 		REUSEADDR             = SO_REUSEADDR,             ///< get/set reuse address boolean option.
 		REUSEPORT             = SO_REUSEPORT,             ///< get/set reuse port boolean option.
 		RXQ_OVFL              = SO_RXQ_OVFL,              ///< get/set boolean option whether to supply a 32-bit value ancillary message indicating the number of dropped packets.
@@ -197,6 +200,7 @@ public: // types
 		TIMESTAMP             = SO_TIMESTAMP,             ///< get/set reception of `SCM_TIMESTAMP` control messages. Boolean option.
 		TIMESTAMPNS           = SO_TIMESTAMPNS,           ///< get/set reception of `SCM_TIMESTAMPNS` control messages. Boolean option.
 		TYPE                  = SO_TYPE,                  ///< get the socket type. Integer value.
+		TXREHASH              = SO_TXREHASH,              ///< get/set boolean option, whether to allow the kernel to rethink the tx queue to use in ertain situations.
 		BUSY_POLL             = SO_BUSY_POLL,             ///< get/set a poll duration in microseconds for `recv()` calls on the socket. Integer option.
 		PREFER_BUSY_POLL      = SO_PREFER_BUSY_POLL,      ///< declare that the application will regularly busy poll the socket, allowing the kernel to disable interrupts. Boolean option.
 		BUSY_POLL_BUDGET      = SO_BUSY_POLL_BUDGET,      ///< controls the maximum number of packets a single busy poll is allowed to process. Integer option.
