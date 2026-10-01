@@ -116,6 +116,7 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_PREFER_BUSY_POLL);
 		CASE_ENUM_TO_STR(SO_BUSY_POLL_BUDGET);
 		CASE_ENUM_TO_STR(SO_BUF_LOCK);
+		CASE_ENUM_TO_STR(SO_NETNS_COOKIE);
 		default: return "SO_???";
 	}
 }

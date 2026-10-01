@@ -1,4 +1,5 @@
 #include <utility>
+#include <stdint.h>
 
 #include <netinet/in.h>
 #include <unistd.h>
@@ -157,6 +158,9 @@ void sol_socket() {
 	if (ret == 0) {
 		close(pidfd);
 	}
+
+	uint64_t net_ns;
+	get_sock_opt<uint64_t>(s, SO_NETNS_COOKIE, net_ns);
 
 	close(s);
 	close(unix_socks[0]);

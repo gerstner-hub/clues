@@ -206,6 +206,7 @@ public: // types
 		PREFER_BUSY_POLL      = SO_PREFER_BUSY_POLL,      ///< declare that the application will regularly busy poll the socket, allowing the kernel to disable interrupts. Boolean option.
 		BUSY_POLL_BUDGET      = SO_BUSY_POLL_BUDGET,      ///< controls the maximum number of packets a single busy poll is allowed to process. Integer option.
 		BUF_LOCK              = SO_BUF_LOCK,              ///< get/set an integer bitmask controlling whether the kernel may automatically change socket buffer sizes.
+		NETNS_COOKIE          = SO_NETNS_COOKIE,          ///< retrieve the network namespace ID the socket belongs to.
 	};
 
 	enum class TCPOption : int {

@@ -5,6 +5,7 @@
 
 // cosmos
 #include <cosmos/error/errno.hxx>
+#include <cosmos/namespace.hxx>
 
 // clues
 #include <clues/dso_export.h>
@@ -299,6 +300,9 @@ DEF_GET_SOCK_OPT_TYPE(BufLock, item::GetBufLockSockOpt, );
 
 /// SetBufLockSockOptSystemCall sets a LockMask bitmask.
 DEF_SET_SOCK_OPT_TYPE(BufLock, item::SetBufLockSockOpt, );
+
+/// GetNetNSCookieSockOptSystemCall retrieves an uint64 cosmos::NetworkNS ID.
+DEF_GET_SOCK_OPT_TYPE(NetNSCookie, item::GetSockOptVal<cosmos::NetworkNS>, );
 
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL

@@ -1,13 +1,12 @@
 // C++
 #include <algorithm>
-#include <sstream>
 #include <type_traits>
-#include <utility>
 
 // cosmos
 #include <cosmos/compiler.hxx>
 #include <cosmos/formatting.hxx>
 #include <cosmos/io/ILogger.hxx>
+#include <cosmos/namespace.hxx>
 
 // clues
 #include <clues/format_enum.hxx>
@@ -213,6 +212,7 @@ template class PointerToScalar<cosmos::Errno>;
 template class PointerToScalar<cosmos::FileNum>;
 template class PointerToScalar<cosmos::ProcessID>;
 template class PointerToScalar<cosmos::SignalNr>;
+template class PointerToScalar<cosmos::NetworkNS>;
 template class PointerToScalar<item::SocketDomain::Domain>;
 template class PointerToScalar<item::SocketType::Type>;
 template class PointerToScalar<void*>;

@@ -188,6 +188,9 @@ SystemCallPtr create_socket_opt_syscall(
 		case PROTOCOL:
 			return create_call.operator()<
 				SocketCall_GetProtocolSockOpt, GetProtocolSockOptSystemCall>();
+		case NETNS_COOKIE:
+			return create_call.operator()<
+				SocketCall_GetNetNSCookieSockOpt, GetNetNSCookieSockOptSystemCall>();
 		case ERROR:
 			/* it is not allowed to SET the errno */
 			return create_call.operator()<
