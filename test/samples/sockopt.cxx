@@ -1,6 +1,7 @@
 #include <utility>
 
 #include <netinet/in.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <unistd.h>
@@ -151,6 +152,11 @@ void sol_socket() {
 
 	set_sock_int_opt(s, SO_BUF_LOCK, SOCK_RCVBUF_LOCK);
 	get_sock_int_opt(s, SO_BUF_LOCK);
+
+	auto [ret, pidfd] = get_sock_int_opt(unix_socks[0], SO_PEERPIDFD);
+	if (ret == 0) {
+		close(pidfd);
+	}
 
 	close(s);
 	close(unix_socks[0]);

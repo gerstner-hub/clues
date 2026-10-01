@@ -10,6 +10,34 @@ namespace clues {
 
 using OptLevel = item::SockOptLevel::Level;
 
+void GetSockOptSystemCall::updateFDTracking(const Tracee &proc) {
+	using Level = item::SockOptLevel;
+
+	auto track_pid_fd = [this, &proc]() -> void {
+		auto &sc = dynamic_cast<
+			const GetFileDescSockOptSystemCall&>(*this);
+
+		const auto fd = *sc.optval.value();
+
+		FDInfo info{FDInfo::PID_FD, fd};
+		info.mode = cosmos::OpenMode::READ_WRITE;
+		info.flags = cosmos::OpenFlags{cosmos::OpenFlag::CLOEXEC};
+		trackFD(proc, std::move(info));
+	};
+
+	switch (level.level()) {
+		case Level::SOCKET: {
+			using Option = item::SockOptName::SocketOption;
+			switch (std::get<Option>(name.option())) {
+				case Option::PEERPIDFD: return track_pid_fd();
+				default: break;
+			}
+			break;
+		}
+		default: break;
+	}
+}
+
 SystemCallPtr create_socket_opt_syscall(
 		const int optname,
 		const SockOptType type,
@@ -127,6 +155,11 @@ SystemCallPtr create_socket_opt_syscall(
 			return create_call.operator()<
 				void, void,
 				SocketCall_SetFileDescSockOpt, SetFileDescSockOptSystemCall>();
+		case PEERPIDFD:
+			/* no SET exists for these */
+			return create_call.operator()<
+				SocketCall_GetFileDescSockOpt, GetFileDescSockOptSystemCall,
+				void, void>();
 		case BUF_LOCK:
 			return create_call.operator()<
 				SocketCall_GetBufLockSockOpt, GetBufLockSockOptSystemCall,

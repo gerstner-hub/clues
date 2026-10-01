@@ -180,6 +180,7 @@ public: // types
 		PEEK_OFF              = SO_PEEK_OFF,              ///< (AF_UNIX) get/set offset to be maintained in the context of MSG_PEEK `recv()` calls. `int` value.
 		PEERCRED              = SO_PEERCRED,              ///< (AF_UNIX) get the `struct ucred` of the peer used during `connect()` or `socketpair()` time.
 		PEERSEC               = SO_PEERSEC,               ///< (AF_UNIX) get a string describing the security context of the peer. Content depends on the LSM in effect.
+		PEERPIDFD             = SO_PEERPIDFD,             ///< (AF_UNIX) obtain a PIDFD of the process which called connect() on the socket.
 		PRIORITY              = SO_PRIORITY,              ///< get/set the priority used for packets sent on the socket. Integer value.
 		PROTOCOL              = SO_PROTOCOL,              ///< get the socket's protocol option. Integer value. Interpretation is depending on SocketDomain.
 		RCVBUF                = SO_RCVBUF,                ///< get/set the maximum receive buffer size used in the kernel. Integer value.

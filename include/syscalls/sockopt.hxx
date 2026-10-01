@@ -70,6 +70,8 @@ protected: // functions
 		 */
 		addParameters(sockfd, level, name, *optvalp, optlen);
 	}
+
+	void updateFDTracking(const Tracee &proc) override;
 };
 
 /// Base class for setsockopt() system call variants.
@@ -274,6 +276,10 @@ DEF_GET_SOCK_OPT_TYPE(PeerCred, item::GetPeerCredSockOpt, );
  * - SocketOption::ATTACH_REUSEPORT_EBPF (both pass a `bpf()` file desc)
  **/
 DEF_SET_SOCK_OPT_TYPE(FileDesc, item::SetSockOptVal<cosmos::FileNum>,
+		ItemCfg({}, "fd", "int*"));
+
+/// GetFileDescSockOptSystemCall retrieves a file descriptor from a socket.
+DEF_GET_SOCK_OPT_TYPE(FileDesc, item::GetSockOptVal<cosmos::FileNum>,
 		ItemCfg({}, "fd", "int*"));
 
 /// GetTimeValSockOptSystemCall receives a `struct timeval`.
