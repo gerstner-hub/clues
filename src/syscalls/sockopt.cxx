@@ -115,6 +115,7 @@ SystemCallPtr create_socket_opt_syscall(
 		case WIFI_STATUS:
 		case NOFCS:
 		case ZEROCOPY:
+		case RIGHTS_NOTRUNC:
 			return create_call.operator()<SocketCall_GetBoolSockOpt, GetBoolSockOptSystemCall, SocketCall_SetBoolSockOpt, SetBoolSockOptSystemCall>();
 		case BUSY_POLL:
 		case INCOMING_CPU:

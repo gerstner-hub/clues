@@ -126,6 +126,7 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_NOFCS);
 		CASE_ENUM_TO_STR(SO_ZEROCOPY);
 		CASE_ENUM_TO_STR(SO_CNX_ADVICE);
+		CASE_ENUM_TO_STR(SO_RIGHTS_NOTRUNC);
 		default: return "SO_???";
 	}
 }

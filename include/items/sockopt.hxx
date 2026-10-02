@@ -150,6 +150,12 @@ public: // types
 
 	};
 
+#ifndef SO_RIGHTS_NOTRUNC
+	// this was only added in kernel 7.3, not yet found in most userspace
+	// headers
+#	define SO_RIGHTS_NOTRUNC 85 /* generic UAPI value */
+#endif
+
 	enum class SocketOption : int {
 		ACCEPTCONN            = SO_ACCEPTCONN,            ///< read-only boolean option whether the socket is in listening state.
 		ATTACH_FILTER         = SO_ATTACH_FILTER,         ///< set a classic BPF filter program passed in `struct fprog` argument.
@@ -183,6 +189,7 @@ public: // types
 		PASSSEC               = SO_PASSSEC,               ///< (AF_UNIX) get/set boolean whether to receive SCM_SECURITY control messages.
 		PASSPIDFD             = SO_PASSPIDFD,             ///< (AF_UNIX) get/set boolean whether to receive SCM_PIDFD control messages.
 		PASSRIGHTS            = SO_PASSRIGHTS,            ///< (AF_UNIX) get/set boolean whether to allow reception of SCM_RIGHTS control messages (default: yes).
+		RIGHTS_NOTRUNC        = SO_RIGHTS_NOTRUNC,        ///< (AF_UNIX) get/set boolean whether to truncate SCM_RIGHTS control messages on error (default) or report an errno instead of a file descriptor. Only available since kernel 7.3.
 		PEEK_OFF              = SO_PEEK_OFF,              ///< (AF_UNIX) get/set offset to be maintained in the context of MSG_PEEK `recv()` calls. `int` value.
 		PEERCRED              = SO_PEERCRED,              ///< (AF_UNIX) get the `struct ucred` of the peer used during `connect()` or `socketpair()` time.
 		PEERSEC               = SO_PEERSEC,               ///< (AF_UNIX) get a string describing the security context of the peer. Content depends on the LSM in effect.
