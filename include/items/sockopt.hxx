@@ -235,6 +235,7 @@ public: // types
 		GET_FILTER            = SO_GET_FILTER,            ///< returns the currently installed filter program into an array of `struct sock_fprog*`. `optlen` is determines the amount of array entries on in/output.
 		ATTACH_REUSEPORT_CBPF = SO_ATTACH_REUSEPORT_CBPF, ///< similar to ATTACH_FILTER, assigns program to control packet distribution in SO_REUSEPORT scenarios.
 		ATTACH_REUSEPORT_EBPF = SO_ATTACH_REUSEPORT_EBPF, ///< similar to ATTACH_BPF for SO_REUSEPORT scenarios.
+		BPF_EXTENSIONS        = SO_BPF_EXTENSIONS,        ///< get-only `int` option. Returns SKF_AD_MAX, the highest BPF extension value supported by the kernel.
 		BINDTODEVICE          = SO_BINDTODEVICE,          ///< receive only packets from the given network interface; string option.
 		BINDTOIFINDEX         = SO_BINDTOIFINDEX,         ///< receive only packets from the given network interface; interface index int option.
 		BROADCAST             = SO_BROADCAST,             ///< set/get broadcast boolean option.

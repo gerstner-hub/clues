@@ -132,6 +132,7 @@ SystemCallPtr create_socket_opt_syscall(
 		case BUSY_POLL_BUDGET:
 		case RESERVE_MEM:
 		case CNX_ADVICE:
+		case BPF_EXTENSIONS:
 			return create_call.operator()<
 				SocketCall_GetIntSockOpt, GetIntSockOptSystemCall,
 				SocketCall_SetIntSockOpt, SetIntSockOptSystemCall>();
