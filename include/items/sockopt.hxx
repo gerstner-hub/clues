@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <linux/net_tstamp.h>
+#include <linux/sock_diag.h>
 
 // cosmos
 #include <cosmos/net/SocketOptions.hxx>
@@ -302,6 +303,7 @@ public: // types
 		CNX_ADVICE            = SO_CNX_ADVICE,            ///< inform the kernel that the current route is bad, this is kind of a command, not a persistent option. Only supports set, acts on `optval == 1`. Other `optval`s could be supported in the future, kind of an enum, without defined constants at the moment.
 		DEVMEM_DONTNEED       = SO_DEVMEM_DONTNEED,       ///< set-only "command" supplying a `struct dmabuf_token` to tell the kernel which DMA buffers are no longer needed by userspace.
 		TXTIME                = SO_TXTIME,                ///< get/set a `struct sock_txtime`. Allows to send SCM_TXTIME control messages to control when to send data out.
+		MEMINFO               = SO_MEMINFO,               ///< get-only option for an array of uint32 values describing the memory usage for the socket in the kernel.
 	};
 
 	enum class TCPOption : int {
@@ -713,6 +715,43 @@ public: // functions
 	}
 
 	std::string str() const override;
+};
+
+class GetMemInfoSockOpt :
+		public PointerOutValue {
+public: // functions
+
+	explicit GetMemInfoSockOpt(const GetSockOptLen &optlen) :
+			item::PointerOutValue{ItemCfg{
+				.label = "optval",
+				.desc = "uint32_t[]"}},
+			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+	/// Returns the array of uint32_t received in the Tracee.
+	/**
+	 * To interpret the data use the indices defined by the enum values
+	 * SK_MEMINFO_*.
+	 **/
+	const std::vector<uint32_t>& meminfo() const {
+		return m_meminfo;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processData(const Tracee &) override {
+		m_meminfo.clear();
+	}
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	std::vector<uint32_t> m_meminfo;
+	const GetSockOptLen &m_optlen;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

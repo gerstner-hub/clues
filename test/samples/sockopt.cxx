@@ -180,6 +180,9 @@ void sol_socket() {
 	txtime.flags = SOF_TXTIME_DEADLINE_MODE;
 	set_sock_opt(s, SO_TXTIME, txtime);
 
+	uint32_t meminfo[SK_MEMINFO_VARS];
+	get_sock_opt(s, SO_MEMINFO, meminfo);
+
 	close(s);
 	close(unix_socks[0]);
 	close(unix_socks[1]);

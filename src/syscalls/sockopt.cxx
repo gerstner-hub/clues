@@ -212,6 +212,9 @@ SystemCallPtr create_socket_opt_syscall(
 			return create_call.operator()<
 				SocketCall_GetTxTimeSockOpt, GetTxTimeSockOptSystemCall,
 				SocketCall_SetTxTimeSockOpt, SetTxTimeSockOptSystemCall>();
+		case MEMINFO:
+			return create_call.operator()<
+				SocketCall_GetMemInfoSockOpt, GetMemInfoSockOptSystemCall>();
 		case ERROR:
 			/* it is not allowed to SET the errno */
 			return create_call.operator()<

@@ -131,6 +131,7 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_RIGHTS_NOTRUNC);
 		CASE_ENUM_TO_STR(SO_DEVMEM_DONTNEED);
 		CASE_ENUM_TO_STR(SO_TXTIME);
+		CASE_ENUM_TO_STR(SO_MEMINFO);
 		default: return "SO_???";
 	}
 }
@@ -448,6 +449,50 @@ std::string SetTxTimeSockOpt::str() const {
 	}
 
 	return TxTimeSockOptBase::str(*data());
+}
+
+void GetMemInfoSockOpt::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue())
+		return;
+
+	const auto num_elements = (*m_optlen.value()) / sizeof(uint32_t);
+
+	proc.readVector(asPtr(), m_meminfo, num_elements, StopAtZero{false});
+}
+
+namespace {
+
+const char* index2meminfo_label(const int i) {
+	switch (i) {
+		CASE_ENUM_TO_STR(SK_MEMINFO_RMEM_ALLOC);
+		CASE_ENUM_TO_STR(SK_MEMINFO_RCVBUF);
+		CASE_ENUM_TO_STR(SK_MEMINFO_WMEM_ALLOC);
+		CASE_ENUM_TO_STR(SK_MEMINFO_SNDBUF);
+		CASE_ENUM_TO_STR(SK_MEMINFO_FWD_ALLOC);
+		CASE_ENUM_TO_STR(SK_MEMINFO_WMEM_QUEUED);
+		CASE_ENUM_TO_STR(SK_MEMINFO_OPTMEM);
+		CASE_ENUM_TO_STR(SK_MEMINFO_BACKLOG);
+		CASE_ENUM_TO_STR(SK_MEMINFO_DROPS);
+		default: return "SK_MEMINFO_???";
+	}
+}
+
+} // end anon ns
+
+std::string GetMemInfoSockOpt::str() const {
+	std::string ret{"["};
+
+	for (size_t i = 0; i < m_meminfo.size(); i++) {
+		if (i != 0) {
+			ret += ", ";
+		}
+		ret += std::format("{} = {}",
+			index2meminfo_label((int)i),
+			m_meminfo[i]
+		);
+	}
+
+	return ret + "]";
 }
 
 } // end ns

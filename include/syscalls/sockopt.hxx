@@ -320,6 +320,9 @@ DEF_GET_SOCK_OPT_TYPE(TxTime, item::GetTxTimeSockOpt, );
 /// SetTxTimeSockOpt supplies a `struct sock_txtime` value.
 DEF_SET_SOCK_OPT_TYPE(TxTime, item::SetTxTimeSockOpt, );
 
+/// GetMemInfoSockOpt receives an array of uint32.
+DEF_GET_SOCK_OPT_TYPE(MemInfo, item::GetMemInfoSockOpt, );
+
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL
 #undef DEF_SET_SOCK_OPT_TYPE
