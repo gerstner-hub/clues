@@ -203,7 +203,8 @@ SystemCallPtr create_socket_opt_syscall(
 				SocketCall_GetErrorSockOpt, GetErrorSockOptSystemCall>();
 		/* these take no option argument at all, use unknown option
 		 * type for them */
-		case DETACH_BPF: return create_unknown_call();
+		case DETACH_BPF:
+		case DETACH_REUSEPORT_BPF: return create_unknown_call();
 		default: break;
 	}
 

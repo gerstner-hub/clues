@@ -162,6 +162,7 @@ public: // types
 		BSDCOMPAT             = SO_BSDCOMPAT,             ///< no longer available boolean option for BSD bug-to-bug compatibility.
 		DEBUG                 = SO_DEBUG,                 ///< set/get boolean socket debugging option.
 		DETACH_BPF            = SO_DETACH_BPF,            ///< remove any active FILTER/BPF program, no option data, synonym to DETACH_FILTER.
+		DETACH_REUSEPORT_BPF  = SO_DETACH_REUSEPORT_BPF,  ///< remove any active FILTER/BPF program for REUSEPORT behaviour, no option data.
 		DOMAIN                = SO_DOMAIN,                ///< returns the SocketDomain::Domain the socket belongs too, read-only option.
 		ERROR                 = SO_ERROR,                 ///< get and clear any pending socket error. Integer errno option.
 		DONTROUTE             = SO_DONTROUTE,             ///< get/set boolean option defining whether gateways may be used, corresponding to cosmos::MessageFlag::DONTROUTE used in send().
