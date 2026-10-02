@@ -216,6 +216,7 @@ public: // types
 		WIFI_STATUS           = SO_WIFI_STATUS,           ///< get/set boolean option to enable reception of control messages indicating low level WIFI status.
 		NOFCS                 = SO_NOFCS,                 ///< get/set boolean option to disable checksuming on packet socket TX frames; let the hardware to the checksumming (FCS = frame check sequence).
 		ZEROCOPY              = SO_ZEROCOPY,              ///< get/set boolean option to enable zerocopy operation on a socket, allows use of MSG_ZEROCOPY flag.
+		CNX_ADVICE            = SO_CNX_ADVICE,            ///< inform the kernel that the current route is bad, this is kind of a command, not a persistent option. Only supports set, acts on `optval == 1`. Other `optval`s could be supported in the future, kind of an enum, without defined constants at the moment.
 	};
 
 	enum class TCPOption : int {
