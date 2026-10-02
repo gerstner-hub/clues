@@ -353,6 +353,8 @@ void Tracee::syncFDsAfterExec() {
 		for (auto it = fd_info_map.begin(); it != fd_info_map.end(); it++) {
 			if (left_fds.count(it->first) == 0) {
 				it = fd_info_map.erase(it);
+				if (it == fd_info_map.end())
+					break;
 			}
 		}
 	} catch (const cosmos::ApiError &ex) {
