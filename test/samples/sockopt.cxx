@@ -10,6 +10,8 @@
 #include <linux/filter.h>
 #include <linux/socket.h>
 
+#include <cosmos/net/network.hxx>
+
 namespace {
 
 int set_int_opt(int sock, const int level, const int name, const int val) {
@@ -84,6 +86,11 @@ void sol_socket() {
 	stropt.resize(IFNAMSIZ);
 	len = stropt.size();
 	getsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, stropt.data(), &len);
+
+	const auto loopback_index = cosmos::net::name_to_index("lo");
+
+	set_sock_int_opt(s, SO_BINDTOIFINDEX, (int)loopback_index);
+	get_sock_int_opt(s, SO_BINDTOIFINDEX);
 
 	struct sock_fprog fprog;
 	fprog.len = 1;

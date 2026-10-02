@@ -6,6 +6,7 @@
 // cosmos
 #include <cosmos/error/errno.hxx>
 #include <cosmos/namespace.hxx>
+#include <cosmos/net/types.hxx>
 
 // clues
 #include <clues/dso_export.h>
@@ -303,6 +304,12 @@ DEF_SET_SOCK_OPT_TYPE(BufLock, item::SetBufLockSockOpt, );
 
 /// GetNetNSCookieSockOptSystemCall retrieves an uint64 cosmos::NetworkNS ID.
 DEF_GET_SOCK_OPT_TYPE(NetNSCookie, item::GetSockOptVal<cosmos::NetworkNS>, );
+
+/// SetInterfaceIndexSockOptSystemCall supplies an `int` denoting a network InterfaceIndex
+DEF_SET_SOCK_OPT_TYPE(InterfaceIndex, item::SetSockOptVal<cosmos::InterfaceIndex>, );
+
+/// GetInterfaceIndexSockOptSystemCall retreives an `int` denoting a network InterfaceIndex
+DEF_GET_SOCK_OPT_TYPE(InterfaceIndex, item::GetSockOptVal<cosmos::InterfaceIndex>, );
 
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL

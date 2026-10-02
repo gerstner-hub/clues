@@ -213,6 +213,7 @@ template class PointerToScalar<cosmos::FileNum>;
 template class PointerToScalar<cosmos::ProcessID>;
 template class PointerToScalar<cosmos::SignalNr>;
 template class PointerToScalar<cosmos::NetworkNS>;
+template class PointerToScalar<cosmos::InterfaceIndex>;
 template class PointerToScalar<item::SocketDomain::Domain>;
 template class PointerToScalar<item::SocketType::Type>;
 template class PointerToScalar<void*>;

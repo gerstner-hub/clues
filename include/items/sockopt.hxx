@@ -158,6 +158,7 @@ public: // types
 		ATTACH_REUSEPORT_CBPF = SO_ATTACH_REUSEPORT_CBPF, ///< similar to ATTACH_FILTER, assigns program to control packet distribution in SO_REUSEPORT scenarios.
 		ATTACH_REUSEPORT_EBPF = SO_ATTACH_REUSEPORT_EBPF, ///< similar to ATTACH_BPF for SO_REUSEPORT scenarios.
 		BINDTODEVICE          = SO_BINDTODEVICE,          ///< receive only packets from the given network interface; string option.
+		BINDTOIFINDEX         = SO_BINDTOIFINDEX,         ///< receive only packets from the given network interface; interface index int option.
 		BROADCAST             = SO_BROADCAST,             ///< set/get broadcast boolean option.
 		BSDCOMPAT             = SO_BSDCOMPAT,             ///< no longer available boolean option for BSD bug-to-bug compatibility.
 		DEBUG                 = SO_DEBUG,                 ///< set/get boolean socket debugging option.

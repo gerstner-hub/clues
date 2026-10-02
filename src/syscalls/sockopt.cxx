@@ -142,6 +142,10 @@ SystemCallPtr create_socket_opt_syscall(
 			/* only GET is meaningfully supported here */
 			return create_call.operator()<
 				SocketCall_GetPeerCredSockOpt, GetPeerCredSockOptSystemCall>();
+		case BINDTOIFINDEX:
+			return create_call.operator()<
+				SocketCall_GetInterfaceIndexSockOpt, GetInterfaceIndexSockOptSystemCall,
+				SocketCall_SetInterfaceIndexSockOpt, SetInterfaceIndexSockOptSystemCall>();
 		case ATTACH_FILTER:
 			/* for getsockopt() the option is called
 			 * SO_GET_FILTER, but it's the same literal
