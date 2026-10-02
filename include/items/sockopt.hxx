@@ -86,6 +86,78 @@ protected: // data
 	const SetSockOptLen &m_optlen;
 };
 
+/// Specialized PointerInValue to handle `struct` types in setsockopt() context.
+template <class STRUCT>
+class SetSockOptStruct :
+		public item::PointerInValue {
+public: // types
+
+	using StructType = STRUCT;
+
+public: // functions
+
+	explicit SetSockOptStruct(const SetSockOptLen &optlen,
+			const ItemCfg &cfg) :
+			item::PointerInValue{cfg.applyDefaults(
+				ItemCfg{.label = "optval"})},
+			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+	const std::optional<STRUCT>& data() const {
+		return m_struct;
+	}
+
+	std::string str() const override = 0;
+
+protected: // functions
+
+	void processData(const Tracee &proc) override;
+
+protected: // data
+
+	const SetSockOptLen &m_optlen;
+	std::optional<STRUCT> m_struct;
+};
+
+/// Specialized PointerOutValue to handle `struct` types in getsockopt() context.
+template <typename STRUCT>
+class GetSockOptStruct :
+		public item::PointerOutValue {
+public: // data
+
+	using StructType = STRUCT;
+
+public: // functions
+
+	explicit GetSockOptStruct(const GetSockOptLen &optlen,
+			const ItemCfg &cfg) :
+			item::PointerOutValue{cfg.applyDefaults(ItemCfg{
+				.label = "optval"
+			})},
+			m_optlen{optlen} {
+	}
+
+	const std::optional<STRUCT>& data() const {
+		return m_struct;
+	}
+
+	virtual std::string str() const override = 0;
+
+protected: // functions
+
+	void processData(const Tracee &) override {
+		m_struct.reset();
+	}
+
+	void updateData(const Tracee &proc) override;
+
+protected: // data
+
+	const GetSockOptLen &m_optlen;
+	std::optional<STRUCT> m_struct;
+};
+
 /// Socket option level selection.
 class SockOptLevel :
 		public ValueInParameter {
@@ -392,30 +464,15 @@ protected: // data
 };
 
 class GetPeerCredSockOpt :
-		public PointerOutValue {
+		public GetSockOptStruct<cosmos::UnixCredentials> {
 public: // functions
 
 	explicit GetPeerCredSockOpt(const GetSockOptLen &optlen) :
-			PointerOutValue{ItemCfg{
-				.label = "creds",
-				.desc = "struct ucred*"}},
-			m_optlen{optlen} {
+			GetSockOptStruct{optlen, ItemCfg{
+				.desc = "struct ucred*"}} {
 	}
 
 	std::string str() const override;
-
-protected: // functions
-
-	void processData(const Tracee &) override {
-		m_creds.reset();
-	}
-
-	void updateData(const Tracee &proc) override;
-
-protected: // data
-
-	const GetSockOptLen &m_optlen;
-	std::optional<cosmos::UnixCredentials> m_creds;
 };
 
 /// Contains the socket protocol for SOL_SOCKET/SO_PROTOCOL.
@@ -602,43 +659,24 @@ protected: // functions
 	void processData(const Tracee &proc) override;
 };
 
+/*
+ * define this here on our own, since <linux/uio.h> makes the compiler
+ * choke over redefinition of `struct iovec`.
+ */
+struct dmabuf_token {
+	uint32_t token_start;
+	uint32_t token_count;
+};
+
 class SetDevMemDontNeedSockOpt :
-		public item::PointerInValue {
-public: // types
-
-	/*
-	 * define this here on our own, since <linux/uio.h> makes the compiler
-	 * choke over redefinition of `struct iovec`.
-	 */
-	struct dmabuf_token {
-		uint32_t token_start;
-		uint32_t token_count;
-	};
-
+		public SetSockOptStruct<dmabuf_token> {
 public: // functions
 
 	explicit SetDevMemDontNeedSockOpt(const SetSockOptLen &optlen) :
-			item::PointerInValue{
-				ItemCfg{.label = "optval",
-					.desc = "struct dmabuf_token*"}},
-			m_optlen{optlen} {
-		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
-	}
-
-	std::optional<struct dmabuf_token> tokenStruct() const {
-		return m_token;
+			SetSockOptStruct{optlen, ItemCfg{.desc = "struct dmabuf_token*"}} {
 	}
 
 	std::string str() const override;
-
-protected: // functions
-
-	void processData(const Tracee &proc) override;
-
-protected: // data
-
-	const SetSockOptLen &m_optlen;
-	std::optional<dmabuf_token> m_token;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

@@ -164,6 +164,37 @@ void SockOptName::processData(const Tracee &) {
 	}
 }
 
+template <typename STRUCT>
+void SetSockOptStruct<STRUCT>::processData(const Tracee &proc) {
+	if (const auto len = m_optlen.value(); len < 0 ||
+			(size_t)len < sizeof(STRUCT)) {
+		m_struct.reset();
+		return;
+	}
+
+	if constexpr (requires (STRUCT& t) { t.raw(); }) {
+		proc.readRawStructIntoOptional(asPtr(), m_struct);
+	} else {
+		proc.readStructIntoOptional(asPtr(), m_struct);
+	}
+}
+
+template <typename STRUCT>
+void GetSockOptStruct<STRUCT>::updateData(const Tracee &proc) {
+	if (!m_call->hasResultValue()) {
+		return;
+	} else if (const auto len = *m_optlen.value();
+			len < 0 || (size_t)len < sizeof(STRUCT)) {
+		return;
+	}
+
+	if constexpr (requires (STRUCT& t) { t.raw(); }) {
+		proc.readRawStructIntoOptional(asPtr(), m_struct);
+	} else {
+		proc.readStructIntoOptional(asPtr(), m_struct);
+	}
+}
+
 void ClassicBPFSockOpt::processData(const Tracee &proc) {
 	m_prog.reset();
 	m_filters.clear();
@@ -240,23 +271,12 @@ void SetLingerSockOpt::processData(const Tracee &proc) {
 	fetch(proc, m_optlen.value());
 }
 
-void GetPeerCredSockOpt::updateData(const Tracee &proc) {
-	if (!m_call->hasResultValue()) {
-		return;
-	} else if (const auto len = *m_optlen.value();
-			len < 0 || (size_t)len < sizeof(struct ucred)) {
-		return;
-	}
-
-	proc.readRawStructIntoOptional(asPtr(), m_creds);
-}
-
 std::string GetPeerCredSockOpt::str() const {
-	if (!m_creds) {
+	if (!m_struct) {
 		return PointerOutValue::str();
 	}
 
-	const auto &creds = *m_creds;
+	const auto &creds = *data();
 
 	return std::format("{{pid={}, uid={}, gid={}}}",
 		cosmos::to_integral(creds.processID()),
@@ -382,22 +402,14 @@ void SetBufLockSockOpt::processData(const Tracee &proc) {
 }
 
 std::string SetDevMemDontNeedSockOpt::str() const {
-	if (!m_token) {
+	if (!data()) {
 		return item::PointerInValue::str();
 	}
 
+	const auto &token = *data();
+
 	return std::format("{{token_start={}, token_count={}}}",
-			m_token->token_start, m_token->token_count);
-}
-
-void SetDevMemDontNeedSockOpt::processData(const Tracee &proc) {
-	if (const auto len = m_optlen.value(); len < 0 ||
-			(size_t)len < sizeof(struct dmabuf_token)) {
-		m_token.reset();
-		return;
-	}
-
-	proc.readStructIntoOptional(asPtr(), m_token);
+			token.token_start, token.token_count);
 }
 
 } // end ns
