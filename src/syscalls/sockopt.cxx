@@ -208,6 +208,10 @@ SystemCallPtr create_socket_opt_syscall(
 		case NETNS_COOKIE:
 			return create_call.operator()<
 				SocketCall_GetNetNSCookieSockOpt, GetNetNSCookieSockOptSystemCall>();
+		case TXTIME:
+			return create_call.operator()<
+				SocketCall_GetTxTimeSockOpt, GetTxTimeSockOptSystemCall,
+				SocketCall_SetTxTimeSockOpt, SetTxTimeSockOptSystemCall>();
 		case ERROR:
 			/* it is not allowed to SET the errno */
 			return create_call.operator()<

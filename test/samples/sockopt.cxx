@@ -175,6 +175,11 @@ void sol_socket() {
 	dma.token_count = 32;
 	set_sock_opt(s, SO_DEVMEM_DONTNEED, dma);
 
+	struct sock_txtime txtime;
+	get_sock_opt(s, SO_TXTIME, txtime);
+	txtime.flags = SOF_TXTIME_DEADLINE_MODE;
+	set_sock_opt(s, SO_TXTIME, txtime);
+
 	close(s);
 	close(unix_socks[0]);
 	close(unix_socks[1]);

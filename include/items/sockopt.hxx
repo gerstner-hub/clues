@@ -7,6 +7,7 @@
 // Linux
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <linux/net_tstamp.h>
 
 // cosmos
 #include <cosmos/net/SocketOptions.hxx>
@@ -298,6 +299,7 @@ public: // types
 		ZEROCOPY              = SO_ZEROCOPY,              ///< get/set boolean option to enable zerocopy operation on a socket, allows use of MSG_ZEROCOPY flag.
 		CNX_ADVICE            = SO_CNX_ADVICE,            ///< inform the kernel that the current route is bad, this is kind of a command, not a persistent option. Only supports set, acts on `optval == 1`. Other `optval`s could be supported in the future, kind of an enum, without defined constants at the moment.
 		DEVMEM_DONTNEED       = SO_DEVMEM_DONTNEED,       ///< set-only "command" supplying a `struct dmabuf_token` to tell the kernel which DMA buffers are no longer needed by userspace.
+		TXTIME                = SO_TXTIME,                ///< get/set a `struct sock_txtime`. Allows to send SCM_TXTIME control messages to control when to send data out.
 	};
 
 	enum class TCPOption : int {
@@ -675,6 +677,37 @@ public: // functions
 
 	explicit SetDevMemDontNeedSockOpt(const SetSockOptLen &optlen) :
 			SetSockOptStruct{optlen, ItemCfg{.desc = "struct dmabuf_token*"}} {
+	}
+
+	std::string str() const override;
+};
+
+class TxTimeSockOptBase {
+protected:
+	std::string str(const sock_txtime&) const;
+};
+
+class GetTxTimeSockOpt :
+		public GetSockOptStruct<sock_txtime>,
+		public TxTimeSockOptBase {
+public: // functions
+
+	explicit GetTxTimeSockOpt(const GetSockOptLen &optlen) :
+			GetSockOptStruct{optlen, ItemCfg{
+				.desc = "struct sock_txtime*"}} {
+	}
+
+	std::string str() const override;
+};
+
+class SetTxTimeSockOpt :
+		public SetSockOptStruct<sock_txtime>,
+		public TxTimeSockOptBase {
+public: // functions
+
+	explicit SetTxTimeSockOpt(const SetSockOptLen &optlen) :
+			SetSockOptStruct{optlen, ItemCfg{
+				.desc = "struct sock_txtime*"}} {
 	}
 
 	std::string str() const override;

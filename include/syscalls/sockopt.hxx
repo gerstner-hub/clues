@@ -311,8 +311,14 @@ DEF_SET_SOCK_OPT_TYPE(InterfaceIndex, item::SetSockOptVal<cosmos::InterfaceIndex
 /// GetInterfaceIndexSockOptSystemCall retreives an `int` denoting a network InterfaceIndex
 DEF_GET_SOCK_OPT_TYPE(InterfaceIndex, item::GetSockOptVal<cosmos::InterfaceIndex>, );
 
-/// SetDevMemDontNeedSockOptSystemCal supplies a `struct dmabuf_token`
+/// SetDevMemDontNeedSockOptSystemCal supplies a `struct dmabuf_token` value.
 DEF_SET_SOCK_OPT_TYPE(DevMemDontNeed, item::SetDevMemDontNeedSockOpt, );
+
+/// GetTxTimeSockOpt retrieves a `struct sock_txtime` value.
+DEF_GET_SOCK_OPT_TYPE(TxTime, item::GetTxTimeSockOpt, );
+
+/// SetTxTimeSockOpt supplies a `struct sock_txtime` value.
+DEF_SET_SOCK_OPT_TYPE(TxTime, item::SetTxTimeSockOpt, );
 
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL

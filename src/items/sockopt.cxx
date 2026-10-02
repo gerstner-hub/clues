@@ -3,11 +3,12 @@
 
 // clues
 #include <clues/items/sockopt.hxx>
+#include <clues/items/time.hxx>
 #include <clues/logger.hxx>
 #include <clues/macros.h>
+#include <clues/private/utils.hxx>
 #include <clues/syscalls/sockopt.hxx>
 #include <clues/Tracee.hxx>
-#include <clues/private/utils.hxx>
 
 namespace clues::item {
 
@@ -129,6 +130,7 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_CNX_ADVICE);
 		CASE_ENUM_TO_STR(SO_RIGHTS_NOTRUNC);
 		CASE_ENUM_TO_STR(SO_DEVMEM_DONTNEED);
+		CASE_ENUM_TO_STR(SO_TXTIME);
 		default: return "SO_???";
 	}
 }
@@ -411,6 +413,41 @@ std::string SetDevMemDontNeedSockOpt::str() const {
 
 	return std::format("{{token_start={}, token_count={}}}",
 			token.token_start, token.token_count);
+}
+
+enum class TxTimeFlag : uint32_t {
+	DEADLINE_MODE = SOF_TXTIME_DEADLINE_MODE,
+	REPORT_ERRORS = SOF_TXTIME_REPORT_ERRORS
+};
+
+using TxTimeFlags = cosmos::BitMask<TxTimeFlag>;
+
+std::string TxTimeSockOptBase::str(const sock_txtime &txtime) const {
+	const TxTimeFlags flags{txtime.flags};
+
+	BITFLAGS_FORMAT_START(flags);
+	BITFLAGS_ADD(SOF_TXTIME_DEADLINE_MODE);
+	BITFLAGS_ADD(SOF_TXTIME_REPORT_ERRORS);
+
+	return std::format("{{clockid={}, flags={}}}",
+			item::ClockID::label(cosmos::ClockType{txtime.clockid}),
+			BITFLAGS_STR());
+}
+
+std::string GetTxTimeSockOpt::str() const {
+	if (!data()) {
+		return item::PointerOutValue::str();
+	}
+
+	return TxTimeSockOptBase::str(*data());
+}
+
+std::string SetTxTimeSockOpt::str() const {
+	if (!data()) {
+		return item::PointerInValue::str();
+	}
+
+	return TxTimeSockOptBase::str(*data());
 }
 
 } // end ns

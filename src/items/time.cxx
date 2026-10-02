@@ -215,8 +215,9 @@ std::string TimeValInOutParameter::str() const {
 	return ret;
 }
 
-std::string ClockID::str() const {
-	switch (valueAs<clockid_t>()) {
+std::string ClockID::label(const cosmos::ClockType clock) {
+	const auto raw = cosmos::to_integral(clock);
+	switch (raw) {
 		CASE_ENUM_TO_STR(CLOCK_REALTIME);
 		CASE_ENUM_TO_STR(CLOCK_REALTIME_COARSE);
 		CASE_ENUM_TO_STR(CLOCK_TAI);
@@ -226,7 +227,7 @@ std::string ClockID::str() const {
 		CASE_ENUM_TO_STR(CLOCK_BOOTTIME);
 		CASE_ENUM_TO_STR(CLOCK_PROCESS_CPUTIME_ID);
 		CASE_ENUM_TO_STR(CLOCK_THREAD_CPUTIME_ID);
-		default: return cosmos::sprintf("unknown (%d)", valueAs<clockid_t>());
+		default: return cosmos::sprintf("unknown (%d)", raw);
 	}
 }
 

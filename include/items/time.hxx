@@ -188,9 +188,13 @@ public: // functions
 			ValueInParameter{make_item_cfg("clockid", "clock identifier")} {
 	}
 
-	std::string str() const override;
+	std::string str() const override {
+		return label(m_type);
+	}
 
 	auto type() const { return m_type; }
+
+	static std::string label(const cosmos::ClockType clock);
 
 protected: // functions
 
