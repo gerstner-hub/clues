@@ -127,6 +127,7 @@ std::string opt_name_str(const SockOptName::SocketOption opt,
 		CASE_ENUM_TO_STR(SO_ZEROCOPY);
 		CASE_ENUM_TO_STR(SO_CNX_ADVICE);
 		CASE_ENUM_TO_STR(SO_RIGHTS_NOTRUNC);
+		CASE_ENUM_TO_STR(SO_DEVMEM_DONTNEED);
 		default: return "SO_???";
 	}
 }
@@ -378,6 +379,25 @@ void SetBufLockSockOpt::processData(const Tracee &proc) {
 	} else {
 		m_mask.reset();
 	}
+}
+
+std::string SetDevMemDontNeedSockOpt::str() const {
+	if (!m_token) {
+		return item::PointerInValue::str();
+	}
+
+	return std::format("{{token_start={}, token_count={}}}",
+			m_token->token_start, m_token->token_count);
+}
+
+void SetDevMemDontNeedSockOpt::processData(const Tracee &proc) {
+	if (const auto len = m_optlen.value(); len < 0 ||
+			(size_t)len < sizeof(struct dmabuf_token)) {
+		m_token.reset();
+		return;
+	}
+
+	proc.readStructIntoOptional(asPtr(), m_token);
 }
 
 } // end ns

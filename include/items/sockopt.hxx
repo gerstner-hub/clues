@@ -224,6 +224,7 @@ public: // types
 		NOFCS                 = SO_NOFCS,                 ///< get/set boolean option to disable checksuming on packet socket TX frames; let the hardware to the checksumming (FCS = frame check sequence).
 		ZEROCOPY              = SO_ZEROCOPY,              ///< get/set boolean option to enable zerocopy operation on a socket, allows use of MSG_ZEROCOPY flag.
 		CNX_ADVICE            = SO_CNX_ADVICE,            ///< inform the kernel that the current route is bad, this is kind of a command, not a persistent option. Only supports set, acts on `optval == 1`. Other `optval`s could be supported in the future, kind of an enum, without defined constants at the moment.
+		DEVMEM_DONTNEED       = SO_DEVMEM_DONTNEED,       ///< set-only "command" supplying a `struct dmabuf_token` to tell the kernel which DMA buffers are no longer needed by userspace.
 	};
 
 	enum class TCPOption : int {
@@ -599,6 +600,45 @@ public: // functions
 protected: // functions
 
 	void processData(const Tracee &proc) override;
+};
+
+class SetDevMemDontNeedSockOpt :
+		public item::PointerInValue {
+public: // types
+
+	/*
+	 * define this here on our own, since <linux/uio.h> makes the compiler
+	 * choke over redefinition of `struct iovec`.
+	 */
+	struct dmabuf_token {
+		uint32_t token_start;
+		uint32_t token_count;
+	};
+
+public: // functions
+
+	explicit SetDevMemDontNeedSockOpt(const SetSockOptLen &optlen) :
+			item::PointerInValue{
+				ItemCfg{.label = "optval",
+					.desc = "struct dmabuf_token*"}},
+			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	}
+
+	std::optional<struct dmabuf_token> tokenStruct() const {
+		return m_token;
+	}
+
+	std::string str() const override;
+
+protected: // functions
+
+	void processData(const Tracee &proc) override;
+
+protected: // data
+
+	const SetSockOptLen &m_optlen;
+	std::optional<dmabuf_token> m_token;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

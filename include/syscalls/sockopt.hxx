@@ -311,6 +311,9 @@ DEF_SET_SOCK_OPT_TYPE(InterfaceIndex, item::SetSockOptVal<cosmos::InterfaceIndex
 /// GetInterfaceIndexSockOptSystemCall retreives an `int` denoting a network InterfaceIndex
 DEF_GET_SOCK_OPT_TYPE(InterfaceIndex, item::GetSockOptVal<cosmos::InterfaceIndex>, );
 
+/// SetDevMemDontNeedSockOptSystemCal supplies a `struct dmabuf_token`
+DEF_SET_SOCK_OPT_TYPE(DevMemDontNeed, item::SetDevMemDontNeedSockOpt, );
+
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL
 #undef DEF_SET_SOCK_OPT_TYPE

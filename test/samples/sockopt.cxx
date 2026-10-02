@@ -11,6 +11,7 @@
 #include <linux/socket.h>
 
 #include <cosmos/net/network.hxx>
+#include <clues/items/sockopt.hxx>
 
 namespace {
 
@@ -168,6 +169,11 @@ void sol_socket() {
 
 	uint64_t net_ns;
 	get_sock_opt<uint64_t>(s, SO_NETNS_COOKIE, net_ns);
+
+	struct clues::item::SetDevMemDontNeedSockOpt::dmabuf_token dma;
+	dma.token_start = 100;
+	dma.token_count = 32;
+	set_sock_opt(s, SO_DEVMEM_DONTNEED, dma);
 
 	close(s);
 	close(unix_socks[0]);

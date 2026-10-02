@@ -144,6 +144,10 @@ SystemCallPtr create_socket_opt_syscall(
 			/* only GET is meaningfully supported here */
 			return create_call.operator()<
 				SocketCall_GetPeerCredSockOpt, GetPeerCredSockOptSystemCall>();
+		case DEVMEM_DONTNEED:
+			return create_call.operator()<
+				void, void,
+				SocketCall_SetDevMemDontNeedSockOpt, SetDevMemDontNeedSockOptSystemCall>();
 		case BINDTOIFINDEX:
 			return create_call.operator()<
 				SocketCall_GetInterfaceIndexSockOpt, GetInterfaceIndexSockOptSystemCall,
