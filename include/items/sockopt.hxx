@@ -80,6 +80,7 @@ public: // functions
 	explicit SetSockOptVal(const SetSockOptLen &optlen, const ItemCfg cfg = {}) :
 			clues::item::PointerToScalar<T>{cfg.applyDefaults(ItemCfg{.label = "optval"})},
 			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
 	}
 
 protected: // data
@@ -137,6 +138,7 @@ public: // functions
 				.label = "optval"
 			})},
 			m_optlen{optlen} {
+		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
 	}
 
 	const std::optional<STRUCT>& data() const {
