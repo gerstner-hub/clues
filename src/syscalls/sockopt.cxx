@@ -99,6 +99,7 @@ SystemCallPtr create_socket_opt_syscall(
 		case PASSCRED:
 		case PASSSEC:
 		case PASSPIDFD:
+		case PASSRIGHTS:
 		case REUSEADDR:
 		case REUSEPORT:
 		case RXQ_OVFL:
@@ -109,6 +110,11 @@ SystemCallPtr create_socket_opt_syscall(
 		case PREFER_BUSY_POLL:
 		case TXREHASH:
 		case RCVMARK:
+		case RCVPRIORITY:
+		case INQ:
+		case WIFI_STATUS:
+		case NOFCS:
+		case ZEROCOPY:
 			return create_call.operator()<SocketCall_GetBoolSockOpt, GetBoolSockOptSystemCall, SocketCall_SetBoolSockOpt, SetBoolSockOptSystemCall>();
 		case BUSY_POLL:
 		case INCOMING_CPU:

@@ -167,16 +167,20 @@ public: // types
 		DONTROUTE             = SO_DONTROUTE,             ///< get/set boolean option defining whether gateways may be used, corresponding to cosmos::MessageFlag::DONTROUTE used in send().
 		INCOMING_CPU          = SO_INCOMING_CPU,          ///< get/set CPU affinity for the socket. Integer CPU number option.
 		INCOMING_NAPI_ID      = SO_INCOMING_NAPI_ID,      ///< returns an ID for the RX queue used to receive packets on this socket. Integer ID value, read-only.
+		INQ                   = SO_INQ,                   ///< (AF_UNIX) get/set boolean option to enable the reception INQ control messages which provide the amoung of bytes remaining in the receive queue.
+
 		KEEPALIVE             = SO_KEEPALIVE,             ///< get/set boolean keepalive option.
 		LINGER                = SO_LINGER,                ///< get/set the current linger option; uses `struct linger`.
 		LOCK_FILTER           = SO_LOCK_FILTER,           ///< lock any currently installed BPF programs on the socket with no way of turning the lock off again. This still takes a boolean.
 		MARK                  = SO_MARK,                  ///< get/set the mark used for each packet sent through the socket. Takes a `uint32_t`.
 		RCVMARK               = SO_RCVMARK,               ///< get/set boolean option controlling reception of SO_MARK ancillary messages.
+		RCVPRIORITY           = SO_RCVPRIORITY,           ///< get/set boolean option controlling reception of control messages providing the receive queue priority for the message.
 		NO_CHECK              = SO_NO_CHECK,              ///< don't calculate checksum for outgoing UDP packets, boolean option.
 		OOBINLINE             = SO_OOBINLINE,             ///< receive out-of-band data directly in the receive data stream. Boolean get/set option.
 		PASSCRED              = SO_PASSCRED,              ///< (AF_UNIX) get/set boolean whether to receive SCM_CREDENTIALS control messages.
 		PASSSEC               = SO_PASSSEC,               ///< (AF_UNIX) get/set boolean whether to receive SCM_SECURITY control messages.
 		PASSPIDFD             = SO_PASSPIDFD,             ///< (AF_UNIX) get/set boolean whether to receive SCM_PIDFD control messages.
+		PASSRIGHTS            = SO_PASSRIGHTS,            ///< (AF_UNIX) get/set boolean whether to allow reception of SCM_RIGHTS control messages (default: yes).
 		PEEK_OFF              = SO_PEEK_OFF,              ///< (AF_UNIX) get/set offset to be maintained in the context of MSG_PEEK `recv()` calls. `int` value.
 		PEERCRED              = SO_PEERCRED,              ///< (AF_UNIX) get the `struct ucred` of the peer used during `connect()` or `socketpair()` time.
 		PEERSEC               = SO_PEERSEC,               ///< (AF_UNIX) get a string describing the security context of the peer. Content depends on the LSM in effect.
@@ -207,6 +211,9 @@ public: // types
 		BUSY_POLL_BUDGET      = SO_BUSY_POLL_BUDGET,      ///< controls the maximum number of packets a single busy poll is allowed to process. Integer option.
 		BUF_LOCK              = SO_BUF_LOCK,              ///< get/set an integer bitmask controlling whether the kernel may automatically change socket buffer sizes.
 		NETNS_COOKIE          = SO_NETNS_COOKIE,          ///< retrieve the network namespace ID the socket belongs to.
+		WIFI_STATUS           = SO_WIFI_STATUS,           ///< get/set boolean option to enable reception of control messages indicating low level WIFI status.
+		NOFCS                 = SO_NOFCS,                 ///< get/set boolean option to disable checksuming on packet socket TX frames; let the hardware to the checksumming (FCS = frame check sequence).
+		ZEROCOPY              = SO_ZEROCOPY,              ///< get/set boolean option to enable zerocopy operation on a socket, allows use of MSG_ZEROCOPY flag.
 	};
 
 	enum class TCPOption : int {
