@@ -42,9 +42,10 @@ class ContainerFiller {
 	using ptr_type = typename CONTAINER::pointer;
 public: // functions
 
-	explicit ContainerFiller(CONTAINER &container, const size_t max) :
+	explicit ContainerFiller(CONTAINER &container, const size_t max, const StopAtZero stop_at_zero) :
 			m_container{container},
-			m_max{max} {
+			m_max{max},
+			m_stop_at_zero{stop_at_zero} {
 	}
 
 	bool operator()(long word) {
@@ -56,7 +57,7 @@ public: // functions
 		for (size_t numitem = 0; numitem < sizeof(word) / ITEM_SIZE; numitem++) {
 
 			std::memcpy(&item, word_ptr + numitem, sizeof(item));
-			if (item == 0)
+			if (m_stop_at_zero && item == 0)
 				// termination found
 				return false;
 
@@ -73,6 +74,7 @@ public: // functions
 protected:
 	CONTAINER &m_container;
 	const size_t m_max = 0;
+	const StopAtZero m_stop_at_zero;
 	size_t m_filled = 0;
 	static constexpr size_t ITEM_SIZE = sizeof(typename CONTAINER::value_type);
 };
@@ -983,10 +985,10 @@ void Tracee::readString(const ForeignPtr addr, std::string &out, const size_t ma
 }
 
 template <typename VECTOR>
-void Tracee::readVector(const ForeignPtr addr, VECTOR &out, const size_t max) const {
+void Tracee::readVector(const ForeignPtr addr, VECTOR &out, const size_t max, const StopAtZero stop_at_zero) const {
 	out.clear();
 
-	ContainerFiller<VECTOR> filler{out, max};
+	ContainerFiller<VECTOR> filler{out, max, stop_at_zero};
 	fillData(addr, filler);
 }
 
@@ -1128,19 +1130,19 @@ void Tracee::snatchFD(const cosmos::FileNum fd, SnatchFDCallback cb) const {
 // explicit template instantiations
 #if !defined(COSMOS_I386) && !defined(COSMOS_X32)
 template void Tracee::readVector<std::vector<uintptr_t>>(const ForeignPtr,
-		std::vector<uintptr_t>&, const size_t) const;
+		std::vector<uintptr_t>&, const size_t, const StopAtZero) const;
 #endif
 
 #ifdef COSMOS_I386
 template void Tracee::readVector<std::vector<unsigned long>>(const ForeignPtr,
-		std::vector<unsigned long>&, const size_t) const;
+		std::vector<unsigned long>&, const size_t, const StopAtZero) const;
 #endif
 /* for 32-bit emulation */
 template void Tracee::readVector<std::vector<uint32_t>>(const ForeignPtr,
-		std::vector<uint32_t>&, const size_t) const;
+		std::vector<uint32_t>&, const size_t, const StopAtZero) const;
 
 template void Tracee::readVector<std::vector<int>>(const ForeignPtr,
-		std::vector<int>&, const size_t) const;
+		std::vector<int>&, const size_t, const StopAtZero) const;
 
 } // end ns
 

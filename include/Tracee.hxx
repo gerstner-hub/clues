@@ -318,9 +318,15 @@ public: // functions
 		return true;
 	}
 
-	/// Reads in a zero terminated array of data items into the STL-vector like parameter `out`.
+	/// Reads in an array of data items into the STL-vector-like parameter `out`.
+	/**
+	 * This reads in an array starting at address `pointer` in the Tracee.
+	 * If `stop_at_zero` is set then processing stops once a element equal
+	 * to zero is encountered or `max` elements have been read. Otherwise
+	 * exactly `max` elements will be read.
+	 **/
 	template <typename VECTOR>
-	void readVector(const ForeignPtr pointer, VECTOR &out, const size_t max = SIZE_MAX) const;
+	void readVector(const ForeignPtr pointer, VECTOR &out, const size_t max = SIZE_MAX, const StopAtZero stop_at_zero = StopAtZero{true}) const;
 
 	/// Returns whether the tracee is a child process created by us.
 	/**

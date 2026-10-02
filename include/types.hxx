@@ -26,6 +26,9 @@ using FollowChildren = cosmos::NamedBool<struct follow_children_t, true>;
 /// A strong boolean type denoting whether to automatically all other threads of a process.
 using AttachThreads = cosmos::NamedBool<struct attach_threads_t, true>;
 
+/// Used in Tracee::readVector to indicate to stop when encountering a zero element.
+using StopAtZero = cosmos::NamedBool<struct stop_at_zero_t, true>;
+
 class Tracee;
 
 using TraceePtr = std::shared_ptr<Tracee>;
