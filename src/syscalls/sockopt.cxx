@@ -104,8 +104,10 @@ SystemCallPtr create_socket_opt_syscall(
 		case REUSEPORT:
 		case RXQ_OVFL:
 		case SELECT_ERR_QUEUE:
-		case TIMESTAMP:
-		case TIMESTAMPNS:
+		case TIMESTAMP_OLD:
+		case TIMESTAMPNS_OLD:
+		case TIMESTAMP_NEW:
+		case TIMESTAMPNS_NEW:
 		case NO_CHECK:
 		case PREFER_BUSY_POLL:
 		case TXREHASH:

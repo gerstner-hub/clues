@@ -183,6 +183,10 @@ void sol_socket() {
 	uint32_t meminfo[SK_MEMINFO_VARS];
 	get_sock_opt(s, SO_MEMINFO, meminfo);
 
+	set_sock_int_opt(s, SO_TIMESTAMP, 1);
+	set_sock_int_opt(s, SO_TIMESTAMPNS_OLD, 1);
+	set_sock_int_opt(s, SO_TIMESTAMP_NEW, 1);
+
 	close(s);
 	close(unix_socks[0]);
 	close(unix_socks[1]);

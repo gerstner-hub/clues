@@ -288,8 +288,10 @@ public: // types
 		SELECT_ERR_QUEUE      = SO_SELECT_ERR_QUEUE,      ///< get/set select() error handling behaviour boolean option. Deprecated.
 		SNDBUF                = SO_SNDBUF,                ///< get/set maximum send buffer size used in the kernel. Integer value.
 		SNDBUFFORCE           = SO_SNDBUFFORCE,           ///< forced SNDBUF setting with `CAP_NET_ADMIN`.
-		TIMESTAMP             = SO_TIMESTAMP,             ///< get/set reception of `SCM_TIMESTAMP` control messages. Boolean option.
-		TIMESTAMPNS           = SO_TIMESTAMPNS,           ///< get/set reception of `SCM_TIMESTAMPNS` control messages. Boolean option.
+		TIMESTAMP_OLD         = SO_TIMESTAMP_OLD,         ///< get/set reception of `SCM_TIMESTAMP` control messages. Boolean option. Old `struct timeval` ABI.
+		TIMESTAMP_NEW         = SO_TIMESTAMP_NEW,         ///< get/set reception of `SCM_TIMESTAMP` control messages. Boolean option. New `struct __kernel_sock_timeval` ABI.
+		TIMESTAMPNS_OLD       = SO_TIMESTAMPNS_OLD,       ///< get/set reception of `SCM_TIMESTAMPNS` control messages. Boolean option. Old `struct timespec` ABI.
+		TIMESTAMPNS_NEW       = SO_TIMESTAMPNS_NEW,       ///< get/set reception of `SCM_TIMESTAMPNS` control messages. Boolean option. New `struct __kernel_timespec` ABI.
 		TYPE                  = SO_TYPE,                  ///< get the socket type. Integer value.
 		TXREHASH              = SO_TXREHASH,              ///< get/set boolean option, whether to allow the kernel to rethink the tx queue to use in ertain situations.
 		BUSY_POLL             = SO_BUSY_POLL,             ///< get/set a poll duration in microseconds for `recv()` calls on the socket. Integer option.
