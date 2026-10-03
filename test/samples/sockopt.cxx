@@ -187,6 +187,12 @@ void sol_socket() {
 	set_sock_int_opt(s, SO_TIMESTAMPNS_OLD, 1);
 	set_sock_int_opt(s, SO_TIMESTAMP_NEW, 1);
 
+	so_timestamping timestamping;
+	get_sock_opt(s, SO_TIMESTAMPING_NEW, timestamping);
+	timestamping.flags = SOF_TIMESTAMPING_OPT_CMSG;
+	timestamping.bind_phc = 0;
+	set_sock_opt(s, SO_TIMESTAMPING_OLD, timestamping);
+
 	close(s);
 	close(unix_socks[0]);
 	close(unix_socks[1]);

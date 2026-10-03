@@ -323,6 +323,12 @@ DEF_SET_SOCK_OPT_TYPE(TxTime, item::SetTxTimeSockOpt, );
 /// GetMemInfoSockOpt receives an array of uint32.
 DEF_GET_SOCK_OPT_TYPE(MemInfo, item::GetMemInfoSockOpt, );
 
+/// GetTimestampingSockOpt receives a `struct so_timestamping`.
+DEF_GET_SOCK_OPT_TYPE(TimeStamping, item::GetTimeStampingSockOpt, );
+
+/// SetTimeSpecSockOpt supplies a `struct so_timestamping`.
+DEF_SET_SOCK_OPT_TYPE(TimeStamping, item::SetTimeStampingSockOpt, );
+
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL
 #undef DEF_SET_SOCK_OPT_TYPE

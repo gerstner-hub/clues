@@ -292,6 +292,8 @@ public: // types
 		TIMESTAMP_NEW         = SO_TIMESTAMP_NEW,         ///< get/set reception of `SCM_TIMESTAMP` control messages. Boolean option. New `struct __kernel_sock_timeval` ABI.
 		TIMESTAMPNS_OLD       = SO_TIMESTAMPNS_OLD,       ///< get/set reception of `SCM_TIMESTAMPNS` control messages. Boolean option. Old `struct timespec` ABI.
 		TIMESTAMPNS_NEW       = SO_TIMESTAMPNS_NEW,       ///< get/set reception of `SCM_TIMESTAMPNS` control messages. Boolean option. New `struct __kernel_timespec` ABI.
+		TIMESTAMPING_OLD      = SO_TIMESTAMPING_OLD,      ///< get/set configuration for `SCM_TIMESTAMPING` control messages. Uses `struct so_timestamping`. Old `struct timespec` ABI.
+		TIMESTAMPING_NEW      = SO_TIMESTAMPING_NEW,      ///< like TIMESTAMPING_OLD but using new `struct __kernel_timespec` ABI in control messages.
 		TYPE                  = SO_TYPE,                  ///< get the socket type. Integer value.
 		TXREHASH              = SO_TXREHASH,              ///< get/set boolean option, whether to allow the kernel to rethink the tx queue to use in ertain situations.
 		BUSY_POLL             = SO_BUSY_POLL,             ///< get/set a poll duration in microseconds for `recv()` calls on the socket. Integer option.
@@ -754,6 +756,40 @@ protected: // data
 
 	std::vector<uint32_t> m_meminfo;
 	const GetSockOptLen &m_optlen;
+};
+
+/// Base type for TIMESTAMPING socket options which implements str() support.
+class TimeStampingSockOptBase {
+protected:
+	std::string str(const so_timestamping&) const;
+};
+
+/// Get option for `struct so_timestamping` used with SO_TIMESTAMPING.
+class GetTimeStampingSockOpt :
+		public GetSockOptStruct<so_timestamping>,
+		public TimeStampingSockOptBase {
+public: // functions
+
+	explicit GetTimeStampingSockOpt(const GetSockOptLen &optlen) :
+			GetSockOptStruct{optlen, ItemCfg{
+				.desc = "struct so_timestamping*"}} {
+	}
+
+	std::string str() const override;
+};
+
+/// Set option for `struct so_timestamping` used with SO_TIMESTAMPING.
+class SetTimeStampingSockOpt :
+		public SetSockOptStruct<so_timestamping>,
+		public TimeStampingSockOptBase {
+public: // functions
+
+	explicit SetTimeStampingSockOpt(const SetSockOptLen &optlen) :
+			SetSockOptStruct{optlen, ItemCfg{
+				.desc = "struct so_timestamping*"}} {
+	}
+
+	std::string str() const override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;
