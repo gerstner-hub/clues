@@ -1,6 +1,7 @@
 #pragma once
 
 // C++
+#include <optional>
 #include <vector>
 
 // clues
@@ -10,6 +11,35 @@
 namespace clues {
 
 CLUES_DEFAULT_VISIBILITY_ON;
+
+/// Non-template mixin class for SocketCallBase
+/**
+ * This non-template type allows a dynamic_cast<SocketCallCommon> for
+ * SystemCall instances without having to care about the various template
+ * instances that can exist. This way the type of socket call can be inspected
+ * more easily.
+ **/
+class SocketCallCommon {
+public: // functions
+
+	SocketCallCommon() :
+		args{call} {
+	}
+
+	/// Returns the SystemCallNr corresponding to the SocketCallType, if mappable.
+	/**
+	 * To enable socketcall-agnostic code this returns the SystemCallNr
+	 * which matches the currently set SocketCallType in the `call`
+	 * member. Some socketcall types have no corresponding system call nr
+	 * (RECV, SENDTO). For these std::nullopt is returned.
+	 **/
+	std::optional<SystemCallNr> translatedSysCallNr() const;
+
+public: // data
+
+	item::SocketCallType call;
+	item::SocketCallArgs args;
+};
 
 /// Base class for `socketcall()` specializations.
 /**
@@ -28,12 +58,12 @@ CLUES_DEFAULT_VISIBILITY_ON;
  **/
 template <typename BASE>
 class SocketCallBase :
+		public SocketCallCommon,
 		public BASE {
 protected:
 
 	explicit SocketCallBase() :
-			BASE{SystemCallNr::SOCKETCALL},
-			args{call} {
+			BASE{SystemCallNr::SOCKETCALL} {
 		for (auto par: this->m_pars) {
 			if (par->needsUpdate() && !par->deferFill()) {
 				m_update_args.push_back(par);
@@ -74,11 +104,6 @@ protected:
 
 	/// Base class items that need to be updated after system call exit.
 	std::vector<SystemCallItem*> m_update_args;
-
-public: // data
-
-	item::SocketCallType call;
-	item::SocketCallArgs args;
 };
 
 /// Implementation of socketcall(SYS_SOCKET, ...).

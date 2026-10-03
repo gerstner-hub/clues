@@ -7,8 +7,10 @@
 // clues
 #include <clues/format.hxx>
 #include <clues/items/time.hxx>
+#include <clues/items/net.hxx>
 #include <clues/macros.h>
 #include <clues/private/kernel/time.hxx>
+#include <clues/syscalls/socketcall.hxx>
 #include <clues/sysnrs/generic.hxx>
 #include <clues/Tracee.hxx>
 #include <clues/utils.hxx>
@@ -35,16 +37,26 @@ bool TimeSpecParameter::needTime32Conversion() const {
 	if (!usesTime32())
 		return false;
 
+	auto call_nr = m_call->callNr();
+
+	if (call_nr == SystemCallNr::SOCKETCALL) {
+		auto socketcall = dynamic_cast<const SocketCallCommon*>(m_call);
+		if (auto mapped_call = socketcall->translatedSysCallNr(); mapped_call) {
+			call_nr = *mapped_call;
+		} else {
+			/* RECV, SENDTO */
+			return false;
+		}
+	}
 
 	/* now we need to check which system call we're on */
-	return cosmos::in_list(m_call->callNr(), {
+	return cosmos::in_list(call_nr, {
 			SystemCallNr::CLOCK_NANOSLEEP,
 			SystemCallNr::FUTEX,
 			SystemCallNr::NANOSLEEP,
 			SystemCallNr::PSELECT6,
 			SystemCallNr::PPOLL,
 			SystemCallNr::RECVMMSG,
-			SystemCallNr::SOCKETCALL, /* SYS_RECVMMSG */
 	});
 }
 
@@ -147,18 +159,78 @@ void TimeValParameter::updateData(const Tracee &proc) {
 	}
 }
 
+namespace {
+
+/*
+ * checking out socket options is quite the pain, if this is needed elsewhere
+ * then we need to make it a general purpose API in the lib.
+ */
+
+struct SockOptInfo {
+	bool is_set;
+	SockOptLevel::Level level;
+	SockOptName::OptVariant name_variant;
+};
+
+std::optional<SockOptInfo> lookup_sock_opt(const SystemCall &sc) {
+	switch (sc.callNr()) {
+		case SystemCallNr::SOCKETCALL:
+		case SystemCallNr::SETSOCKOPT:
+		case SystemCallNr::GETSOCKOPT:
+			break;
+		default: return std::nullopt;
+	}
+
+	const auto getoptsc = dynamic_cast<const GetSockOptSystemCall*>(&sc);
+	const auto setoptsc = dynamic_cast<const SetSockOptSystemCall*>(&sc);
+
+	SockOptInfo ret;
+
+	if (getoptsc) {
+		return SockOptInfo {
+			.is_set = false,
+			.level = getoptsc->level.level(),
+			.name_variant = getoptsc->name.option()
+		};
+	} else if (setoptsc) {
+		return SockOptInfo {
+			.is_set = true,
+			.level = setoptsc->level.level(),
+			.name_variant = setoptsc->name.option()
+		};
+	}
+
+	return std::nullopt;
+}
+
+} // end ns
+
 bool TimeValParameter::needTime32Conversion() const {
 
 	if (!usesTime32()) {
 		return false;
 	}
 
-	/* now we need to check which system call we're on */
-	return cosmos::in_list(m_call->callNr(), {
-		SystemCallNr::SELECT,
-		SystemCallNr::NEWSELECT,
-		SystemCallNr::PSELECT6
-	});
+	if (const auto sockopt_info = lookup_sock_opt(*m_call); sockopt_info) {
+		if (sockopt_info->level == SockOptLevel::SOCKET) {
+			const auto opt = std::get<SockOptName::SocketOption>(sockopt_info->name_variant);
+
+			if (cosmos::in_list(opt, {
+				SockOptName::SocketOption::RCVTIMEO_NEW,
+				SockOptName::SocketOption::RCVTIMEO_OLD})) {
+				return true;
+			}
+		}
+
+		return false;
+	} else {
+		/* now we need to check which system call we're on */
+		return cosmos::in_list(m_call->callNr(), {
+			SystemCallNr::SELECT,
+			SystemCallNr::NEWSELECT,
+			SystemCallNr::PSELECT6
+		});
+	}
 }
 
 void TimeValParameter::fetch(const Tracee &proc,

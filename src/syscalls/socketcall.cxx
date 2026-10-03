@@ -258,4 +258,32 @@ SystemCallPtr create_socket_call_syscall(const Tracee &tracee, const SystemCallI
 	}
 }
 
+std::optional<SystemCallNr> SocketCallCommon::translatedSysCallNr() const {
+	using enum item::SocketCallType::Call;
+#define CALL2NR(call) case call: return SystemCallNr::call;
+
+	switch (call.call()) {
+		CALL2NR(ACCEPT4);
+		CALL2NR(ACCEPT);
+		CALL2NR(BIND);
+		CALL2NR(CONNECT);
+		CALL2NR(GETPEERNAME);
+		CALL2NR(GETSOCKNAME);
+		CALL2NR(GETSOCKOPT);
+		CALL2NR(LISTEN);
+		CALL2NR(RECVFROM);
+		CALL2NR(RECVMMSG);
+		CALL2NR(RECVMSG);
+		CALL2NR(SENDMMSG);
+		CALL2NR(SENDMSG);
+		CALL2NR(SENDTO);
+		CALL2NR(SETSOCKOPT);
+		CALL2NR(SHUTDOWN);
+		CALL2NR(SOCKETPAIR);
+		CALL2NR(SOCKET);
+		default: return std::nullopt;
+	}
+#undef CALL2NR
+}
+
 } // end ns

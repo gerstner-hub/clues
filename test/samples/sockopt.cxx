@@ -12,6 +12,7 @@
 
 #include <cosmos/net/network.hxx>
 #include <clues/items/sockopt.hxx>
+#include "../utils/types.hxx"
 
 namespace {
 
@@ -145,16 +146,16 @@ void sol_socket() {
 	set_sock_int_opt(s, SO_ATTACH_REUSEPORT_EBPF, 10);
 	get_sock_int_opt(s, SO_ATTACH_REUSEPORT_EBPF);
 
-	struct timeval tv;
+	canon_timeval tv;
 	tv.tv_sec = 100;
 	tv.tv_usec = 1000;
 	setsockopt(s, SOL_SOCKET, SO_RCVTIMEO_OLD, &tv, sizeof(tv));
 	len = sizeof(tv);
 	getsockopt(s, SOL_SOCKET, SO_RCVTIMEO_OLD, &tv, &len);
 
-	struct timespec ts;
+	clues::timespec64 ts;
 	ts.tv_sec = 10;
-	ts.tv_nsec = 10000;
+	ts.tv_nsec = 20;
 	setsockopt(s, SOL_SOCKET, SO_RCVTIMEO_NEW, &ts, sizeof(ts));
 	len = sizeof(ts);
 	getsockopt(s, SOL_SOCKET, SO_RCVTIMEO_NEW, &ts, &len);
