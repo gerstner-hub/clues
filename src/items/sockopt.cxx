@@ -393,7 +393,7 @@ void GetBufLockSockOpt::updateData(const Tracee &proc) {
 	GetSockOptVal::updateData(proc);
 
 	if (this->value()) {
-		m_mask.emplace(LockMask{*this->value()});
+		m_mask.emplace(BufLockFlags{*this->value()});
 	} else {
 		m_mask.reset();
 	}
@@ -403,7 +403,7 @@ void SetBufLockSockOpt::processData(const Tracee &proc) {
 	SetSockOptVal::processData(proc);
 
 	if (this->value()) {
-		m_mask.emplace(LockMask{*this->value()});
+		m_mask.emplace(BufLockFlags{*this->value()});
 	} else {
 		m_mask.reset();
 	}
@@ -461,7 +461,14 @@ void GetMemInfoSockOpt::updateData(const Tracee &proc) {
 
 	const auto num_elements = (*m_optlen.value()) / sizeof(uint32_t);
 
-	proc.readVector(asPtr(), m_meminfo, num_elements, StopAtZero{false});
+	if (num_elements < m_meminfo.size()) {
+		/*
+		 * we don't support truncation of the meminfo.
+		 */
+		return;
+	}
+
+	proc.readStruct(asPtr(), m_meminfo.plain());
 }
 
 namespace {
@@ -486,13 +493,17 @@ const char* index2meminfo_label(const int i) {
 std::string GetMemInfoSockOpt::str() const {
 	std::string ret{"["};
 
-	for (size_t i = 0; i < m_meminfo.size(); i++) {
+	using IndexType = std::underlying_type<MemInfo>::type;
+
+	for (IndexType i = 0;
+			static_cast<size_t>(i) < m_meminfo.size();
+			i++) {
 		if (i != 0) {
 			ret += ", ";
 		}
 		ret += std::format("{} = {}",
 			index2meminfo_label((int)i),
-			m_meminfo[i]
+			m_meminfo[MemInfo{i}]
 		);
 	}
 

@@ -204,7 +204,8 @@ protected: // data
 
 /// Socket option name selection.
 /**
- * The concrete type depends on the SockOptLevel sibling parameter.
+ * The concrete type of the socket option depends on the tuple of
+ * (SockOptLevel, SockOptName).
  **/
 class SockOptName :
 		public ValueInParameter {
@@ -225,12 +226,6 @@ public: // types
 	enum class PacketOption : int {
 
 	};
-
-#ifndef SO_RIGHTS_NOTRUNC
-	// this was only added in kernel 7.3, not yet found in most userspace
-	// headers
-#	define SO_RIGHTS_NOTRUNC 85 /* generic UAPI value */
-#endif
 
 	enum class SocketOption : int {
 		ACCEPTCONN            = SO_ACCEPTCONN,            ///< read-only boolean option whether the socket is in listening state.
@@ -350,7 +345,7 @@ protected: // data
 	const SockOptType m_opt_type;
 };
 
-/// Type for `struct sock_fprog` as used with SO_ATTACH_FILTER and others.
+/// Type for `struct sock_fprog` as used with `SO_ATTACH_FILTER` and others.
 /**
  * This specialization of FilterProg checks that the `optlen` is sufficient to
  * process a `struct sock_fprog`. It is used with:
@@ -377,7 +372,7 @@ protected: // data
 	const SetSockOptLen &m_optlen;
 };
 
-/// Type for `struct sock_filter` as used with SO_GET_FILTER.
+/// Type for `struct sock_filter` as used with `SO_GET_FILTER`.
 /**
  * `SO_GET_FILTER` is actually only the GET variant for `SO_ATTACH_FILTER`.
  * It's semantics are quite unfortunate: `optval` refers to an array of
@@ -489,9 +484,9 @@ public: // functions
 /// Contains the socket protocol for SOL_SOCKET/SO_PROTOCOL.
 /**
  * This type provides the same ProtocolVariant as the SocketProtocol item
- * does. Only currently supported socket families are covered. For more exotic
- * situations you need to inspect the raw integer value returned from
- * the `value()` base class function.
+ * does. Only socket families currently supported by libclues are covered. For
+ * more exotic situations you need to inspect the raw integer value returned
+ * from the `value()` base class function.
  **/
 class ProtocolSockOpt :
 		public GetSockOptVal<int> {
@@ -618,16 +613,13 @@ class BufLockSockOptT :
 		public BASE {
 public: // types
 
-	enum class LockType : int {
-		SNDBUF = SOCK_SNDBUF_LOCK,
-		RCVBUF = SOCK_RCVBUF_LOCK
-	};
+	using enum cosmos::SocketOptions::BufLockFlag;
 
-	using LockMask = cosmos::BitMask<LockType>;
+	using BufLockFlags = cosmos::SocketOptions::BufLockFlags;
 
 public: // functions
 
-	std::optional<LockMask> mask() const {
+	std::optional<BufLockFlags> mask() const {
 		return m_mask;
 	}
 
@@ -641,7 +633,7 @@ protected: // functions
 
 protected: // data
 
-	std::optional<LockMask> m_mask;
+	std::optional<BufLockFlags> m_mask;
 };
 
 class GetBufLockSockOpt :
@@ -670,17 +662,8 @@ protected: // functions
 	void processData(const Tracee &proc) override;
 };
 
-/*
- * define this here on our own, since <linux/uio.h> makes the compiler
- * choke over redefinition of `struct iovec`.
- */
-struct dmabuf_token {
-	uint32_t token_start;
-	uint32_t token_count;
-};
-
 class SetDevMemDontNeedSockOpt :
-		public SetSockOptStruct<dmabuf_token> {
+		public SetSockOptStruct<cosmos::SocketOptions::DMABufToken> {
 public: // functions
 
 	explicit SetDevMemDontNeedSockOpt(const SetSockOptLen &optlen) :
@@ -723,6 +706,11 @@ public: // functions
 
 class GetMemInfoSockOpt :
 		public PointerOutValue {
+public: // types
+
+	using MemInfoArray = cosmos::SocketOptions::MemInfoArray;
+	using MemInfo = cosmos::SocketOptions::MemInfo;
+
 public: // functions
 
 	explicit GetMemInfoSockOpt(const GetSockOptLen &optlen) :
@@ -735,10 +723,9 @@ public: // functions
 
 	/// Returns the array of uint32_t received in the Tracee.
 	/**
-	 * To interpret the data use the indices defined by the enum values
-	 * SK_MEMINFO_*.
+	 * The returned type uses the enum type `MemInfo` as indices.
 	 **/
-	const std::vector<uint32_t>& meminfo() const {
+	const MemInfoArray& meminfo() const {
 		return m_meminfo;
 	}
 
@@ -747,14 +734,14 @@ public: // functions
 protected: // functions
 
 	void processData(const Tracee &) override {
-		m_meminfo.clear();
+		m_meminfo.plain().fill(0);
 	}
 
 	void updateData(const Tracee &proc) override;
 
 protected: // data
 
-	std::vector<uint32_t> m_meminfo;
+	cosmos::SocketOptions::MemInfoArray m_meminfo;
 	const GetSockOptLen &m_optlen;
 };
 
