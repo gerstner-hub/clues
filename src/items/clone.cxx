@@ -87,10 +87,7 @@ void CloneArgs::processData(const Tracee &proc) {
 		return;
 	}
 
-	// ignore the check for trivial types, cosmos::CloneArgs has a
-	// constructor to set the whole structure to zero, we can live with that
-	// not happening here.
-	if (!proc.readStructIntoOptional<cosmos::CloneArgs, /*CHECK_TRIVIAL=*/false>(asPtr(), m_args)) {
+	if (!proc.readStructIntoOptional<cosmos::CloneArgs>(asPtr(), m_args)) {
 		return;
 	}
 

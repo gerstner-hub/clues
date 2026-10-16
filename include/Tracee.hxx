@@ -238,7 +238,7 @@ public: // functions
 			return false;
 
 		if constexpr (CHECK_TRIVIAL) {
-			static_assert(std::is_trivial_v<T> == true);
+			static_assert(std::is_trivially_copyable_v<T> == true);
 		}
 
 		try {
