@@ -285,16 +285,16 @@ DEF_GET_SOCK_OPT_TYPE(FileDesc, item::GetSockOptVal<cosmos::FileNum>,
 		ItemCfg({}, "fd", "int*"));
 
 /// GetTimeValSockOptSystemCall receives a `struct timeval`.
-DEF_GET_SOCK_OPT_TYPE(TimeVal, item::GetTimeValSockOpt, );
+DEF_GET_SOCK_OPT_TYPE(OldTimeVal, item::GetOldTimeValSockOpt, );
 
 /// SetTimeValSockOptSystemCall supplies a `struct timeval`.
-DEF_SET_SOCK_OPT_TYPE(TimeVal, item::SetTimeValSockOpt, );
+DEF_SET_SOCK_OPT_TYPE(OldTimeVal, item::SetOldTimeValSockOpt, );
 
-/// GetTimeSpecSockOptSystemCall receives a `struct timespec`.
-DEF_GET_SOCK_OPT_TYPE(TimeSpec, item::GetTimeSpecSockOpt, );
+/// GetNewTimeValSockOptSystemCall receives a `struct kernel_sock_timeval`.
+DEF_GET_SOCK_OPT_TYPE(NewTimeVal, item::GetNewTimeValSockOpt, );
 
-/// SetTimeSpecSockOptSystemCall supplies a `struct timespec`.
-DEF_SET_SOCK_OPT_TYPE(TimeSpec, item::SetTimeSpecSockOpt, );
+/// SetNewTimeValSockOptSystemCall supplies a `struct kernel_sock_timeval`.
+DEF_SET_SOCK_OPT_TYPE(NewTimeVal, item::SetNewTimeValSockOpt, );
 
 /// GetBufLockSockOptSystemCall retrieves a LockMask bitmask.
 DEF_GET_SOCK_OPT_TYPE(BufLock, item::GetBufLockSockOpt, );

@@ -190,13 +190,13 @@ SystemCallPtr create_socket_opt_syscall(
 		case RCVTIMEO_OLD:
 		case SNDTIMEO_OLD:
 			return create_call.operator()<
-				SocketCall_GetTimeValSockOpt, GetTimeValSockOptSystemCall,
-				SocketCall_SetTimeValSockOpt, SetTimeValSockOptSystemCall>();
+				SocketCall_GetOldTimeValSockOpt, GetOldTimeValSockOptSystemCall,
+				SocketCall_SetOldTimeValSockOpt, SetOldTimeValSockOptSystemCall>();
 		case RCVTIMEO_NEW:
 		case SNDTIMEO_NEW:
 			return create_call.operator()<
-				SocketCall_GetTimeSpecSockOpt, GetTimeSpecSockOptSystemCall,
-				SocketCall_SetTimeSpecSockOpt, SetTimeSpecSockOptSystemCall>();
+				SocketCall_GetNewTimeValSockOpt, GetNewTimeValSockOptSystemCall,
+				SocketCall_SetNewTimeValSockOpt, SetNewTimeValSockOptSystemCall>();
 		case TIMESTAMPING_NEW:
 		case TIMESTAMPING_OLD:
 			return create_call.operator()<

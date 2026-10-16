@@ -517,11 +517,11 @@ protected: // data
 };
 
 /// Specialization of TimeValParameter which takes `optlen` into account.
-class SetTimeValSockOpt :
+class SetOldTimeValSockOpt :
 		public item::TimeValParameter {
 public: // functions
 
-	explicit SetTimeValSockOpt(const SetSockOptLen &optlen) :
+	explicit SetOldTimeValSockOpt(const SetSockOptLen &optlen) :
 			item::TimeValParameter{ItemCfg{
 				ItemType::PARAM_IN,
 				"optval",
@@ -540,11 +540,11 @@ protected: // data
 };
 
 /// Specialization of TimeValParameter which takes `optlen` into account.
-class GetTimeValSockOpt :
+class GetOldTimeValSockOpt :
 		public item::TimeValParameter {
 public: // functions
 
-	explicit GetTimeValSockOpt(const GetSockOptLen &optlen) :
+	explicit GetOldTimeValSockOpt(const GetSockOptLen &optlen) :
 			item::TimeValParameter{ItemCfg{
 				ItemType::PARAM_OUT,
 				"optval",
@@ -562,50 +562,56 @@ protected: // data
 	const GetSockOptLen &m_optlen;
 };
 
-/// Specialization of TimeSpecParameter which takes `optlen` into account.
-class SetTimeSpecSockOpt :
-		public item::TimeSpecParameter {
-public: // functions
+/// Special socket-related timeval parameter with Y38 support.
+/**
+ * Some socket options use this special socket-related timeval type which is
+ * not otherwise used in time system calls. It is similar to `struct timespec`
+ * on 64-bit systems, but uses microseconds instead of nanoseconds, so it has
+ * different semantics.
+ *
+ * This is a mixin type for the actual in/out socket item types.
+ **/
+class NewTimeValSockOptBase {
+public: // types
 
-	explicit SetTimeSpecSockOpt(const SetSockOptLen &optlen) :
-			item::TimeSpecParameter{ItemCfg{
-				ItemType::PARAM_IN,
-				"optval",
-				"struct timespec*"}},
-			m_optlen{optlen} {
-		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
-	}
+	/// The raw definition of the structure 64-bit sock_timeval structure.
+	/**
+	 * This structure definition is not normally exposed to userspace.
+	 **/
+	struct sock_timeval {
+		int64_t tv_sec = 0;
+		int64_t tv_usec = 0;
+	};
 
 protected: // functions
 
-	void processData(const Tracee &proc) override;
-
-protected: // data
-
-	const SetSockOptLen &m_optlen;
+	std::string str(const sock_timeval &stv) const;
 };
 
-/// Specialization of TimeSpecParameter which takes `optlen` into account.
-class GetTimeSpecSockOpt :
-		public item::TimeSpecParameter {
+class GetNewTimeValSockOpt :
+		public NewTimeValSockOptBase,
+		public GetSockOptStruct<NewTimeValSockOptBase::sock_timeval> {
 public: // functions
 
-	explicit GetTimeSpecSockOpt(const GetSockOptLen &optlen) :
-			item::TimeSpecParameter{ItemCfg{
-				ItemType::PARAM_OUT,
-				"optval",
-				"struct timespec*"}},
-			m_optlen{optlen} {
-		this->m_flags.set(SystemCallItem::Flag::DEFER_FILL);
+	explicit GetNewTimeValSockOpt(const GetSockOptLen &optlen) :
+			GetSockOptStruct{optlen, ItemCfg{
+				.desc = "struct kernel_sock_timeval*"}} {
 	}
 
-protected: // functions
+	std::string str() const override;
+};
 
-	void updateData(const Tracee &proc) override;
+class SetNewTimeValSockOpt :
+		public NewTimeValSockOptBase,
+		public SetSockOptStruct<NewTimeValSockOptBase::sock_timeval> {
+public: // functions
 
-protected: // data
+	explicit SetNewTimeValSockOpt(const SetSockOptLen &optlen) :
+			SetSockOptStruct{optlen, ItemCfg{
+				.desc = "struct kernel_sock_timeval*"}} {
+	}
 
-	const GetSockOptLen &m_optlen;
+	std::string str() const override;
 };
 
 template <class BASE, class OPT_LEN>

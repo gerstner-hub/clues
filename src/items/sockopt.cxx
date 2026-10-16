@@ -333,7 +333,29 @@ std::string ProtocolSockOpt::str() const {
 	return std::visit(prot_visitor, m_prot);
 }
 
-void SetTimeValSockOpt::processData(const Tracee &proc) {
+std::string NewTimeValSockOptBase::str(const sock_timeval &tsv) const {
+	return std::format("{{tv_sec={}, tv_usec={}}}",
+			tsv.tv_sec, tsv.tv_usec
+	);
+}
+
+std::string GetNewTimeValSockOpt::str() const {
+	if (!data()) {
+		return item::PointerOutValue::str();
+	}
+
+	return NewTimeValSockOptBase::str(*data());
+}
+
+std::string SetNewTimeValSockOpt::str() const {
+	if (!data()) {
+		return item::PointerInValue::str();
+	}
+
+	return NewTimeValSockOptBase::str(*data());
+}
+
+void SetOldTimeValSockOpt::processData(const Tracee &proc) {
 	if (const auto len = m_optlen.value(); len < 0 ||
 			(size_t)len < traceeStructSize()) {
 		m_timeval.reset();
@@ -343,7 +365,7 @@ void SetTimeValSockOpt::processData(const Tracee &proc) {
 	TimeValParameter::processData(proc);
 }
 
-void GetTimeValSockOpt::updateData(const Tracee &proc) {
+void GetOldTimeValSockOpt::updateData(const Tracee &proc) {
 	if (!m_call->hasResultValue()) {
 		return;
 	} else if (const auto len = *m_optlen.value(); len < 0 ||
@@ -352,27 +374,6 @@ void GetTimeValSockOpt::updateData(const Tracee &proc) {
 	}
 
 	TimeValParameter::updateData(proc);
-}
-
-void SetTimeSpecSockOpt::processData(const Tracee &proc) {
-	if (const auto len = m_optlen.value(); len < 0 ||
-			(size_t)len < traceeStructSize()) {
-		m_timespec.reset();
-		return;
-	}
-
-	TimeSpecParameter::processData(proc);
-}
-
-void GetTimeSpecSockOpt::updateData(const Tracee &proc) {
-	if (!m_call->hasResultValue()) {
-		return;
-	} else if (const auto len = *m_optlen.value(); len < 0 ||
-			(size_t)len < traceeStructSize()) {
-		return;
-	}
-
-	TimeSpecParameter::updateData(proc);
 }
 
 template <class BASE, class OPT_LEN>
