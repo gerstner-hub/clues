@@ -253,7 +253,7 @@ public: // types
 		LINGER                = SO_LINGER,                ///< get/set the current linger option; uses `struct linger`.
 		LOCK_FILTER           = SO_LOCK_FILTER,           ///< lock any currently installed BPF programs on the socket with no way of turning the lock off again. This still takes a boolean.
 		MARK                  = SO_MARK,                  ///< get/set the mark used for each packet sent through the socket. Takes a `uint32_t`.
-		RCVMARK               = SO_RCVMARK,               ///< get/set boolean option controlling reception of SO_MARK ancillary messages.
+		RCVMARK               = SO_RCVMARK,               ///< get/set boolean option controlling reception of SO_MARK control messages.
 		RCVPRIORITY           = SO_RCVPRIORITY,           ///< get/set boolean option controlling reception of control messages providing the receive queue priority for the message.
 		NO_CHECK              = SO_NO_CHECK,              ///< don't calculate checksum for outgoing UDP packets, boolean option.
 		OOBINLINE             = SO_OOBINLINE,             ///< receive out-of-band data directly in the receive data stream. Boolean get/set option.
@@ -279,7 +279,7 @@ public: // types
 		RESERVE_MEM           = SO_RESERVE_MEM,           ///< get/set memory to reserve in kernel for socket. int argument in bytes.
 		REUSEADDR             = SO_REUSEADDR,             ///< get/set reuse address boolean option.
 		REUSEPORT             = SO_REUSEPORT,             ///< get/set reuse port boolean option.
-		RXQ_OVFL              = SO_RXQ_OVFL,              ///< get/set boolean option whether to supply a 32-bit value ancillary message indicating the number of dropped packets.
+		RXQ_OVFL              = SO_RXQ_OVFL,              ///< get/set boolean option whether to supply a 32-bit value control message indicating the number of dropped packets.
 		SELECT_ERR_QUEUE      = SO_SELECT_ERR_QUEUE,      ///< get/set select() error handling behaviour boolean option. Deprecated.
 		SNDBUF                = SO_SNDBUF,                ///< get/set maximum send buffer size used in the kernel. Integer value.
 		SNDBUFFORCE           = SO_SNDBUFFORCE,           ///< forced SNDBUF setting with `CAP_NET_ADMIN`.
