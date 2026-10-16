@@ -279,8 +279,8 @@ public: // types
 		SNDLOWAT              = SO_SNDLOWAT,              ///< get minimum number of bytes in send buffer before passing on to the protocol layer. Cannot be changed on Linux. Integer option.
 		RCVTIMEO_OLD          = SO_RCVTIMEO_OLD,          ///< get/set receive timeout in `struct timeval` argument.
 		SNDTIMEO_OLD          = SO_SNDTIMEO_OLD,          ///< get/set send timeout in `struct timeval` argument.
-		RCVTIMEO_NEW          = SO_RCVTIMEO_NEW,          ///< get/set receive timeout in `struct timespec` argument.
-		SNDTIMEO_NEW          = SO_SNDTIMEO_NEW,          ///< get/set send timeout in `struct timespec` argument.
+		RCVTIMEO_NEW          = SO_RCVTIMEO_NEW,          ///< get/set receive timeout in `struct __kernel_sock_timeval` argument.
+		SNDTIMEO_NEW          = SO_SNDTIMEO_NEW,          ///< get/set send timeout in `struct __kernel_sock_timeval` argument.
 		RESERVE_MEM           = SO_RESERVE_MEM,           ///< get/set memory to reserve in kernel for socket. int argument in bytes.
 		REUSEADDR             = SO_REUSEADDR,             ///< get/set reuse address boolean option.
 		REUSEPORT             = SO_REUSEPORT,             ///< get/set reuse port boolean option.
@@ -295,7 +295,7 @@ public: // types
 		TIMESTAMPING_OLD      = SO_TIMESTAMPING_OLD,      ///< get/set configuration for `SCM_TIMESTAMPING` control messages. Uses `struct so_timestamping`. Old `struct timespec` ABI.
 		TIMESTAMPING_NEW      = SO_TIMESTAMPING_NEW,      ///< like TIMESTAMPING_OLD but using new `struct __kernel_timespec` ABI in control messages.
 		TYPE                  = SO_TYPE,                  ///< get the socket type. Integer value.
-		TXREHASH              = SO_TXREHASH,              ///< get/set boolean option, whether to allow the kernel to rethink the tx queue to use in ertain situations.
+		TXREHASH              = SO_TXREHASH,              ///< get/set boolean option, whether to allow the kernel to rethink the tx queue to use in certain situations.
 		BUSY_POLL             = SO_BUSY_POLL,             ///< get/set a poll duration in microseconds for `recv()` calls on the socket. Integer option.
 		PREFER_BUSY_POLL      = SO_PREFER_BUSY_POLL,      ///< declare that the application will regularly busy poll the socket, allowing the kernel to disable interrupts. Boolean option.
 		BUSY_POLL_BUDGET      = SO_BUSY_POLL_BUDGET,      ///< controls the maximum number of packets a single busy poll is allowed to process. Integer option.
