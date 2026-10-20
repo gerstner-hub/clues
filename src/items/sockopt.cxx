@@ -537,6 +537,10 @@ std::string TimestampingSockOptBase::str(const so_timestamping &ts) const {
 
 	const auto flags_str = BITFLAGS_STR();
 
+	if (m_only_flags) {
+		return flags_str;
+	}
+
 	return std::format("{{flags={}, bind_phc={}}}",
 		flags_str, ts.bind_phc);
 }
@@ -555,6 +559,29 @@ std::string SetTimestampingSockOpt::str() const {
 	}
 
 	return TimestampingSockOptBase::str(*m_struct->raw());
+}
+
+void SetTimestampingSockOpt::processData(const Tracee &proc) {
+	m_only_flags = false;
+	SetSockOptStruct::processData(proc);
+
+	if (m_struct) {
+		return;
+	}
+
+	/*
+	 * this checks for a special backward compatibility (or shorthand?)
+	 * case which only exists in the setter. Instead of passing the struct
+	 * only the flags can be passed as an int. The kernel differentiates
+	 * this by option size alone.
+	 */
+	if (m_optlen.value() == sizeof(int)) {
+		m_only_flags = true;
+		m_struct.emplace();
+		int flags;
+		proc.readStruct(this->ptr(), flags);
+		m_struct->raw()->flags = flags;
+	}
 }
 
 } // end ns

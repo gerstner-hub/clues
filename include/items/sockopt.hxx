@@ -755,6 +755,9 @@ protected: // data
 class TimestampingSockOptBase {
 protected:
 	std::string str(const so_timestamping&) const;
+
+	/// Whether only the flags part of so_timestamping have been passed.
+	bool m_only_flags = false;
 };
 
 /// Get option for `struct so_timestamping` used with SO_TIMESTAMPING.
@@ -783,6 +786,10 @@ public: // functions
 	}
 
 	std::string str() const override;
+
+protected: // functions
+
+	void processData(const Tracee &proc) override;
 };
 
 CLUES_DEFAULT_VISIBILITY_OFF;

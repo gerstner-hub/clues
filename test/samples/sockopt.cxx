@@ -193,6 +193,8 @@ void sol_socket() {
 	timestamping.flags = SOF_TIMESTAMPING_OPT_CMSG;
 	timestamping.bind_phc = 0;
 	set_sock_opt(s, SO_TIMESTAMPING_OLD, timestamping);
+	// alternative variant which only passes flags, no struct
+	set_sock_opt(s, SO_TIMESTAMPING_OLD, SOF_TIMESTAMPING_RAW_HARDWARE);
 
 	close(s);
 	close(unix_socks[0]);
