@@ -752,18 +752,18 @@ protected: // data
 };
 
 /// Base type for TIMESTAMPING socket options which implements str() support.
-class TimeStampingSockOptBase {
+class TimestampingSockOptBase {
 protected:
 	std::string str(const so_timestamping&) const;
 };
 
 /// Get option for `struct so_timestamping` used with SO_TIMESTAMPING.
-class GetTimeStampingSockOpt :
-		public GetSockOptStruct<so_timestamping>,
-		public TimeStampingSockOptBase {
+class GetTimestampingSockOpt :
+		public GetSockOptStruct<cosmos::SocketOptions::TimestampingConfig>,
+		public TimestampingSockOptBase {
 public: // functions
 
-	explicit GetTimeStampingSockOpt(const GetSockOptLen &optlen) :
+	explicit GetTimestampingSockOpt(const GetSockOptLen &optlen) :
 			GetSockOptStruct{optlen, ItemCfg{
 				.desc = "struct so_timestamping*"}} {
 	}
@@ -772,12 +772,12 @@ public: // functions
 };
 
 /// Set option for `struct so_timestamping` used with SO_TIMESTAMPING.
-class SetTimeStampingSockOpt :
-		public SetSockOptStruct<so_timestamping>,
-		public TimeStampingSockOptBase {
+class SetTimestampingSockOpt :
+		public SetSockOptStruct<cosmos::SocketOptions::TimestampingConfig>,
+		public TimestampingSockOptBase {
 public: // functions
 
-	explicit SetTimeStampingSockOpt(const SetSockOptLen &optlen) :
+	explicit SetTimestampingSockOpt(const SetSockOptLen &optlen) :
 			SetSockOptStruct{optlen, ItemCfg{
 				.desc = "struct so_timestamping*"}} {
 	}

@@ -324,10 +324,10 @@ DEF_SET_SOCK_OPT_TYPE(TxTime, item::SetTxTimeSockOpt, );
 DEF_GET_SOCK_OPT_TYPE(MemInfo, item::GetMemInfoSockOpt, );
 
 /// GetTimestampingSockOpt receives a `struct so_timestamping`.
-DEF_GET_SOCK_OPT_TYPE(TimeStamping, item::GetTimeStampingSockOpt, );
+DEF_GET_SOCK_OPT_TYPE(Timestamping, item::GetTimestampingSockOpt, );
 
 /// SetTimeSpecSockOpt supplies a `struct so_timestamping`.
-DEF_SET_SOCK_OPT_TYPE(TimeStamping, item::SetTimeStampingSockOpt, );
+DEF_SET_SOCK_OPT_TYPE(Timestamping, item::SetTimestampingSockOpt, );
 
 #undef DEF_GET_SOCK_OPT_TYPE
 #undef DEF_GET_SOCK_OPT_TYPE_FULL

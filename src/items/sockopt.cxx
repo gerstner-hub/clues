@@ -511,32 +511,8 @@ std::string GetMemInfoSockOpt::str() const {
 	return ret + "]";
 }
 
-enum class TimeStampingFlag : int {
-	TX_HARDWARE   = SOF_TIMESTAMPING_TX_HARDWARE,
-	TX_SOFTWARE   = SOF_TIMESTAMPING_TX_SOFTWARE,
-	RX_HARDWARE   = SOF_TIMESTAMPING_RX_HARDWARE,
-	RX_SOFTWARE   = SOF_TIMESTAMPING_RX_SOFTWARE,
-	SOFTWARE      = SOF_TIMESTAMPING_SOFTWARE,
-	SYS_HARDWARE  = SOF_TIMESTAMPING_SYS_HARDWARE,
-	RAW_HARDWARE  = SOF_TIMESTAMPING_RAW_HARDWARE,
-	OPT_ID        = SOF_TIMESTAMPING_OPT_ID,
-	TX_SCHED      = SOF_TIMESTAMPING_TX_SCHED,
-	TX_ACK        = SOF_TIMESTAMPING_TX_ACK,
-	OPT_CMSG      = SOF_TIMESTAMPING_OPT_CMSG,
-	OPT_TSONLY    = SOF_TIMESTAMPING_OPT_TSONLY,
-	OPT_STATS     = SOF_TIMESTAMPING_OPT_STATS,
-	OPT_PKTINFO   = SOF_TIMESTAMPING_OPT_PKTINFO,
-	OPT_TX_SWHW   = SOF_TIMESTAMPING_OPT_TX_SWHW,
-	BIND_PHC      = SOF_TIMESTAMPING_BIND_PHC,
-	OPT_ID_TCP    = SOF_TIMESTAMPING_OPT_ID_TCP,
-	OPT_RX_FILTER = SOF_TIMESTAMPING_OPT_RX_FILTER,
-	TX_COMPLETION = SOF_TIMESTAMPING_TX_COMPLETION,
-};
-
-using TimeStampingFlags = cosmos::BitMask<TimeStampingFlag>;
-
-std::string TimeStampingSockOptBase::str(const so_timestamping &ts) const {
-	const auto flags = TimeStampingFlags{ts.flags};
+std::string TimestampingSockOptBase::str(const so_timestamping &ts) const {
+	const auto flags = cosmos::SocketOptions::TimestampingConfig::Flags{ts.flags};
 	BITFLAGS_FORMAT_START(flags);
 
 	BITFLAGS_ADD(SOF_TIMESTAMPING_TX_HARDWARE);
@@ -565,20 +541,20 @@ std::string TimeStampingSockOptBase::str(const so_timestamping &ts) const {
 		flags_str, ts.bind_phc);
 }
 
-std::string GetTimeStampingSockOpt::str() const {
+std::string GetTimestampingSockOpt::str() const {
 	if (!m_struct) {
 		return PointerOutValue::str();
 	}
 
-	return TimeStampingSockOptBase::str(*m_struct);
+	return TimestampingSockOptBase::str(*m_struct->raw());
 }
 
-std::string SetTimeStampingSockOpt::str() const {
+std::string SetTimestampingSockOpt::str() const {
 	if (!m_struct) {
 		return PointerInValue::str();
 	}
 
-	return TimeStampingSockOptBase::str(*m_struct);
+	return TimestampingSockOptBase::str(*m_struct->raw());
 }
 
 } // end ns
