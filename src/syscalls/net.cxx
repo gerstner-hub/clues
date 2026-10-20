@@ -124,18 +124,15 @@ void RecvMsgSystemCall::updateFDTracking(const Tracee &proc) {
 	const auto header_opt = msg.header();
 
 	for (const auto &ctrl: *header_opt) {
-		if (const auto type = cosmos::as_unix_message(ctrl); !type)
-			continue;
-		else if (type != cosmos::UnixMessage::RIGHTS)
-			continue;
-
 		cosmos::UnixRightsMessage rights;
-		rights.deserialize(ctrl);
-		cosmos::UnixRightsMessage::FileNumVector fds;
-		rights.takeFDs(fds);
+		if (rights.matches(ctrl)) {
+			rights.deserialize(ctrl);
+			cosmos::UnixRightsMessage::FileNumVector fds;
+			rights.takeFDs(fds);
 
-		for (const auto fd: fds) {
-			track(cosmos::FileNum{fd}, proc);
+			for (const auto fd: fds) {
+				track(cosmos::FileNum{fd}, proc);
+			}
 		}
 	}
 }
