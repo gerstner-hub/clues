@@ -41,6 +41,14 @@ std::string GenericPointerValue::str() const {
 	}
 }
 
+std::string PointerValue::str() const {
+	if (auto ptr = valueAs<void*>(); ptr) {
+		return std::format("{:p}", ptr);
+	} else {
+		return "NULL";
+	}
+}
+
 std::string PointerValue::formatBadPointer() const {
 	if (ptr() == ForeignPtr::NO_POINTER) {
 		return "NULL";

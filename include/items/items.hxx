@@ -82,6 +82,9 @@ public: // functions
 		return ForeignPtr{valueAs<uintptr_t>()};
 	}
 
+	/// Fallback string formatter which prints the hex pointer.
+	std::string str() const override;
+
 protected:
 
 	std::string formatBadPointer() const;
